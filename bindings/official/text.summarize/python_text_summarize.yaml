@@ -1,0 +1,18 @@
+id: python_text_summarize
+
+capability: text.summarize
+service: core_python
+protocol: pythoncall
+operation: summarize_text
+
+request:
+  text: input.text
+  max_length: input.max_length
+
+response:
+  summary: response.summary
+
+metadata:
+  description: |
+    Official binding for text.summarize using the core_python
+   

@@ -1,0 +1,3 @@
+defaults:
+
+  text.summarize: python_text_summarize
