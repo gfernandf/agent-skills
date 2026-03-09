@@ -7,12 +7,10 @@ operation: summarize_text
 
 request:
   text: input.text
-  max_length: input.max_length
 
 response:
   summary: response.summary
 
 metadata:
-  description: |
-    Official binding for text.summarize using the core_python
-   
+  description: "Official binding for text.summarize using the core_python service."
+  status: stable   

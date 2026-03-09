@@ -9,6 +9,7 @@ from customization.binding_state_store import BindingStateStore
 from customization.override_intent_loader import OverrideIntentLoader
 from customization.quality_gate import QualityGate
 from customization.service_descriptor_loader import ServiceDescriptorLoader
+
 from runtime.active_binding_map import ActiveBindingMap
 from runtime.binding_executor import BindingExecutor
 from runtime.binding_registry import BindingRegistry
@@ -17,7 +18,6 @@ from runtime.capability_executor import DefaultCapabilityExecutor
 from runtime.capability_loader import YamlCapabilityLoader
 from runtime.execution_engine import ExecutionEngine
 from runtime.execution_planner import ExecutionPlanner
-from runtime.input_mapper import build_step_input  # indirectly used by engine
 from runtime.nested_skill_runner import NestedSkillRunner
 from runtime.protocol_router import ProtocolRouter
 from runtime.reference_resolver import ReferenceResolver
@@ -33,12 +33,14 @@ from runtime.pythoncall_invoker import PythonCallInvoker
 
 
 def main() -> None:
+
     parser = argparse.ArgumentParser(prog="skills")
     sub = parser.add_subparsers(dest="command", required=True)
 
     run_cmd = sub.add_parser("run", help="Execute a skill")
     run_cmd.add_argument("skill_id")
-    run_cmd.add_argument("--input", default="{}")
+    run_cmd.add_argument("--input", default=None)
+    run_cmd.add_argument("--input-file", default=None)
 
     describe_cmd = sub.add_parser("describe", help="Describe a skill")
     describe_cmd.add_argument("skill_id")
@@ -48,23 +50,56 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    repo_root = Path.cwd()
-    host_root = Path.cwd()
+    runtime_root = Path.cwd()
+    registry_root = runtime_root.parent / "agent-skill-registry"
+    host_root = runtime_root
 
     if args.command == "run":
-        _cmd_run(repo_root, host_root, args.skill_id, args.input)
+
+        _cmd_run(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.skill_id,
+            args.input,
+            args.input_file,
+        )
 
     elif args.command == "describe":
-        _cmd_describe(repo_root, args.skill_id)
+
+        _cmd_describe(registry_root, args.skill_id)
 
     elif args.command == "activate":
-        _cmd_activate(repo_root, host_root, args.capability)
+
+        _cmd_activate(runtime_root, host_root, args.capability)
 
 
-def _cmd_run(repo_root: Path, host_root: Path, skill_id: str, input_json: str) -> None:
-    inputs = json.loads(input_json)
+def _cmd_run(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    skill_id: str,
+    input_json: str | None,
+    input_file: str | None,
+) -> None:
 
-    engine = _build_engine(repo_root, host_root)
+    if input_json and input_file:
+        raise ValueError("Use either --input or --input-file")
+
+    if input_file:
+
+        with open(input_file, "r", encoding="utf-8") as f:
+            inputs = json.load(f)
+
+    elif input_json:
+
+        inputs = json.loads(input_json)
+
+    else:
+
+        inputs = {}
+
+    engine = _build_engine(registry_root, runtime_root, host_root)
 
     from runtime.models import ExecutionRequest
 
@@ -75,37 +110,45 @@ def _cmd_run(repo_root: Path, host_root: Path, skill_id: str, input_json: str) -
 
     result = engine.execute(request)
 
-    print(json.dumps(result.outputs, indent=2))
+    print(json.dumps(result.outputs, indent=2, ensure_ascii=False))
 
 
-def _cmd_describe(repo_root: Path, skill_id: str) -> None:
-    skill_loader = YamlSkillLoader(repo_root)
+def _cmd_describe(registry_root: Path, skill_id: str) -> None:
+
+    skill_loader = YamlSkillLoader(registry_root)
+
     skill = skill_loader.get_skill(skill_id)
 
-    print(json.dumps({
-        "id": skill.id,
-        "name": skill.name,
-        "description": skill.description,
-        "inputs": list(skill.inputs.keys()),
-        "outputs": list(skill.outputs.keys()),
-        "steps": [s.id for s in skill.steps],
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "id": skill.id,
+                "name": skill.name,
+                "description": skill.description,
+                "inputs": list(skill.inputs.keys()),
+                "outputs": list(skill.outputs.keys()),
+                "steps": [s.id for s in skill.steps],
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
 
 
-def _cmd_activate(repo_root: Path, host_root: Path, capability: str | None) -> None:
-    binding_registry = BindingRegistry(repo_root, host_root)
-    capability_loader = YamlCapabilityLoader(repo_root)
+def _cmd_activate(runtime_root: Path, host_root: Path, capability: str | None) -> None:
+
+    binding_registry = BindingRegistry(runtime_root, host_root)
 
     service_loader = ServiceDescriptorLoader(host_root)
     override_loader = OverrideIntentLoader(host_root)
     state_store = BindingStateStore(host_root)
+
     quality_gate = QualityGate()
 
     activation = BindingActivationService(
-        repo_root=repo_root,
+        runtime_root=runtime_root,
         host_root=host_root,
         binding_registry=binding_registry,
-        capability_loader=capability_loader,
         service_loader=service_loader,
         override_loader=override_loader,
         state_store=state_store,
@@ -113,32 +156,50 @@ def _cmd_activate(repo_root: Path, host_root: Path, capability: str | None) -> N
     )
 
     if capability:
+
         binding_id = activation.activate_capability(capability)
+
         print(f"{capability} -> {binding_id}")
+
     else:
+
         active = activation.activate_all()
-        print(json.dumps(active, indent=2))
+
+        print(json.dumps(active, indent=2, ensure_ascii=False))
 
 
-def _build_engine(repo_root: Path, host_root: Path) -> ExecutionEngine:
-    skill_loader = YamlSkillLoader(repo_root)
-    capability_loader = YamlCapabilityLoader(repo_root)
+def _build_engine(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+) -> ExecutionEngine:
+
+    skill_loader = YamlSkillLoader(registry_root)
+
+    capability_loader = YamlCapabilityLoader(registry_root)
 
     planner = ExecutionPlanner()
+
     resolver = ReferenceResolver()
 
-    binding_registry = BindingRegistry(repo_root, host_root)
+    binding_registry = BindingRegistry(runtime_root, host_root)
+
     active_map = ActiveBindingMap(host_root)
+
     binding_resolver = BindingResolver(binding_registry, active_map)
 
     service_resolver = ServiceResolver(binding_registry)
 
     request_builder = RequestBuilder()
+
     response_mapper = ResponseMapper()
 
     openapi_invoker = OpenAPIInvoker()
+
     openrpc_invoker = OpenRPCInvoker()
+
     mcp_invoker = MCPInvoker(client_registry=None)
+
     pythoncall_invoker = PythonCallInvoker()
 
     protocol_router = ProtocolRouter(
@@ -165,7 +226,7 @@ def _build_engine(repo_root: Path, host_root: Path) -> ExecutionEngine:
         execution_planner=planner,
         reference_resolver=resolver,
         capability_executor=capability_executor,
-        nested_skill_runner=NestedSkillRunner(None),  # patched below
+        nested_skill_runner=NestedSkillRunner(None),
     )
 
     engine.nested_skill_runner.execution_engine = engine
