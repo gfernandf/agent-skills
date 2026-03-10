@@ -100,6 +100,9 @@ class StepResult:
     resolved_input: dict[str, Any]
     produced_output: dict[str, Any] | None = None
     raw_result: Any = None
+    # optional metadata captured during binding execution
+    binding_id: str | None = None
+    service_id: str | None = None
     error_message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None

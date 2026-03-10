@@ -1,16 +1,12 @@
 id: python_audio_transcribe
-
 capability: audio.transcribe
 service: audio_baseline
 protocol: pythoncall
 operation: transcribe_audio
-
 request:
-  audio_data: input.audio_data
-
+  audio_data: input.audio
 response:
   text: response.text
-
 metadata:
-  description: "Official binding for audio.transcribe using the audio_baseline service."
+  description: Official binding for audio.transcribe using the audio_baseline service.
   status: stable

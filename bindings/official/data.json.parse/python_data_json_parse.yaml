@@ -1,16 +1,12 @@
 id: python_data_json_parse
-
 capability: data.json.parse
 service: data_baseline
 protocol: pythoncall
 operation: parse_json
-
 request:
-  json_string: input.json_string
-
+  json_string: input.text
 response:
   parsed_data: response.parsed_data
-
 metadata:
-  description: "Official binding for data.json.parse using the data_baseline service."
+  description: Official binding for data.json.parse using the data_baseline service.
   status: stable

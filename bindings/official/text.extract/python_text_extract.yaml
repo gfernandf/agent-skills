@@ -6,7 +6,7 @@ protocol: pythoncall
 operation: extract_text
 
 request:
-  document: input.document
+  document: input.text
 
 response:
   text: response.text

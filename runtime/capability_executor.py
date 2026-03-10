@@ -18,11 +18,14 @@ class CapabilityExecutor(Protocol):
         self,
         capability: CapabilitySpec,
         step_input: dict[str, Any],
-    ) -> dict[str, Any]:
+        trace_callback=None,
+    ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         """
         Execute a capability and return its outputs.
 
-        Must return a mapping whose keys correspond to the capability outputs.
+        May also return a `(outputs, metadata)` tuple when additional
+        binding/service information is available. Metadata should be a
+        dictionary containing any keys that may be useful for tracing.
         """
         ...
 
@@ -42,9 +45,10 @@ class DefaultCapabilityExecutor:
         self,
         capability: CapabilitySpec,
         step_input: dict[str, Any],
-    ) -> dict[str, Any]:
+        trace_callback=None,
+    ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         try:
-            result = self.binding_executor.execute(capability, step_input)
+            result = self.binding_executor.execute(capability, step_input, trace_callback=trace_callback)
         except CapabilityNotFoundError:
             raise
         except Exception as e:
@@ -54,10 +58,19 @@ class DefaultCapabilityExecutor:
                 cause=e,
             ) from e
 
-        if not isinstance(result, dict):
+        # `result` may be a tuple from BindingExecutor
+        if isinstance(result, tuple):
+            outputs, meta = result
+        else:
+            outputs, meta = result, {}
+
+        if not isinstance(outputs, dict):
             raise CapabilityExecutionError(
                 f"Capability '{capability.id}' returned a non-mapping result.",
                 capability_id=capability.id,
             )
 
-        return result
+        # attach metadata into return if present
+        if meta:
+            return outputs, meta
+        return outputs

@@ -147,6 +147,7 @@ class ExecutionEngine:
                 self.reference_resolver,
             )
 
+            meta: dict | None = None
             if step.uses.startswith("skill:"):
                 produced = self.nested_skill_runner.execute(
                     step.uses,
@@ -156,10 +157,16 @@ class ExecutionEngine:
             else:
                 capability = self.capability_loader.get_capability(step.uses)
 
-                produced = self.capability_executor.execute(
+                result = self.capability_executor.execute(
                     capability,
                     step_input,
+                    trace_callback=trace_callback,
                 )
+
+                if isinstance(result, tuple):
+                    produced, meta = result
+                else:
+                    produced, meta = result, None
 
             apply_step_output(
                 step,
@@ -167,12 +174,22 @@ class ExecutionEngine:
                 state,
             )
 
+            # emit completion event including produced output and metadata
+            event_data: dict[str, Any] = {}
+            if produced is not None:
+                event_data["produced_output"] = produced
+            if meta:
+                event_data.update(meta)
+
             emit_event(
                 state,
                 "step_completed",
                 f"Step '{step.id}' completed.",
                 step_id=step.id,
+                data=event_data if event_data else None,
             )
+            if trace_callback:
+                trace_callback(state.events[-1])
 
             return StepResult(
                 step_id=step.id,
@@ -180,6 +197,8 @@ class ExecutionEngine:
                 status="completed",
                 resolved_input=step_input,
                 produced_output=produced,
+                binding_id=(meta.get("binding_id") if meta else None),
+                service_id=(meta.get("service_id") if meta else None),
             )
 
         except Exception as e:
@@ -190,6 +209,8 @@ class ExecutionEngine:
                 step_id=step.id,
                 data={"error": str(e)},
             )
+            if trace_callback:
+                trace_callback(state.events[-1])
 
             return StepResult(
                 step_id=step.id,

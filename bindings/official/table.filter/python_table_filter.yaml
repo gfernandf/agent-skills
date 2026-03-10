@@ -1,17 +1,13 @@
 id: python_table_filter
-
 capability: table.filter
 service: table_baseline
 protocol: pythoncall
 operation: filter_table
-
 request:
-  table_data: input.table_data
-  filter_criteria: input.filter_criteria
-
+  table_data: input.table
+  filter_criteria: input.condition
 response:
   filtered_table: response.filtered_table
-
 metadata:
-  description: "Official binding for table.filter using the table_baseline service."
+  description: Official binding for table.filter using the table_baseline service.
   status: stable

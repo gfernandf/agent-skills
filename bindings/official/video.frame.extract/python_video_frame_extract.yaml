@@ -1,17 +1,13 @@
 id: python_video_frame_extract
-
 capability: video.frame.extract
 service: video_baseline
 protocol: pythoncall
 operation: extract_frames
-
 request:
-  video_data: input.video_data
-  frame_rate: input.frame_rate
-
+  video_data: input.video
+  frame_rate: input.video
 response:
   frames: response.frames
-
 metadata:
-  description: "Official binding for video.frame.extract using the video_baseline service."
+  description: Official binding for video.frame.extract using the video_baseline service.
   status: stable

@@ -211,7 +211,9 @@ def _cmd_trace(
         print(f"[{event.type}] {event.message}")
         if event.step_id:
             print(f"  step: {event.step_id}")
+        # print binding/service info or produced output if available
         if event.data:
+            # ensure consistent ordering
             for k, v in event.data.items():
                 print(f"  {k}: {v}")
         print()

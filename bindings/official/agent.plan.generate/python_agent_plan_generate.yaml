@@ -1,16 +1,12 @@
 id: python_agent_plan_generate
-
 capability: agent.plan.generate
 service: agent_baseline
 protocol: pythoncall
 operation: generate_plan
-
 request:
-  goal: input.goal
-
+  goal: input.objective
 response:
   plan: response.plan
-
 metadata:
-  description: "Official binding for agent.plan.generate using the agent_baseline service."
+  description: Official binding for agent.plan.generate using the agent_baseline service.
   status: stable

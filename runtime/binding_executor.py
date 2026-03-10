@@ -51,9 +51,12 @@ class BindingExecutor:
         self.protocol_router = protocol_router
         self.response_mapper = response_mapper
 
-    def execute(self, capability, step_input: dict) -> dict:
+    def execute(self, capability, step_input: dict, trace_callback=None) -> dict | tuple[dict, dict]:
         """
         Execute a capability using the resolved binding.
+
+        Returns either a plain output mapping or a tuple `(outputs, metadata)`.
+        Metadata contains binding/service identifiers useful for tracing.
         """
 
         capability_id = capability.id
@@ -83,6 +86,7 @@ class BindingExecutor:
                 },
             )
 
+
             response: InvocationResponse = self.protocol_router.invoke(invocation)
 
             mapped_output = self.response_mapper.map(
@@ -90,7 +94,8 @@ class BindingExecutor:
                 invocation_response=response,
             )
 
-            return mapped_output
+            # return outputs along with metadata for later tracing
+            return mapped_output, {"binding_id": binding.id, "service_id": service.id}
 
         except Exception as e:
             raise BindingExecutionError(

@@ -1,17 +1,13 @@
 id: python_code_diff_extract
-
 capability: code.diff.extract
 service: code_baseline
 protocol: pythoncall
 operation: extract_diff
-
 request:
-  code_before: input.code_before
-  code_after: input.code_after
-
+  code_before: input.code_b
+  code_after: input.code_a
 response:
   diff: response.diff
-
 metadata:
-  description: "Official binding for code.diff.extract using the code_baseline service."
+  description: Official binding for code.diff.extract using the code_baseline service.
   status: stable

@@ -1,17 +1,13 @@
 id: python_web_page_extract
-
 capability: web.page.extract
 service: web_baseline
 protocol: pythoncall
 operation: extract_webpage
-
 request:
-  url: input.url
-
+  url: input.content
 response:
   title: response.title
   text: response.text
-
 metadata:
-  description: "Official binding for web.page.extract using the web_baseline service."
+  description: Official binding for web.page.extract using the web_baseline service.
   status: stable

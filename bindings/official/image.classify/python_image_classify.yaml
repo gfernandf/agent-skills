@@ -1,17 +1,13 @@
 id: python_image_classify
-
 capability: image.classify
 service: image_baseline
 protocol: pythoncall
 operation: classify_image
-
 request:
-  image_data: input.image_data
-
+  image_data: input.image
 response:
   class: response.class
   confidence: response.confidence
-
 metadata:
-  description: "Official binding for image.classify using the image_baseline service."
+  description: Official binding for image.classify using the image_baseline service.
   status: stable
