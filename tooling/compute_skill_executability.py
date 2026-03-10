@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import argparse
 import json
+import sys
 from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from runtime.binding_registry import BindingRegistry
 from runtime.capability_loader import YamlCapabilityLoader
 from runtime.skill_loader import YamlSkillLoader
 
 
-def compute_skill_executability(repo_root: Path, host_root: Path | None = None) -> dict:
+def compute_skill_executability(registry_root: Path, runtime_root: Path, host_root: Path | None = None) -> dict:
     """
     Determine which skills are executable given the current binding registry.
 
@@ -16,11 +21,11 @@ def compute_skill_executability(repo_root: Path, host_root: Path | None = None) 
     - every capability referenced by its steps has at least one binding
     """
 
-    skill_loader = YamlSkillLoader(repo_root)
-    capability_loader = YamlCapabilityLoader(repo_root)
-    binding_registry = BindingRegistry(repo_root, host_root)
+    skill_loader = YamlSkillLoader(registry_root)
+    capability_loader = YamlCapabilityLoader(registry_root)
+    binding_registry = BindingRegistry(runtime_root, host_root)
 
-    skills_root = repo_root / "skills"
+    skills_root = registry_root / "skills"
 
     executable = []
     non_executable = []
@@ -77,10 +82,17 @@ def _load_yaml(path: Path):
 
 
 def main() -> None:
-    repo_root = Path.cwd()
-    host_root = Path.cwd()
+    parser = argparse.ArgumentParser(prog="compute_skill_executability")
+    parser.add_argument("--registry-root", type=Path, default=None, help="Path to the registry root")
+    parser.add_argument("--runtime-root", type=Path, default=None, help="Path to the runtime root")
+    parser.add_argument("--host-root", type=Path, default=None, help="Path to the host root")
+    args = parser.parse_args()
+    
+    registry_root = args.registry_root or Path.cwd().parent / "agent-skill-registry"
+    runtime_root = args.runtime_root or Path.cwd()
+    host_root = args.host_root or runtime_root
 
-    stats = compute_skill_executability(repo_root, host_root)
+    stats = compute_skill_executability(registry_root, runtime_root, host_root)
 
     print(json.dumps(stats, indent=2))
 

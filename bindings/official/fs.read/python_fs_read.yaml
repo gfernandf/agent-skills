@@ -1,0 +1,16 @@
+id: python_fs_read
+
+capability: fs.read
+service: fs_baseline
+protocol: pythoncall
+operation: read_file
+
+request:
+  path: input.path
+
+response:
+  content: response.content
+
+metadata:
+  description: "Official binding for fs.read using the fs_baseline service."
+  status: stable

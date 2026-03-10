@@ -1,0 +1,17 @@
+id: python_agent_route
+
+capability: agent.route
+service: agent_baseline
+protocol: pythoncall
+operation: route_agent
+
+request:
+  query: input.query
+  agents: input.agents
+
+response:
+  selected_agent: response.selected_agent
+
+metadata:
+  description: "Official binding for agent.route using the agent_baseline service."
+  status: stable

@@ -1,0 +1,7 @@
+id: data_baseline
+kind: pythoncall
+module: official_services.data_baseline
+
+metadata:
+  description: "Baseline local implementations for structured data parsing and validation."
+  maintained_by: "agent-skills"

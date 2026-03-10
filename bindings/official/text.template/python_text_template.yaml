@@ -1,0 +1,17 @@
+id: python_text_template
+
+capability: text.template
+service: text_baseline
+protocol: pythoncall
+operation: template_text
+
+request:
+  template: input.template
+  variables: input.variables
+
+response:
+  templated_text: response.templated_text
+
+metadata:
+  description: "Official binding for text.template using the text_baseline service."
+  status: stable

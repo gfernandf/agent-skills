@@ -1,0 +1,16 @@
+id: python_text_language_detect
+
+capability: text.language.detect
+service: text_baseline
+protocol: pythoncall
+operation: detect_language
+
+request:
+  text: input.text
+
+response:
+  language: response.language
+
+metadata:
+  description: "Official binding for text.language.detect using the text_baseline service."
+  status: stable

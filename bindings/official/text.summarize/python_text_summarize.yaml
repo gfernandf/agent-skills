@@ -1,7 +1,7 @@
 id: python_text_summarize
 
 capability: text.summarize
-service: core_python
+service: text_baseline
 protocol: pythoncall
 operation: summarize_text
 
@@ -12,5 +12,5 @@ response:
   summary: response.summary
 
 metadata:
-  description: "Official binding for text.summarize using the core_python service."
+  description: "Official binding for text.summarize using the text_baseline service."
   status: stable   

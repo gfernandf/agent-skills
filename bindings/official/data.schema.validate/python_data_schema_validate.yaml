@@ -1,0 +1,18 @@
+id: python_data_schema_validate
+
+capability: data.schema.validate
+service: data_baseline
+protocol: pythoncall
+operation: validate_schema
+
+request:
+  data: input.data
+  schema: input.schema
+
+response:
+  valid: response.valid
+  errors: response.errors
+
+metadata:
+  description: "Official binding for data.schema.validate using the data_baseline service."
+  status: stable

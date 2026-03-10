@@ -1,0 +1,7 @@
+id: audio_baseline
+kind: pythoncall
+module: official_services.audio_baseline
+
+metadata:
+  description: "Baseline local implementations for audio capabilities."
+  maintained_by: "agent-skills"

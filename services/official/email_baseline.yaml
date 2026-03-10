@@ -1,0 +1,7 @@
+id: email_baseline
+kind: pythoncall
+module: official_services.email_baseline
+
+metadata:
+  description: "Baseline local implementations for email operations. May start as controlled placeholders or dry-run implementations."
+  maintained_by: "agent-skills"

@@ -1,0 +1,17 @@
+id: python_agent_delegate
+
+capability: agent.delegate
+service: agent_baseline
+protocol: pythoncall
+operation: delegate_agent
+
+request:
+  task: input.task
+  agent: input.agent
+
+response:
+  accepted: response.accepted
+
+metadata:
+  description: "Official binding for agent.delegate using the agent_baseline service."
+  status: stable

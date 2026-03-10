@@ -1,0 +1,16 @@
+id: python_memory_retrieve
+
+capability: memory.retrieve
+service: memory_baseline
+protocol: pythoncall
+operation: retrieve_memory
+
+request:
+  key: input.key
+
+response:
+  value: response.value
+
+metadata:
+  description: "Official binding for memory.retrieve using the memory_baseline service."
+  status: stable

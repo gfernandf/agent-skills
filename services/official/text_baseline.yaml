@@ -1,0 +1,7 @@
+id: text_baseline
+kind: pythoncall
+module: official_services.text_baseline
+
+metadata:
+  description: "Baseline local implementations for text operations including summarization, templating, extraction, language detection, translation, embedding, classification, and entity/keyword extraction."
+  maintained_by: "agent-skills"

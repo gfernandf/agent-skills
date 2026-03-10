@@ -1,0 +1,17 @@
+id: python_code_format
+
+capability: code.format
+service: code_baseline
+protocol: pythoncall
+operation: format_code
+
+request:
+  code: input.code
+  language: input.language
+
+response:
+  formatted_code: response.formatted_code
+
+metadata:
+  description: "Official binding for code.format using the code_baseline service."
+  status: stable

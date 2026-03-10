@@ -1,0 +1,7 @@
+id: memory_baseline
+kind: pythoncall
+module: official_services.memory_baseline
+
+metadata:
+  description: "Baseline local implementations for memory store/retrieve operations."
+  maintained_by: "agent-skills"

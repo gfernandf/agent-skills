@@ -1,0 +1,7 @@
+id: code_baseline
+kind: pythoncall
+module: official_services.code_baseline
+
+metadata:
+  description: "Baseline local implementations for code manipulation and execution capabilities."
+  maintained_by: "agent-skills"

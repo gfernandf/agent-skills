@@ -1,0 +1,7 @@
+id: fs_baseline
+kind: pythoncall
+module: official_services.fs_baseline
+
+metadata:
+  description: "Baseline local implementations for filesystem operations."
+  maintained_by: "agent-skills"

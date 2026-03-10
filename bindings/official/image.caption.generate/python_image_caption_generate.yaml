@@ -1,0 +1,16 @@
+id: python_image_caption_generate
+
+capability: image.caption.generate
+service: image_baseline
+protocol: pythoncall
+operation: generate_caption
+
+request:
+  image_data: input.image_data
+
+response:
+  caption: response.caption
+
+metadata:
+  description: "Official binding for image.caption.generate using the image_baseline service."
+  status: stable

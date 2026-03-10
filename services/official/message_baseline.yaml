@@ -1,0 +1,7 @@
+id: message_baseline
+kind: pythoncall
+module: official_services.message_baseline
+
+metadata:
+  description: "Baseline local implementations for generic messaging operations."
+  maintained_by: "agent-skills"

@@ -82,6 +82,26 @@ class YamlCapabilityLoader:
             )
         return path
 
+    def get_all_capabilities(self) -> dict[str, CapabilitySpec]:
+        """
+        Load and return all capabilities from the registry.
+        
+        Returns a dict mapping capability_id to CapabilitySpec.
+        Invalid capabilities are skipped silently.
+        """
+        if self._capability_index is None:
+            self._capability_index = self._build_capability_index()
+        
+        capabilities = {}
+        for capability_id, path in self._capability_index.items():
+            try:
+                capabilities[capability_id] = self.get_capability(capability_id)
+            except Exception:
+                # Skip invalid capabilities
+                pass
+        
+        return capabilities
+
     def _build_capability_index(self) -> dict[str, Path]:
         index: dict[str, Path] = {}
 

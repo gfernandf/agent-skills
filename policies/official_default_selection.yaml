@@ -1,3 +1,35 @@
 defaults:
 
+  agent.delegate: python_agent_delegate
+  agent.plan.generate: python_agent_plan_generate
+  agent.route: python_agent_route
+  audio.transcribe: python_audio_transcribe
+  code.diff.extract: python_code_diff_extract
+  code.execute: python_code_execute
+  code.format: python_code_format
+  data.json.parse: python_data_json_parse
+  data.schema.validate: python_data_schema_validate
+  doc.chunk: python_doc_chunk
+  email.read: python_email_read
+  email.send: python_email_send
+  fs.read: python_fs_read
+  image.caption.generate: python_image_caption_generate
+  image.classify: python_image_classify
+  memory.retrieve: python_memory_retrieve
+  memory.store: python_memory_store
+  message.send: python_message_send
+  pdf.read: python_pdf_read
+  table.filter: python_table_filter
+  text.classify: python_text_classify
+  text.embed: python_text_embed
+  text.entity.extract: python_text_entity_extract
+  text.extract: python_text_extract
+  text.keyword.extract: python_text_keyword_extract
+  text.language.detect: python_text_language_detect
   text.summarize: python_text_summarize
+  text.template: python_text_template
+  text.translate: python_text_translate
+  video.frame.extract: python_video_frame_extract
+  web.fetch: python_web_fetch
+  web.page.extract: python_web_page_extract
+  web.search: python_web_search

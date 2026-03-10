@@ -1,0 +1,16 @@
+id: python_text_extract
+
+capability: text.extract
+service: text_baseline
+protocol: pythoncall
+operation: extract_text
+
+request:
+  document: input.document
+
+response:
+  text: response.text
+
+metadata:
+  description: "Official binding for text.extract using the text_baseline service."
+  status: stable

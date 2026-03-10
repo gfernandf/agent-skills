@@ -1,0 +1,7 @@
+id: table_baseline
+kind: pythoncall
+module: official_services.table_baseline
+
+metadata:
+  description: "Baseline local implementations for table operations."
+  maintained_by: "agent-skills"

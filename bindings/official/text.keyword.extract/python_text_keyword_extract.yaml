@@ -1,0 +1,16 @@
+id: python_text_keyword_extract
+
+capability: text.keyword.extract
+service: text_baseline
+protocol: pythoncall
+operation: extract_keywords
+
+request:
+  text: input.text
+
+response:
+  keywords: response.keywords
+
+metadata:
+  description: "Official binding for text.keyword.extract using the text_baseline service."
+  status: stable

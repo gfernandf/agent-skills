@@ -1,0 +1,7 @@
+id: web_baseline
+kind: pythoncall
+module: official_services.web_baseline
+
+metadata:
+  description: "Baseline local implementations for web operations including fetch, search, and page extraction."
+  maintained_by: "agent-skills"

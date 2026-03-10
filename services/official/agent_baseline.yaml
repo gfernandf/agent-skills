@@ -1,0 +1,7 @@
+id: agent_baseline
+kind: pythoncall
+module: official_services.agent_baseline
+
+metadata:
+  description: "Baseline local implementations for agent-oriented capabilities such as routing, planning, and delegation."
+  maintained_by: "agent-skills"

@@ -1,0 +1,18 @@
+id: python_code_execute
+
+capability: code.execute
+service: code_baseline
+protocol: pythoncall
+operation: execute_code
+
+request:
+  code: input.code
+  language: input.language
+
+response:
+  result: response.result
+  error: response.error
+
+metadata:
+  description: "Official binding for code.execute using the code_baseline service."
+  status: stable

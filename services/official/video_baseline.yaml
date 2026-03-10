@@ -1,0 +1,7 @@
+id: video_baseline
+kind: pythoncall
+module: official_services.video_baseline
+
+metadata:
+  description: "Baseline local implementations for video operations."
+  maintained_by: "agent-skills"

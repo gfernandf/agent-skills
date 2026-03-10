@@ -1,0 +1,18 @@
+id: python_email_read
+
+capability: email.read
+service: email_baseline
+protocol: pythoncall
+operation: read_email
+
+request:
+  email_id: input.email_id
+
+response:
+  subject: response.subject
+  body: response.body
+  sender: response.sender
+
+metadata:
+  description: "Official binding for email.read using the email_baseline service."
+  status: stable

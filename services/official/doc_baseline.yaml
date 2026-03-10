@@ -1,0 +1,7 @@
+id: doc_baseline
+kind: pythoncall
+module: official_services.doc_baseline
+
+metadata:
+  description: "Baseline local implementations for document chunking and PDF reading."
+  maintained_by: "agent-skills"

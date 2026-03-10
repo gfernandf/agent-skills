@@ -1,0 +1,16 @@
+id: python_web_search
+
+capability: web.search
+service: web_baseline
+protocol: pythoncall
+operation: search_web
+
+request:
+  query: input.query
+
+response:
+  results: response.results
+
+metadata:
+  description: "Official binding for web.search using the web_baseline service."
+  status: stable

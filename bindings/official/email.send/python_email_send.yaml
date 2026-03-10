@@ -1,0 +1,18 @@
+id: python_email_send
+
+capability: email.send
+service: email_baseline
+protocol: pythoncall
+operation: send_email
+
+request:
+  to: input.to
+  subject: input.subject
+  body: input.body
+
+response:
+  sent: response.sent
+
+metadata:
+  description: "Official binding for email.send using the email_baseline service."
+  status: stable

@@ -1,0 +1,7 @@
+id: image_baseline
+kind: pythoncall
+module: official_services.image_baseline
+
+metadata:
+  description: "Baseline local implementations for image captioning and classification."
+  maintained_by: "agent-skills"
