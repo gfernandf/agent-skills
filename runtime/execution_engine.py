@@ -54,6 +54,7 @@ class ExecutionEngine:
         self,
         request: ExecutionRequest,
         parent_context: ExecutionContext | None = None,
+        trace_callback=None,
     ) -> SkillExecutionResult:
         """
         Execute a skill and return the final result.
@@ -82,10 +83,13 @@ class ExecutionEngine:
             f"Executing skill '{skill.id}'.",
         )
 
+        if trace_callback:
+            trace_callback(state.events[-1])
+
         plan = self.execution_planner.build_plan(skill)
 
         for step in plan:
-            result = self._execute_step(step, skill.id, context)
+            result = self._execute_step(step, skill.id, context, trace_callback)
             record_step_result(state, result)
 
             if result.status != "completed":
@@ -107,6 +111,9 @@ class ExecutionEngine:
             f"Skill '{skill.id}' completed.",
         )
 
+        if trace_callback:
+            trace_callback(state.events[-1])
+
         return SkillExecutionResult(
             skill_id=skill.id,
             status=state.status,
@@ -119,6 +126,7 @@ class ExecutionEngine:
         step,
         skill_id: str,
         context: ExecutionContext,
+        trace_callback=None,
     ) -> StepResult:
         state = context.state
 
@@ -128,6 +136,9 @@ class ExecutionEngine:
             f"Starting step '{step.id}'.",
             step_id=step.id,
         )
+
+        if trace_callback:
+            trace_callback(state.events[-1])
 
         try:
             step_input = build_step_input(
