@@ -11,7 +11,8 @@ request:
 
 response:
   result: response.result
-  error: response.error
+  stdout: response.stdout
+  stderr: response.stderr
 
 metadata:
   description: "Official binding for code.execute using the code_baseline service."

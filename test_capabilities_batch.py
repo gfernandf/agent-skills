@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+"""
+Batch test all capabilities to identify which are functional vs stubs.
+
+This tests each capability by:
+1. Finding its official binding
+2. Identifying the service operation
+3. Calling it directly with sensible test data
+4. Reporting pass/fail and why
+"""
+
+import sys
+import inspect
+from pathlib import Path
+from typing import Any, Dict, Tuple
+
+# Add runtime to path
+runtime_root = Path(__file__).parent / "runtime"
+sys.path.insert(0, str(runtime_root))
+
+from runtime.binding_registry import BindingRegistry
+from runtime.capability_loader import YamlCapabilityLoader
+from runtime.binding_models import BindingSpec
+
+
+# Test data generators - names must match binding input fields
+TEST_DATA = {
+    "agent.delegate": {"agent": "agent1", "task": "summarize text"},
+    "agent.plan.generate": {"objective": "Build a web scraper"},
+    "agent.route": {"input": "What is machine learning?"},
+    "audio.transcribe": {"audio": b"fake audio data"},
+    "code.diff.extract": {"code_a": "x = 5", "code_b": "x = 10"},
+    "code.execute": {"code": "x = 5 + 3; print(x)", "language": "python"},
+    "code.format": {"code": "def foo( x,y ):\n  return x+y", "language": "python"},
+    "data.json.parse": {"text": '{"name": "John", "age": 30}'},
+    "data.schema.validate": {"data": {"name": "John"}, "schema": {"type": "object"}},
+    "doc.chunk": {"text": "This is a long document. " * 50, "chunk_size": 1000},
+    "email.read": {"mailbox": "inbox"},
+    "email.send": {"to": "test@example.com", "subject": "Test Subject", "body": "Test message body"},
+    "fs.read": {"path": "C:\\Windows\\System32\\drivers\\etc\\hosts", "mode": "text"},
+    "image.caption.generate": {"image": b"fake image data"},
+    "image.classify": {"image": b"fake image data", "labels": ["cat", "dog", "bird"]},
+    "memory.retrieve": {"key": "test_key"},
+    "memory.store": {"key": "test_key", "value": "test_value"},
+    "message.send": {"message": "Test message", "recipient": "test_user"},
+    "pdf.read": {"path": "/tmp/test.pdf"},
+    "table.filter": {"table": [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 30}], "condition": {"age": {"$gt": 26}}},
+    "text.classify": {"text": "I love this product! It's amazing!", "labels": ["positive", "negative", "neutral"]},
+    "text.embed": {"text": "This is a test sentence for embedding."},
+    "text.entity.extract": {"text": "John Smith works at Google in Mountain View."},
+    "text.extract": {"text": "<html><body><h1>Title</h1><p>This is a test paragraph with important information.</p></body></html>"},
+    "text.keyword.extract": {"text": "Python is a great programming language for machine learning and data science applications."},
+    "text.language.detect": {"text": "This is English text."},
+    "text.summarize": {"text": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on the development of algorithms that can access data and use it to learn for themselves."},
+    "text.template": {"template": "Hello {{name}}, welcome to {{place}}!", "variables": {"name": "John", "place": "Agent Skills"}},
+    "text.translate": {"text": "Hello world", "target_language": "es"},
+    "video.frame.extract": {"video": b"fake video data"},
+    "web.fetch": {"url": "https://www.google.com"},
+    "web.page.extract": {"content": "<html><body><h1>Web Page</h1><p>Main content here.</p></body></html>"},
+    "web.search": {"query": "machine learning"},
+}
+
+
+def find_service_function(binding: BindingSpec) -> Tuple[Any, str]:
+    """
+    Find the actual Python function to call based on binding info.
+    
+    Returns: (module_object, function_name)
+    """
+    service_id = binding.service_id
+    operation_id = binding.operation_id
+    
+    # Convert service ID to module name (e.g., text_baseline -> text_baseline)
+    module_name = f"official_services.{service_id}"
+    
+    try:
+        module = __import__(module_name, fromlist=[service_id])
+        
+        # Find the function - try operation_id as-is first, then with underscores
+        func_name = operation_id
+        if not hasattr(module, func_name):
+            # Try with snake_case conversion
+            func_name = operation_id.replace('-', '_')
+        
+        if hasattr(module, func_name):
+            return module, func_name
+        else:
+            return None, None
+    except Exception as e:
+        return None, None
+
+
+def call_capability(capability_id: str, binding: BindingSpec, test_input: Dict[str, Any]) -> Tuple[bool, str, Any]:
+    """
+    Call a capability's service function and return (success, reason, result).
+    """
+    try:
+        module, func_name = find_service_function(binding)
+        
+        if not module or not func_name:
+            return False, f"Could not locate {binding.service_id}.{binding.operation_id}", None
+        
+        # Get the function
+        func = getattr(module, func_name)
+        
+        # Build arguments from request template
+        args = {}
+        for param_name, value in binding.request_template.items():
+            if isinstance(value, str) and value.startswith("input."):
+                input_field = value[len("input."):]
+                if input_field in test_input:
+                    args[param_name] = test_input[input_field]
+                else:
+                    # Missing required input
+                    return False, f"Missing input field: {input_field} (for param: {param_name})", None
+            else:
+                args[param_name] = value
+        
+        # Call the function
+        result = func(**args)
+        
+        # Check if result looks like a placeholder
+        if isinstance(result, dict):
+            has_placeholder = False
+            for v in result.values():
+                if isinstance(v, str) and "[" in v and "]" in v and len(str(v)) < 100:
+                    # Looks like "[Placeholder text]"
+                    has_placeholder = True
+                    break
+            if has_placeholder:
+                return False, f"Placeholder result detected", result
+        
+        return True, "OK", result
+        
+    except TypeError as e:
+        error_msg = str(e)
+        if "missing" in error_msg.lower():
+            return False, f"Missing required argument: {error_msg[:60]}", None
+        else:
+            return False, f"Function signature mismatch: {error_msg[:60]}", None
+    except Exception as e:
+        return False, f"Error: {str(e)[:100]}", None
+
+
+def test_all_capabilities():
+    """Test all 33 capabilities."""
+    
+    # Initialize
+    registry_root = Path(__file__).parent.parent / "agent-skill-registry"
+    runtime_root = Path(__file__).parent
+    
+    capability_loader = YamlCapabilityLoader(registry_root)
+    binding_registry = BindingRegistry(runtime_root, registry_root)
+    
+    # Get all capabilities
+    all_capabilities = capability_loader.get_all_capabilities()
+    print(f"Testing {len(all_capabilities)} capabilities...\n")
+    
+    results = {
+        "functional": [],
+        "placeholder": [],
+        "error": [],
+        "skipped": []
+    }
+    
+    for capability_id in sorted(all_capabilities.keys()):
+        capability = all_capabilities[capability_id]
+        
+        # Get binding
+        bindings = binding_registry.get_bindings_for_capability(capability_id)
+        if not bindings:
+            results["skipped"].append({
+                "id": capability_id,
+                "reason": "No binding found"
+            })
+            continue
+        
+        binding = bindings[0]  # Use first binding
+        
+        # Get test data
+        test_input = TEST_DATA.get(capability_id)
+        if not test_input:
+            results["skipped"].append({
+                "id": capability_id,
+                "reason": "No test data defined"
+            })
+            continue
+        
+        # Call capability
+        success, reason, result = call_capability(capability_id, binding, test_input)
+        
+        if success:
+            results["functional"].append({
+                "id": capability_id,
+                "binding": binding.id,
+                "service": binding.service_id,
+                "status": reason
+            })
+        elif "Placeholder" in reason:
+            results["placeholder"].append({
+                "id": capability_id,
+                "binding": binding.id,
+                "service": binding.service_id,
+                "reason": reason
+            })
+        else:
+            results["error"].append({
+                "id": capability_id,
+                "binding": binding.id,
+                "service": binding.service_id,
+                "reason": reason
+            })
+    
+    return results
+
+
+def print_results(results: Dict):
+    """Pretty print results."""
+    
+    print("\n" + "="*80)
+    print("CAPABILITY TEST RESULTS")
+    print("="*80)
+    
+    # Functional
+    print(f"\n✅ FUNCTIONAL ({len(results['functional'])})")
+    print("-" * 80)
+    for item in results["functional"]:
+        print(f"  {item['id']:30} | {item['binding']:30} | {item['service']}")
+    
+    # Placeholders
+    print(f"\n⚠️  PLACEHOLDER/STUB ({len(results['placeholder'])})")
+    print("-" * 80)
+    for item in results["placeholder"]:
+        print(f"  {item['id']:30} | {item['reason'][:48]}")
+    
+    # Errors
+    print(f"\n❌ ERROR ({len(results['error'])})")
+    print("-" * 80)
+    for item in results["error"]:
+        print(f"  {item['id']:30} | {item['reason'][:48]}")
+    
+    # Skipped
+    if results["skipped"]:
+        print(f"\n⏭️  SKIPPED ({len(results['skipped'])})")
+        print("-" * 80)
+        for item in results["skipped"]:
+            print(f"  {item['id']:30} | {item['reason']}")
+    
+    # Summary
+    total = len(results["functional"]) + len(results["placeholder"]) + len(results["error"]) + len(results["skipped"])
+    print("\n" + "="*80)
+    print(f"SUMMARY: {len(results['functional'])}/{total} functional | {len(results['placeholder'])} stubs | {len(results['error'])} errors")
+    print("="*80 + "\n")
+    
+    return len(results["error"]) == 0
+
+
+def main():
+    try:
+        results = test_all_capabilities()
+        success = print_results(results)
+        return 0 if success else 1
+    except Exception as e:
+        print(f"❌ Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

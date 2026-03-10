@@ -3,6 +3,10 @@ Code baseline service module.
 Provides baseline implementations for code-related capabilities.
 """
 
+import io
+import sys
+from contextlib import redirect_stdout, redirect_stderr
+
 def extract_diff(code_before, code_after):
     """
     Extract the diff between two code snippets.
@@ -26,10 +30,31 @@ def execute_code(code, language):
         language (str): The programming language.
     
     Returns:
-        dict: {"result": str, "error": str}
+        dict: {"result": object, "stdout": str, "stderr": str}
     """
-    # Baseline implementation: placeholder
-    return {"result": "[Execution result]", "error": ""}
+    if language.lower() != "python":
+        return {"result": None, "stdout": "", "stderr": f"Unsupported language: {language}"}
+    
+    # Capture stdout and stderr
+    stdout_capture = io.StringIO()
+    stderr_capture = io.StringIO()
+    
+    result = None
+    try:
+        with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
+            # Use exec for statements, eval for expressions
+            try:
+                result = eval(code)
+            except SyntaxError:
+                exec(code)
+    except Exception as e:
+        stderr_capture.write(str(e))
+    
+    return {
+        "result": result,
+        "stdout": stdout_capture.getvalue(),
+        "stderr": stderr_capture.getvalue()
+    }
 
 def format_code(code, language):
     """

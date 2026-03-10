@@ -3,6 +3,33 @@ Email baseline service module.
 Provides baseline implementations for email-related capabilities.
 """
 
+def read_emails(mailbox):
+    """
+    Read emails from a mailbox.
+    
+    Args:
+        mailbox (str): The mailbox or folder name.
+    
+    Returns:
+        dict: {"messages": list}
+    """
+    # Baseline implementation: return sample emails
+    messages = [
+        {
+            "subject": f"Sample email 1 from {mailbox}",
+            "body": "This is a sample email body.",
+            "sender": "sender1@example.com",
+            "date": "2023-01-01"
+        },
+        {
+            "subject": f"Sample email 2 from {mailbox}",
+            "body": "Another sample email.",
+            "sender": "sender2@example.com",
+            "date": "2023-01-02"
+        }
+    ]
+    return {"messages": messages}
+
 def read_email(email_id):
     """
     Read an email by its ID.

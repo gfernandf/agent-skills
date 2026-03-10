@@ -4,9 +4,10 @@ service: doc_baseline
 protocol: pythoncall
 operation: read_pdf
 request:
-  pdf_data: input.path
+  path: input.path
 response:
   text: response.text
+  metadata: response.metadata
 metadata:
   description: Official binding for pdf.read using the doc_baseline service.
   status: stable
