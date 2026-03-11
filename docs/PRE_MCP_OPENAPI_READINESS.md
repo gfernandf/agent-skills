@@ -61,5 +61,7 @@ Executed from `agent-skills/tooling`:
 ## Recommended Next Work (Before MCP/OpenAPI)
 
 1. Define and freeze error taxonomy for adapter-facing surfaces (MCP/OpenAPI).
+  - Baseline drafted in `docs/OPENAPI_PHASE0_FOUNDATION.md`.
 2. Define adapter-level auth and secret handling policy (what can be logged/returned).
+  - Baseline drafted in `docs/OPENAPI_PHASE0_FOUNDATION.md`.
 3. Add per-capability SLO/SLI targets (latency/error budgets) using current observability fields.

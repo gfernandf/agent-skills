@@ -1,0 +1,24 @@
+{
+  "id": "data.schema.validate.openapi.mock",
+  "capability_id": "data.schema.validate",
+  "binding_id": "openapi_data_schema_validate_mock",
+  "expected_service_id": "data_schema_validate_openapi_mock",
+  "trace_id": "phase1-openapi-data-schema-validate",
+  "input": {
+    "data": {
+      "name": "John"
+    },
+    "schema": {
+      "type": "object"
+    }
+  },
+  "expected_output": {
+    "valid": true,
+    "errors": []
+  },
+  "mock_server": {
+    "type": "data_schema_validate",
+    "host": "127.0.0.1",
+    "port": 8765
+  }
+}

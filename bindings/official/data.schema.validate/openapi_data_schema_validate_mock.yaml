@@ -1,0 +1,19 @@
+id: openapi_data_schema_validate_mock
+
+capability: data.schema.validate
+service: data_schema_validate_openapi_mock
+protocol: openapi
+operation: validate
+
+request:
+  data: input.data
+  schema: input.schema
+
+response:
+  valid: response.valid
+  errors: response.errors
+
+metadata:
+  method: POST
+  description: "Prototype OpenAPI binding for data.schema.validate used in Phase 1 verification."
+  status: experimental

@@ -1,0 +1,10 @@
+id: data_schema_validate_openapi_mock
+kind: openapi
+base_url: http://127.0.0.1:8765
+spec_ref: services/official/specs/data_schema_validate_openapi_mock.yaml
+
+metadata:
+  description: "Prototype OpenAPI service for data.schema.validate Phase 1 verification."
+  maintained_by: "agent-skills"
+  status: experimental
+  purpose: phase1-smoke-prototype

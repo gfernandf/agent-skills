@@ -1,0 +1,42 @@
+openapi: 3.0.3
+info:
+  title: Data Schema Validate Mock API
+  version: 1.0.0
+  description: Prototype provider-facing OpenAPI surface for Phase 1 verification.
+servers:
+  - url: http://127.0.0.1:8765
+paths:
+  /validate:
+    post:
+      operationId: validate
+      summary: Validate structured data against a schema.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+                - schema
+              properties:
+                data:
+                  type: object
+                schema:
+                  type: object
+      responses:
+        '200':
+          description: Validation result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - valid
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
