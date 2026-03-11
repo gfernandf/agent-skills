@@ -1,0 +1,14 @@
+id: python_policy_constraint_validate
+capability: policy.constraint.validate
+service: policy_baseline
+protocol: pythoncall
+operation: validate_constraint
+request:
+  payload: input.payload
+  constraint: input.constraint
+response:
+  valid: response.valid
+  violations: response.violations
+metadata:
+  description: Official binding for policy.constraint.validate using policy_baseline service.
+  status: stable

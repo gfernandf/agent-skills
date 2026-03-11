@@ -1,0 +1,14 @@
+id: python_provenance_citation_generate
+capability: provenance.citation.generate
+service: provenance_baseline
+protocol: pythoncall
+operation: generate_citation
+request:
+  source: input.source
+  excerpt: input.excerpt
+  locator: input.locator
+response:
+  citation: response.citation
+metadata:
+  description: Official binding for provenance.citation.generate using provenance_baseline service.
+  status: stable

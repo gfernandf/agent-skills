@@ -1,0 +1,13 @@
+id: python_security_pii_redact
+capability: security.pii.redact
+service: security_baseline
+protocol: pythoncall
+operation: redact_pii
+request:
+  text: input.text
+response:
+  redacted_text: response.redacted_text
+  findings: response.findings
+metadata:
+  description: Official binding for security.pii.redact using security_baseline service.
+  status: stable

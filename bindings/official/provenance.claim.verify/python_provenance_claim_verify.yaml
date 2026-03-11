@@ -1,0 +1,15 @@
+id: python_provenance_claim_verify
+capability: provenance.claim.verify
+service: provenance_baseline
+protocol: pythoncall
+operation: verify_claim
+request:
+  claim: input.claim
+  sources: input.sources
+response:
+  verified: response.verified
+  evidence: response.evidence
+  rationale: response.rationale
+metadata:
+  description: Official binding for provenance.claim.verify using provenance_baseline service.
+  status: stable

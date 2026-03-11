@@ -1,0 +1,7 @@
+id: ops_baseline
+kind: pythoncall
+module: official_services.ops_baseline
+
+metadata:
+  description: "Baseline local implementations for budget estimation and trace monitoring."
+  maintained_by: "agent-skills"

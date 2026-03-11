@@ -1,0 +1,14 @@
+id: python_security_output_gate
+capability: security.output.gate
+service: security_baseline
+protocol: pythoncall
+operation: gate_output
+request:
+  output: input.output
+  policy: input.policy
+response:
+  allowed: response.allowed
+  reasons: response.reasons
+metadata:
+  description: Official binding for security.output.gate using security_baseline service.
+  status: stable

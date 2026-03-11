@@ -1,0 +1,14 @@
+id: python_eval_output_score
+capability: eval.output.score
+service: eval_baseline
+protocol: pythoncall
+operation: score_output
+request:
+  output: input.output
+  rubric: input.rubric
+response:
+  score: response.score
+  dimensions: response.dimensions
+metadata:
+  description: Official binding for eval.output.score using eval_baseline service.
+  status: stable

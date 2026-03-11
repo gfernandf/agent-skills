@@ -1,0 +1,15 @@
+id: python_ops_budget_estimate
+capability: ops.budget.estimate
+service: ops_baseline
+protocol: pythoncall
+operation: estimate_budget
+request:
+  plan: input.plan
+  limits: input.limits
+response:
+  estimated_cost: response.estimated_cost
+  estimated_duration_ms: response.estimated_duration_ms
+  within_budget: response.within_budget
+metadata:
+  description: Official binding for ops.budget.estimate using ops_baseline service.
+  status: stable

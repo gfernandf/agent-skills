@@ -33,6 +33,14 @@ TEST_DATA = {
     "code.execute": {"code": "x = 5 + 3; print(x)", "language": "python"},
     "code.format": {"code": "def foo( x,y ):\n  return x+y", "language": "python"},
     "data.json.parse": {"text": '{"name": "John", "age": 30}'},
+    "data.record.deduplicate": {
+        "records": [
+            {"id": 1, "name": "Alice"},
+            {"id": 1, "name": "Alice"},
+            {"id": 2, "name": "Bob"}
+        ],
+        "key_fields": ["id"]
+    },
     "data.schema.validate": {"data": {"name": "John"}, "schema": {"type": "object"}},
     "doc.chunk": {"text": "This is a long document. " * 50, "chunk_size": 1000},
     "email.read": {"mailbox": "inbox"},
@@ -43,7 +51,42 @@ TEST_DATA = {
     "memory.retrieve": {"key": "test_key"},
     "memory.store": {"key": "test_key", "value": "test_value"},
     "message.send": {"message": "Test message", "recipient": "test_user"},
+    "ops.budget.estimate": {
+        "plan": {"steps": [{"id": "s1"}, {"id": "s2"}]},
+        "limits": {"max_cost": 1.0, "max_duration_ms": 5000}
+    },
+    "ops.trace.monitor": {
+        "trace": {"duration_ms": 1200, "error_count": 1},
+        "thresholds": {"max_duration_ms": 2000, "max_errors": 2}
+    },
     "pdf.read": {"path": "/tmp/test.pdf"},
+    "policy.constraint.validate": {
+        "payload": {"title": "Hello", "body": "World"},
+        "constraint": {"required_keys": ["title"], "forbidden_keys": ["password"]}
+    },
+    "provenance.citation.generate": {
+        "source": {"url": "https://example.com/article", "title": "Example"},
+        "excerpt": "Important fact",
+        "locator": "p.10"
+    },
+    "provenance.claim.verify": {
+        "claim": "Alice works at Example",
+        "sources": [
+            {"text": "Alice works at Example and leads product."},
+            {"text": "Unrelated source"}
+        ]
+    },
+    "eval.output.score": {
+        "output": {"summary": "Short summary", "confidence": 0.9},
+        "rubric": {"dimensions": {"completeness": 0.5, "clarity": 0.5}}
+    },
+    "security.output.gate": {
+        "output": {"text": "Contact me at test@example.com"},
+        "policy": {"block_pii": True, "block_secrets": True}
+    },
+    "security.pii.detect": {"text": "Email me at test@example.com"},
+    "security.pii.redact": {"text": "Phone +1 650 555 1234 and email test@example.com"},
+    "security.secret.detect": {"text": "token=sk-1234567890ABCDEFGHIJ"},
     "table.filter": {"table": [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 30}], "condition": {"age": {"$gt": 26}}},
     "text.classify": {"text": "I love this product! It's amazing!", "labels": ["positive", "negative", "neutral"]},
     "text.embed": {"text": "This is a test sentence for embedding."},
@@ -57,6 +100,7 @@ TEST_DATA = {
     "video.frame.extract": {"video": b"fake video data"},
     "web.fetch": {"url": "https://www.google.com"},
     "web.page.extract": {"content": "<html><body><h1>Web Page</h1><p>Main content here.</p></body></html>"},
+    "web.source.verify": {"url": "https://example.com/news"},
     "web.search": {"query": "machine learning"},
 }
 

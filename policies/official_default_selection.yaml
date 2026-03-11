@@ -8,6 +8,7 @@ defaults:
   code.execute: python_code_execute
   code.format: python_code_format
   data.json.parse: python_data_json_parse
+  data.record.deduplicate: python_data_record_deduplicate
   data.schema.validate: python_data_schema_validate
   doc.chunk: python_doc_chunk
   email.read: python_email_read
@@ -18,7 +19,17 @@ defaults:
   memory.retrieve: python_memory_retrieve
   memory.store: python_memory_store
   message.send: python_message_send
+  ops.budget.estimate: python_ops_budget_estimate
+  ops.trace.monitor: python_ops_trace_monitor
   pdf.read: python_pdf_read
+  policy.constraint.validate: python_policy_constraint_validate
+  provenance.citation.generate: python_provenance_citation_generate
+  provenance.claim.verify: python_provenance_claim_verify
+  eval.output.score: python_eval_output_score
+  security.output.gate: python_security_output_gate
+  security.pii.detect: python_security_pii_detect
+  security.pii.redact: python_security_pii_redact
+  security.secret.detect: python_security_secret_detect
   table.filter: python_table_filter
   text.classify: python_text_classify
   text.embed: python_text_embed
@@ -32,4 +43,5 @@ defaults:
   video.frame.extract: python_video_frame_extract
   web.fetch: python_web_fetch
   web.page.extract: python_web_page_extract
+  web.source.verify: python_web_source_verify
   web.search: python_web_search

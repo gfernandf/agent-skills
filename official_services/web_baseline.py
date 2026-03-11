@@ -159,3 +159,39 @@ def search_web(query):
     """
     # Baseline implementation: empty results
     return {"results": []}
+
+
+def verify_source(url):
+    """
+    Verify trust signals for a source URL.
+
+    Args:
+        url (str): URL to verify.
+
+    Returns:
+        dict: {"trusted": bool, "reason": str, "normalized_source": dict}
+    """
+    ok, err = _validate_url(url)
+    if not ok:
+        return {
+            "trusted": False,
+            "reason": err,
+            "normalized_source": {},
+        }
+
+    parsed = urllib.parse.urlparse(url)
+    host = parsed.netloc.lower()
+
+    untrusted_patterns = ("localhost", "127.0.0.1", "0.0.0.0")
+    trusted = not any(pattern in host for pattern in untrusted_patterns)
+    reason = "trusted_domain" if trusted else "local_or_private_host"
+
+    return {
+        "trusted": trusted,
+        "reason": reason,
+        "normalized_source": {
+            "scheme": parsed.scheme.lower(),
+            "host": host,
+            "path": parsed.path or "/",
+        },
+    }

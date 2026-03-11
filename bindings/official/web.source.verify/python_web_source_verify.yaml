@@ -1,0 +1,14 @@
+id: python_web_source_verify
+capability: web.source.verify
+service: web_baseline
+protocol: pythoncall
+operation: verify_source
+request:
+  url: input.url
+response:
+  trusted: response.trusted
+  reason: response.reason
+  normalized_source: response.normalized_source
+metadata:
+  description: Official binding for web.source.verify using web_baseline service.
+  status: stable

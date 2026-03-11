@@ -1,0 +1,7 @@
+id: security_baseline
+kind: pythoncall
+module: official_services.security_baseline
+
+metadata:
+  description: "Baseline local implementations for PII, secret detection, and gating."
+  maintained_by: "agent-skills"

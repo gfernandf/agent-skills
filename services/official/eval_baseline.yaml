@@ -1,0 +1,7 @@
+id: eval_baseline
+kind: pythoncall
+module: official_services.eval_baseline
+
+metadata:
+  description: "Baseline local implementations for output quality scoring."
+  maintained_by: "agent-skills"

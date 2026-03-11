@@ -1,0 +1,7 @@
+id: policy_baseline
+kind: pythoncall
+module: official_services.policy_baseline
+
+metadata:
+  description: "Baseline local implementations for policy constraint validation."
+  maintained_by: "agent-skills"

@@ -1,0 +1,13 @@
+id: python_security_pii_detect
+capability: security.pii.detect
+service: security_baseline
+protocol: pythoncall
+operation: detect_pii
+request:
+  text: input.text
+response:
+  contains_pii: response.contains_pii
+  findings: response.findings
+metadata:
+  description: Official binding for security.pii.detect using security_baseline service.
+  status: stable

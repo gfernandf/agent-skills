@@ -1,0 +1,14 @@
+id: python_data_record_deduplicate
+capability: data.record.deduplicate
+service: data_baseline
+protocol: pythoncall
+operation: deduplicate_records
+request:
+  records: input.records
+  key_fields: input.key_fields
+response:
+  records: response.records
+  duplicates: response.duplicates
+metadata:
+  description: Official binding for data.record.deduplicate using data_baseline service.
+  status: stable

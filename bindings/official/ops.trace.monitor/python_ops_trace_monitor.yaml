@@ -1,0 +1,14 @@
+id: python_ops_trace_monitor
+capability: ops.trace.monitor
+service: ops_baseline
+protocol: pythoncall
+operation: monitor_trace
+request:
+  trace: input.trace
+  thresholds: input.thresholds
+response:
+  status: response.status
+  alerts: response.alerts
+metadata:
+  description: Official binding for ops.trace.monitor using ops_baseline service.
+  status: stable

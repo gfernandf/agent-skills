@@ -1,0 +1,7 @@
+id: provenance_baseline
+kind: pythoncall
+module: official_services.provenance_baseline
+
+metadata:
+  description: "Baseline local implementations for citations and claim verification."
+  maintained_by: "agent-skills"
