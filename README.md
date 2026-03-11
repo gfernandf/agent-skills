@@ -16,6 +16,13 @@ It acts as the **source of truth for agent workflows** that can be executed by c
 - Observability implementation details: `docs/OBSERVABILITY.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
 
+## Documentation Index
+
+- Current project closure snapshot: `docs/PROJECT_STATUS.md`
+- Runtime runner architecture and operations: `docs/RUNNER_GUIDE.md`
+- Observability and trace/redaction controls: `docs/OBSERVABILITY.md`
+- Pre-MCP/OpenAPI readiness baseline: `docs/PRE_MCP_OPENAPI_READINESS.md`
+
 ---
 
 # Why this exists
