@@ -76,6 +76,17 @@ Protocol invokers:
 - runtime/openrpc_invoker.py
 - runtime/mcp_invoker.py
 
+OpenAPI invoker runtime knobs (metadata-driven):
+
+- binding metadata:
+   - `method` (default `POST`)
+   - `timeout_seconds` (overrides service/default timeout)
+   - `headers` (string-to-string map merged over service headers)
+   - `response_mode` (`json` default, `text`, or `raw`)
+- service metadata:
+   - `timeout_seconds` (used when binding does not override)
+   - `headers` (base header map)
+
 Observability:
 
 - runtime/observability.py: structured logs, trace context, redaction

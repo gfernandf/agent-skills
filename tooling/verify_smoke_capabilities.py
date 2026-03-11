@@ -60,8 +60,8 @@ def main():
             failures.append((capability_id, "Capability not found in registry"))
             continue
 
-        bindings = binding_registry.get_bindings_for_capability(capability_id)
-        if not bindings:
+        binding = batch.select_binding_for_capability(binding_registry, capability_id)
+        if binding is None:
             failures.append((capability_id, "No binding found"))
             continue
 
@@ -70,7 +70,6 @@ def main():
             failures.append((capability_id, "No test data defined in test_capabilities_batch.py"))
             continue
 
-        binding = bindings[0]
         success, reason, _ = batch.call_capability(capability_id, binding, test_input)
         if success:
             passes.append(capability_id)

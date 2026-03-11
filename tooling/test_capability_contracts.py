@@ -145,16 +145,15 @@ def run_contract_tests():
 
     for capability_id in sorted(all_capabilities.keys()):
         cap_spec = all_capabilities[capability_id]
-        bindings = binding_registry.get_bindings_for_capability(capability_id)
+        binding = batch.select_binding_for_capability(binding_registry, capability_id)
 
-        if not bindings:
+        if binding is None:
             results["fail"].append({
                 "id": capability_id,
                 "violations": ["No binding found — cannot run contract tests."],
             })
             continue
 
-        binding = bindings[0]
         test_input = batch.TEST_DATA.get(capability_id)
 
         capability_violations = []

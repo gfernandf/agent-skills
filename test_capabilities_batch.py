@@ -90,6 +90,30 @@ def find_service_function(binding: BindingSpec) -> Tuple[Any, str]:
         return None, None
 
 
+def select_binding_for_capability(
+    binding_registry: BindingRegistry,
+    capability_id: str,
+) -> BindingSpec | None:
+    """
+    Select the execution binding using runtime semantics.
+
+    Priority:
+    1) official default binding id from policy
+    2) first available binding as fallback (legacy behavior)
+    """
+    default_binding_id = binding_registry.get_official_default_binding_id(capability_id)
+    if default_binding_id:
+        try:
+            return binding_registry.get_binding(default_binding_id)
+        except Exception:
+            pass
+
+    bindings = binding_registry.get_bindings_for_capability(capability_id)
+    if not bindings:
+        return None
+    return bindings[0]
+
+
 def call_capability(capability_id: str, binding: BindingSpec, test_input: Dict[str, Any]) -> Tuple[bool, str, Any]:
     """
     Call a capability's service function and return (success, reason, result).
@@ -167,15 +191,13 @@ def test_all_capabilities():
         capability = all_capabilities[capability_id]
         
         # Get binding
-        bindings = binding_registry.get_bindings_for_capability(capability_id)
-        if not bindings:
+        binding = select_binding_for_capability(binding_registry, capability_id)
+        if binding is None:
             results["skipped"].append({
                 "id": capability_id,
                 "reason": "No binding found"
             })
             continue
-        
-        binding = bindings[0]  # Use first binding
         
         # Get test data
         test_input = TEST_DATA.get(capability_id)
