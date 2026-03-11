@@ -207,6 +207,83 @@ jobs:
               f.write(summary)
           PY
 
+  openapi_verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml requests beautifulsoup4 PyPDF2
+
+      - name: Run OpenAPI verifications
+        run: |
+          mkdir -p artifacts
+          python cli/main.py openapi verify-bindings --all --report-file artifacts/openapi_bindings_report.json
+          python cli/main.py openapi verify-invoker | tee artifacts/openapi_invoker.log
+          python cli/main.py openapi verify-errors | tee artifacts/openapi_errors.log
+
+      - name: Publish OpenAPI verification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-verification-report
+          path: |
+            artifacts/openapi_bindings_report.json
+            artifacts/openapi_invoker.log
+            artifacts/openapi_errors.log
+
+      - name: Append OpenAPI summary
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          from pathlib import Path
+
+          report_path = Path('artifacts/openapi_bindings_report.json')
+          summary = [
+              "## OpenAPI Verification",
+              "",
+          ]
+
+          if report_path.exists():
+              report = json.loads(report_path.read_text(encoding='utf-8'))
+              summary.extend([
+                  f"- Scenarios total: {report.get('total', 0)}",
+                  f"- Scenarios passed: {report.get('passed', 0)}",
+                  f"- Scenarios failed: {report.get('failed', 0)}",
+              ])
+          else:
+              summary.append("- Scenario report file not generated.")
+
+          invoker_log = Path('artifacts/openapi_invoker.log')
+          errors_log = Path('artifacts/openapi_errors.log')
+          summary.append(f"- Invoker log present: {'yes' if invoker_log.exists() else 'no'}")
+          summary.append(f"- Error contract log present: {'yes' if errors_log.exists() else 'no'}")
+          summary.append("")
+
+          with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+              f.write("\n".join(summary) + "\n")
+          PY
+
   full_batch:
     if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_full_batch == true) }}
     runs-on: ubuntu-latest
