@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Audio Transcribe Mock API
+  version: 1.0.0
+paths:
+  /transcribe:
+    post:
+      operationId: transcribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                audio_data:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: integer
+      responses:
+        "200":
+          description: Transcription result

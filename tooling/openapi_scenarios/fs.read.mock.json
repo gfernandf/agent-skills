@@ -1,0 +1,19 @@
+{
+  "id": "fs.read.openapi.mock",
+  "capability_id": "fs.read",
+  "binding_id": "openapi_fs_read_mock",
+  "input": {
+    "path": "C:\\Windows\\System32\\drivers\\etc\\hosts",
+    "mode": "text"
+  },
+  "expected_output": {
+    "content": "Mock file content from C:\\Windows\\System32\\drivers\\etc\\hosts",
+    "bytes": ""
+  },
+  "mock_server": {
+    "type": "fs_read",
+    "host": "127.0.0.1",
+    "port": 8765
+  },
+  "expected_service_id": "fs_read_openapi_mock"
+}

@@ -33,44 +33,44 @@ This checklist guides the population phase: systematically adding OpenAPI bindin
 Based on [tooling/verify_smoke_capabilities.py](tooling/verify_smoke_capabilities.py):
 
 ### 1. text.summarize
-- **Status**: ⚪ Pending
+- **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
-- **Mock Binding**: ⚪ TODO
+- **Mock Binding**: ✅ PASS (openapi_text_summarize_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Core text capability; consider mock first, then simple text provider
 
 ### 2. code.execute
-- **Status**: ⚪ Pending
+- **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
-- **Mock Binding**: ⚪ TODO
+- **Mock Binding**: ✅ PASS (openapi_code_execute_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Execution capability; mock can return static code output
 
 ### 3. web.fetch
-- **Status**: ⚪ Pending
+- **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
-- **Mock Binding**: ⚪ TODO
+- **Mock Binding**: ✅ PASS (openapi_web_fetch_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Fetches external URLs; mock can return hardcoded HTML
 
 ### 4. pdf.read
-- **Status**: ⚪ Pending
+- **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
-- **Mock Binding**: ⚪ TODO
+- **Mock Binding**: ✅ PASS (openapi_pdf_read_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: PDF extraction; mock returns mock text content
 
 ### 5. audio.transcribe
-- **Status**: ⚪ Pending
+- **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
-- **Mock Binding**: ⚪ TODO
+- **Mock Binding**: ✅ PASS (openapi_audio_transcribe_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Audio to text; mock returns static transcription
 
 ### 6. fs.read
-- **Status**: ⚪ Pending
+- **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
-- **Mock Binding**: ⚪ TODO
+- **Mock Binding**: ✅ PASS (openapi_fs_read_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: File system read; mock returns test file contents
 
@@ -83,9 +83,9 @@ Based on [tooling/verify_smoke_capabilities.py](tooling/verify_smoke_capabilitie
 - **Notes**: Reference implementation; copy pattern for remaining capabilities
 
 ### 8. agent.route
-- **Status**: ⚪ Pending
+- **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
-- **Mock Binding**: ⚪ TODO
+- **Mock Binding**: ✅ PASS (openapi_agent_route_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Agent routing; mock can return static routing decision
 

@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+  title: Agent Route Mock API
+  version: 1.0.0
+paths:
+  /route:
+    post:
+      operationId: route
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  oneOf:
+                    - type: string
+                    - type: array
+                agents:
+                  oneOf:
+                    - type: string
+                    - type: array
+      responses:
+        "200":
+          description: Routing result

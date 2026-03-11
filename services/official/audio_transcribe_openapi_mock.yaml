@@ -1,0 +1,10 @@
+id: audio_transcribe_openapi_mock
+kind: openapi
+base_url: http://127.0.0.1:8765
+spec_ref: services/official/specs/audio_transcribe_openapi_mock.yaml
+
+metadata:
+  description: "OpenAPI mock service for audio.transcribe."
+  maintained_by: "agent-skills"
+  status: experimental
+  purpose: smoke-openapi-mock

@@ -1,0 +1,10 @@
+id: fs_read_openapi_mock
+kind: openapi
+base_url: http://127.0.0.1:8765
+spec_ref: services/official/specs/fs_read_openapi_mock.yaml
+
+metadata:
+  description: "OpenAPI mock service for fs.read."
+  maintained_by: "agent-skills"
+  status: experimental
+  purpose: smoke-openapi-mock

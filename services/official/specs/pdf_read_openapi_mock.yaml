@@ -1,0 +1,21 @@
+openapi: 3.0.3
+info:
+  title: PDF Read Mock API
+  version: 1.0.0
+paths:
+  /read:
+    post:
+      operationId: read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+      responses:
+        "200":
+          description: PDF extraction result

@@ -1,0 +1,18 @@
+id: openapi_agent_route_mock
+
+capability: agent.route
+service: agent_route_openapi_mock
+protocol: openapi
+operation: route
+
+request:
+  query: input.input
+  agents: input.input
+
+response:
+  route: response.route
+
+metadata:
+  method: POST
+  description: "OpenAPI mock binding for agent.route."
+  status: experimental

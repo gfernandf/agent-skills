@@ -1,0 +1,17 @@
+id: openapi_audio_transcribe_mock
+
+capability: audio.transcribe
+service: audio_transcribe_openapi_mock
+protocol: openapi
+operation: transcribe
+
+request:
+  audio_data: input.audio
+
+response:
+  transcript: response.transcript
+
+metadata:
+  method: POST
+  description: "OpenAPI mock binding for audio.transcribe."
+  status: experimental

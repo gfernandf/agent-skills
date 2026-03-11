@@ -54,8 +54,327 @@ class DataSchemaValidateHandler(BaseHTTPRequestHandler):
         return
 
 
+class TextSummarizeHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path != "/summarize":
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        payload = self._read_json()
+        if payload is None:
+            return
+
+        text = payload.get("text")
+        if not isinstance(text, str):
+            self._write_json(400, {"error": "text_must_be_string"})
+            return
+
+        words = text.split()
+        summary = " ".join(words[:20])
+        if len(words) > 20:
+            summary += " ..."
+
+        self._write_json(200, {"summary": summary})
+
+    def _read_json(self) -> dict[str, Any] | None:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(content_length)
+        try:
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._write_json(400, {"error": "invalid_json"})
+            return None
+
+    def _write_json(self, status: int, body: dict[str, Any]) -> None:
+        encoded = json.dumps(body).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
+class CodeExecuteHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path != "/execute":
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        payload = self._read_json()
+        if payload is None:
+            return
+
+        code = payload.get("code")
+        language = payload.get("language")
+
+        if not isinstance(code, str) or not isinstance(language, str):
+            self._write_json(400, {"error": "invalid_input"})
+            return
+
+        if language.lower() != "python":
+            self._write_json(
+                200,
+                {
+                    "result": None,
+                    "stdout": "",
+                    "stderr": f"Unsupported language: {language}. Only 'python' is supported.",
+                },
+            )
+            return
+
+        stdout = "8\n" if "5 + 3" in code and "print" in code else ""
+        self._write_json(200, {"result": None, "stdout": stdout, "stderr": ""})
+
+    def _read_json(self) -> dict[str, Any] | None:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(content_length)
+        try:
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._write_json(400, {"error": "invalid_json"})
+            return None
+
+    def _write_json(self, status: int, body: dict[str, Any]) -> None:
+        encoded = json.dumps(body).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
+class WebFetchHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path != "/fetch":
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        payload = self._read_json()
+        if payload is None:
+            return
+
+        url = payload.get("url")
+        if not isinstance(url, str) or not url:
+            self._write_json(400, {"error": "url_must_be_non_empty_string"})
+            return
+
+        body = f"<html><body><h1>Mock page</h1><p>Fetched from {url}</p></body></html>"
+        self._write_json(200, {"content": body, "status": 200})
+
+    def _read_json(self) -> dict[str, Any] | None:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(content_length)
+        try:
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._write_json(400, {"error": "invalid_json"})
+            return None
+
+    def _write_json(self, status: int, body: dict[str, Any]) -> None:
+        encoded = json.dumps(body).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
+class PdfReadHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path != "/read":
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        payload = self._read_json()
+        if payload is None:
+            return
+
+        path = payload.get("path")
+        if not isinstance(path, str) or not path:
+            self._write_json(400, {"error": "path_must_be_non_empty_string"})
+            return
+
+        self._write_json(
+            200,
+            {
+                "text": f"Mock PDF text extracted from {path}",
+                "metadata": {"pages": 1, "pages_read": 1, "source": "openapi-mock"},
+            },
+        )
+
+    def _read_json(self) -> dict[str, Any] | None:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(content_length)
+        try:
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._write_json(400, {"error": "invalid_json"})
+            return None
+
+    def _write_json(self, status: int, body: dict[str, Any]) -> None:
+        encoded = json.dumps(body).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
+class AudioTranscribeHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path != "/transcribe":
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        payload = self._read_json()
+        if payload is None:
+            return
+
+        audio_data = payload.get("audio_data")
+        if isinstance(audio_data, str) and audio_data:
+            transcript = f"Transcription from source descriptor: {audio_data}."
+        elif isinstance(audio_data, list):
+            transcript = f"Transcription of in-memory audio ({len(audio_data)} bytes)."
+        else:
+            transcript = "No audio provided."
+
+        self._write_json(200, {"transcript": transcript})
+
+    def _read_json(self) -> dict[str, Any] | None:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(content_length)
+        try:
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._write_json(400, {"error": "invalid_json"})
+            return None
+
+    def _write_json(self, status: int, body: dict[str, Any]) -> None:
+        encoded = json.dumps(body).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
+class FsReadHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path != "/read":
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        payload = self._read_json()
+        if payload is None:
+            return
+
+        path = payload.get("path")
+        mode = payload.get("mode")
+
+        if not isinstance(path, str) or not path:
+            self._write_json(400, {"error": "path_must_be_non_empty_string"})
+            return
+
+        if mode == "binary":
+            self._write_json(200, {"content": "", "bytes": "U3R1Yi1iaW5hcnktY29udGVudA=="})
+            return
+
+        self._write_json(200, {"content": f"Mock file content from {path}", "bytes": ""})
+
+    def _read_json(self) -> dict[str, Any] | None:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(content_length)
+        try:
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._write_json(400, {"error": "invalid_json"})
+            return None
+
+    def _write_json(self, status: int, body: dict[str, Any]) -> None:
+        encoded = json.dumps(body).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
+class AgentRouteHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path != "/route":
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        payload = self._read_json()
+        if payload is None:
+            return
+
+        agents = payload.get("agents")
+
+        if isinstance(agents, list) and agents:
+            route = str(agents[0])
+        elif isinstance(agents, str) and agents:
+            route = agents[0]
+        else:
+            route = "default"
+
+        self._write_json(200, {"route": route})
+
+    def _read_json(self) -> dict[str, Any] | None:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(content_length)
+        try:
+            return json.loads(raw_body.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._write_json(400, {"error": "invalid_json"})
+            return None
+
+    def _write_json(self, status: int, body: dict[str, Any]) -> None:
+        encoded = json.dumps(body).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
 HANDLER_BY_TYPE = {
     "data_schema_validate": DataSchemaValidateHandler,
+    "text_summarize": TextSummarizeHandler,
+    "code_execute": CodeExecuteHandler,
+    "web_fetch": WebFetchHandler,
+    "pdf_read": PdfReadHandler,
+    "audio_transcribe": AudioTranscribeHandler,
+    "fs_read": FsReadHandler,
+    "agent_route": AgentRouteHandler,
 }
 
 

@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: Code Execute Mock API
+  version: 1.0.0
+paths:
+  /execute:
+    post:
+      operationId: execute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, language]
+              properties:
+                code:
+                  type: string
+                language:
+                  type: string
+      responses:
+        "200":
+          description: Execution result

@@ -1,0 +1,21 @@
+openapi: 3.0.3
+info:
+  title: Web Fetch Mock API
+  version: 1.0.0
+paths:
+  /fetch:
+    post:
+      operationId: fetch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+      responses:
+        "200":
+          description: Web content
