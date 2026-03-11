@@ -46,6 +46,13 @@ Core runtime modules:
 - runtime/response_mapper.py
 - runtime/protocol_router.py
 
+OpenAPI protocol support:
+
+- runtime/openapi_invoker.py
+- runtime/openapi_error_contract.py
+- docs/OPENAPI_CONSTRUCTION_GUIDE.md (how to add new OpenAPI bindings)
+- docs/OPENAPI_POPULATION_CHECKLIST.md (gate criteria for population phase)
+
 ## 3) First Commands to Run (2 min)
 
 From agent-skills root:
