@@ -43,10 +43,23 @@ Executed from `agent-skills/tooling`:
   - `web.fetch`
   - `pdf.read`
   - `audio.transcribe`
+- Trace correlation:
+  - end-to-end `trace_id` on skill/step/capability events
+  - nested skill execution propagates parent trace id
+  - CLI supports `--trace-id` on `run` and `trace`
+- Log safety:
+  - sensitive key redaction
+  - string and collection truncation guards
+
+## CI Consistency Gates
+
+- `smoke.yml` includes a `registry_consistency` job that:
+  - validates registry schema and references
+  - regenerates catalog and stats
+  - fails if regeneration introduces uncommitted diffs (catalog freshness gate)
 
 ## Recommended Next Work (Before MCP/OpenAPI)
 
-1. Add request correlation IDs (`trace_id`) through runtime and service logs.
-2. Add structured redaction rules for sensitive fields in input/output logs.
-3. Define and freeze error taxonomy for adapter-facing surfaces (MCP/OpenAPI).
-4. Add CI check that validates generated registry catalogs are up-to-date.
+1. Define and freeze error taxonomy for adapter-facing surfaces (MCP/OpenAPI).
+2. Define adapter-level auth and secret handling policy (what can be logged/returned).
+3. Add per-capability SLO/SLI targets (latency/error budgets) using current observability fields.

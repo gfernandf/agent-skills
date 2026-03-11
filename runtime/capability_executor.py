@@ -20,6 +20,7 @@ class CapabilityExecutor(Protocol):
         self,
         capability: CapabilitySpec,
         step_input: dict[str, Any],
+        trace_id: str | None = None,
         trace_callback=None,
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         """
@@ -47,11 +48,13 @@ class DefaultCapabilityExecutor:
         self,
         capability: CapabilitySpec,
         step_input: dict[str, Any],
+        trace_id: str | None = None,
         trace_callback=None,
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         start_time = time.perf_counter()
         log_event(
             "capability.execute.start",
+            trace_id=trace_id,
             capability_id=capability.id,
             input_keys=sorted(step_input.keys()),
         )
@@ -61,6 +64,7 @@ class DefaultCapabilityExecutor:
             log_event(
                 "capability.execute.failed",
                 level="error",
+                trace_id=trace_id,
                 capability_id=capability.id,
                 duration_ms=elapsed_ms(start_time),
                 error_type="CapabilityNotFoundError",
@@ -70,6 +74,7 @@ class DefaultCapabilityExecutor:
             log_event(
                 "capability.execute.failed",
                 level="error",
+                trace_id=trace_id,
                 capability_id=capability.id,
                 duration_ms=elapsed_ms(start_time),
                 error_type=type(e).__name__,
@@ -91,6 +96,7 @@ class DefaultCapabilityExecutor:
             log_event(
                 "capability.execute.failed",
                 level="error",
+                trace_id=trace_id,
                 capability_id=capability.id,
                 duration_ms=elapsed_ms(start_time),
                 error_type="InvalidOutputType",
@@ -103,6 +109,7 @@ class DefaultCapabilityExecutor:
 
         log_event(
             "capability.execute.completed",
+            trace_id=trace_id,
             capability_id=capability.id,
             duration_ms=elapsed_ms(start_time),
             output_keys=sorted(outputs.keys()),

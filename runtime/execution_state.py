@@ -6,7 +6,11 @@ from typing import Any
 from runtime.models import ExecutionState, RuntimeEvent, StepResult
 
 
-def create_execution_state(skill_id: str, inputs: dict[str, Any]) -> ExecutionState:
+def create_execution_state(
+    skill_id: str,
+    inputs: dict[str, Any],
+    trace_id: str | None = None,
+) -> ExecutionState:
     """
     Create the initial mutable execution state for a skill run.
     """
@@ -21,6 +25,7 @@ def create_execution_state(skill_id: str, inputs: dict[str, Any]) -> ExecutionSt
         started_at=_utc_now(),
         finished_at=None,
         status="pending",
+        trace_id=trace_id,
     )
 
 
@@ -47,6 +52,7 @@ def emit_event(
         message=message,
         timestamp=_utc_now(),
         step_id=step_id,
+        trace_id=state.trace_id,
         data=dict(data or {}),
     )
     add_event(state, event)

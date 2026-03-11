@@ -14,6 +14,9 @@ This project now emits structured JSON logs for runtime orchestration and high-r
 - Format: single-line JSON per event
 - Timestamp field: `ts` (UTC, ISO-like)
 - Level env var: `AGENT_SKILLS_LOG_LEVEL` (default: `INFO`)
+- Correlation env var support via runtime context: `trace_id` (auto-generated if not provided)
+- Max string length in logs: `AGENT_SKILLS_LOG_MAX_STR_LEN` (default: `512`)
+- Max collection items in logs: `AGENT_SKILLS_LOG_MAX_ITEMS` (default: `50`)
 
 ## Runtime Events
 
@@ -31,6 +34,7 @@ Emitted from the execution pipeline:
 
 Common fields:
 
+- `trace_id`
 - `skill_id`
 - `step_id`
 - `capability_id`
@@ -51,6 +55,8 @@ Instrumented baseline services:
 
 Each service event includes status (`completed`, `rejected`, `failed`) and latency.
 
+When service logs are emitted inside runtime execution, `trace_id` is propagated automatically through context.
+
 ## Example Log
 
 ```json
@@ -61,4 +67,12 @@ Each service event includes status (`completed`, `rejected`, `failed`) and laten
 
 - Logging does not alter return payloads for any capability.
 - Optional fields are sanitized to JSON-safe values.
+- Sensitive fields are redacted based on key names (for example: `token`, `password`, `authorization`, `api_key`, `secret`, `cookie`).
 - To reduce verbosity in CI/local runs, set `AGENT_SKILLS_LOG_LEVEL=WARNING`.
+
+## CLI Trace Correlation
+
+You can provide a correlation id from CLI:
+
+- `python cli/main.py run <skill_id> --trace-id my-trace-001`
+- `python cli/main.py trace <skill_id> --trace-id my-trace-001`

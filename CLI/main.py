@@ -49,6 +49,7 @@ def main() -> None:
     run_cmd.add_argument("skill_id")
     run_cmd.add_argument("--input", default=None)
     run_cmd.add_argument("--input-file", default=None)
+    run_cmd.add_argument("--trace-id", default=None, help="Optional trace id for correlation")
     add_root_args(run_cmd)
 
     describe_cmd = sub.add_parser("describe", help="Describe a skill")
@@ -63,6 +64,7 @@ def main() -> None:
     trace_cmd.add_argument("skill_id")
     trace_cmd.add_argument("--input", default=None)
     trace_cmd.add_argument("--input-file", default=None)
+    trace_cmd.add_argument("--trace-id", default=None, help="Optional trace id for correlation")
     add_root_args(trace_cmd)
 
     doctor_cmd = sub.add_parser("doctor", help="Run system health checks")
@@ -84,6 +86,7 @@ def main() -> None:
             args.skill_id,
             args.input,
             args.input_file,
+            args.trace_id,
         )
 
     elif args.command == "describe":
@@ -103,6 +106,7 @@ def main() -> None:
             args.skill_id,
             args.input,
             args.input_file,
+            args.trace_id,
         )
 
     elif args.command == "doctor":
@@ -117,6 +121,7 @@ def _cmd_run(
     skill_id: str,
     input_json: str | None,
     input_file: str | None,
+    trace_id: str | None,
 ) -> None:
 
     if input_json and input_file:
@@ -142,6 +147,7 @@ def _cmd_run(
     request = ExecutionRequest(
         skill_id=skill_id,
         inputs=inputs,
+        trace_id=trace_id,
     )
 
     result = engine.execute(request)
@@ -178,6 +184,7 @@ def _cmd_trace(
     skill_id: str,
     input_json: str | None,
     input_file: str | None,
+    trace_id: str | None,
 ) -> None:
     print("DEBUG: _cmd_trace called")
 
@@ -204,6 +211,7 @@ def _cmd_trace(
     request = ExecutionRequest(
         skill_id=skill_id,
         inputs=inputs,
+        trace_id=trace_id,
     )
 
     # Enable tracing

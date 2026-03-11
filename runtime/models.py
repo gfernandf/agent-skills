@@ -85,6 +85,7 @@ class RuntimeEvent:
     message: str
     timestamp: datetime
     step_id: str | None = None
+    trace_id: str | None = None
     data: dict[str, Any] = field(default_factory=dict)
 
 
@@ -124,6 +125,7 @@ class ExecutionState:
     started_at: datetime | None = None
     finished_at: datetime | None = None
     status: str = "pending"
+    trace_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -147,6 +149,7 @@ class ExecutionRequest:
     skill_id: str
     inputs: dict[str, Any]
     options: ExecutionOptions = field(default_factory=ExecutionOptions)
+    trace_id: str | None = None
 
 
 @dataclass
@@ -163,6 +166,7 @@ class ExecutionContext:
     depth: int = 0
     parent_skill_id: str | None = None
     lineage: tuple[str, ...] = ()
+    trace_id: str | None = None
 
 
 @dataclass(frozen=True)

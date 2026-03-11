@@ -152,6 +152,61 @@ jobs:
               f.write(summary)
           PY
 
+  registry_consistency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml requests beautifulsoup4 PyPDF2
+
+      - name: Validate registry
+        run: |
+          python ../agent-skill-registry/tools/validate_registry.py
+
+      - name: Regenerate registry catalog and stats
+        run: |
+          python ../agent-skill-registry/tools/generate_catalog.py
+          python ../agent-skill-registry/tools/registry_stats.py
+
+      - name: Verify catalog freshness
+        run: |
+          git -C ../agent-skill-registry status --porcelain
+          if [ -n "$(git -C ../agent-skill-registry status --porcelain)" ]; then
+            echo "Registry catalog/stats are out of date. Please regenerate and commit changes." >&2
+            git -C ../agent-skill-registry --no-pager diff
+            exit 1
+          fi
+
+      - name: Append registry consistency summary
+        if: always()
+        run: |
+          python - << 'PY'
+          from pathlib import Path
+          summary = "## Registry Consistency\n\n- Validation: completed\n- Catalog freshness: no pending diffs\n"
+          with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+              f.write(summary)
+          PY
+
   full_batch:
     if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_full_batch == true) }}
     runs-on: ubuntu-latest

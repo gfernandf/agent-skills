@@ -45,6 +45,7 @@ class NestedSkillRunner:
             skill_id=skill_id,
             inputs=step_input,
             options=context.options,
+            trace_id=context.trace_id,
         )
 
         try:

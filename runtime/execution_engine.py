@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from uuid import uuid4
 from typing import Any
 
 from runtime.errors import (
@@ -21,7 +22,7 @@ from runtime.models import (
     SkillExecutionResult,
     StepResult,
 )
-from runtime.observability import elapsed_ms, log_event
+from runtime.observability import elapsed_ms, log_event, reset_current_trace_id, set_current_trace_id
 from runtime.output_mapper import apply_step_output
 
 
@@ -65,90 +66,99 @@ class ExecutionEngine:
         """
         start_time = time.perf_counter()
         skill = self.skill_loader.get_skill(request.skill_id)
+        trace_id = request.trace_id or (parent_context.trace_id if parent_context else None) or str(uuid4())
+        trace_token = set_current_trace_id(trace_id)
 
-        state = create_execution_state(skill.id, request.inputs)
+        try:
+            state = create_execution_state(skill.id, request.inputs, trace_id=trace_id)
 
-        context = ExecutionContext(
-            state=state,
-            options=request.options,
-            depth=(parent_context.depth + 1) if parent_context else 0,
-            parent_skill_id=parent_context.state.skill_id if parent_context else None,
-            lineage=(
-                (*parent_context.lineage, skill.id)
-                if parent_context
-                else (skill.id,)
-            ),
-        )
+            context = ExecutionContext(
+                state=state,
+                options=request.options,
+                depth=(parent_context.depth + 1) if parent_context else 0,
+                parent_skill_id=parent_context.state.skill_id if parent_context else None,
+                lineage=(
+                    (*parent_context.lineage, skill.id)
+                    if parent_context
+                    else (skill.id,)
+                ),
+                trace_id=trace_id,
+            )
 
-        mark_started(state)
+            mark_started(state)
 
-        log_event(
-            "skill.execute.start",
-            skill_id=skill.id,
-            depth=context.depth,
-            lineage=list(context.lineage),
-        )
+            log_event(
+                "skill.execute.start",
+                trace_id=trace_id,
+                skill_id=skill.id,
+                depth=context.depth,
+                lineage=list(context.lineage),
+            )
 
-        emit_event(
-            state,
-            "skill_start",
-            f"Executing skill '{skill.id}'.",
-        )
+            emit_event(
+                state,
+                "skill_start",
+                f"Executing skill '{skill.id}'.",
+            )
 
-        if trace_callback:
-            trace_callback(state.events[-1])
+            if trace_callback:
+                trace_callback(state.events[-1])
 
-        plan = self.execution_planner.build_plan(skill)
+            plan = self.execution_planner.build_plan(skill)
 
-        for step in plan:
-            result = self._execute_step(step, skill.id, context, trace_callback)
-            record_step_result(state, result)
+            for step in plan:
+                result = self._execute_step(step, skill.id, context, trace_callback)
+                record_step_result(state, result)
 
-            if result.status != "completed":
-                 if context.options.fail_fast:
-                     mark_finished(state, "failed")
-                     log_event(
-                         "skill.execute.failed",
-                         level="error",
-                         skill_id=skill.id,
-                         failed_step_id=step.id,
-                         duration_ms=elapsed_ms(start_time),
-                         reason=result.error_message,
-                     )
-                     raise StepExecutionError(
-                         f"Step '{step.id}' failed: {result.error_message}",
-                         skill_id=skill.id,
-                         step_id=step.id,
-                    )
+                if result.status != "completed":
+                    if context.options.fail_fast:
+                        mark_finished(state, "failed")
+                        log_event(
+                            "skill.execute.failed",
+                            level="error",
+                            trace_id=trace_id,
+                            skill_id=skill.id,
+                            failed_step_id=step.id,
+                            duration_ms=elapsed_ms(start_time),
+                            reason=result.error_message,
+                        )
+                        raise StepExecutionError(
+                            f"Step '{step.id}' failed: {result.error_message}",
+                            skill_id=skill.id,
+                            step_id=step.id,
+                        )
 
-        self._validate_final_outputs(skill, state)
+            self._validate_final_outputs(skill, state)
 
-        mark_finished(state, "completed")
+            mark_finished(state, "completed")
 
-        emit_event(
-            state,
-            "skill_completed",
-            f"Skill '{skill.id}' completed.",
-        )
+            emit_event(
+                state,
+                "skill_completed",
+                f"Skill '{skill.id}' completed.",
+            )
 
-        if trace_callback:
-            trace_callback(state.events[-1])
+            if trace_callback:
+                trace_callback(state.events[-1])
 
-        log_event(
-            "skill.execute.completed",
-            skill_id=skill.id,
-            status=state.status,
-            steps_total=len(state.step_results),
-            outputs=list(state.outputs.keys()),
-            duration_ms=elapsed_ms(start_time),
-        )
+            log_event(
+                "skill.execute.completed",
+                trace_id=trace_id,
+                skill_id=skill.id,
+                status=state.status,
+                steps_total=len(state.step_results),
+                outputs=list(state.outputs.keys()),
+                duration_ms=elapsed_ms(start_time),
+            )
 
-        return SkillExecutionResult(
-            skill_id=skill.id,
-            status=state.status,
-            outputs=dict(state.outputs),
-            state=state,
-        )
+            return SkillExecutionResult(
+                skill_id=skill.id,
+                status=state.status,
+                outputs=dict(state.outputs),
+                state=state,
+            )
+        finally:
+            reset_current_trace_id(trace_token)
 
     def _execute_step(
         self,
@@ -162,6 +172,7 @@ class ExecutionEngine:
 
         log_event(
             "step.execute.start",
+            trace_id=context.trace_id,
             skill_id=skill_id,
             step_id=step.id,
             uses=step.uses,
@@ -197,6 +208,7 @@ class ExecutionEngine:
                 result = self.capability_executor.execute(
                     capability,
                     step_input,
+                    trace_id=context.trace_id,
                     trace_callback=trace_callback,
                 )
 
@@ -230,6 +242,7 @@ class ExecutionEngine:
 
             log_event(
                 "step.execute.completed",
+                trace_id=context.trace_id,
                 skill_id=skill_id,
                 step_id=step.id,
                 uses=step.uses,
@@ -252,6 +265,7 @@ class ExecutionEngine:
             log_event(
                 "step.execute.failed",
                 level="error",
+                trace_id=context.trace_id,
                 skill_id=skill_id,
                 step_id=step.id,
                 uses=step.uses,
