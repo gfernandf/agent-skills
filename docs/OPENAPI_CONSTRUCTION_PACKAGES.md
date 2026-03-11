@@ -164,6 +164,11 @@ This plan assumes capabilities remain abstract and canonical in the registry.
 1. Real-service service descriptor and binding validated.
 2. Documented local setup requirements for instance-level execution.
 
+### Current Pilot Status
+
+1. Local real-service pilot implemented for `data.schema.validate`.
+2. Verification command: `python tooling/verify_openapi_data_schema_validate_local_real.py`.
+
 ### Commit Gate
 
 1. Pilot real-service scenario passes in configured local environment.

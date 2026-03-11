@@ -1,0 +1,57 @@
+openapi: 3.0.3
+info:
+  title: Data Schema Validate Local API
+  version: 1.0.0
+  description: Local provider for pilot real-service integration of data.schema.validate.
+servers:
+  - url: http://127.0.0.1:8780
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Health probe endpoint.
+      responses:
+        '200':
+          description: Service health.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+  /validate:
+    post:
+      operationId: validate
+      summary: Validate data against JSON schema subset.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data
+                - schema
+              properties:
+                data:
+                  type: object
+                schema:
+                  type: object
+      responses:
+        '200':
+          description: Validation result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - valid
+                  - errors
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string

@@ -1,0 +1,27 @@
+{
+  "id": "data.schema.validate.openapi.local",
+  "capability_id": "data.schema.validate",
+  "binding_id": "openapi_data_schema_validate_local",
+  "expected_service_id": "data_schema_validate_openapi_local",
+  "trace_id": "phase5-openapi-data-schema-validate-local",
+  "input": {
+    "data": {
+      "name": "John"
+    },
+    "schema": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "expected_output": {
+    "valid": true,
+    "errors": []
+  }
+}

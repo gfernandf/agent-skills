@@ -1,0 +1,20 @@
+id: openapi_data_schema_validate_local
+
+capability: data.schema.validate
+service: data_schema_validate_openapi_local
+protocol: openapi
+operation: validate
+
+request:
+  data: input.data
+  schema: input.schema
+
+response:
+  valid: response.valid
+  errors: response.errors
+
+metadata:
+  method: POST
+  timeout_seconds: 10
+  description: "Local real OpenAPI binding for data.schema.validate pilot."
+  status: pilot

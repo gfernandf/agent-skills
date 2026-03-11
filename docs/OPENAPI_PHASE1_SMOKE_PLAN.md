@@ -54,6 +54,7 @@ The Phase 1 subset is the current smoke suite:
    - `python tooling/verify_openapi_bindings.py --all`
 4. Compatibility command still supported: `python tooling/verify_openapi_data_schema_validate.py`
 5. The official default binding remains `python_data_schema_validate`; OpenAPI activation is local and explicit.
+6. Real local-service pilot path added for `data.schema.validate` (separate from CI mock scenario).
 
 ## Implementation Rules
 
@@ -145,3 +146,4 @@ Phase 1 is complete when:
 Use `data.schema.validate` as the reference implementation and move next to `text.summarize`, while keeping the current pythoncall defaults intact.
 
 Construction work should follow package boundaries and commit strategy defined in `docs/OPENAPI_CONSTRUCTION_PACKAGES.md`.
+For pilot real-service validation run `python tooling/verify_openapi_data_schema_validate_local_real.py`.
