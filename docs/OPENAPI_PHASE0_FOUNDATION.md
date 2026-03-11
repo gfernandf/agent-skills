@@ -136,3 +136,4 @@ Phase 0 is considered complete when:
 Use this document as the gate for Phase 1 implementation on smoke capabilities.
 Execution planning for that subset is documented in `docs/OPENAPI_PHASE1_SMOKE_PLAN.md`.
 Construction sequencing by scope and commit boundaries is documented in `docs/OPENAPI_CONSTRUCTION_PACKAGES.md`.
+Adapter-facing error and security baseline is tracked in `docs/OPENAPI_ERROR_SECURITY_BASELINE.md`.
