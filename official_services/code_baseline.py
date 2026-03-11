@@ -6,7 +6,10 @@ Provides baseline implementations for code-related capabilities.
 import io
 import sys
 import signal
+import time
 from contextlib import redirect_stdout, redirect_stderr
+
+from runtime.observability import elapsed_ms, log_event
 
 # Execution limits
 _MAX_CODE_BYTES = 16_384          # 16 KB max code input
@@ -57,14 +60,35 @@ def execute_code(code, language):
     Returns:
         dict: {"result": object, "stdout": str, "stderr": str}
     """
+    start_time = time.perf_counter()
+    code_bytes = len(code.encode("utf-8", errors="ignore")) if isinstance(code, str) else None
+
+    def _finish(payload, status, error_type=None):
+        log_event(
+            "service.code.execute",
+            status=status,
+            language=language,
+            code_bytes=code_bytes,
+            stderr_present=bool(payload.get("stderr")),
+            duration_ms=elapsed_ms(start_time),
+            error_type=error_type,
+        )
+        return payload
+
+    log_event(
+        "service.code.execute.start",
+        language=language,
+        code_bytes=code_bytes,
+    )
+
     if not isinstance(code, str) or not code.strip():
-        return _error("Invalid input: 'code' must be a non-empty string.")
+        return _finish(_error("Invalid input: 'code' must be a non-empty string."), "rejected", "ValidationError")
     if not isinstance(language, str) or not language.strip():
-        return _error("Invalid input: 'language' must be a non-empty string.")
+        return _finish(_error("Invalid input: 'language' must be a non-empty string."), "rejected", "ValidationError")
     if len(code.encode()) > _MAX_CODE_BYTES:
-        return _error(f"Code exceeds maximum allowed size ({_MAX_CODE_BYTES} bytes).")
+        return _finish(_error(f"Code exceeds maximum allowed size ({_MAX_CODE_BYTES} bytes)."), "rejected", "PayloadTooLarge")
     if language.lower() != "python":
-        return _error(f"Unsupported language: {language}. Only 'python' is supported.")
+        return _finish(_error(f"Unsupported language: {language}. Only 'python' is supported."), "rejected", "UnsupportedLanguage")
 
     stdout_capture = io.StringIO()
     stderr_capture = io.StringIO()
@@ -101,7 +125,7 @@ def execute_code(code, language):
         stdout_val = stdout_val[:_MAX_OUTPUT_BYTES]
         stderr_val = (stderr_val + " [output truncated]")[:512]
 
-    return {"result": result, "stdout": stdout_val, "stderr": stderr_val}
+    return _finish({"result": result, "stdout": stdout_val, "stderr": stderr_val}, "completed")
 
 def format_code(code, language):
     """

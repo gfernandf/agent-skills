@@ -11,6 +11,11 @@ The registry provides a standardized, declarative way to define:
 
 It acts as the **source of truth for agent workflows** that can be executed by compatible runtimes.
 
+## Runtime Quality & Observability
+
+- Observability implementation details: `docs/OBSERVABILITY.md`
+- Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
+
 ---
 
 # Why this exists

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import time
 from typing import Any, Protocol
 
 from runtime.errors import CapabilityExecutionError, CapabilityNotFoundError
 from runtime.models import CapabilitySpec
+from runtime.observability import elapsed_ms, log_event
 
 
 class CapabilityExecutor(Protocol):
@@ -47,11 +49,32 @@ class DefaultCapabilityExecutor:
         step_input: dict[str, Any],
         trace_callback=None,
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
+        start_time = time.perf_counter()
+        log_event(
+            "capability.execute.start",
+            capability_id=capability.id,
+            input_keys=sorted(step_input.keys()),
+        )
         try:
             result = self.binding_executor.execute(capability, step_input, trace_callback=trace_callback)
         except CapabilityNotFoundError:
+            log_event(
+                "capability.execute.failed",
+                level="error",
+                capability_id=capability.id,
+                duration_ms=elapsed_ms(start_time),
+                error_type="CapabilityNotFoundError",
+            )
             raise
         except Exception as e:
+            log_event(
+                "capability.execute.failed",
+                level="error",
+                capability_id=capability.id,
+                duration_ms=elapsed_ms(start_time),
+                error_type=type(e).__name__,
+                error_message=str(e),
+            )
             raise CapabilityExecutionError(
                 f"Capability '{capability.id}' execution failed.",
                 capability_id=capability.id,
@@ -65,10 +88,27 @@ class DefaultCapabilityExecutor:
             outputs, meta = result, {}
 
         if not isinstance(outputs, dict):
+            log_event(
+                "capability.execute.failed",
+                level="error",
+                capability_id=capability.id,
+                duration_ms=elapsed_ms(start_time),
+                error_type="InvalidOutputType",
+                output_type=type(outputs).__name__,
+            )
             raise CapabilityExecutionError(
                 f"Capability '{capability.id}' returned a non-mapping result.",
                 capability_id=capability.id,
             )
+
+        log_event(
+            "capability.execute.completed",
+            capability_id=capability.id,
+            duration_ms=elapsed_ms(start_time),
+            output_keys=sorted(outputs.keys()),
+            binding_id=(meta.get("binding_id") if isinstance(meta, dict) else None),
+            service_id=(meta.get("service_id") if isinstance(meta, dict) else None),
+        )
 
         # attach metadata into return if present
         if meta:

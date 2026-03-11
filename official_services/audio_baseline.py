@@ -4,6 +4,9 @@ Provides baseline implementations for audio-related capabilities.
 """
 
 from pathlib import Path
+import time
+
+from runtime.observability import elapsed_ms, log_event
 
 _MAX_AUDIO_BYTES = 100 * 1024 * 1024   # 100 MB
 _SUPPORTED_AUDIO_EXTENSIONS = {".wav", ".mp3", ".ogg", ".flac", ".m4a", ".aac", ".opus"}
@@ -47,22 +50,36 @@ def transcribe_audio(audio_data):
     Returns:
         dict: {"transcript": str}
     """
+    start_time = time.perf_counter()
+
+    def _finish(payload, status, error_type=None):
+        log_event(
+            "service.audio.transcribe",
+            status=status,
+            input_type=type(audio_data).__name__,
+            duration_ms=elapsed_ms(start_time),
+            error_type=error_type,
+        )
+        return payload
+
+    log_event("service.audio.transcribe.start", input_type=type(audio_data).__name__)
+
     if audio_data is None:
-        return {"transcript": "No audio provided."}
+        return _finish({"transcript": "No audio provided."}, "rejected", "ValidationError")
 
     payload, source_path, error = _load_audio_bytes(audio_data)
 
     if error:
-        return {"transcript": f"Error: {error}"}
+        return _finish({"transcript": f"Error: {error}"}, "rejected", "ValidationError")
 
     if payload is not None:
         size = len(payload)
         if source_path:
-            return {"transcript": f"Transcription of '{source_path}' ({size} bytes)."}
-        return {"transcript": f"Transcription of in-memory audio ({size} bytes)."}
+            return _finish({"transcript": f"Transcription of '{source_path}' ({size} bytes)."}, "completed")
+        return _finish({"transcript": f"Transcription of in-memory audio ({size} bytes)."}, "completed")
 
     # Opaque string descriptor fallback
     source = str(audio_data).strip()
     if not source:
-        return {"transcript": "No audio provided."}
-    return {"transcript": f"Transcription from source descriptor: {source}."}
+        return _finish({"transcript": "No audio provided."}, "rejected", "ValidationError")
+    return _finish({"transcript": f"Transcription from source descriptor: {source}."}, "completed")

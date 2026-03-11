@@ -4,6 +4,9 @@ Provides baseline implementations for document-related capabilities.
 """
 
 import os
+import time
+
+from runtime.observability import elapsed_ms, log_event
 
 _MAX_PDF_BYTES = 50 * 1024 * 1024   # 50 MB
 _MAX_PDF_PAGES = 500
@@ -33,20 +36,37 @@ def read_pdf(path):
     Returns:
         dict: {"text": str, "metadata": dict}
     """
+    start_time = time.perf_counter()
+
+    def _finish(payload, status, error_type=None):
+        metadata = payload.get("metadata") if isinstance(payload, dict) else {}
+        log_event(
+            "service.pdf.read",
+            status=status,
+            file_path=path,
+            pages=(metadata.get("pages") if isinstance(metadata, dict) else None),
+            pages_read=(metadata.get("pages_read") if isinstance(metadata, dict) else None),
+            duration_ms=elapsed_ms(start_time),
+            error_type=error_type,
+        )
+        return payload
+
+    log_event("service.pdf.read.start", file_path=path)
+
     if not isinstance(path, str) or not path.strip():
-        return {"text": "Invalid input: 'path' must be a non-empty string.", "metadata": {}}
+        return _finish({"text": "Invalid input: 'path' must be a non-empty string.", "metadata": {}}, "rejected", "ValidationError")
 
     # Normalise and validate path (no directory traversal)
     norm = os.path.realpath(path)
     if not os.path.isfile(norm):
-        return {"text": f"File not found: {path}", "metadata": {}}
+        return _finish({"text": f"File not found: {path}", "metadata": {}}, "rejected", "FileNotFound")
 
     file_size = os.path.getsize(norm)
     if file_size > _MAX_PDF_BYTES:
-        return {
+        return _finish({
             "text": f"File exceeds maximum allowed size ({_MAX_PDF_BYTES // (1024*1024)} MB).",
             "metadata": {}
-        }
+        }, "rejected", "PayloadTooLarge")
 
     try:
         from PyPDF2 import PdfReader
@@ -72,6 +92,6 @@ def read_pdf(path):
                 "producer": reader.metadata.producer,
             })
 
-        return {"text": text, "metadata": metadata}
+        return _finish({"text": text, "metadata": metadata}, "completed")
     except Exception as e:
-        return {"text": f"Error reading PDF: {type(e).__name__}: {e}", "metadata": {}}
+        return _finish({"text": f"Error reading PDF: {type(e).__name__}: {e}", "metadata": {}}, "failed", type(e).__name__)

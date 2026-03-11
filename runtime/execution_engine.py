@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import time
+from typing import Any
+
 from runtime.errors import (
     FinalOutputValidationError,
     StepExecutionError,
@@ -18,6 +21,7 @@ from runtime.models import (
     SkillExecutionResult,
     StepResult,
 )
+from runtime.observability import elapsed_ms, log_event
 from runtime.output_mapper import apply_step_output
 
 
@@ -59,6 +63,7 @@ class ExecutionEngine:
         """
         Execute a skill and return the final result.
         """
+        start_time = time.perf_counter()
         skill = self.skill_loader.get_skill(request.skill_id)
 
         state = create_execution_state(skill.id, request.inputs)
@@ -76,6 +81,13 @@ class ExecutionEngine:
         )
 
         mark_started(state)
+
+        log_event(
+            "skill.execute.start",
+            skill_id=skill.id,
+            depth=context.depth,
+            lineage=list(context.lineage),
+        )
 
         emit_event(
             state,
@@ -95,6 +107,14 @@ class ExecutionEngine:
             if result.status != "completed":
                  if context.options.fail_fast:
                      mark_finished(state, "failed")
+                     log_event(
+                         "skill.execute.failed",
+                         level="error",
+                         skill_id=skill.id,
+                         failed_step_id=step.id,
+                         duration_ms=elapsed_ms(start_time),
+                         reason=result.error_message,
+                     )
                      raise StepExecutionError(
                          f"Step '{step.id}' failed: {result.error_message}",
                          skill_id=skill.id,
@@ -114,6 +134,15 @@ class ExecutionEngine:
         if trace_callback:
             trace_callback(state.events[-1])
 
+        log_event(
+            "skill.execute.completed",
+            skill_id=skill.id,
+            status=state.status,
+            steps_total=len(state.step_results),
+            outputs=list(state.outputs.keys()),
+            duration_ms=elapsed_ms(start_time),
+        )
+
         return SkillExecutionResult(
             skill_id=skill.id,
             status=state.status,
@@ -129,6 +158,14 @@ class ExecutionEngine:
         trace_callback=None,
     ) -> StepResult:
         state = context.state
+        step_start = time.perf_counter()
+
+        log_event(
+            "step.execute.start",
+            skill_id=skill_id,
+            step_id=step.id,
+            uses=step.uses,
+        )
 
         emit_event(
             state,
@@ -191,6 +228,16 @@ class ExecutionEngine:
             if trace_callback:
                 trace_callback(state.events[-1])
 
+            log_event(
+                "step.execute.completed",
+                skill_id=skill_id,
+                step_id=step.id,
+                uses=step.uses,
+                duration_ms=elapsed_ms(step_start),
+                binding_id=(meta.get("binding_id") if meta else None),
+                service_id=(meta.get("service_id") if meta else None),
+            )
+
             return StepResult(
                 step_id=step.id,
                 uses=step.uses,
@@ -202,6 +249,16 @@ class ExecutionEngine:
             )
 
         except Exception as e:
+            log_event(
+                "step.execute.failed",
+                level="error",
+                skill_id=skill_id,
+                step_id=step.id,
+                uses=step.uses,
+                duration_ms=elapsed_ms(step_start),
+                error_type=type(e).__name__,
+                error_message=str(e),
+            )
             emit_event(
                 state,
                 "step_failed",

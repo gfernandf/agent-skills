@@ -7,7 +7,10 @@ import urllib.request
 import urllib.error
 import urllib.parse
 import re
+import time
 from html.parser import HTMLParser
+
+from runtime.observability import elapsed_ms, log_event
 
 # Limits
 _FETCH_TIMEOUT_SECONDS = 10
@@ -69,9 +72,30 @@ def fetch_webpage(url):
     Returns:
         dict: {"content": str, "status": int}
     """
+    start_time = time.perf_counter()
+    parsed_url = urllib.parse.urlparse(url) if isinstance(url, str) and url.strip() else None
+
+    def _finish(payload, status):
+        log_event(
+            "service.web.fetch",
+            status=status,
+            http_status=payload.get("status"),
+            scheme=(parsed_url.scheme if parsed_url else None),
+            host=(parsed_url.netloc if parsed_url else None),
+            duration_ms=elapsed_ms(start_time),
+        )
+        return payload
+
+    log_event(
+        "service.web.fetch.start",
+        url=url,
+        scheme=(parsed_url.scheme if parsed_url else None),
+        host=(parsed_url.netloc if parsed_url else None),
+    )
+
     ok, err = _validate_url(url)
     if not ok:
-        return {"content": err, "status": 400}
+        return _finish({"content": err, "status": 400}, "rejected")
 
     try:
         req = urllib.request.Request(
@@ -81,15 +105,15 @@ def fetch_webpage(url):
         with urllib.request.urlopen(req, timeout=_FETCH_TIMEOUT_SECONDS) as response:
             raw = response.read(_MAX_RESPONSE_BYTES)
             content = raw.decode("utf-8", errors="ignore")
-            return {"content": content, "status": response.status}
+            return _finish({"content": content, "status": response.status}, "completed")
     except urllib.error.HTTPError as e:
-        return {"content": f"HTTP error: {e.code} {e.reason}", "status": e.code}
+        return _finish({"content": f"HTTP error: {e.code} {e.reason}", "status": e.code}, "failed")
     except urllib.error.URLError as e:
-        return {"content": f"URL error: {e.reason}", "status": 502}
+        return _finish({"content": f"URL error: {e.reason}", "status": 502}, "failed")
     except TimeoutError:
-        return {"content": f"Request timed out after {_FETCH_TIMEOUT_SECONDS}s.", "status": 504}
+        return _finish({"content": f"Request timed out after {_FETCH_TIMEOUT_SECONDS}s.", "status": 504}, "failed")
     except Exception as e:
-        return {"content": f"Unexpected error: {type(e).__name__}: {e}", "status": 500}
+        return _finish({"content": f"Unexpected error: {type(e).__name__}: {e}", "status": 500}, "failed")
 
 def extract_webpage(url):
     """
