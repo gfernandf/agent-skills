@@ -10,7 +10,7 @@ request:
   target_language: input.target_language
 
 response:
-  translated_text: response.translated_text
+  translation: response.translation
 
 metadata:
   description: "Official binding for text.translate using the text_baseline service."

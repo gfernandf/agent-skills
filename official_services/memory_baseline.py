@@ -14,19 +14,20 @@ def retrieve_memory(key):
         key (str): The memory key.
     
     Returns:
-        dict: {"value": str}
+        dict: {"found": bool, "value": any}
     """
-    value = _memory_store.get(key, "")
-    return {"value": value}
+    found = key in _memory_store
+    value = _memory_store.get(key)  # None when not found; skips type check
+    return {"found": found, "value": value}
 
 def store_memory(key, value):
     """
     Store a value in memory.
-    
+
     Args:
         key (str): The memory key.
         value (str): The value to store.
-    
+
     Returns:
         dict: {"stored": bool}
     """

@@ -91,6 +91,67 @@ jobs:
               f.write(summary)
           PY
 
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml requests beautifulsoup4 PyPDF2
+
+      - name: Run contract tests
+        run: |
+          mkdir -p artifacts
+          python tooling/test_capability_contracts.py | tee artifacts/contracts.log
+
+      - name: Publish contracts artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts-report
+          path: artifacts/contracts.log
+
+      - name: Append contracts summary
+        if: always()
+        run: |
+          python - << 'PY'
+          from pathlib import Path
+
+          log_path = Path('artifacts/contracts.log')
+          if not log_path.exists():
+              summary = "## Contract Tests\n\nNo contract log generated.\n"
+          else:
+              lines = log_path.read_text(encoding='utf-8', errors='replace').splitlines()
+              summary_line = next((line for line in lines if line.startswith('SUMMARY:')), None)
+              summary = "## Contract Tests\n\n"
+              if summary_line:
+                  summary += f"- {summary_line}\n"
+              else:
+                  summary += "- Summary line not found in log.\n"
+
+          with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+              f.write(summary)
+          PY
+
   full_batch:
     if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_full_batch == true) }}
     runs-on: ubuntu-latest

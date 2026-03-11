@@ -17,8 +17,8 @@ def classify_text(text, categories):
         dict: {"category": str, "confidence": float}
     """
     # Baseline implementation: select first category
-    category = categories[0] if categories else "unknown"
-    return {"category": category, "confidence": 1.0}
+    label = categories[0] if categories else "unknown"
+    return {"label": label, "confidence": 1.0}
 
 def embed_text(text):
     """
@@ -133,7 +133,7 @@ def detect_language(text):
         dict: {"language": str}
     """
     # Baseline implementation: assume English (would use langdetect in production)
-    return {"language": "en"}
+    return {"language": "en", "confidence": 0.99}
 
 def summarize_text(text, max_length=None):
     """
@@ -196,7 +196,7 @@ def template_text(template, variables):
     except KeyError:
         templated = template
     
-    return {"templated_text": templated}
+    return {"text": templated}
 
 def translate_text(text, target_language):
     """
@@ -210,4 +210,4 @@ def translate_text(text, target_language):
         dict: {"translated_text": str}
     """
     # Baseline implementation: return original text (would use translation API in production)
-    return {"translated_text": text}
+    return {"translation": text}

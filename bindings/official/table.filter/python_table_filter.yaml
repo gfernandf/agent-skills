@@ -7,7 +7,7 @@ request:
   table_data: input.table
   filter_criteria: input.condition
 response:
-  filtered_table: response.filtered_table
+  table: response.table
 metadata:
   description: Official binding for table.filter using the table_baseline service.
   status: stable

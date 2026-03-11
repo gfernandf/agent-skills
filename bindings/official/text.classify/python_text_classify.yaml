@@ -7,7 +7,7 @@ request:
   text: input.text
   categories: input.labels
 response:
-  category: response.category
+  label: response.label
   confidence: response.confidence
 metadata:
   description: Official binding for text.classify using the text_baseline service.

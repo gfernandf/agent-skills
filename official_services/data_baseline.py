@@ -17,9 +17,9 @@ def parse_json(json_string):
     """
     try:
         parsed = json.loads(json_string)
-        return {"parsed_data": parsed}
+        return {"data": parsed}
     except json.JSONDecodeError as e:
-        return {"parsed_data": {"error": str(e)}}
+        return {"data": {"error": str(e)}}
 
 def validate_schema(data, schema):
     """

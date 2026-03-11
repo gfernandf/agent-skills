@@ -6,7 +6,7 @@ operation: parse_json
 request:
   json_string: input.text
 response:
-  parsed_data: response.parsed_data
+  data: response.data
 metadata:
   description: Official binding for data.json.parse using the data_baseline service.
   status: stable

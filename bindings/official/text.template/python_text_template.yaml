@@ -10,7 +10,7 @@ request:
   variables: input.variables
 
 response:
-  templated_text: response.templated_text
+  text: response.text
 
 metadata:
   description: "Official binding for text.template using the text_baseline service."

@@ -7,7 +7,7 @@ request:
   query: input.input
   agents: input.input
 response:
-  selected_agent: response.selected_agent
+  route: response.route
 metadata:
   description: Official binding for agent.route using the agent_baseline service.
   status: stable

@@ -10,6 +10,7 @@ request:
 
 response:
   language: response.language
+  confidence: response.confidence
 
 metadata:
   description: "Official binding for text.language.detect using the text_baseline service."

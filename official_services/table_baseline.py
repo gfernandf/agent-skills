@@ -15,4 +15,4 @@ def filter_table(table_data, filter_criteria):
         dict: {"filtered_table": list}
     """
     # Baseline implementation: return all data (no filtering)
-    return {"filtered_table": table_data}
+    return {"table": table_data}
