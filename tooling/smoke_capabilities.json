@@ -1,0 +1,10 @@
+[
+  "text.summarize",
+  "code.execute",
+  "web.fetch",
+  "pdf.read",
+  "audio.transcribe",
+  "fs.read",
+  "data.schema.validate",
+  "agent.route"
+]
