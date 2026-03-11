@@ -2,9 +2,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import yaml
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from customization.binding_activation import BindingActivationService
 from customization.binding_state_store import BindingStateStore
@@ -70,6 +76,31 @@ def main() -> None:
     doctor_cmd = sub.add_parser("doctor", help="Run system health checks")
     add_root_args(doctor_cmd)
 
+    openapi_cmd = sub.add_parser("openapi", help="Run OpenAPI verification and diagnostics")
+    openapi_sub = openapi_cmd.add_subparsers(dest="openapi_command", required=True)
+
+    openapi_verify_bindings_cmd = openapi_sub.add_parser(
+        "verify-bindings",
+        help="Run OpenAPI binding scenarios",
+    )
+    openapi_verify_bindings_cmd.add_argument("--scenario", type=Path, default=None)
+    openapi_verify_bindings_cmd.add_argument("--all", action="store_true")
+    openapi_verify_bindings_cmd.add_argument("--scenarios-dir", type=Path, default=None)
+    openapi_verify_bindings_cmd.add_argument("--report-file", type=Path, default=None)
+    add_root_args(openapi_verify_bindings_cmd)
+
+    openapi_verify_invoker_cmd = openapi_sub.add_parser(
+        "verify-invoker",
+        help="Run runtime-level OpenAPI invoker checks",
+    )
+    add_root_args(openapi_verify_invoker_cmd)
+
+    openapi_verify_errors_cmd = openapi_sub.add_parser(
+        "verify-errors",
+        help="Run OpenAPI error contract checks",
+    )
+    add_root_args(openapi_verify_errors_cmd)
+
     args = parser.parse_args()
 
     # Resolve roots with defaults
@@ -112,6 +143,55 @@ def main() -> None:
     elif args.command == "doctor":
 
         _cmd_doctor(registry_root, runtime_root, host_root)
+
+    elif args.command == "openapi":
+
+        _cmd_openapi(args, runtime_root)
+
+
+def _cmd_openapi(args, runtime_root: Path) -> None:
+    tooling_root = runtime_root / "tooling"
+
+    if args.openapi_command == "verify-bindings":
+        cmd = [
+            sys.executable,
+            str(tooling_root / "verify_openapi_bindings.py"),
+        ]
+        if args.scenario is not None:
+            cmd.extend(["--scenario", str(args.scenario)])
+        if args.all:
+            cmd.append("--all")
+        if args.scenarios_dir is not None:
+            cmd.extend(["--scenarios-dir", str(args.scenarios_dir)])
+        if args.report_file is not None:
+            cmd.extend(["--report-file", str(args.report_file)])
+
+        completed = subprocess.run(cmd, check=False)
+        if completed.returncode != 0:
+            raise SystemExit(completed.returncode)
+        return
+
+    if args.openapi_command == "verify-invoker":
+        cmd = [
+            sys.executable,
+            str(tooling_root / "verify_openapi_invoker_runtime.py"),
+        ]
+        completed = subprocess.run(cmd, check=False)
+        if completed.returncode != 0:
+            raise SystemExit(completed.returncode)
+        return
+
+    if args.openapi_command == "verify-errors":
+        cmd = [
+            sys.executable,
+            str(tooling_root / "verify_openapi_error_contract.py"),
+        ]
+        completed = subprocess.run(cmd, check=False)
+        if completed.returncode != 0:
+            raise SystemExit(completed.returncode)
+        return
+
+    raise ValueError(f"Unsupported openapi command '{args.openapi_command}'.")
 
 
 def _cmd_run(

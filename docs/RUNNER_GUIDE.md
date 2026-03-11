@@ -126,6 +126,13 @@ System checks:
 
 - python CLI/main.py doctor
 
+OpenAPI checks from CLI:
+
+- python CLI/main.py openapi verify-bindings --all
+- python CLI/main.py openapi verify-bindings --scenario tooling/openapi_scenarios/data.schema.validate.mock.json
+- python CLI/main.py openapi verify-invoker
+- python CLI/main.py openapi verify-errors
+
 ## 6) Validation and Health Commands
 
 Contracts:
