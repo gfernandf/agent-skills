@@ -19,6 +19,7 @@ It acts as the **source of truth for agent workflows** that can be executed by c
 ## Documentation Index
 
 - Current project closure snapshot: `docs/PROJECT_STATUS.md`
+- 10-minute onboarding for new contributors: `docs/ONBOARDING_10_MIN.md`
 - Runtime runner architecture and operations: `docs/RUNNER_GUIDE.md`
 - Observability and trace/redaction controls: `docs/OBSERVABILITY.md`
 - Pre-MCP/OpenAPI readiness baseline: `docs/PRE_MCP_OPENAPI_READINESS.md`
