@@ -38,6 +38,7 @@ from runtime.openapi_invoker import OpenAPIInvoker
 from runtime.openrpc_invoker import OpenRPCInvoker
 from runtime.mcp_invoker import MCPInvoker
 from runtime.pythoncall_invoker import PythonCallInvoker
+from runtime.engine_factory import build_runtime_components
 
 
 def main() -> None:
@@ -488,62 +489,10 @@ def _build_engine(
     runtime_root: Path,
     host_root: Path,
 ) -> ExecutionEngine:
-
-    skill_loader = YamlSkillLoader(registry_root)
-
-    capability_loader = YamlCapabilityLoader(registry_root)
-
-    planner = ExecutionPlanner()
-
-    resolver = ReferenceResolver()
-
-    binding_registry = BindingRegistry(runtime_root, host_root)
-
-    active_map = ActiveBindingMap(host_root)
-
-    binding_resolver = BindingResolver(binding_registry, active_map)
-
-    service_resolver = ServiceResolver(binding_registry)
-
-    request_builder = RequestBuilder()
-
-    response_mapper = ResponseMapper()
-
-    openapi_invoker = OpenAPIInvoker()
-
-    openrpc_invoker = OpenRPCInvoker()
-
-    mcp_invoker = MCPInvoker(client_registry=None)
-
-    pythoncall_invoker = PythonCallInvoker()
-
-    protocol_router = ProtocolRouter(
-        openapi_invoker=openapi_invoker,
-        mcp_invoker=mcp_invoker,
-        openrpc_invoker=openrpc_invoker,
-        pythoncall_invoker=pythoncall_invoker,
+    components = build_runtime_components(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+        mcp_client_registry=None,
     )
-
-    binding_executor = BindingExecutor(
-        binding_registry=binding_registry,
-        binding_resolver=binding_resolver,
-        service_resolver=service_resolver,
-        request_builder=request_builder,
-        protocol_router=protocol_router,
-        response_mapper=response_mapper,
-    )
-
-    capability_executor = DefaultCapabilityExecutor(binding_executor)
-
-    engine = ExecutionEngine(
-        skill_loader=skill_loader,
-        capability_loader=capability_loader,
-        execution_planner=planner,
-        reference_resolver=resolver,
-        capability_executor=capability_executor,
-        nested_skill_runner=NestedSkillRunner(None),
-    )
-
-    engine.nested_skill_runner.execution_engine = engine
-
-    return engine
+    return components.engine

@@ -30,6 +30,7 @@ It acts as the **source of truth for agent workflows** that can be executed by c
 - **OpenAPI population checklist (gate criteria + regression tests)**: `docs/OPENAPI_POPULATION_CHECKLIST.md`
 - **OpenAPI construction phase closure (Package 6 summary)**: `docs/OPENAPI_PACKAGE6_CLOSURE.md`
 - OpenAPI error and security baseline: `docs/OPENAPI_ERROR_SECURITY_BASELINE.md`
+- **Consumer-facing neutral API (HTTP + MCP adapters)**: `docs/CONSUMER_FACING_NEUTRAL_API.md`
 
 ---
 

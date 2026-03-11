@@ -53,20 +53,29 @@ OpenAPI protocol support:
 - docs/OPENAPI_CONSTRUCTION_GUIDE.md (how to add new OpenAPI bindings)
 - docs/OPENAPI_POPULATION_CHECKLIST.md (gate criteria for population phase)
 
+Consumer-facing neutral API:
+
+- runtime/engine_factory.py
+- customer_facing/neutral_api.py
+- customer_facing/http_openapi_server.py
+- customer_facing/mcp_tool_bridge.py
+- docs/CONSUMER_FACING_NEUTRAL_API.md
+
 ## 3) First Commands to Run (2 min)
 
 From agent-skills root:
 
 - python tooling/verify_smoke_capabilities.py --report-file artifacts/smoke_report.json
 - python tooling/test_capability_contracts.py
+- python tooling/verify_customer_facing_neutral.py
 - python tooling/compute_runtime_coverage.py
 - python tooling/compute_skill_executability.py
 
 Expected baseline:
 
 - smoke: 8/8 pass
-- contracts: 33/33 pass
-- coverage: 33/33
+- contracts: 45/45 pass
+- coverage: 45/45
 - skills executable: 31/31
 
 ## 4) Run a Skill (2 min)

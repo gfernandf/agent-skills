@@ -17,10 +17,10 @@ The project is in a stable pre-integration state.
 Latest local verification snapshot:
 
 - Functional smoke suite: 8/8 pass
-- Capability contracts: 33/33 pass (99 checks, 0 violations)
-- Runtime coverage: 33/33 capabilities executable (ratio 1.0)
+- Capability contracts: 45/45 pass (135 checks, 0 violations)
+- Runtime coverage: 45/45 capabilities executable (ratio 1.0)
 - Skill executability: 31/31 executable (ratio 1.0)
-- Runtime inventory: 33 capabilities, 33 bindings, 15 services, 31 skills
+- Runtime inventory: 45 capabilities, 45 official defaults, 20 services, 31 skills
 
 ## Security and Reliability Status
 
