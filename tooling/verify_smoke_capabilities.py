@@ -7,6 +7,7 @@ Exit codes:
 - 1: at least one smoke capability failed or is misconfigured
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -30,7 +31,19 @@ def load_smoke_list():
     return data
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Verify critical smoke capabilities.")
+    parser.add_argument(
+        "--report-file",
+        type=Path,
+        default=None,
+        help="Optional path to write JSON report for CI/agent ingestion.",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
     smoke_capabilities = load_smoke_list()
 
     capability_loader = YamlCapabilityLoader(REGISTRY_ROOT)
@@ -63,6 +76,18 @@ def main():
             passes.append(capability_id)
         else:
             failures.append((capability_id, reason))
+
+    report = {
+        "total": len(smoke_capabilities),
+        "passed": len(passes),
+        "failed": len(failures),
+        "pass_ids": passes,
+        "failures": [{"capability": capability_id, "reason": reason} for capability_id, reason in failures],
+    }
+
+    if args.report_file is not None:
+        args.report_file.parent.mkdir(parents=True, exist_ok=True)
+        args.report_file.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     print("\nSMOKE RESULTS")
     print("=" * 60)
