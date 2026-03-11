@@ -5,8 +5,29 @@ Provides baseline implementations for web-related capabilities.
 
 import urllib.request
 import urllib.error
+import urllib.parse
 import re
 from html.parser import HTMLParser
+
+# Limits
+_FETCH_TIMEOUT_SECONDS = 10
+_MAX_RESPONSE_BYTES = 2 * 1024 * 1024   # 2 MB
+_ALLOWED_SCHEMES = {"http", "https"}
+
+
+def _validate_url(url):
+    """Return (ok, error_message). Rejects non-http/https schemes (SSRF guard)."""
+    if not isinstance(url, str) or not url.strip():
+        return False, "Invalid input: 'url' must be a non-empty string."
+    try:
+        parsed = urllib.parse.urlparse(url)
+    except Exception:
+        return False, "Invalid URL format."
+    if parsed.scheme.lower() not in _ALLOWED_SCHEMES:
+        return False, f"Scheme '{parsed.scheme}' is not allowed. Use http or https."
+    if not parsed.netloc:
+        return False, "URL must include a valid host."
+    return True, None
 
 class TextExtractor(HTMLParser):
     """Extract text content from HTML."""
@@ -41,24 +62,34 @@ class TextExtractor(HTMLParser):
 def fetch_webpage(url):
     """
     Fetch the content of a webpage.
-    
+
     Args:
-        url (str): The URL to fetch.
-    
+        url (str): The URL to fetch (http/https only).
+
     Returns:
         dict: {"content": str, "status": int}
     """
+    ok, err = _validate_url(url)
+    if not ok:
+        return {"content": err, "status": 400}
+
     try:
-        # Add User-Agent to avoid being blocked
         req = urllib.request.Request(
             url,
-            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+            headers={"User-Agent": "AgentSkills/1.0 (capability=web.fetch)"}
         )
-        with urllib.request.urlopen(req, timeout=10) as response:
-            content = response.read().decode('utf-8', errors='ignore')
-            return {"content": content, "status": 200}
+        with urllib.request.urlopen(req, timeout=_FETCH_TIMEOUT_SECONDS) as response:
+            raw = response.read(_MAX_RESPONSE_BYTES)
+            content = raw.decode("utf-8", errors="ignore")
+            return {"content": content, "status": response.status}
+    except urllib.error.HTTPError as e:
+        return {"content": f"HTTP error: {e.code} {e.reason}", "status": e.code}
+    except urllib.error.URLError as e:
+        return {"content": f"URL error: {e.reason}", "status": 502}
+    except TimeoutError:
+        return {"content": f"Request timed out after {_FETCH_TIMEOUT_SECONDS}s.", "status": 504}
     except Exception as e:
-        return {"content": f"Error fetching URL: {str(e)}", "status": 500}
+        return {"content": f"Unexpected error: {type(e).__name__}: {e}", "status": 500}
 
 def extract_webpage(url):
     """
