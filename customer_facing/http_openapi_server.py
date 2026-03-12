@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,15 +17,26 @@ from runtime.openapi_error_contract import build_http_error_payload, map_runtime
 class ServerConfig:
     host: str = "127.0.0.1"
     port: int = 8080
+    api_key: str | None = None
+    rate_limit_requests: int = 60
+    rate_limit_window_seconds: int = 60
+    unauthenticated_paths: tuple[str, ...] = ("/openapi.json", "/v1/health")
 
 
 class _RequestHandler(BaseHTTPRequestHandler):
     api: NeutralRuntimeAPI | None = None
     openapi_spec_path: Path | None = None
+    config: ServerConfig = ServerConfig()
+    _rate_lock = threading.Lock()
+    _rate_state: dict[str, list[float]] = {}
 
     def do_GET(self) -> None:  # noqa: N802
         try:
             parsed = urlparse(self.path)
+            if not self._authorize(parsed.path):
+                return
+            if not self._enforce_rate_limit(parsed.path):
+                return
             if parsed.path == "/v1/health":
                 self._write_json(200, self._api().health())
                 return
@@ -45,6 +58,10 @@ class _RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         try:
             parsed = urlparse(self.path)
+            if not self._authorize(parsed.path):
+                return
+            if not self._enforce_rate_limit(parsed.path):
+                return
             body = self._read_json_body()
 
             skill_prefix = "/v1/skills/"
@@ -83,6 +100,80 @@ class _RequestHandler(BaseHTTPRequestHandler):
         if self.api is None:
             raise RuntimeError("NeutralRuntimeAPI is not configured")
         return self.api
+
+    def _authorize(self, path: str) -> bool:
+        config = self.config
+
+        if path in config.unauthenticated_paths:
+            return True
+
+        if config.api_key is None:
+            return True
+
+        provided = self.headers.get("x-api-key")
+        if not provided:
+            self._write_json(
+                401,
+                {
+                    "error": {
+                        "code": "unauthorized",
+                        "message": "Missing API key.",
+                        "type": "AuthenticationError",
+                    }
+                },
+            )
+            return False
+
+        if provided != config.api_key:
+            self._write_json(
+                403,
+                {
+                    "error": {
+                        "code": "forbidden",
+                        "message": "Invalid API key.",
+                        "type": "AuthenticationError",
+                    }
+                },
+            )
+            return False
+
+        return True
+
+    def _enforce_rate_limit(self, path: str) -> bool:
+        config = self.config
+
+        if path in config.unauthenticated_paths:
+            return True
+
+        max_requests = max(1, int(config.rate_limit_requests))
+        window_seconds = max(1, int(config.rate_limit_window_seconds))
+        now = time.time()
+
+        client_id = self.client_address[0] if self.client_address else "unknown"
+
+        with self._rate_lock:
+            events = self._rate_state.get(client_id, [])
+            cutoff = now - window_seconds
+            events = [ts for ts in events if ts >= cutoff]
+
+            if len(events) >= max_requests:
+                self._rate_state[client_id] = events
+                self._write_json(
+                    429,
+                    {
+                        "error": {
+                            "code": "rate_limited",
+                            "message": "Too many requests. Retry later.",
+                            "type": "RateLimitError",
+                        }
+                    },
+                )
+                return False
+
+            events.append(now)
+            self._rate_state[client_id] = events
+
+        return True
 
     def _extract_trace_id(self, body: Any) -> str | None:
         header_trace = self.headers.get("x-trace-id")
@@ -150,6 +241,8 @@ def run_server(
 ) -> None:
     _RequestHandler.api = api
     _RequestHandler.openapi_spec_path = openapi_spec_path
+    _RequestHandler.config = config
+    _RequestHandler._rate_state = {}
 
     server = ThreadingHTTPServer((config.host, config.port), _RequestHandler)
     print(f"customer-facing API listening on http://{config.host}:{config.port}")

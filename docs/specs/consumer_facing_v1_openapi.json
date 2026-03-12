@@ -10,6 +10,15 @@
       "url": "http://127.0.0.1:8080"
     }
   ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      }
+    }
+  },
   "paths": {
     "/v1/health": {
       "get": {
@@ -24,6 +33,11 @@
     "/v1/skills/{skill_id}/describe": {
       "get": {
         "operationId": "describeSkill",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "skill_id",
@@ -38,6 +52,15 @@
           "200": {
             "description": "Skill description"
           },
+          "401": {
+            "description": "Missing API key"
+          },
+          "403": {
+            "description": "Invalid API key"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
           "404": {
             "description": "Skill not found"
           }
@@ -47,6 +70,11 @@
     "/v1/skills/{skill_id}/execute": {
       "post": {
         "operationId": "executeSkill",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "skill_id",
@@ -90,6 +118,15 @@
           "200": {
             "description": "Skill execution result"
           },
+          "401": {
+            "description": "Missing API key"
+          },
+          "403": {
+            "description": "Invalid API key"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
           "400": {
             "description": "Invalid request"
           },
@@ -105,6 +142,11 @@
     "/v1/capabilities/{capability_id}/execute": {
       "post": {
         "operationId": "executeCapability",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "capability_id",
@@ -144,6 +186,15 @@
         "responses": {
           "200": {
             "description": "Capability execution result"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "403": {
+            "description": "Invalid API key"
+          },
+          "429": {
+            "description": "Rate limited"
           },
           "404": {
             "description": "Capability not found"

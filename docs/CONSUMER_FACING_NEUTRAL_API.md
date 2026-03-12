@@ -30,6 +30,7 @@ Core modules:
 3. `customer_facing/http_openapi_server.py`
 - HTTP adapter with v1 routes and OpenAPI spec endpoint.
 - Reuses `runtime/openapi_error_contract.py` for deterministic error mapping.
+- Optional API-key authentication (`x-api-key`) and in-memory per-client rate limiting.
 
 4. `customer_facing/mcp_tool_bridge.py`
 - MCP-oriented tool adapter over the same neutral operations.
@@ -44,6 +45,12 @@ Base version: `/v1`
 3. `POST /v1/skills/{skill_id}/execute`
 4. `POST /v1/capabilities/{capability_id}/execute`
 5. `GET /openapi.json`
+
+Security model (configurable):
+
+1. `GET /v1/health` and `GET /openapi.json` can remain unauthenticated.
+2. All execution/describe routes can require `x-api-key`.
+3. Protected routes can enforce request rate limits with `429` responses.
 
 OpenAPI spec file:
 
@@ -89,6 +96,12 @@ Error payload shape:
 python tooling/run_customer_http_api.py --host 127.0.0.1 --port 8080
 ```
 
+Run with API key + rate limit:
+
+```bash
+python tooling/run_customer_http_api.py --host 127.0.0.1 --port 8080 --api-key local-dev-key --rate-limit-requests 20 --rate-limit-window-seconds 60
+```
+
 ### Run MCP bridge (stdio)
 
 ```bash
@@ -107,6 +120,18 @@ Example stdio request line:
 python tooling/verify_customer_facing_neutral.py
 ```
 
+### Verify HTTP controls (auth + throttling)
+
+```bash
+python tooling/verify_customer_http_controls.py
+```
+
+### Verify HTTP/MCP parity snapshot
+
+```bash
+python tooling/verify_customer_facing_parity_snapshot.py
+```
+
 ## Design Invariants
 
 1. Consumer-facing contract is protocol-neutral and stable.
@@ -116,7 +141,7 @@ python tooling/verify_customer_facing_neutral.py
 
 ## Next Steps
 
-1. Add authentication and authorization middleware/policy checks.
-2. Add rate limiting and request-size guardrails in HTTP adapter.
+1. Replace in-memory rate limiting with distributed/shared limiter for multi-instance deployment.
+2. Replace static API key with pluggable authn/authz provider.
 3. Replace stdio MCP bridge with full MCP server transport integration.
-4. Add parity tests ensuring equivalent logical output across HTTP and MCP adapters.
+4. Extend parity snapshots across more capabilities and representative error cases.

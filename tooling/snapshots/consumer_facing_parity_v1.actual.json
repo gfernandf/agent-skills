@@ -1,0 +1,143 @@
+{
+  "health": {
+    "http": {
+      "registry_root": "C:\\Users\\Usuario\\agent-skill-registry",
+      "runtime_root": "C:\\Users\\Usuario\\agent-skills",
+      "status": "ok"
+    },
+    "mcp": {
+      "registry_root": "C:\\Users\\Usuario\\agent-skill-registry",
+      "runtime_root": "C:\\Users\\Usuario\\agent-skills",
+      "status": "ok"
+    },
+    "equal": true
+  },
+  "describe_skill": {
+    "http": {
+      "description": "Generate a plan from an objective.",
+      "id": "agent.plan-from-objective",
+      "inputs": {
+        "objective": {
+          "default": null,
+          "description": null,
+          "required": true,
+          "type": "string"
+        }
+      },
+      "name": "Plan From Objective",
+      "outputs": {
+        "plan": {
+          "default": null,
+          "description": null,
+          "required": true,
+          "type": "object"
+        }
+      },
+      "steps": [
+        {
+          "id": "generate_plan",
+          "input": {
+            "objective": "inputs.objective"
+          },
+          "output": {
+            "plan": "outputs.plan"
+          },
+          "uses": "agent.plan.generate"
+        }
+      ],
+      "version": "0.1.0"
+    },
+    "mcp": {
+      "description": "Generate a plan from an objective.",
+      "id": "agent.plan-from-objective",
+      "inputs": {
+        "objective": {
+          "default": null,
+          "description": null,
+          "required": true,
+          "type": "string"
+        }
+      },
+      "name": "Plan From Objective",
+      "outputs": {
+        "plan": {
+          "default": null,
+          "description": null,
+          "required": true,
+          "type": "object"
+        }
+      },
+      "steps": [
+        {
+          "id": "generate_plan",
+          "input": {
+            "objective": "inputs.objective"
+          },
+          "output": {
+            "plan": "outputs.plan"
+          },
+          "uses": "agent.plan.generate"
+        }
+      ],
+      "version": "0.1.0"
+    },
+    "equal": true
+  },
+  "execute_skill": {
+    "http": {
+      "outputs": {
+        "plan": {
+          "objective": "Build a policy-compliant execution plan.",
+          "steps": [
+            "Step 1: Analyse requirements for: Build a policy-compliant execution plan.",
+            "Step 2: Execute",
+            "Step 3: Verify"
+          ]
+        }
+      },
+      "skill_id": "agent.plan-from-objective",
+      "status": "completed"
+    },
+    "mcp": {
+      "outputs": {
+        "plan": {
+          "objective": "Build a policy-compliant execution plan.",
+          "steps": [
+            "Step 1: Analyse requirements for: Build a policy-compliant execution plan.",
+            "Step 2: Execute",
+            "Step 3: Verify"
+          ]
+        }
+      },
+      "skill_id": "agent.plan-from-objective",
+      "status": "completed"
+    },
+    "equal": true
+  },
+  "execute_capability": {
+    "http": {
+      "capability_id": "policy.constraint.validate",
+      "meta": {
+        "binding_id": "python_policy_constraint_validate",
+        "service_id": "policy_baseline"
+      },
+      "outputs": {
+        "valid": true,
+        "violations": []
+      }
+    },
+    "mcp": {
+      "capability_id": "policy.constraint.validate",
+      "meta": {
+        "binding_id": "python_policy_constraint_validate",
+        "service_id": "policy_baseline"
+      },
+      "outputs": {
+        "valid": true,
+        "violations": []
+      }
+    },
+    "equal": true
+  },
+  "all_equal": true
+}
