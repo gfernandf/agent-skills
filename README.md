@@ -16,6 +16,18 @@ It acts as the **source of truth for agent workflows** that can be executed by c
 - Observability implementation details: `docs/OBSERVABILITY.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
 
+## MCP Integration Slice
+
+The runtime now includes an initial MCP-backed capability slice for `text.summarize`
+without changing the official default binding selection.
+
+- Official MCP service: `services/official/text_mcp_inprocess.yaml`
+- Official MCP binding: `bindings/official/text.summarize/mcp_text_summarize_inprocess.yaml`
+- Verification: `python tooling/verify_mcp_text_summarize.py`
+
+This uses an in-process MCP server adapter to validate the runtime MCP path end to end
+before broader external MCP service rollout.
+
 ## Documentation Index
 
 - Current project closure snapshot: `docs/PROJECT_STATUS.md`

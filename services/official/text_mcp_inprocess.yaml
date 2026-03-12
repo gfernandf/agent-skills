@@ -1,0 +1,7 @@
+id: text_mcp_inprocess
+kind: mcp
+server: official_text_tools
+
+metadata:
+  description: "In-process MCP server for the initial text capability integration slice."
+  maintained_by: "agent-skills"

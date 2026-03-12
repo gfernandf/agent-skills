@@ -12,6 +12,7 @@ from runtime.capability_executor import DefaultCapabilityExecutor
 from runtime.capability_loader import YamlCapabilityLoader
 from runtime.execution_engine import ExecutionEngine
 from runtime.execution_planner import ExecutionPlanner
+from runtime.default_mcp_client_registry import DefaultMCPClientRegistry
 from runtime.mcp_invoker import MCPInvoker
 from runtime.nested_skill_runner import NestedSkillRunner
 from runtime.openapi_invoker import OpenAPIInvoker
@@ -64,7 +65,10 @@ def build_runtime_components(
 
     openapi_invoker = OpenAPIInvoker()
     openrpc_invoker = OpenRPCInvoker()
-    mcp_invoker = MCPInvoker(client_registry=mcp_client_registry or _UnavailableMCPClientRegistry())
+    mcp_invoker = MCPInvoker(
+        client_registry=mcp_client_registry
+        or DefaultMCPClientRegistry(fallback_registry=_UnavailableMCPClientRegistry())
+    )
     pythoncall_invoker = PythonCallInvoker()
 
     protocol_router = ProtocolRouter(
