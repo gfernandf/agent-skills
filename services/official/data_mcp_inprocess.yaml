@@ -1,0 +1,7 @@
+id: data_mcp_inprocess
+kind: mcp
+server: official_data_tools
+
+metadata:
+  description: "In-process MCP server for data capability integration slices."
+  maintained_by: "agent-skills"

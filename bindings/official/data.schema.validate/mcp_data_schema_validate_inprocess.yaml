@@ -1,0 +1,18 @@
+id: mcp_data_schema_validate_inprocess
+
+capability: data.schema.validate
+service: data_mcp_inprocess
+protocol: mcp
+operation: data.schema.validate
+
+request:
+  data: input.data
+  schema: input.schema
+
+response:
+  valid: response.valid
+  errors: response.errors
+
+metadata:
+  description: "Official MCP binding for data.schema.validate using the in-process MCP data server."
+  status: experimental

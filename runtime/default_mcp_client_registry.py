@@ -6,6 +6,8 @@ from typing import Any
 
 _DEFAULT_SERVER_MODULES = {
     "official_text_tools": "official_mcp_servers.text_tools",
+    "official_data_tools": "official_mcp_servers.data_tools",
+    "official_web_tools": "official_mcp_servers.web_tools",
 }
 
 

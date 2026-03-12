@@ -1,0 +1,7 @@
+id: web_mcp_inprocess
+kind: mcp
+server: official_web_tools
+
+metadata:
+  description: "In-process MCP server for web capability integration slices."
+  maintained_by: "agent-skills"

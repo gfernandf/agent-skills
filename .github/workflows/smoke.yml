@@ -57,6 +57,7 @@ jobs:
           python tooling/verify_customer_http_controls.py | tee artifacts/customer_http_controls.log
           python tooling/verify_customer_facing_parity_snapshot.py | tee artifacts/customer_parity_snapshot.log
           python tooling/verify_mcp_text_summarize.py | tee artifacts/mcp_text_summarize.log
+          python tooling/verify_mcp_data_web_slices.py | tee artifacts/mcp_data_web_slices.log
 
       - name: Publish smoke report artifact
         if: always()
@@ -68,6 +69,7 @@ jobs:
             artifacts/customer_http_controls.log
             artifacts/customer_parity_snapshot.log
             artifacts/mcp_text_summarize.log
+            artifacts/mcp_data_web_slices.log
             tooling/snapshots/consumer_facing_parity_v1.actual.json
 
       - name: Append smoke summary
@@ -113,6 +115,7 @@ jobs:
               (Path('artifacts/customer_http_controls.log'), 'Customer-facing HTTP controls verification passed.'),
               (Path('artifacts/customer_parity_snapshot.log'), 'Customer-facing parity snapshot verification passed.'),
               (Path('artifacts/mcp_text_summarize.log'), 'MCP text.summarize verification passed.'),
+                (Path('artifacts/mcp_data_web_slices.log'), 'MCP data/web slice verification passed.'),
           ]
 
           lines = ['## Customer-Facing Smoke Checks', '']

@@ -18,12 +18,23 @@ It acts as the **source of truth for agent workflows** that can be executed by c
 
 ## MCP Integration Slice
 
-The runtime now includes an initial MCP-backed capability slice for `text.summarize`
-without changing the official default binding selection.
+The runtime now includes initial MCP-backed capability slices without changing
+the official default binding selection.
 
-- Official MCP service: `services/official/text_mcp_inprocess.yaml`
-- Official MCP binding: `bindings/official/text.summarize/mcp_text_summarize_inprocess.yaml`
-- Verification: `python tooling/verify_mcp_text_summarize.py`
+- `text.summarize`
+	- Service: `services/official/text_mcp_inprocess.yaml`
+	- Binding: `bindings/official/text.summarize/mcp_text_summarize_inprocess.yaml`
+- `data.schema.validate`
+	- Service: `services/official/data_mcp_inprocess.yaml`
+	- Binding: `bindings/official/data.schema.validate/mcp_data_schema_validate_inprocess.yaml`
+- `web.fetch`
+	- Service: `services/official/web_mcp_inprocess.yaml`
+	- Binding: `bindings/official/web.fetch/mcp_web_fetch_inprocess.yaml`
+
+Verifications:
+
+- `python tooling/verify_mcp_text_summarize.py`
+- `python tooling/verify_mcp_data_web_slices.py`
 
 This uses an in-process MCP server adapter to validate the runtime MCP path end to end
 before broader external MCP service rollout.
@@ -43,6 +54,7 @@ before broader external MCP service rollout.
 - **OpenAPI construction phase closure (Package 6 summary)**: `docs/OPENAPI_PACKAGE6_CLOSURE.md`
 - OpenAPI error and security baseline: `docs/OPENAPI_ERROR_SECURITY_BASELINE.md`
 - **Consumer-facing neutral API (HTTP + MCP adapters)**: `docs/CONSUMER_FACING_NEUTRAL_API.md`
+- **MCP integration rollout slices and verification**: `docs/MCP_INTEGRATION_SLICES.md`
 
 ---
 
