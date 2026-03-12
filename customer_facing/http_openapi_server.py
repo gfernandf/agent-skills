@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import time
 from dataclasses import dataclass
@@ -11,6 +12,9 @@ from urllib.parse import urlparse
 
 from customer_facing.neutral_api import NeutralRuntimeAPI
 from runtime.openapi_error_contract import build_http_error_payload, map_runtime_error_to_http
+
+
+logger = logging.getLogger("customer_facing.http")
 
 
 @dataclass(frozen=True)
@@ -33,6 +37,8 @@ class _RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         try:
             parsed = urlparse(self.path)
+            self._request_start = time.time()
+            self._request_path = parsed.path
             if not self._authorize(parsed.path):
                 return
             if not self._enforce_rate_limit(parsed.path):
@@ -58,6 +64,8 @@ class _RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         try:
             parsed = urlparse(self.path)
+            self._request_start = time.time()
+            self._request_path = parsed.path
             if not self._authorize(parsed.path):
                 return
             if not self._enforce_rate_limit(parsed.path):
@@ -217,6 +225,13 @@ class _RequestHandler(BaseHTTPRequestHandler):
 
     def _write_runtime_error(self, error: Exception) -> None:
         trace_id = self.headers.get("x-trace-id")
+        logger.exception(
+            "customer_http_error method=%s path=%s trace_id=%s error_type=%s",
+            self.command,
+            getattr(self, "_request_path", self.path),
+            trace_id or "-",
+            type(error).__name__,
+        )
         contract = map_runtime_error_to_http(error)
         payload = build_http_error_payload(error, trace_id=trace_id)
         self._write_json(contract.status_code, payload)
@@ -229,6 +244,27 @@ class _RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
+        elapsed_ms = -1
+        request_start = getattr(self, "_request_start", None)
+        if isinstance(request_start, float):
+            elapsed_ms = int((time.time() - request_start) * 1000)
+
+        error_code = "-"
+        error_obj = body.get("error") if isinstance(body, dict) else None
+        if isinstance(error_obj, dict) and isinstance(error_obj.get("code"), str):
+            error_code = error_obj["code"]
+
+        client_id = self.client_address[0] if self.client_address else "unknown"
+        logger.info(
+            "customer_http_request method=%s path=%s status=%s client=%s duration_ms=%s error_code=%s",
+            self.command,
+            getattr(self, "_request_path", self.path),
+            status,
+            client_id,
+            elapsed_ms,
+            error_code,
+        )
+
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
         return
 
@@ -239,6 +275,12 @@ def run_server(
     config: ServerConfig = ServerConfig(),
     openapi_spec_path: Path | None = None,
 ) -> None:
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        )
+
     _RequestHandler.api = api
     _RequestHandler.openapi_spec_path = openapi_spec_path
     _RequestHandler.config = config
@@ -246,6 +288,14 @@ def run_server(
 
     server = ThreadingHTTPServer((config.host, config.port), _RequestHandler)
     print(f"customer-facing API listening on http://{config.host}:{config.port}")
+    logger.info(
+        "customer_http_server_started host=%s port=%s auth_enabled=%s rate_limit_requests=%s rate_limit_window_seconds=%s",
+        config.host,
+        config.port,
+        bool(config.api_key),
+        config.rate_limit_requests,
+        config.rate_limit_window_seconds,
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

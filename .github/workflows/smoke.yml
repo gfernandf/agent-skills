@@ -51,12 +51,22 @@ jobs:
         run: |
           python tooling/verify_smoke_capabilities.py --report-file artifacts/smoke_report.json
 
+      - name: Run customer-facing smoke checks
+        run: |
+          mkdir -p artifacts
+          python tooling/verify_customer_http_controls.py | tee artifacts/customer_http_controls.log
+          python tooling/verify_customer_facing_parity_snapshot.py | tee artifacts/customer_parity_snapshot.log
+
       - name: Publish smoke report artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-report
-          path: artifacts/smoke_report.json
+          path: |
+            artifacts/smoke_report.json
+            artifacts/customer_http_controls.log
+            artifacts/customer_parity_snapshot.log
+            tooling/snapshots/consumer_facing_parity_v1.actual.json
 
       - name: Append smoke summary
         if: always()
@@ -90,6 +100,30 @@ jobs:
           with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
               f.write(summary)
           PY
+
+          - name: Append customer-facing smoke summary
+          if: always()
+          run: |
+            python - << 'PY'
+            from pathlib import Path
+
+            checks = [
+              (Path('artifacts/customer_http_controls.log'), 'Customer-facing HTTP controls verification passed.'),
+              (Path('artifacts/customer_parity_snapshot.log'), 'Customer-facing parity snapshot verification passed.'),
+            ]
+
+            lines = ['## Customer-Facing Smoke Checks', '']
+            for log_path, expected in checks:
+              if not log_path.exists():
+                lines.append(f'- {log_path.name}: missing log')
+                continue
+              content = log_path.read_text(encoding='utf-8', errors='replace')
+              status = 'passed' if expected in content else 'failed'
+              lines.append(f'- {log_path.name}: {status}')
+
+            with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+              f.write('\n'.join(lines) + '\n')
+            PY
 
   contracts:
     runs-on: ubuntu-latest

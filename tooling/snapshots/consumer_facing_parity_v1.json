@@ -1,13 +1,9 @@
 {
   "health": {
     "http": {
-      "registry_root": "C:\\Users\\Usuario\\agent-skill-registry",
-      "runtime_root": "C:\\Users\\Usuario\\agent-skills",
       "status": "ok"
     },
     "mcp": {
-      "registry_root": "C:\\Users\\Usuario\\agent-skill-registry",
-      "runtime_root": "C:\\Users\\Usuario\\agent-skills",
       "status": "ok"
     },
     "equal": true

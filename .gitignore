@@ -11,3 +11,6 @@ venv/
 
 # Generated reports
 artifacts/
+
+# Generated parity diffs
+tooling/snapshots/*.actual.json
