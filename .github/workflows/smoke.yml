@@ -101,29 +101,29 @@ jobs:
               f.write(summary)
           PY
 
-          - name: Append customer-facing smoke summary
-          if: always()
-          run: |
-            python - << 'PY'
-            from pathlib import Path
+      - name: Append customer-facing smoke summary
+        if: always()
+        run: |
+          python - << 'PY'
+          from pathlib import Path
 
-            checks = [
+          checks = [
               (Path('artifacts/customer_http_controls.log'), 'Customer-facing HTTP controls verification passed.'),
               (Path('artifacts/customer_parity_snapshot.log'), 'Customer-facing parity snapshot verification passed.'),
-            ]
+          ]
 
-            lines = ['## Customer-Facing Smoke Checks', '']
-            for log_path, expected in checks:
+          lines = ['## Customer-Facing Smoke Checks', '']
+          for log_path, expected in checks:
               if not log_path.exists():
-                lines.append(f'- {log_path.name}: missing log')
-                continue
+                  lines.append(f'- {log_path.name}: missing log')
+                  continue
               content = log_path.read_text(encoding='utf-8', errors='replace')
               status = 'passed' if expected in content else 'failed'
               lines.append(f'- {log_path.name}: {status}')
 
-            with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+          with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
               f.write('\n'.join(lines) + '\n')
-            PY
+          PY
 
   contracts:
     runs-on: ubuntu-latest
