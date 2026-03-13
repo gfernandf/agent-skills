@@ -56,6 +56,16 @@ Implemented baseline:
 - Runtime conformance enforcement via required profile (optional, default-friendly)
 - Explainability surface for capability resolution in CLI (`explain-capability`)
 - Conformance verifiers: `tooling/verify_binding_conformance_layer.py`, `tooling/verify_conformance_enforcement.py`, `tooling/verify_binding_conformance_suite.py`
+- Explainability exposed on customer adapters:
+	- HTTP `POST /v1/capabilities/{capability_id}/explain`
+	- MCP tool `capability.explain`
+- Governance discovery exposed on customer adapters:
+	- HTTP `GET /v1/skills/governance`
+	- MCP tool `skill.governance.list`
+	- CLI `skill-governance`
+- Governance wiring with usage ingestion from runtime logs:
+	- `tooling/ingest_skill_usage_from_logs.py`
+	- quality scoring now includes conformance signals per skill
 
 Optional evidence files:
 

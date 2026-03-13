@@ -97,6 +97,11 @@ def main() -> None:
     )
     add_root_args(explain_cap_cmd)
 
+    gov_cmd = sub.add_parser("skill-governance", help="List skill governance entries from operational quality catalog")
+    gov_cmd.add_argument("--min-state", default=None, choices=["draft", "validated", "lab-verified", "trusted", "recommended"])
+    gov_cmd.add_argument("--limit", type=int, default=20)
+    add_root_args(gov_cmd)
+
     doctor_cmd = sub.add_parser("doctor", help="Run system health checks")
     add_root_args(doctor_cmd)
 
@@ -174,6 +179,16 @@ def main() -> None:
             host_root,
             args.capability_id,
             args.required_conformance_profile,
+        )
+
+    elif args.command == "skill-governance":
+
+        _cmd_skill_governance(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.min_state,
+            args.limit,
         )
 
     elif args.command == "doctor":
@@ -552,6 +567,24 @@ def _cmd_explain_capability(
         required_conformance_profile=required_conformance_profile,
     )
     print(json.dumps(explanation, indent=2, ensure_ascii=False))
+
+
+def _cmd_skill_governance(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    min_state: str | None,
+    limit: int,
+) -> None:
+    from customer_facing.neutral_api import NeutralRuntimeAPI
+
+    api = NeutralRuntimeAPI(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+    )
+    result = api.list_skill_governance(min_state=min_state, limit=limit)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":

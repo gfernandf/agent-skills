@@ -26,9 +26,9 @@ def _assert_strict_requirement_fails_without_strict_binding() -> None:
             required_conformance_profile="strict",
         )
     except Exception as e:
-        if "No executable binding candidates" not in str(e):
+        if "No bindings satisfy required conformance profile" not in str(e):
             raise RuntimeError(
-                "Expected strict requirement failure with no eligible binding candidates. "
+                "Expected strict requirement failure with conformance-unmet message. "
                 f"actual={str(e)!r}"
             ) from e
         return

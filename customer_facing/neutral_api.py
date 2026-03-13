@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -41,6 +42,60 @@ class NeutralRuntimeAPI:
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "registry_root": str(self.registry_root),
             "runtime_root": str(self.runtime_root),
+        }
+
+    def list_skill_governance(
+        self,
+        *,
+        min_state: str | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        """
+        Read the operational skill quality artifact and return filtered entries.
+        """
+        rank = {
+            "draft": 0,
+            "validated": 1,
+            "lab-verified": 2,
+            "trusted": 3,
+            "recommended": 4,
+        }
+
+        artifact = self.runtime_root / "artifacts" / "skill_quality.json"
+        if not artifact.exists():
+            return {
+                "source": str(artifact),
+                "summary": {"total_skills": 0, "by_state": {}},
+                "skills": [],
+                "warning": "skill quality artifact not found; run tooling/build_skill_quality_catalog.py",
+            }
+
+        raw = json.loads(artifact.read_text(encoding="utf-8"))
+        skills = raw.get("skills", []) if isinstance(raw, dict) else []
+        if not isinstance(skills, list):
+            skills = []
+
+        min_rank = 0
+        if isinstance(min_state, str) and min_state:
+            min_rank = rank.get(min_state, 0)
+
+        filtered = [
+            s
+            for s in skills
+            if isinstance(s, dict) and rank.get(str(s.get("lifecycle_state")), -1) >= min_rank
+        ]
+
+        try:
+            limit_int = max(1, int(limit))
+        except Exception:
+            limit_int = 20
+
+        return {
+            "source": str(artifact),
+            "summary": raw.get("summary", {}) if isinstance(raw, dict) else {},
+            "skills": filtered[:limit_int],
+            "min_state": min_state,
+            "limit": limit_int,
         }
 
     def describe_skill(self, skill_id: str) -> dict[str, Any]:

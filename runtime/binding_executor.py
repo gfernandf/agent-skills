@@ -85,12 +85,14 @@ class BindingExecutor:
 
         attempts: list[dict[str, Any]] = []
         last_error: Exception | None = None
+        skipped_for_conformance = 0
 
         for index, item in enumerate(resolution_plan["chain"]):
             binding_id = item["binding_id"]
             conformance_profile = "standard"
 
             if not item["eligible"]:
+                skipped_for_conformance += 1
                 attempts.append(
                     {
                         "binding_id": binding_id,
@@ -176,6 +178,15 @@ class BindingExecutor:
                 capability_id=capability_id,
                 cause=last_error,
             ) from last_error
+
+        if skipped_for_conformance > 0:
+            raise BindingExecutionError(
+                (
+                    f"No bindings satisfy required conformance profile '{required_profile}' "
+                    f"for capability '{capability_id}'."
+                ),
+                capability_id=capability_id,
+            )
 
         raise BindingExecutionError(
             f"No executable binding candidates for capability '{capability_id}'.",

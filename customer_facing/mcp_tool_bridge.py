@@ -48,6 +48,7 @@ class MCPToolBridge:
                         "inputs": {"type": "object"},
                         "trace_id": {"type": "string"},
                         "include_trace": {"type": "boolean"},
+                        "required_conformance_profile": {"type": "string"},
                     },
                 },
             },
@@ -61,6 +62,30 @@ class MCPToolBridge:
                         "capability_id": {"type": "string"},
                         "inputs": {"type": "object"},
                         "trace_id": {"type": "string"},
+                        "required_conformance_profile": {"type": "string"},
+                    },
+                },
+            },
+            {
+                "name": "capability.explain",
+                "description": "Explain effective binding resolution and conformance eligibility for a capability.",
+                "input_schema": {
+                    "type": "object",
+                    "required": ["capability_id"],
+                    "properties": {
+                        "capability_id": {"type": "string"},
+                        "required_conformance_profile": {"type": "string"},
+                    },
+                },
+            },
+            {
+                "name": "skill.governance.list",
+                "description": "List skills by governance state from operational quality catalog.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "min_state": {"type": "string"},
+                        "limit": {"type": "integer"},
                     },
                 },
             },
@@ -81,6 +106,11 @@ class MCPToolBridge:
                 inputs=args.get("inputs") if isinstance(args.get("inputs"), dict) else {},
                 trace_id=args.get("trace_id") if isinstance(args.get("trace_id"), str) else None,
                 include_trace=bool(args.get("include_trace", False)),
+                required_conformance_profile=(
+                    args.get("required_conformance_profile")
+                    if isinstance(args.get("required_conformance_profile"), str)
+                    else None
+                ),
             )
 
         if name == "capability.execute":
@@ -88,6 +118,27 @@ class MCPToolBridge:
                 capability_id=str(args.get("capability_id", "")),
                 inputs=args.get("inputs") if isinstance(args.get("inputs"), dict) else {},
                 trace_id=args.get("trace_id") if isinstance(args.get("trace_id"), str) else None,
+                required_conformance_profile=(
+                    args.get("required_conformance_profile")
+                    if isinstance(args.get("required_conformance_profile"), str)
+                    else None
+                ),
+            )
+
+        if name == "capability.explain":
+            return self.api.explain_capability_resolution(
+                capability_id=str(args.get("capability_id", "")),
+                required_conformance_profile=(
+                    args.get("required_conformance_profile")
+                    if isinstance(args.get("required_conformance_profile"), str)
+                    else None
+                ),
+            )
+
+        if name == "skill.governance.list":
+            return self.api.list_skill_governance(
+                min_state=args.get("min_state") if isinstance(args.get("min_state"), str) else None,
+                limit=int(args.get("limit", 20)) if isinstance(args.get("limit"), int) else 20,
             )
 
         raise ValueError(f"Unsupported MCP tool '{name}'")

@@ -93,11 +93,26 @@ CLI explain surface:
 - `python cli/main.py explain-capability text.summarize`
 - `python cli/main.py explain-capability text.summarize --required-conformance-profile strict`
 
+Consumer-facing explain endpoints:
+
+- `POST /v1/capabilities/{capability_id}/explain`
+- MCP tool: `capability.explain`
+
 Verifier:
 
 - `python tooling/verify_binding_conformance_layer.py`
 - `python tooling/verify_conformance_enforcement.py`
 - `python tooling/verify_binding_conformance_suite.py`
+
+Governance discovery surfaces:
+
+- CLI: `python cli/main.py skill-governance --min-state trusted --limit 20`
+- HTTP: `GET /v1/skills/governance?min_state=trusted&limit=20`
+- MCP tool: `skill.governance.list`
+
+Usage ingestion for governance wiring:
+
+- `python tooling/ingest_skill_usage_from_logs.py --log-file <runtime.jsonl>`
 
 ## Skill Governance Catalog (Cold Start + Field Maturity)
 

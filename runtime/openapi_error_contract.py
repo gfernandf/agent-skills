@@ -60,6 +60,15 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
         )
 
     if isinstance(error, (CapabilityExecutionError, StepExecutionError)):
+        lowered = str(error).lower()
+        if "required conformance profile" in lowered and "no bindings satisfy" in lowered:
+            return HttpErrorContract(
+                status_code=412,
+                code="conformance_unmet",
+                type=type(error).__name__,
+                message="No eligible binding satisfies the requested conformance profile.",
+            )
+
         root = _root_cause(error)
         root_name = type(root).__name__.lower()
         if "timeout" in root_name:

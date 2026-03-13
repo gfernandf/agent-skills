@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from customer_facing.neutral_api import NeutralRuntimeAPI
 from runtime.openapi_error_contract import build_http_error_payload, map_runtime_error_to_http
@@ -57,6 +57,20 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 self._write_json(200, self._api().describe_skill(skill_id))
                 return
 
+            if parsed.path == "/v1/skills/governance":
+                query = parse_qs(parsed.query or "")
+                min_state = query.get("min_state", [None])[0]
+                limit_raw = query.get("limit", [20])[0]
+                try:
+                    limit = int(limit_raw)
+                except Exception:
+                    limit = 20
+                self._write_json(
+                    200,
+                    self._api().list_skill_governance(min_state=min_state, limit=limit),
+                )
+                return
+
             self._write_json(404, {"error": {"code": "not_found", "message": "Route not found", "type": "NotFound"}})
         except Exception as e:  # pragma: no cover
             self._write_runtime_error(e)
@@ -78,11 +92,17 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 inputs = body.get("inputs") if isinstance(body, dict) else {}
                 trace_id = self._extract_trace_id(body)
                 include_trace = bool(body.get("include_trace", False)) if isinstance(body, dict) else False
+                required_profile = None
+                if isinstance(body, dict):
+                    value = body.get("required_conformance_profile")
+                    if isinstance(value, str) and value:
+                        required_profile = value
                 response = self._api().execute_skill(
                     skill_id=skill_id,
                     inputs=inputs if isinstance(inputs, dict) else {},
                     trace_id=trace_id,
                     include_trace=include_trace,
+                    required_conformance_profile=required_profile,
                 )
                 self._write_json(200, response)
                 return
@@ -92,10 +112,30 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 capability_id = parsed.path[len(capability_prefix) : -len("/execute")]
                 inputs = body.get("inputs") if isinstance(body, dict) else {}
                 trace_id = self._extract_trace_id(body)
+                required_profile = None
+                if isinstance(body, dict):
+                    value = body.get("required_conformance_profile")
+                    if isinstance(value, str) and value:
+                        required_profile = value
                 response = self._api().execute_capability(
                     capability_id=capability_id,
                     inputs=inputs if isinstance(inputs, dict) else {},
                     trace_id=trace_id,
+                    required_conformance_profile=required_profile,
+                )
+                self._write_json(200, response)
+                return
+
+            if parsed.path.startswith(capability_prefix) and parsed.path.endswith("/explain"):
+                capability_id = parsed.path[len(capability_prefix) : -len("/explain")]
+                required_profile = None
+                if isinstance(body, dict):
+                    value = body.get("required_conformance_profile")
+                    if isinstance(value, str) and value:
+                        required_profile = value
+                response = self._api().explain_capability_resolution(
+                    capability_id=capability_id,
+                    required_conformance_profile=required_profile,
                 )
                 self._write_json(200, response)
                 return
