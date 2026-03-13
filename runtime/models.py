@@ -138,6 +138,7 @@ class ExecutionOptions:
     max_skill_depth: int = 10
     include_raw_step_results: bool = True
     trace_enabled: bool = True
+    required_conformance_profile: str | None = None
 
 
 @dataclass(frozen=True)

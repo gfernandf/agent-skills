@@ -209,6 +209,7 @@ class ExecutionEngine:
                     capability,
                     step_input,
                     trace_id=context.trace_id,
+                    required_conformance_profile=context.options.required_conformance_profile,
                     trace_callback=trace_callback,
                 )
 

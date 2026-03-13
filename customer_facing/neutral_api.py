@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from runtime.engine_factory import RuntimeComponents, build_runtime_components
-from runtime.models import ExecutionRequest
+from runtime.models import ExecutionOptions, ExecutionRequest
 
 
 class NeutralRuntimeAPI:
@@ -70,8 +70,14 @@ class NeutralRuntimeAPI:
         *,
         trace_id: str | None = None,
         include_trace: bool = False,
+        required_conformance_profile: str | None = None,
     ) -> dict[str, Any]:
-        request = ExecutionRequest(skill_id=skill_id, inputs=inputs or {}, trace_id=trace_id)
+        request = ExecutionRequest(
+            skill_id=skill_id,
+            inputs=inputs or {},
+            options=ExecutionOptions(required_conformance_profile=required_conformance_profile),
+            trace_id=trace_id,
+        )
         result = self.components.engine.execute(request)
 
         payload: dict[str, Any] = {
@@ -102,12 +108,14 @@ class NeutralRuntimeAPI:
         inputs: dict[str, Any] | None,
         *,
         trace_id: str | None = None,
+        required_conformance_profile: str | None = None,
     ) -> dict[str, Any]:
         capability = self.components.capability_loader.get_capability(capability_id)
         result = self.components.capability_executor.execute(
             capability,
             inputs or {},
             trace_id=trace_id,
+            required_conformance_profile=required_conformance_profile,
         )
 
         if isinstance(result, tuple):
@@ -121,3 +129,16 @@ class NeutralRuntimeAPI:
             "meta": meta,
             "trace_id": trace_id,
         }
+
+    def explain_capability_resolution(
+        self,
+        capability_id: str,
+        *,
+        required_conformance_profile: str | None = None,
+    ) -> dict[str, Any]:
+        capability = self.components.capability_loader.get_capability(capability_id)
+        executor = self.components.capability_executor.binding_executor
+        return executor.build_resolution_plan(
+            capability=capability,
+            required_conformance_profile=required_conformance_profile,
+        )

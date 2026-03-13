@@ -21,6 +21,7 @@ class CapabilityExecutor(Protocol):
         capability: CapabilitySpec,
         step_input: dict[str, Any],
         trace_id: str | None = None,
+        required_conformance_profile: str | None = None,
         trace_callback=None,
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         """
@@ -49,6 +50,7 @@ class DefaultCapabilityExecutor:
         capability: CapabilitySpec,
         step_input: dict[str, Any],
         trace_id: str | None = None,
+        required_conformance_profile: str | None = None,
         trace_callback=None,
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         start_time = time.perf_counter()
@@ -57,9 +59,15 @@ class DefaultCapabilityExecutor:
             trace_id=trace_id,
             capability_id=capability.id,
             input_keys=sorted(step_input.keys()),
+            required_conformance_profile=required_conformance_profile,
         )
         try:
-            result = self.binding_executor.execute(capability, step_input, trace_callback=trace_callback)
+            result = self.binding_executor.execute(
+                capability,
+                step_input,
+                trace_callback=trace_callback,
+                required_conformance_profile=required_conformance_profile,
+            )
         except CapabilityNotFoundError:
             log_event(
                 "capability.execute.failed",
@@ -115,6 +123,7 @@ class DefaultCapabilityExecutor:
             output_keys=sorted(outputs.keys()),
             binding_id=(meta.get("binding_id") if isinstance(meta, dict) else None),
             service_id=(meta.get("service_id") if isinstance(meta, dict) else None),
+            conformance_profile=(meta.get("conformance_profile") if isinstance(meta, dict) else None),
         )
 
         # attach metadata into return if present

@@ -52,6 +52,10 @@ Implemented baseline:
 - Field maturity path through optional usage and feedback evidence inputs
 - Runtime binding fallback policy with mandatory official default terminal fallback
 - Fallback policy verifier: `tooling/verify_binding_fallback_policy.py`
+- Binding conformance profiles (`strict|standard|experimental`) with load-time validation
+- Runtime conformance enforcement via required profile (optional, default-friendly)
+- Explainability surface for capability resolution in CLI (`explain-capability`)
+- Conformance verifiers: `tooling/verify_binding_conformance_layer.py`, `tooling/verify_conformance_enforcement.py`, `tooling/verify_binding_conformance_suite.py`
 
 Optional evidence files:
 

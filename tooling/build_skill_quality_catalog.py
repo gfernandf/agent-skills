@@ -90,13 +90,9 @@ def _score_rating(rating_avg: float | None, rating_count: int) -> float:
 def _compute_executability(
     *,
     skills_catalog: list[dict[str, Any]],
-    registry_root: Path,
-    runtime_root: Path,
-    host_root: Path,
+    capability_loader: YamlCapabilityLoader,
+    binding_registry: BindingRegistry,
 ) -> dict[str, bool]:
-    capability_loader = YamlCapabilityLoader(registry_root)
-    binding_registry = BindingRegistry(runtime_root, host_root)
-
     result: dict[str, bool] = {}
 
     for skill in skills_catalog:
@@ -132,6 +128,74 @@ def _compute_executability(
     return result
 
 
+def _conformance_profile_score(profile: str) -> float:
+    if profile == "strict":
+        return 100.0
+    if profile == "standard":
+        return 75.0
+    if profile == "experimental":
+        return 45.0
+    return 60.0
+
+
+def _resolve_binding_profile(binding: Any) -> str:
+    metadata = binding.metadata if hasattr(binding, "metadata") else {}
+    if isinstance(metadata, dict):
+        value = metadata.get("conformance_profile")
+        if isinstance(value, str) and value:
+            return value
+    return "standard"
+
+
+def _compute_skill_conformance_metrics(skill: dict[str, Any], binding_registry: BindingRegistry) -> dict[str, Any]:
+    uses_capabilities = skill.get("uses_capabilities", [])
+    if not isinstance(uses_capabilities, list):
+        uses_capabilities = []
+
+    profiles: list[str] = []
+
+    for capability_id in uses_capabilities:
+        if not isinstance(capability_id, str) or not capability_id:
+            continue
+
+        default_binding_id = binding_registry.get_official_default_binding_id(capability_id)
+        if not isinstance(default_binding_id, str) or not default_binding_id:
+            continue
+
+        try:
+            binding = binding_registry.get_binding(default_binding_id)
+        except Exception:
+            continue
+
+        profiles.append(_resolve_binding_profile(binding))
+
+    if not profiles:
+        return {
+            "conformance_score": 60.0,
+            "profile_counts": {"strict": 0, "standard": 0, "experimental": 0},
+            "lowest_profile": None,
+        }
+
+    counts = {
+        "strict": profiles.count("strict"),
+        "standard": profiles.count("standard"),
+        "experimental": profiles.count("experimental"),
+    }
+    score = sum(_conformance_profile_score(profile) for profile in profiles) / len(profiles)
+
+    lowest = "strict"
+    if counts["experimental"] > 0:
+        lowest = "experimental"
+    elif counts["standard"] > 0:
+        lowest = "standard"
+
+    return {
+        "conformance_score": round(score, 2),
+        "profile_counts": counts,
+        "lowest_profile": lowest,
+    }
+
+
 def _metadata_list_size(metadata: Any, key: str) -> int:
     if not isinstance(metadata, dict):
         return 0
@@ -139,7 +203,12 @@ def _metadata_list_size(metadata: Any, key: str) -> int:
     return len(value) if isinstance(value, list) else 0
 
 
-def _compute_readiness_score(skill: dict[str, Any], executable: bool, lab: dict[str, Any]) -> tuple[float, list[str]]:
+def _compute_readiness_score(
+    skill: dict[str, Any],
+    executable: bool,
+    lab: dict[str, Any],
+    conformance_metrics: dict[str, Any],
+) -> tuple[float, list[str]]:
     score = 0.0
     flags: list[str] = []
 
@@ -198,7 +267,12 @@ def _compute_readiness_score(skill: dict[str, Any], executable: bool, lab: dict[
         score = _clamp(float(manual))
         flags.append("manual_readiness_override")
 
-    return _clamp(score), flags
+    conformance_score = float(conformance_metrics.get("conformance_score", 60.0))
+    conformance_penalty = max(0.0, (70.0 - conformance_score) * 0.25)
+    if conformance_penalty > 0:
+        flags.append("low_conformance_default_path")
+
+    return _clamp(score - conformance_penalty), flags
 
 
 def _compute_field_metrics(usage: dict[str, Any], feedback: dict[str, Any]) -> dict[str, Any]:
@@ -330,11 +404,13 @@ def build_skill_quality_catalog(
     if not isinstance(skills, list):
         raise ValueError("catalog/skills.json must contain a list.")
 
+    capability_loader = YamlCapabilityLoader(registry_root)
+    binding_registry = BindingRegistry(runtime_root, host_root)
+
     executability = _compute_executability(
         skills_catalog=skills,
-        registry_root=registry_root,
-        runtime_root=runtime_root,
-        host_root=host_root,
+        capability_loader=capability_loader,
+        binding_registry=binding_registry,
     )
 
     lab_map = _load_optional_skill_map(lab_file)
@@ -355,8 +431,14 @@ def build_skill_quality_catalog(
         lab = lab_map.get(skill_id, {})
         usage = usage_map.get(skill_id, {})
         feedback = feedback_map.get(skill_id, {})
+        conformance_metrics = _compute_skill_conformance_metrics(skill, binding_registry)
 
-        readiness_score, readiness_flags = _compute_readiness_score(skill, executable, lab)
+        readiness_score, readiness_flags = _compute_readiness_score(
+            skill,
+            executable,
+            lab,
+            conformance_metrics,
+        )
         field_metrics = _compute_field_metrics(usage, feedback)
         overall_score = _compute_overall_score(
             readiness_score=readiness_score,
@@ -379,6 +461,7 @@ def build_skill_quality_catalog(
             "lifecycle_state": lifecycle_state,
             "evidence_source": _resolve_evidence_source(field_metrics["executions_30d"]),
             "metrics": field_metrics,
+            "conformance": conformance_metrics,
             "flags": sorted(set(readiness_flags)),
         }
 

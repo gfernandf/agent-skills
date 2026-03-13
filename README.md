@@ -85,10 +85,19 @@ Behavior:
 - Missing profile defaults to `standard`.
 - Invalid profile values are rejected at binding load time.
 - Effective profile is exposed in execution metadata for tracing/explainability.
+- Optional enforcement is available at execution time using required profile
+	(`strict|standard|experimental`).
+
+CLI explain surface:
+
+- `python cli/main.py explain-capability text.summarize`
+- `python cli/main.py explain-capability text.summarize --required-conformance-profile strict`
 
 Verifier:
 
 - `python tooling/verify_binding_conformance_layer.py`
+- `python tooling/verify_conformance_enforcement.py`
+- `python tooling/verify_binding_conformance_suite.py`
 
 ## Skill Governance Catalog (Cold Start + Field Maturity)
 
