@@ -126,12 +126,18 @@ class NeutralRuntimeAPI:
         trace_id: str | None = None,
         include_trace: bool = False,
         required_conformance_profile: str | None = None,
+        audit_mode: str | None = None,
+        execution_channel: str | None = None,
     ) -> dict[str, Any]:
         request = ExecutionRequest(
             skill_id=skill_id,
             inputs=inputs or {},
-            options=ExecutionOptions(required_conformance_profile=required_conformance_profile),
+            options=ExecutionOptions(
+                required_conformance_profile=required_conformance_profile,
+                audit_mode=audit_mode,
+            ),
             trace_id=trace_id,
+            channel=execution_channel,
         )
         result = self.components.engine.execute(request)
 

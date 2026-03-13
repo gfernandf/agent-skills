@@ -16,6 +16,31 @@ It acts as the **source of truth for agent workflows** that can be executed by c
 - Observability implementation details: `docs/OBSERVABILITY.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
 
+## Skill Execution Audit Layer
+
+The runtime supports persisted execution audit records per skill run.
+
+- Modes: `off`, `standard`, `full`
+- Default mode: `standard` (configurable via `AGENT_SKILLS_AUDIT_DEFAULT_MODE`)
+- Default output: `artifacts/runtime_skill_audit.jsonl`
+
+`standard` mode stores lightweight audit metadata and payload hashes.
+
+`full` mode additionally stores redacted payload snapshots.
+
+Surface controls:
+
+- CLI `run` / `trace`: `--audit-mode off|standard|full`
+- HTTP `/v1/skills/{id}/execute`: body field `audit_mode`
+- MCP `skill.execute`: argument `audit_mode`
+
+User-managed deletion is available via:
+
+- `python cli/main.py audit-purge --trace-id <trace-id>`
+- `python cli/main.py audit-purge --skill-id <skill-id>`
+- `python cli/main.py audit-purge --older-than-days 30`
+- `python cli/main.py audit-purge --all`
+
 ## MCP Integration Slice
 
 The runtime now includes initial MCP-backed capability slices without changing

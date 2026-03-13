@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from runtime.active_binding_map import ActiveBindingMap
+from runtime.audit import AuditRecorder
 from runtime.binding_executor import BindingExecutor
 from runtime.binding_registry import BindingRegistry
 from runtime.binding_resolver import BindingResolver
@@ -88,6 +89,7 @@ def build_runtime_components(
     )
 
     capability_executor = DefaultCapabilityExecutor(binding_executor)
+    audit_recorder = AuditRecorder(runtime_root)
 
     engine = ExecutionEngine(
         skill_loader=skill_loader,
@@ -96,6 +98,7 @@ def build_runtime_components(
         reference_resolver=resolver,
         capability_executor=capability_executor,
         nested_skill_runner=NestedSkillRunner(None),
+        audit_recorder=audit_recorder,
     )
 
     engine.nested_skill_runner.execution_engine = engine

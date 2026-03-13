@@ -97,12 +97,19 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     value = body.get("required_conformance_profile")
                     if isinstance(value, str) and value:
                         required_profile = value
+                audit_mode = None
+                if isinstance(body, dict):
+                    value = body.get("audit_mode")
+                    if isinstance(value, str) and value:
+                        audit_mode = value
                 response = self._api().execute_skill(
                     skill_id=skill_id,
                     inputs=inputs if isinstance(inputs, dict) else {},
                     trace_id=trace_id,
                     include_trace=include_trace,
                     required_conformance_profile=required_profile,
+                    audit_mode=audit_mode,
+                    execution_channel="http",
                 )
                 self._write_json(200, response)
                 return

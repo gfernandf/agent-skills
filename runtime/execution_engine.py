@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime, timezone
 from uuid import uuid4
 from typing import Any
 
 from runtime.errors import (
     FinalOutputValidationError,
+    InvalidExecutionOptionsError,
     StepExecutionError,
 )
 from runtime.execution_state import (
@@ -47,6 +49,7 @@ class ExecutionEngine:
         reference_resolver,
         capability_executor,
         nested_skill_runner,
+        audit_recorder,
     ) -> None:
         self.skill_loader = skill_loader
         self.capability_loader = capability_loader
@@ -54,6 +57,7 @@ class ExecutionEngine:
         self.reference_resolver = reference_resolver
         self.capability_executor = capability_executor
         self.nested_skill_runner = nested_skill_runner
+        self.audit_recorder = audit_recorder
 
     def execute(
         self,
@@ -68,6 +72,9 @@ class ExecutionEngine:
         skill = self.skill_loader.get_skill(request.skill_id)
         trace_id = request.trace_id or (parent_context.trace_id if parent_context else None) or str(uuid4())
         trace_token = set_current_trace_id(trace_id)
+        state = None
+        context = None
+        execution_error: Exception | None = None
 
         try:
             state = create_execution_state(skill.id, request.inputs, trace_id=trace_id)
@@ -83,6 +90,7 @@ class ExecutionEngine:
                     else (skill.id,)
                 ),
                 trace_id=trace_id,
+                channel=request.channel,
             )
 
             mark_started(state)
@@ -157,7 +165,46 @@ class ExecutionEngine:
                 outputs=dict(state.outputs),
                 state=state,
             )
+        except Exception as e:
+            execution_error = e
+            if state is not None and state.status != "completed":
+                mark_finished(state, "failed")
+            if state is not None:
+                log_event(
+                    "skill.execute.failed",
+                    level="error",
+                    trace_id=trace_id,
+                    skill_id=skill.id,
+                    depth=(context.depth if context is not None else 0),
+                    duration_ms=elapsed_ms(start_time),
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                )
+            raise
         finally:
+            if state is not None and context is not None:
+                try:
+                    self.audit_recorder.record_execution(
+                        skill_id=skill.id,
+                        state=state,
+                        options=context.options,
+                        channel=context.channel,
+                        depth=context.depth,
+                        parent_skill_id=context.parent_skill_id,
+                        lineage=context.lineage,
+                        error=execution_error,
+                    )
+                except InvalidExecutionOptionsError:
+                    raise
+                except Exception as audit_error:
+                    log_event(
+                        "audit.write.failed",
+                        level="error",
+                        trace_id=trace_id,
+                        skill_id=skill.id,
+                        error_type=type(audit_error).__name__,
+                        error_message=str(audit_error),
+                    )
             reset_current_trace_id(trace_token)
 
     def _execute_step(
@@ -169,6 +216,7 @@ class ExecutionEngine:
     ) -> StepResult:
         state = context.state
         step_start = time.perf_counter()
+        step_started_at = _utc_now()
 
         log_event(
             "step.execute.start",
@@ -218,6 +266,22 @@ class ExecutionEngine:
                 else:
                     produced, meta = result, None
 
+                attempts_count = None
+                fallback_used = None
+                conformance_profile = None
+                required_profile = None
+                if isinstance(meta, dict):
+                    attempts = meta.get("attempts")
+                    if isinstance(attempts, list):
+                        attempts_count = len(attempts)
+                    fallback_raw = meta.get("fallback_used")
+                    if isinstance(fallback_raw, bool):
+                        fallback_used = fallback_raw
+                    if isinstance(meta.get("conformance_profile"), str):
+                        conformance_profile = meta.get("conformance_profile")
+                    if isinstance(meta.get("required_conformance_profile"), str):
+                        required_profile = meta.get("required_conformance_profile")
+
             apply_step_output(
                 step,
                 produced,
@@ -260,6 +324,12 @@ class ExecutionEngine:
                 produced_output=produced,
                 binding_id=(meta.get("binding_id") if meta else None),
                 service_id=(meta.get("service_id") if meta else None),
+                attempts_count=attempts_count,
+                fallback_used=fallback_used,
+                conformance_profile=conformance_profile,
+                required_conformance_profile=required_profile,
+                started_at=step_started_at,
+                finished_at=_utc_now(),
             )
 
         except Exception as e:
@@ -291,6 +361,8 @@ class ExecutionEngine:
                 resolved_input={},
                 produced_output=None,
                 error_message=str(e),
+                started_at=step_started_at,
+                finished_at=_utc_now(),
             )
 
     def _validate_final_outputs(self, skill, state) -> None:
@@ -303,3 +375,7 @@ class ExecutionEngine:
                     f"Required output '{name}' not produced.",
                     skill_id=skill.id,
                 )
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)

@@ -91,3 +91,7 @@ class FinalOutputValidationError(RuntimeErrorBase):
 
 class MaxSkillDepthExceededError(RuntimeErrorBase):
     """Raised when nested skill execution exceeds the configured maximum depth."""
+
+
+class InvalidExecutionOptionsError(RuntimeErrorBase):
+    """Raised when execution options are invalid."""

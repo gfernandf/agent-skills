@@ -70,6 +70,100 @@ When service logs are emitted inside runtime execution, `trace_id` is propagated
 - Sensitive fields are redacted based on key names (for example: `token`, `password`, `authorization`, `api_key`, `secret`, `cookie`).
 - To reduce verbosity in CI/local runs, set `AGENT_SKILLS_LOG_LEVEL=WARNING`.
 
+## Skill Execution Audit Records
+
+In addition to runtime logs, skill execution now supports persisted audit records
+written as JSONL.
+
+Default path:
+
+- `artifacts/runtime_skill_audit.jsonl`
+
+Override path:
+
+- `AGENT_SKILLS_AUDIT_PATH`
+
+Default mode:
+
+- `AGENT_SKILLS_AUDIT_DEFAULT_MODE` (`standard` by default)
+
+Supported per-execution modes:
+
+- `off`: no persisted audit record for the execution
+- `standard`: metadata + hashes only (lightweight)
+- `full`: includes redacted payload snapshots per run and per step
+
+Audit records include:
+
+- run metadata (`trace_id`, `skill_id`, status, channel, duration)
+- per-step metadata (`step_id`, `uses`, status, duration, binding/service IDs)
+- fallback and conformance metadata when available
+- hash references for inputs/outputs (`sha256:*`)
+
+Sensitive values are redacted by key-name policy similar to runtime logs.
+
+CLI examples:
+
+- `python cli/main.py run text.simple-summarize --audit-mode standard`
+- `python cli/main.py trace text.simple-summarize --audit-mode full`
+- `python cli/main.py audit-purge --older-than-days 30`
+- `python cli/main.py audit-purge --trace-id <trace-id>`
+- `python cli/main.py audit-purge --all`
+
+## End-to-End Validation Checklist
+
+Use this checklist to validate that audit persistence is operational and mode-aware.
+
+1. Reset previous audit records:
+
+```powershell
+python cli/main.py audit-purge --all
+```
+
+2. Run a multi-step skill in `standard` mode:
+
+```powershell
+python cli/main.py trace text.detect-language-and-classify --input-file artifacts/e2e_input_message.json --audit-mode standard
+```
+
+Expected:
+
+- Skill completes successfully.
+- A new JSONL record is written.
+- Record contains `input_hash`/`output_hash` and per-step hashes.
+- Record does not include full `inputs`, `outputs`, or per-step payload snapshots.
+
+3. Run the same skill in `full` mode:
+
+```powershell
+python cli/main.py run text.detect-language-and-classify --input-file artifacts/e2e_input_message.json --audit-mode full
+```
+
+Expected:
+
+- Skill completes successfully.
+- A second JSONL record is written.
+- Record includes the same hashes plus redacted payload snapshots:
+	- top-level `inputs` and `outputs`
+	- per-step `resolved_input` and `produced_output`
+
+4. Verify audit file contents:
+
+```powershell
+Get-Content artifacts/runtime_skill_audit.jsonl
+```
+
+5. Validate user-managed deletion:
+
+```powershell
+python cli/main.py audit-purge --trace-id <trace-id>
+```
+
+Expected:
+
+- Purge response reports `deleted > 0` for matching records.
+- Remaining records are preserved.
+
 ## CLI Trace Correlation
 
 You can provide a correlation id from CLI:

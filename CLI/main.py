@@ -21,6 +21,7 @@ from customization.service_descriptor_loader import ServiceDescriptorLoader
 from runtime.active_binding_map import ActiveBindingMap
 from runtime.binding_executor import BindingExecutor
 from runtime.binding_registry import BindingRegistry
+from runtime.audit import AuditRecorder
 from runtime.binding_resolver import BindingResolver
 from runtime.capability_executor import DefaultCapabilityExecutor
 from runtime.capability_loader import YamlCapabilityLoader
@@ -64,6 +65,12 @@ def main() -> None:
         default=None,
         help="Optional minimum conformance profile for all capabilities executed by this run.",
     )
+    run_cmd.add_argument(
+        "--audit-mode",
+        choices=["off", "standard", "full"],
+        default=None,
+        help="Audit record mode for this run. Defaults to runtime configuration.",
+    )
     add_root_args(run_cmd)
 
     describe_cmd = sub.add_parser("describe", help="Describe a skill")
@@ -85,7 +92,20 @@ def main() -> None:
         default=None,
         help="Optional minimum conformance profile for all capabilities executed by this run.",
     )
+    trace_cmd.add_argument(
+        "--audit-mode",
+        choices=["off", "standard", "full"],
+        default=None,
+        help="Audit record mode for this run. Defaults to runtime configuration.",
+    )
     add_root_args(trace_cmd)
+
+    audit_purge_cmd = sub.add_parser("audit-purge", help="Purge persisted skill execution audit records")
+    audit_purge_cmd.add_argument("--trace-id", default=None)
+    audit_purge_cmd.add_argument("--skill-id", default=None)
+    audit_purge_cmd.add_argument("--older-than-days", type=int, default=None)
+    audit_purge_cmd.add_argument("--all", action="store_true", help="Delete all persisted audit records")
+    add_root_args(audit_purge_cmd)
 
     explain_cap_cmd = sub.add_parser("explain-capability", help="Explain effective binding resolution and conformance chain")
     explain_cap_cmd.add_argument("capability_id")
@@ -148,6 +168,7 @@ def main() -> None:
             args.input_file,
             args.trace_id,
             args.required_conformance_profile,
+            args.audit_mode,
         )
 
     elif args.command == "describe":
@@ -169,6 +190,7 @@ def main() -> None:
             args.input_file,
             args.trace_id,
             args.required_conformance_profile,
+            args.audit_mode,
         )
 
     elif args.command == "explain-capability":
@@ -194,6 +216,16 @@ def main() -> None:
     elif args.command == "doctor":
 
         _cmd_doctor(registry_root, runtime_root, host_root)
+
+    elif args.command == "audit-purge":
+
+        _cmd_audit_purge(
+            runtime_root,
+            args.trace_id,
+            args.skill_id,
+            args.older_than_days,
+            args.all,
+        )
 
     elif args.command == "openapi":
 
@@ -254,6 +286,7 @@ def _cmd_run(
     input_file: str | None,
     trace_id: str | None,
     required_conformance_profile: str | None,
+    audit_mode: str | None,
 ) -> None:
 
     if input_json and input_file:
@@ -277,8 +310,12 @@ def _cmd_run(
     request = ExecutionRequest(
         skill_id=skill_id,
         inputs=inputs,
-        options=ExecutionOptions(required_conformance_profile=required_conformance_profile),
+        options=ExecutionOptions(
+            required_conformance_profile=required_conformance_profile,
+            audit_mode=audit_mode,
+        ),
         trace_id=trace_id,
+        channel="cli",
     )
 
     result = engine.execute(request)
@@ -317,9 +354,8 @@ def _cmd_trace(
     input_file: str | None,
     trace_id: str | None,
     required_conformance_profile: str | None,
+    audit_mode: str | None,
 ) -> None:
-    print("DEBUG: _cmd_trace called")
-
     if input_json and input_file:
         raise ValueError("Use either --input or --input-file")
 
@@ -341,8 +377,12 @@ def _cmd_trace(
     request = ExecutionRequest(
         skill_id=skill_id,
         inputs=inputs,
-        options=ExecutionOptions(required_conformance_profile=required_conformance_profile),
+        options=ExecutionOptions(
+            required_conformance_profile=required_conformance_profile,
+            audit_mode=audit_mode,
+        ),
         trace_id=trace_id,
+        channel="cli",
     )
 
     # Enable tracing
@@ -584,6 +624,23 @@ def _cmd_skill_governance(
         host_root=host_root,
     )
     result = api.list_skill_governance(min_state=min_state, limit=limit)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+def _cmd_audit_purge(
+    runtime_root: Path,
+    trace_id: str | None,
+    skill_id: str | None,
+    older_than_days: int | None,
+    purge_all: bool,
+) -> None:
+    recorder = AuditRecorder(runtime_root)
+    result = recorder.purge(
+        trace_id=trace_id,
+        skill_id=skill_id,
+        older_than_days=older_than_days,
+        purge_all=purge_all,
+    )
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 

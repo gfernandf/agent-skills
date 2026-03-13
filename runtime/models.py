@@ -104,6 +104,10 @@ class StepResult:
     # optional metadata captured during binding execution
     binding_id: str | None = None
     service_id: str | None = None
+    attempts_count: int | None = None
+    fallback_used: bool | None = None
+    conformance_profile: str | None = None
+    required_conformance_profile: str | None = None
     error_message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
@@ -139,6 +143,7 @@ class ExecutionOptions:
     include_raw_step_results: bool = True
     trace_enabled: bool = True
     required_conformance_profile: str | None = None
+    audit_mode: str | None = None
 
 
 @dataclass(frozen=True)
@@ -151,6 +156,7 @@ class ExecutionRequest:
     inputs: dict[str, Any]
     options: ExecutionOptions = field(default_factory=ExecutionOptions)
     trace_id: str | None = None
+    channel: str | None = None
 
 
 @dataclass
@@ -168,6 +174,7 @@ class ExecutionContext:
     parent_skill_id: str | None = None
     lineage: tuple[str, ...] = ()
     trace_id: str | None = None
+    channel: str | None = None
 
 
 @dataclass(frozen=True)

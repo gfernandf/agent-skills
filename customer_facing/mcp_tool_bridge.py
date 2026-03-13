@@ -49,6 +49,7 @@ class MCPToolBridge:
                         "trace_id": {"type": "string"},
                         "include_trace": {"type": "boolean"},
                         "required_conformance_profile": {"type": "string"},
+                        "audit_mode": {"type": "string"},
                     },
                 },
             },
@@ -111,6 +112,12 @@ class MCPToolBridge:
                     if isinstance(args.get("required_conformance_profile"), str)
                     else None
                 ),
+                audit_mode=(
+                    args.get("audit_mode")
+                    if isinstance(args.get("audit_mode"), str)
+                    else None
+                ),
+                execution_channel="mcp",
             )
 
         if name == "capability.execute":
