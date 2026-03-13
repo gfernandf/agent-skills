@@ -1,0 +1,10 @@
+{
+  "skills": {
+    "text.simple-summarize": {
+      "contract_passed": true,
+      "smoke_passed": true,
+      "review_passed": true,
+      "control_points_passed": true
+    }
+  }
+}

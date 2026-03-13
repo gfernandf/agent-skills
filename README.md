@@ -39,6 +39,60 @@ Verifications:
 This uses an in-process MCP server adapter to validate the runtime MCP path end to end
 before broader external MCP service rollout.
 
+## OpenAI Access (Local Runtime)
+
+An experimental official OpenAPI service/binding is available for `text.summarize`
+using OpenAI Chat Completions.
+
+- Service: `services/official/text_openai_chat.yaml`
+- Binding: `bindings/official/text.summarize/openapi_text_summarize_openai_chat.yaml`
+- Verifier: `python tooling/verify_openai_text_summarize.py`
+
+Credentials are resolved from the local environment at runtime:
+
+- `OPENAI_API_KEY`
+
+PowerShell example:
+
+```powershell
+$env:OPENAI_API_KEY = "<your-key>"
+python tooling/verify_openai_text_summarize.py
+```
+
+This flow does not change official default selection yet; it validates access and
+binding behavior before capability-by-capability default promotion.
+
+## Skill Governance Catalog (Cold Start + Field Maturity)
+
+The runtime now supports an operational quality catalog that is separate from the
+registry source definitions.
+
+- Builder: `python tooling/build_skill_quality_catalog.py`
+- Output: `artifacts/skill_quality.json`
+
+Optional evidence inputs (if present):
+
+- `artifacts/skill_lab_validation.json`
+- `artifacts/skill_usage_30d.json`
+- `artifacts/skill_feedback_30d.json`
+
+Example templates are provided:
+
+- `tooling/examples/skill_lab_validation.example.json`
+- `tooling/examples/skill_usage_30d.example.json`
+- `tooling/examples/skill_feedback_30d.example.json`
+
+Lifecycle states:
+
+- `draft`
+- `validated`
+- `lab-verified`
+- `trusted`
+- `recommended`
+
+Cold-start behavior is explicit: without field usage data, skills can still be
+classified using internal evidence and readiness scoring.
+
 ## Documentation Index
 
 - Current project closure snapshot: `docs/PROJECT_STATUS.md`

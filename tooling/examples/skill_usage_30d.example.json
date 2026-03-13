@@ -1,0 +1,11 @@
+{
+  "skills": {
+    "text.simple-summarize": {
+      "executions_30d": 80,
+      "successes_30d": 78,
+      "timeouts_30d": 1,
+      "p50_duration_ms": 750,
+      "p95_duration_ms": 1800
+    }
+  }
+}

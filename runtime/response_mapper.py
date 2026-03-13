@@ -119,6 +119,23 @@ class ResponseMapper:
                 current = current[part]
                 continue
 
+            if isinstance(current, list):
+                if not part.isdigit():
+                    raise ResponseMappingError(
+                        f"Binding '{binding.id}' cannot resolve 'response.{field_path}' because '{part}' is not a valid list index.",
+                        capability_id=binding.capability_id,
+                    )
+
+                index = int(part)
+                if index < 0 or index >= len(current):
+                    raise ResponseMappingError(
+                        f"Binding '{binding.id}' references out-of-range list index '{part}' in 'response.{field_path}'.",
+                        capability_id=binding.capability_id,
+                    )
+
+                current = current[index]
+                continue
+
             raise ResponseMappingError(
                 f"Binding '{binding.id}' cannot resolve 'response.{field_path}' because '{part}' is accessed on a non-mapping value.",
                 capability_id=binding.capability_id,

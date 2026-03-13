@@ -42,6 +42,26 @@ Implemented and active:
 
 See docs/OBSERVABILITY.md for full details.
 
+## Skill Governance Status
+
+Implemented baseline:
+
+- Operational skill quality catalog generator: `tooling/build_skill_quality_catalog.py`
+- Output artifact separated from registry source: `artifacts/skill_quality.json`
+- Cold-start support through internal readiness scoring and `lab-verified` lifecycle path
+- Field maturity path through optional usage and feedback evidence inputs
+
+Optional evidence files:
+
+- `artifacts/skill_lab_validation.json`
+- `artifacts/skill_usage_30d.json`
+- `artifacts/skill_feedback_30d.json`
+
+Current default behavior without evidence files:
+
+- Skills receive internal-evidence classification and readiness-based lifecycle state
+- This avoids forcing all skills into low-confidence labels during initial rollout
+
 ## CI Status
 
 Current workflow gates:

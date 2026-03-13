@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 import time
 from typing import Any
 
@@ -27,6 +29,7 @@ class OpenAPIInvoker:
 
     DEFAULT_TIMEOUT_SECONDS = 30.0
     ALLOWED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+    _ENV_PLACEHOLDER = re.compile(r"\$\{([A-Z][A-Z0-9_]*)\}")
 
     def invoke(self, request: InvocationRequest) -> InvocationResponse:
         start_time = time.perf_counter()
@@ -201,9 +204,44 @@ class OpenAPIInvoker:
                     f"OpenAPI {source} header '{key}' must have a string value.",
                     capability_id=capability_id,
                 )
-            normalized[key] = value
+            normalized[key] = self._resolve_env_placeholders(
+                value=value,
+                header_key=key,
+                source=source,
+                capability_id=capability_id,
+            )
 
         return normalized
+
+    def _resolve_env_placeholders(
+        self,
+        *,
+        value: str,
+        header_key: str,
+        source: str,
+        capability_id: str | None,
+    ) -> str:
+        """
+        Resolve ${ENV_VAR} placeholders in header values.
+
+        Example:
+            Authorization: "Bearer ${OPENAI_API_KEY}"
+        """
+
+        def _replace(match: re.Match[str]) -> str:
+            env_name = match.group(1)
+            env_value = os.getenv(env_name)
+            if env_value is None:
+                raise OpenAPIInvocationError(
+                    (
+                        f"OpenAPI {source} header '{header_key}' references "
+                        f"missing environment variable '{env_name}'."
+                    ),
+                    capability_id=capability_id,
+                )
+            return env_value
+
+        return self._ENV_PLACEHOLDER.sub(_replace, value)
 
     def _resolve_response_mode(self, raw_mode: Any, capability_id: str | None) -> str:
         if not isinstance(raw_mode, str) or not raw_mode:

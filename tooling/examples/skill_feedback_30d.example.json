@@ -1,0 +1,10 @@
+{
+  "skills": {
+    "text.simple-summarize": {
+      "rating_avg": 4.4,
+      "rating_count": 26,
+      "reports_30d": 1,
+      "severe_reports_30d": 0
+    }
+  }
+}
