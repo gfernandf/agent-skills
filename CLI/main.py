@@ -39,6 +39,7 @@ from runtime.openrpc_invoker import OpenRPCInvoker
 from runtime.mcp_invoker import MCPInvoker
 from runtime.pythoncall_invoker import PythonCallInvoker
 from runtime.engine_factory import build_runtime_components
+from runtime.models import ExecutionOptions, ExecutionRequest
 
 
 def main() -> None:
@@ -57,6 +58,12 @@ def main() -> None:
     run_cmd.add_argument("--input", default=None)
     run_cmd.add_argument("--input-file", default=None)
     run_cmd.add_argument("--trace-id", default=None, help="Optional trace id for correlation")
+    run_cmd.add_argument(
+        "--required-conformance-profile",
+        choices=["strict", "standard", "experimental"],
+        default=None,
+        help="Optional minimum conformance profile for all capabilities executed by this run.",
+    )
     add_root_args(run_cmd)
 
     describe_cmd = sub.add_parser("describe", help="Describe a skill")
@@ -72,7 +79,23 @@ def main() -> None:
     trace_cmd.add_argument("--input", default=None)
     trace_cmd.add_argument("--input-file", default=None)
     trace_cmd.add_argument("--trace-id", default=None, help="Optional trace id for correlation")
+    trace_cmd.add_argument(
+        "--required-conformance-profile",
+        choices=["strict", "standard", "experimental"],
+        default=None,
+        help="Optional minimum conformance profile for all capabilities executed by this run.",
+    )
     add_root_args(trace_cmd)
+
+    explain_cap_cmd = sub.add_parser("explain-capability", help="Explain effective binding resolution and conformance chain")
+    explain_cap_cmd.add_argument("capability_id")
+    explain_cap_cmd.add_argument(
+        "--required-conformance-profile",
+        choices=["strict", "standard", "experimental"],
+        default=None,
+        help="Optional minimum conformance profile used for eligibility planning.",
+    )
+    add_root_args(explain_cap_cmd)
 
     doctor_cmd = sub.add_parser("doctor", help="Run system health checks")
     add_root_args(doctor_cmd)
@@ -119,6 +142,7 @@ def main() -> None:
             args.input,
             args.input_file,
             args.trace_id,
+            args.required_conformance_profile,
         )
 
     elif args.command == "describe":
@@ -139,6 +163,17 @@ def main() -> None:
             args.input,
             args.input_file,
             args.trace_id,
+            args.required_conformance_profile,
+        )
+
+    elif args.command == "explain-capability":
+
+        _cmd_explain_capability(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.capability_id,
+            args.required_conformance_profile,
         )
 
     elif args.command == "doctor":
@@ -203,6 +238,7 @@ def _cmd_run(
     input_json: str | None,
     input_file: str | None,
     trace_id: str | None,
+    required_conformance_profile: str | None,
 ) -> None:
 
     if input_json and input_file:
@@ -223,11 +259,10 @@ def _cmd_run(
 
     engine = _build_engine(registry_root, runtime_root, host_root)
 
-    from runtime.models import ExecutionRequest
-
     request = ExecutionRequest(
         skill_id=skill_id,
         inputs=inputs,
+        options=ExecutionOptions(required_conformance_profile=required_conformance_profile),
         trace_id=trace_id,
     )
 
@@ -266,6 +301,7 @@ def _cmd_trace(
     input_json: str | None,
     input_file: str | None,
     trace_id: str | None,
+    required_conformance_profile: str | None,
 ) -> None:
     print("DEBUG: _cmd_trace called")
 
@@ -287,11 +323,10 @@ def _cmd_trace(
 
     engine = _build_engine(registry_root, runtime_root, host_root)
 
-    from runtime.models import ExecutionRequest
-
     request = ExecutionRequest(
         skill_id=skill_id,
         inputs=inputs,
+        options=ExecutionOptions(required_conformance_profile=required_conformance_profile),
         trace_id=trace_id,
     )
 
@@ -496,3 +531,28 @@ def _build_engine(
         mcp_client_registry=None,
     )
     return components.engine
+
+
+def _cmd_explain_capability(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    capability_id: str,
+    required_conformance_profile: str | None,
+) -> None:
+    from customer_facing.neutral_api import NeutralRuntimeAPI
+
+    api = NeutralRuntimeAPI(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+    )
+    explanation = api.explain_capability_resolution(
+        capability_id,
+        required_conformance_profile=required_conformance_profile,
+    )
+    print(json.dumps(explanation, indent=2, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
