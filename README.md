@@ -109,6 +109,7 @@ classified using internal evidence and readiness scoring.
 - OpenAPI error and security baseline: `docs/OPENAPI_ERROR_SECURITY_BASELINE.md`
 - **Consumer-facing neutral API (HTTP + MCP adapters)**: `docs/CONSUMER_FACING_NEUTRAL_API.md`
 - **MCP integration rollout slices and verification**: `docs/MCP_INTEGRATION_SLICES.md`
+- **Skill governance manifesto (trust model + architecture changes)**: `docs/SKILL_GOVERNANCE_MANIFESTO.md`
 
 ---
 
