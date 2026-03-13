@@ -62,6 +62,18 @@ python tooling/verify_openai_text_summarize.py
 This flow does not change official default selection yet; it validates access and
 binding behavior before capability-by-capability default promotion.
 
+## Binding Fallback Policy (Runtime)
+
+Execution now applies a deterministic fallback chain per capability:
+
+1. Resolved primary binding (user override or official default).
+2. Optional `metadata.fallback_binding_id` chain declared by bindings.
+3. Mandatory terminal fallback to the official default binding.
+
+Verifier:
+
+- `python tooling/verify_binding_fallback_policy.py`
+
 ## Skill Governance Catalog (Cold Start + Field Maturity)
 
 The runtime now supports an operational quality catalog that is separate from the

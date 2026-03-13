@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from runtime.binding_models import InvocationRequest, InvocationResponse
 from runtime.binding_registry import BindingRegistry
 from runtime.binding_resolver import BindingResolver
@@ -61,45 +63,109 @@ class BindingExecutor:
 
         capability_id = capability.id
 
-        try:
-            resolved = self.binding_resolver.resolve(capability_id)
+        resolved = self.binding_resolver.resolve(capability_id)
+        chain = self._build_fallback_chain(
+            capability_id=capability_id,
+            primary_binding_id=resolved.binding_id,
+        )
 
-            binding = self.binding_registry.get_binding(resolved.binding_id)
+        attempts: list[dict[str, Any]] = []
+        last_error: Exception | None = None
 
-            service = self.service_resolver.resolve(binding.service_id)
+        for index, binding_id in enumerate(chain):
+            try:
+                binding = self.binding_registry.get_binding(binding_id)
+                service = self.service_resolver.resolve(binding.service_id)
 
-            payload = self.request_builder.build(
-                binding=binding,
-                step_input=step_input,
-            )
+                payload = self.request_builder.build(
+                    binding=binding,
+                    step_input=step_input,
+                )
 
-            invocation = InvocationRequest(
-                protocol=binding.protocol,
-                service=service,
-                binding=binding,
-                operation_id=binding.operation_id,
-                payload=payload,
-                context_metadata={
-                    "capability_id": capability_id,
+                invocation = InvocationRequest(
+                    protocol=binding.protocol,
+                    service=service,
+                    binding=binding,
+                    operation_id=binding.operation_id,
+                    payload=payload,
+                    context_metadata={
+                        "capability_id": capability_id,
+                        "binding_id": binding.id,
+                        "service_id": service.id,
+                    },
+                )
+
+                response: InvocationResponse = self.protocol_router.invoke(invocation)
+
+                mapped_output = self.response_mapper.map(
+                    binding=binding,
+                    invocation_response=response,
+                )
+
+                attempts.append({"binding_id": binding.id, "service_id": service.id, "status": "success"})
+
+                return mapped_output, {
                     "binding_id": binding.id,
                     "service_id": service.id,
-                },
-            )
+                    "fallback_used": index > 0,
+                    "fallback_chain": list(chain),
+                    "attempts": attempts,
+                }
 
+            except Exception as e:
+                last_error = e
+                attempts.append(
+                    {
+                        "binding_id": binding_id,
+                        "status": "failed",
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                    }
+                )
+                continue
 
-            response: InvocationResponse = self.protocol_router.invoke(invocation)
-
-            mapped_output = self.response_mapper.map(
-                binding=binding,
-                invocation_response=response,
-            )
-
-            # return outputs along with metadata for later tracing
-            return mapped_output, {"binding_id": binding.id, "service_id": service.id}
-
-        except Exception as e:
+        if last_error is not None:
             raise BindingExecutionError(
-                f"Binding execution failed for capability '{capability_id}'.",
+                (
+                    f"Binding execution failed for capability '{capability_id}' after "
+                    f"{len(chain)} attempt(s)."
+                ),
                 capability_id=capability_id,
-                cause=e,
-            ) from e
+                cause=last_error,
+            ) from last_error
+
+        raise BindingExecutionError(
+            f"No executable binding candidates for capability '{capability_id}'.",
+            capability_id=capability_id,
+        )
+
+    def _build_fallback_chain(self, *, capability_id: str, primary_binding_id: str) -> list[str]:
+        """
+        Build deterministic fallback chain:
+
+        1. resolved primary binding
+        2. optional binding metadata fallback_binding_id chain
+        3. mandatory terminal official default binding
+        """
+        chain: list[str] = []
+        visited: set[str] = set()
+
+        current_id = primary_binding_id
+        while current_id and current_id not in visited:
+            binding = self.binding_registry.get_binding(current_id)
+            if binding.capability_id != capability_id:
+                break
+
+            chain.append(current_id)
+            visited.add(current_id)
+
+            raw_next = binding.metadata.get("fallback_binding_id") if isinstance(binding.metadata, dict) else None
+            if not isinstance(raw_next, str) or not raw_next:
+                break
+            current_id = raw_next
+
+        default_binding_id = self.binding_registry.get_official_default_binding_id(capability_id)
+        if isinstance(default_binding_id, str) and default_binding_id and default_binding_id not in visited:
+            chain.append(default_binding_id)
+
+        return chain

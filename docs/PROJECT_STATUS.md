@@ -50,6 +50,8 @@ Implemented baseline:
 - Output artifact separated from registry source: `artifacts/skill_quality.json`
 - Cold-start support through internal readiness scoring and `lab-verified` lifecycle path
 - Field maturity path through optional usage and feedback evidence inputs
+- Runtime binding fallback policy with mandatory official default terminal fallback
+- Fallback policy verifier: `tooling/verify_binding_fallback_policy.py`
 
 Optional evidence files:
 
