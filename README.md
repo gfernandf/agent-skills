@@ -74,6 +74,22 @@ Verifier:
 
 - `python tooling/verify_binding_fallback_policy.py`
 
+## Binding Conformance Layer
+
+Bindings may declare metadata profile:
+
+- `conformance_profile: strict|standard|experimental`
+
+Behavior:
+
+- Missing profile defaults to `standard`.
+- Invalid profile values are rejected at binding load time.
+- Effective profile is exposed in execution metadata for tracing/explainability.
+
+Verifier:
+
+- `python tooling/verify_binding_conformance_layer.py`
+
 ## Skill Governance Catalog (Cold Start + Field Maturity)
 
 The runtime now supports an operational quality catalog that is separate from the

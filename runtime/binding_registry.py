@@ -35,6 +35,8 @@ class BindingRegistry:
         self._services_by_id: dict[str, ServiceDescriptor] = {}
         self._official_defaults: dict[str, str] = {}
 
+        self._allowed_conformance_profiles = {"strict", "standard", "experimental"}
+
         self._load_all()
 
     def get_binding(self, binding_id: str) -> BindingSpec:
@@ -367,6 +369,18 @@ class BindingRegistry:
             raise BindingRegistryError(
                 f"Binding '{binding_id}' in '{relpath}' field 'metadata' must be a mapping if present."
             )
+
+        conformance_profile = metadata.get("conformance_profile")
+        if conformance_profile is not None:
+            if not isinstance(conformance_profile, str) or not conformance_profile:
+                raise BindingRegistryError(
+                    f"Binding '{binding_id}' in '{relpath}' metadata.conformance_profile must be a non-empty string if present."
+                )
+            if conformance_profile not in self._allowed_conformance_profiles:
+                allowed = ", ".join(sorted(self._allowed_conformance_profiles))
+                raise BindingRegistryError(
+                    f"Binding '{binding_id}' in '{relpath}' has invalid metadata.conformance_profile '{conformance_profile}'. Allowed values: {allowed}."
+                )
 
         normalized_response_mapping: dict[str, str] = {}
         for output_name, response_ref in response_mapping.items():

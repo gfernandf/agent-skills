@@ -48,6 +48,10 @@ class QualityGate:
             self._validate_required_outputs(binding, capability)
         )
 
+        issues.extend(
+            self._validate_conformance_profile(binding)
+        )
+
         return issues
 
     def _validate_service_shape(self, service: ServiceDescriptor) -> list[str]:
@@ -139,5 +143,26 @@ class QualityGate:
                     f"Binding '{binding.id}' does not map required capability output "
                     f"'{output_name}'."
                 )
+
+        return issues
+
+    def _validate_conformance_profile(self, binding: BindingSpec) -> list[str]:
+        issues: list[str] = []
+        allowed = {"strict", "standard", "experimental"}
+
+        profile = binding.metadata.get("conformance_profile") if isinstance(binding.metadata, dict) else None
+        if profile is None:
+            return issues
+
+        if not isinstance(profile, str) or not profile:
+            issues.append(
+                f"Binding '{binding.id}' metadata.conformance_profile must be a non-empty string if present."
+            )
+            return issues
+
+        if profile not in allowed:
+            issues.append(
+                f"Binding '{binding.id}' metadata.conformance_profile '{profile}' is invalid. Allowed: {', '.join(sorted(allowed))}."
+            )
 
         return issues

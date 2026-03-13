@@ -73,9 +73,11 @@ class BindingExecutor:
         last_error: Exception | None = None
 
         for index, binding_id in enumerate(chain):
+            conformance_profile = "standard"
             try:
                 binding = self.binding_registry.get_binding(binding_id)
                 service = self.service_resolver.resolve(binding.service_id)
+                conformance_profile = self._resolve_conformance_profile(binding.metadata)
 
                 payload = self.request_builder.build(
                     binding=binding,
@@ -102,11 +104,19 @@ class BindingExecutor:
                     invocation_response=response,
                 )
 
-                attempts.append({"binding_id": binding.id, "service_id": service.id, "status": "success"})
+                attempts.append(
+                    {
+                        "binding_id": binding.id,
+                        "service_id": service.id,
+                        "status": "success",
+                        "conformance_profile": conformance_profile,
+                    }
+                )
 
                 return mapped_output, {
                     "binding_id": binding.id,
                     "service_id": service.id,
+                    "conformance_profile": conformance_profile,
                     "fallback_used": index > 0,
                     "fallback_chain": list(chain),
                     "attempts": attempts,
@@ -118,6 +128,7 @@ class BindingExecutor:
                     {
                         "binding_id": binding_id,
                         "status": "failed",
+                        "conformance_profile": conformance_profile,
                         "error_type": type(e).__name__,
                         "error_message": str(e),
                     }
@@ -169,3 +180,11 @@ class BindingExecutor:
             chain.append(default_binding_id)
 
         return chain
+
+    def _resolve_conformance_profile(self, metadata: dict[str, Any] | None) -> str:
+        if not isinstance(metadata, dict):
+            return "standard"
+        profile = metadata.get("conformance_profile")
+        if isinstance(profile, str) and profile:
+            return profile
+        return "standard"
