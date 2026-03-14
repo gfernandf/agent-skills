@@ -54,12 +54,24 @@ def build_runtime_components(
 ) -> RuntimeComponents:
     registry_skill_loader = YamlSkillLoader(registry_root)
 
+    def _resolve_local_overlay_repo_root(path: Path) -> Path:
+        # YamlSkillLoader expects repo_root containing a top-level `skills/` directory.
+        # Users typically pass `<runtime>/skills/local`; convert that to `<runtime>`.
+        p = path.resolve()
+        if p.name == "local" and p.parent.name == "skills":
+            return p.parent.parent
+        if (p / "skills").is_dir():
+            return p
+        # Best-effort fallback: use runtime_root, which contains `skills/local` by convention.
+        return runtime_root
+
     # If a local skills directory exists (or was explicitly provided), layer it
     # on top of the registry so local/user skills take resolution priority.
     resolved_local = local_skills_root or (runtime_root / "skills" / "local")
     if resolved_local.exists() and any(resolved_local.iterdir()):
+        local_repo_root = _resolve_local_overlay_repo_root(resolved_local)
         skill_loader: YamlSkillLoader | CompositeSkillLoader = CompositeSkillLoader(
-            [YamlSkillLoader(resolved_local.parent), registry_skill_loader]
+            [YamlSkillLoader(local_repo_root), registry_skill_loader]
         )
     else:
         skill_loader = registry_skill_loader

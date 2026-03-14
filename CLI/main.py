@@ -677,6 +677,8 @@ def _cmd_package_pr(
         "dry_run": dry_run,
         "steps": [],
     }
+    branch_created = False
+    original_branch: str | None = None
 
     def _record_step(name: str, ok: bool, detail: str | None = None) -> None:
         step = {"name": name, "ok": ok}
@@ -685,9 +687,31 @@ def _cmd_package_pr(
         result_payload["steps"].append(step)
 
     def _finish_with_error(message: str, exit_code: int = 2) -> None:
+        cleanup_notes: list[str] = []
+
+        if branch_created:
+            if original_branch:
+                cp_checkout = _run(["git", "checkout", original_branch])
+                if cp_checkout.returncode == 0:
+                    cleanup_notes.append(f"checked out original branch '{original_branch}'")
+                else:
+                    cleanup_notes.append(
+                        "failed to return to original branch before cleanup"
+                    )
+
+            cp_delete = _run(["git", "branch", "-D", branch_name])
+            if cp_delete.returncode == 0:
+                cleanup_notes.append(f"deleted temporary branch '{branch_name}'")
+            else:
+                cleanup_notes.append(
+                    f"failed to delete temporary branch '{branch_name}'"
+                )
+
         result_payload["ok"] = False
         result_payload["error"] = message
         _record_step("error", False, message)
+        if cleanup_notes:
+            result_payload["cleanup"] = cleanup_notes
         if json_output:
             print(json.dumps(result_payload, indent=2, ensure_ascii=False))
             raise SystemExit(exit_code)
@@ -800,9 +824,26 @@ def _cmd_package_pr(
             "registry repo has uncommitted changes; commit/stash them first"
         )
 
-    # Create branch from current HEAD.
-    cp = _run(["git", "checkout", "-b", branch_name])
+    cp = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+    _require_ok(cp, "resolve current branch")
+    original_branch = (cp.stdout or "").strip() or None
+
+    cp = _run(["git", "rev-parse", "--verify", base])
+    _require_ok(cp, f"resolve base branch '{base}'")
+
+    cp = _run(["git", "checkout", base])
+    _require_ok(cp, f"checkout base branch '{base}'")
+
+    cp = _run(["git", "rev-parse", "--verify", branch_name])
+    if cp.returncode == 0:
+        _finish_with_error(
+            f"target branch '{branch_name}' already exists locally"
+        )
+
+    # Create branch explicitly from base.
+    cp = _run(["git", "checkout", "-b", branch_name, base])
     _require_ok(cp, "branch creation")
+    branch_created = True
 
     target_abs.parent.mkdir(parents=True, exist_ok=True)
     target_abs.write_text(payload_skill.read_text(encoding="utf-8"), encoding="utf-8")
@@ -810,9 +851,9 @@ def _cmd_package_pr(
 
     # Run required governance checks before PR creation.
     for cmd, label in [
-        (["python", "tools/validate_registry.py"], "validate_registry"),
-        (["python", "tools/generate_catalog.py"], "generate_catalog"),
-        (["python", "tools/governance_guardrails.py"], "governance_guardrails"),
+        ([sys.executable, "tools/validate_registry.py"], "validate_registry"),
+        ([sys.executable, "tools/generate_catalog.py"], "generate_catalog"),
+        ([sys.executable, "tools/governance_guardrails.py"], "governance_guardrails"),
     ]:
         cp = _run(cmd)
         _require_ok(cp, label)

@@ -170,6 +170,41 @@ Lifecycle states:
 Cold-start behavior is explicit: without field usage data, skills can still be
 classified using internal evidence and readiness scoring.
 
+## Local-to-Registry Workflow (User UX)
+
+The platform now supports a complete local-first workflow so users can iterate
+privately and only request officialization when they are ready.
+
+1. Generate a local skill from plain language:
+
+```powershell
+python skills.py scaffold "summarize incoming support email and store summary in memory"
+```
+
+2. Prepare a promotion package:
+
+```powershell
+python skills.py package-prepare --skill-id text.summarize-incoming-support --target-channel experimental
+```
+
+3. Validate package quality and governance readiness:
+
+```powershell
+python skills.py package-validate "<package_path>" --print-pr-command
+```
+
+4. Launch a PR in one command (after validation):
+
+```powershell
+python skills.py package-pr "<package_path>"
+```
+
+All package workflow commands support machine-readable output for UI/backend orchestration:
+
+- `python skills.py package-prepare ... --json`
+- `python skills.py package-validate ... --json`
+- `python skills.py package-pr ... --json`
+
 ## Documentation Index
 
 - Current project closure snapshot: `docs/PROJECT_STATUS.md`
