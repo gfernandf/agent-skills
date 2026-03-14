@@ -270,7 +270,7 @@ The goal is to make agent capabilities **reliable, composable, and production-re
 
 # Core Concepts
 
-The registry defines two fundamental building blocks.
+The runtime executes two fundamental building blocks defined in the registry.
 
 ## Capabilities
 

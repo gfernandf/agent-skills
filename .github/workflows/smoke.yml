@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       run_full_batch:
-        description: "Run full 33/33 batch verification"
+        description: "Run full capability batch verification"
         required: false
         default: false
         type: boolean
