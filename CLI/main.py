@@ -248,6 +248,11 @@ def main() -> None:
         action="store_true",
         help="Print planned operations but do not run git/gh commands.",
     )
+    package_pr_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
+    )
     add_root_args(package_pr_cmd)
 
     openapi_cmd = sub.add_parser("openapi", help="Run OpenAPI verification and diagnostics")
@@ -399,6 +404,7 @@ def main() -> None:
             args.base,
             args.draft,
             args.dry_run,
+            args.json,
         )
 
     elif args.command == "openapi":
@@ -585,42 +591,90 @@ def _cmd_package_pr(
     base: str,
     draft: bool,
     dry_run: bool,
+    json_output: bool,
 ) -> None:
+    result_payload: dict[str, object] = {
+        "ok": False,
+        "command": "package-pr",
+        "dry_run": dry_run,
+        "steps": [],
+    }
+
+    def _record_step(name: str, ok: bool, detail: str | None = None) -> None:
+        step = {"name": name, "ok": ok}
+        if detail:
+            step["detail"] = detail
+        result_payload["steps"].append(step)
+
+    def _finish_with_error(message: str, exit_code: int = 2) -> None:
+        result_payload["ok"] = False
+        result_payload["error"] = message
+        _record_step("error", False, message)
+        if json_output:
+            print(json.dumps(result_payload, indent=2, ensure_ascii=False))
+            raise SystemExit(exit_code)
+        raise SystemExit(message)
+
+    def _finish_success() -> None:
+        result_payload["ok"] = True
+        if json_output:
+            print(json.dumps(result_payload, indent=2, ensure_ascii=False))
+
     # Always validate package before any git/gh side effects.
     validation = validate_officialization_package(
         package_root=package_path,
         registry_root=registry_root,
     )
+    result_payload["validation"] = {
+        "errors": validation.errors,
+        "warnings": validation.warnings,
+        "skill_id": validation.skill_id,
+        "target_channel": validation.target_channel,
+    }
     if validation.errors:
-        print("[package-pr] Validation errors:")
-        for err in validation.errors:
-            print(f"  - {err}")
-        raise SystemExit(2)
+        if not json_output:
+            print("[package-pr] Validation errors:")
+            for err in validation.errors:
+                print(f"  - {err}")
+        _finish_with_error("package validation failed", exit_code=2)
+    _record_step("validate_package", True)
 
     if not validation.skill_id or not validation.target_channel:
-        raise SystemExit("[package-pr] Missing skill_id or target_channel in package manifest.")
+        _finish_with_error("missing skill_id or target_channel in package manifest")
 
     skill_id = validation.skill_id
     target_channel = validation.target_channel
     if "." not in skill_id:
-        raise SystemExit(f"[package-pr] Invalid skill id in package: {skill_id}")
+        _finish_with_error(f"invalid skill id in package: {skill_id}")
     domain, slug = skill_id.split(".", 1)
 
     repo_root = registry_repo_root or registry_root
     if not repo_root.exists():
-        raise SystemExit(f"[package-pr] registry repo root does not exist: {repo_root}")
+        _finish_with_error(f"registry repo root does not exist: {repo_root}")
 
     payload_skill = package_path / "payload" / "skills" / target_channel / domain / slug / "skill.yaml"
     if not payload_skill.exists():
-        raise SystemExit(f"[package-pr] Missing payload skill: {payload_skill}")
+        _finish_with_error(f"missing payload skill: {payload_skill}")
 
     pr_template = package_path / "pr_body_template.md"
     if not pr_template.exists():
-        raise SystemExit(f"[package-pr] Missing PR template file: {pr_template}")
+        _finish_with_error(f"missing PR template file: {pr_template}")
 
     target_rel = Path("skills") / target_channel / domain / slug / "skill.yaml"
     target_abs = repo_root / target_rel
     branch_name = f"promote/{target_channel}/{skill_id}".replace(".", "-")
+
+    result_payload["plan"] = {
+        "repo_root": str(repo_root),
+        "branch": branch_name,
+        "skill_id": skill_id,
+        "target_channel": target_channel,
+        "target_file": str(target_abs),
+        "remote": remote,
+        "base": base,
+        "draft": draft,
+        "package_path": str(package_path),
+    }
 
     def _run(cmd: list[str]) -> subprocess.CompletedProcess:
         return subprocess.run(cmd, cwd=repo_root, check=False, text=True, capture_output=True)
@@ -628,17 +682,24 @@ def _cmd_package_pr(
     def _require_ok(cp: subprocess.CompletedProcess, label: str) -> None:
         if cp.returncode != 0:
             detail = (cp.stderr or cp.stdout or "").strip()
-            raise SystemExit(f"[package-pr] {label} failed: {detail}")
+            _finish_with_error(f"{label} failed: {detail}")
+        _record_step(label, True)
 
-    print("[package-pr] Plan")
-    print(f"  Repo root    : {repo_root}")
-    print(f"  Branch       : {branch_name}")
-    print(f"  Skill        : {skill_id}")
-    print(f"  Target file  : {target_abs}")
-    print(f"  Remote/base  : {remote} / {base}")
+    if not json_output:
+        print("[package-pr] Plan")
+        print(f"  Repo root    : {repo_root}")
+        print(f"  Branch       : {branch_name}")
+        print(f"  Skill        : {skill_id}")
+        print(f"  Target file  : {target_abs}")
+        print(f"  Remote/base  : {remote} / {base}")
 
     if dry_run:
-        print("[package-pr] Dry-run enabled. No git/gh commands executed.")
+        _record_step("dry_run", True, "No git/gh commands executed")
+        result_payload["ok"] = True
+        if json_output:
+            print(json.dumps(result_payload, indent=2, ensure_ascii=False))
+        else:
+            print("[package-pr] Dry-run enabled. No git/gh commands executed.")
         return
 
     # Pre-flight checks.
@@ -657,9 +718,8 @@ def _cmd_package_pr(
     status = _run(["git", "status", "--porcelain"])
     _require_ok(status, "git status")
     if status.stdout.strip():
-        raise SystemExit(
-            "[package-pr] Registry repo has uncommitted changes. "
-            "Commit/stash them first to avoid mixing unrelated changes."
+        _finish_with_error(
+            "registry repo has uncommitted changes; commit/stash them first"
         )
 
     # Create branch from current HEAD.
@@ -668,6 +728,7 @@ def _cmd_package_pr(
 
     target_abs.parent.mkdir(parents=True, exist_ok=True)
     target_abs.write_text(payload_skill.read_text(encoding="utf-8"), encoding="utf-8")
+    _record_step("apply_payload", True, str(target_abs))
 
     # Run required governance checks before PR creation.
     for cmd, label in [
@@ -704,9 +765,21 @@ def _cmd_package_pr(
     cp = _run(pr_cmd)
     _require_ok(cp, "gh pr create")
 
-    print("[package-pr] PR created successfully.")
-    if cp.stdout.strip():
-        print(cp.stdout.strip())
+    pr_output = (cp.stdout or "").strip()
+    result_payload["pr"] = {
+        "title": f"Promote {skill_id} to {target_channel}",
+        "base": base,
+        "remote": remote,
+        "draft": draft,
+        "output": pr_output,
+    }
+
+    if not json_output:
+        print("[package-pr] PR created successfully.")
+        if pr_output:
+            print(pr_output)
+
+    _finish_success()
 
 
 def _cmd_openapi(args, runtime_root: Path) -> None:
