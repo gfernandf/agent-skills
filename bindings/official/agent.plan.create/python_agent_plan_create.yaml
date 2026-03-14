@@ -1,0 +1,24 @@
+id: python_skill_generate_from_prompt
+
+capability: agent.plan.create
+service: scaffold_service
+protocol: pythoncall
+operation: generate_skill_from_prompt
+
+request:
+  intent_description: input.intent_description
+  registry_root: input.registry_root
+  target_channel: input.target_channel
+
+response:
+  skill_yaml: response.skill_yaml
+  suggested_id: response.suggested_id
+  capabilities_used: response.capabilities_used
+  validation_errors: response.validation_errors
+
+metadata:
+  description: >
+    Official pythoncall binding for agent.plan.create.
+    Uses the scaffold_service module which auto-detects the registry root
+    and selects LLM or template mode based on OPENAI_API_KEY availability.
+  status: experimental

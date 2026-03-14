@@ -1,0 +1,12 @@
+id: scaffold_service
+kind: pythoncall
+module: official_services.scaffold_service
+
+metadata:
+  description: >
+    Skill scaffold service. Generates valid skill YAML from a natural-language
+    intent description using the local capability catalog as context.
+    Operates in LLM mode (OpenAI) when OPENAI_API_KEY is set, otherwise
+    falls back to keyword-based template generation.
+  maintained_by: agent-skills
+  status: experimental

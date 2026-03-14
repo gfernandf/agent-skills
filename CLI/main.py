@@ -135,6 +135,38 @@ def main() -> None:
     doctor_cmd = sub.add_parser("doctor", help="Run system health checks")
     add_root_args(doctor_cmd)
 
+    scaffold_cmd = sub.add_parser(
+        "scaffold",
+        help="Generate a skill YAML from a natural-language intent description",
+    )
+    scaffold_cmd.add_argument(
+        "intent",
+        help="Plain-language description of the workflow to create.",
+    )
+    scaffold_cmd.add_argument(
+        "--channel",
+        choices=["local", "experimental", "community"],
+        default="local",
+        help="Target skill channel (default: local).",
+    )
+    scaffold_cmd.add_argument(
+        "--model",
+        default="gpt-4o-mini",
+        help="OpenAI model to use when OPENAI_API_KEY is set (default: gpt-4o-mini).",
+    )
+    scaffold_cmd.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print generated YAML to stdout without writing any file.",
+    )
+    scaffold_cmd.add_argument(
+        "--out-dir",
+        type=Path,
+        default=None,
+        help="Override output directory. Defaults to <local-skills-root>/<domain>/<slug>/.",
+    )
+    add_root_args(scaffold_cmd)
+
     openapi_cmd = sub.add_parser("openapi", help="Run OpenAPI verification and diagnostics")
     openapi_sub = openapi_cmd.add_subparsers(dest="openapi_command", required=True)
 
@@ -240,9 +272,95 @@ def main() -> None:
             args.all,
         )
 
+    elif args.command == "scaffold":
+
+        _cmd_scaffold(
+            registry_root,
+            runtime_root,
+            host_root,
+            local_skills_root,
+            args.intent,
+            args.channel,
+            args.model,
+            args.dry_run,
+            args.out_dir,
+        )
+
     elif args.command == "openapi":
 
         _cmd_openapi(args, runtime_root)
+
+
+def _cmd_scaffold(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    local_skills_root: Path | None,
+    intent: str,
+    channel: str,
+    model: str,
+    dry_run: bool,
+    out_dir: Path | None,
+) -> None:
+    import os
+
+    from official_services.scaffold_service import generate_skill_from_prompt
+
+    print(f"[scaffold] Generating skill for: {intent[:80]}{'...' if len(intent) > 80 else ''}")
+    has_key = bool(os.environ.get("OPENAI_API_KEY"))
+    print(f"[scaffold] Mode: {'LLM (OpenAI)' if has_key else 'template (no OPENAI_API_KEY found)'}")
+
+    result = generate_skill_from_prompt(
+        intent_description=intent,
+        registry_root=str(registry_root),
+        target_channel=channel,
+        model=model,
+    )
+
+    skill_yaml: str = result["skill_yaml"]
+    suggested_id: str = result["suggested_id"]
+    capabilities_used: list = result["capabilities_used"]
+    validation_errors: list = result["validation_errors"]
+
+    print(f"[scaffold] Suggested id   : {suggested_id}")
+    print(f"[scaffold] Capabilities   : {', '.join(capabilities_used) or '(none detected)'}")
+
+    if validation_errors:
+        print("[scaffold] Validation warnings:")
+        for err in validation_errors:
+            print(f"           - {err}")
+    else:
+        print("[scaffold] Validation     : OK")
+
+    if dry_run:
+        print("\n" + "=" * 60)
+        print(skill_yaml)
+        print("=" * 60)
+        return
+
+    # Determine output path
+    if out_dir:
+        target_dir = out_dir
+    else:
+        resolved_local = local_skills_root or (runtime_root / "skills" / "local")
+        # Parse domain and slug from suggested_id (domain.slug)
+        parts = suggested_id.split(".", 1)
+        domain = parts[0] if len(parts) >= 1 else "workflow"
+        slug = parts[1].replace(".", "-") if len(parts) >= 2 else "custom"
+        target_dir = resolved_local / domain / slug
+
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target_file = target_dir / "skill.yaml"
+
+    if target_file.exists():
+        print(f"[scaffold] WARNING: {target_file} already exists — overwriting.")
+
+    target_file.write_text(skill_yaml, encoding="utf-8")
+    print(f"[scaffold] Written to     : {target_file}")
+    print("[scaffold] Next steps:")
+    print(f"           1. Review and edit {target_file}")
+    print(f"           2. Run: skills run {suggested_id} --input '{{}}' to test")
+    print( "           3. Promote to experimental/ or community/ via PR when ready")
 
 
 def _cmd_openapi(args, runtime_root: Path) -> None:
