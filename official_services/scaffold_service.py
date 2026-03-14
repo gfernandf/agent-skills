@@ -217,12 +217,22 @@ def _rank_capabilities(
 
     def _cap_score(cap: dict[str, Any]) -> int:
         cap_id = cap.get("id", "")
+        cap_domain = cap_id.split(".")[0] if isinstance(cap_id, str) and "." in cap_id else ""
         cap_words = set(re.findall(r"[a-z]+", (cap_id + " " + cap.get("description", "")).lower()))
-        score = len(intent_words & cap_words)
+        lexical_overlap = len(intent_words & cap_words)
+        score = lexical_overlap
+
+        domain_match = cap_domain in mentioned_domains
+        if domain_match:
+            score += 3
+
+        # Penalize generic but unrelated capabilities.
+        if lexical_overlap == 0 and not domain_match:
+            score -= 4
 
         # Prefer capabilities whose primary input can be seeded from a text input.
         input_names = list((cap.get("inputs") or {}).keys())
-        if input_names:
+        if input_names and (lexical_overlap > 0 or domain_match):
             first_in = input_names[0]
             if first_in in {"text", "content", "query", "input", "document", "prompt"}:
                 score += 2
@@ -254,7 +264,7 @@ def _rank_capabilities(
             key=lambda x: -x[1],
         )
         for cap, score in scored:
-            if score == 0 and len(selected) >= 2:
+            if score <= 0 and len(selected) >= 2:
                 break
             selected.append(cap)
             seen_ids.add(cap.get("id", ""))
@@ -262,6 +272,36 @@ def _rank_capabilities(
                 break
 
     return selected[:top_n] if selected else capabilities[:3]
+
+
+def _infer_goal_capability_ids(intent: str) -> list[str]:
+    txt = intent.lower()
+    ordered_matches: list[tuple[tuple[str, ...], str]] = [
+        (("extract", "entity"), "text.entity.extract"),
+        (("extract", "entities"), "text.entity.extract"),
+        (("named", "entity"), "text.entity.extract"),
+        (("keyword",), "text.keyword.extract"),
+        (("keywords",), "text.keyword.extract"),
+        (("translate",), "text.translate"),
+        (("translation",), "text.translate"),
+        (("summarize",), "text.summarize"),
+        (("summary",), "text.summarize"),
+        (("detect", "language"), "text.language.detect"),
+        (("identify", "language"), "text.language.detect"),
+        (("sentiment",), "text.classify"),
+        (("classify",), "text.classify"),
+        (("classification",), "text.classify"),
+        (("categorize",), "text.classify"),
+        (("embed",), "text.embed"),
+        (("embedding",), "text.embed"),
+        (("extract", "text"), "text.extract"),
+    ]
+
+    goal_ids: list[str] = []
+    for keywords, cap_id in ordered_matches:
+        if all(keyword in txt for keyword in keywords) and cap_id not in goal_ids:
+            goal_ids.append(cap_id)
+    return goal_ids
 
 
 # ---------------------------------------------------------------------------
@@ -273,33 +313,57 @@ def _build_template_skill(
     suggested_id: str,
     matched_caps: list[dict[str, Any]],
     target_channel: str,
+    goal_capability_ids: list[str] | None = None,
 ) -> str:
     """Build a well-formed but stub skill YAML without an LLM."""
     parts = suggested_id.split(".", 1)
     slug = parts[1] if len(parts) > 1 else suggested_id
     name = slug.replace("-", " ").title()
 
-    selected_caps = _select_executable_template_caps(matched_caps, max_steps=4)
+    desired_output_type = _infer_desired_output_type(intent)
+    selected_caps = _select_executable_template_caps(
+        matched_caps,
+        max_steps=4,
+        desired_output_type=desired_output_type,
+        goal_capability_ids=goal_capability_ids,
+    )
 
     steps = []
     prev_ref = "inputs.input_text"
+    last_output_type = desired_output_type
     for i, cap in enumerate(selected_caps):
         cap_id = cap.get("id", "unknown")
         step_id = f"{cap_id.replace('.', '_')}_step{i + 1}"
         is_last = i == len(selected_caps) - 1
 
         cap_in_fields = list(cap.get("inputs", {}).keys())
-        cap_out_fields = list(cap.get("outputs", {}).keys())
         first_in = cap_in_fields[0] if cap_in_fields else "text"
-        first_out = cap_out_fields[0] if cap_out_fields else "result"
+        next_first_input_type = None
+        if not is_last:
+            next_cap = selected_caps[i + 1]
+            next_inputs = next_cap.get("inputs") if isinstance(next_cap.get("inputs"), dict) else {}
+            next_in_name = list(next_inputs.keys())[0] if next_inputs else None
+            if isinstance(next_in_name, str):
+                next_first_input_type = _field_type(next_inputs.get(next_in_name))
+
+        preferred_names = ["summary", "text", "content", "result", "label", "route", "findings"]
+        first_out, first_out_type = _choose_output_field(
+            cap,
+            preferred_type=(desired_output_type if is_last else next_first_input_type),
+            preferred_names=preferred_names,
+        )
+        if is_last:
+            last_output_type = first_out_type or desired_output_type
 
         var_alias = f"{step_id}_{first_out}".replace(".", "_")
         local_target = "outputs.result" if is_last else f"vars.{var_alias}"
 
+        step_input = _build_step_input_mapping(cap, first_in, prev_ref, intent)
+
         steps.append({
             "id": step_id,
             "uses": cap_id,
-            "input": {first_in: prev_ref},
+            "input": step_input,
             "output": {first_out: local_target},
         })
         prev_ref = f"vars.{var_alias}" if not is_last else prev_ref
@@ -318,8 +382,8 @@ def _build_template_skill(
         },
         "outputs": {
             "result": {
-                "type": "string",
-                "description": "Workflow result.",
+                "type": last_output_type,
+                "description": f"Workflow result ({last_output_type}).",
             }
         },
         "steps": steps,
@@ -347,9 +411,204 @@ def _required_input_fields(cap: dict[str, Any]) -> list[str]:
     return required
 
 
+def _infer_language_defaults(intent_text: str) -> tuple[str | None, str | None]:
+    txt = intent_text.lower()
+    language_map = {
+        "english": "en",
+        "spanish": "es",
+        "french": "fr",
+        "german": "de",
+        "italian": "it",
+        "portuguese": "pt",
+        "dutch": "nl",
+    }
+
+    source_language = None
+    target_language = None
+    for label, code in language_map.items():
+        if f"to {label}" in txt or f"into {label}" in txt:
+            target_language = code
+        if f"from {label}" in txt:
+            source_language = code
+
+    return source_language, target_language
+
+
+def _default_input_value(field_name: str, field_spec: Any, intent_text: str = "") -> Any:
+    ftype = _field_type(field_spec) or "string"
+    source_language, target_language = _infer_language_defaults(intent_text)
+
+    if field_name == "labels" and ftype == "array":
+        if "sentiment" in intent_text.lower():
+            return ["positive", "neutral", "negative"]
+        return ["positive", "neutral", "negative"]
+    if field_name in {"target_language", "target_lang", "to_language"}:
+        if target_language:
+            return target_language
+        return "en"
+    if field_name in {"source_language", "source_lang", "from_language"}:
+        if source_language:
+            return source_language
+        return "auto"
+    if field_name in {"max_length", "limit", "top_k"} and ftype in {"integer", "number"}:
+        return 120
+
+    if ftype == "boolean":
+        return False
+    if ftype == "integer":
+        return 0
+    if ftype == "number":
+        return 0
+    if ftype == "array":
+        return []
+    if ftype == "object":
+        return {}
+    return "sample"
+
+
+def _build_step_input_mapping(cap: dict[str, Any], first_in: str, prev_ref: str, intent_text: str) -> dict[str, Any]:
+    mapping: dict[str, Any] = {first_in: prev_ref}
+    inputs = cap.get("inputs") or {}
+    if not isinstance(inputs, dict):
+        return mapping
+
+    cap_id = str(cap.get("id", ""))
+
+    for field_name in _required_input_fields(cap):
+        if field_name in mapping:
+            continue
+        mapping[field_name] = _default_input_value(field_name, inputs.get(field_name), intent_text)
+
+    # Some bindings require fields that are not marked as required in catalog specs.
+    if cap_id == "text.classify" and "labels" in inputs and "labels" not in mapping:
+        mapping["labels"] = _default_input_value("labels", inputs.get("labels"), intent_text)
+    if cap_id == "text.translate":
+        if "source_language" in inputs and "source_language" not in mapping:
+            mapping["source_language"] = _default_input_value("source_language", inputs.get("source_language"), intent_text)
+        if "target_language" in inputs and "target_language" not in mapping:
+            mapping["target_language"] = _default_input_value("target_language", inputs.get("target_language"), intent_text)
+
+    return mapping
+
+
+def _can_autofill_input(field_name: str) -> bool:
+    return field_name in {
+        "labels",
+        "target_language",
+        "target_lang",
+        "to_language",
+        "source_language",
+        "source_lang",
+        "from_language",
+        "max_length",
+        "limit",
+        "top_k",
+    }
+
+
+def _is_template_seedable(cap: dict[str, Any]) -> bool:
+    required_inputs = _required_input_fields(cap)
+    if not required_inputs:
+        return True
+    primary_input = next(iter((cap.get("inputs") or {}).keys()), None)
+    unresolved = [field for field in required_inputs if field != primary_input and not _can_autofill_input(field)]
+    return not unresolved
+
+
+def _field_type(spec: Any) -> str | None:
+    if isinstance(spec, dict):
+        t = spec.get("type")
+        if isinstance(t, str) and t:
+            return t
+    return None
+
+
+def _infer_desired_output_type(intent: str) -> str:
+    txt = intent.lower()
+    boolean_hints = [
+        "whether",
+        "detect if",
+        "check if",
+        "is valid",
+        "compliant",
+        "true or false",
+        "boolean",
+        "contains pii",
+    ]
+    for hint in boolean_hints:
+        if hint in txt:
+            return "boolean"
+
+    array_hints = ["list", "items", "entities", "keywords", "records"]
+    for hint in array_hints:
+        if hint in txt:
+            return "array"
+
+    return "string"
+
+
+def _choose_output_field(
+    cap: dict[str, Any],
+    *,
+    preferred_type: str | None,
+    preferred_names: list[str],
+) -> tuple[str, str]:
+    outputs = cap.get("outputs")
+    if not isinstance(outputs, dict) or not outputs:
+        return "result", preferred_type or "string"
+
+    # 1) name + type match
+    for name in preferred_names:
+        if name in outputs:
+            t = _field_type(outputs.get(name)) or "string"
+            if preferred_type is None or t == preferred_type:
+                return name, t
+
+    # 2) type match any field
+    if preferred_type:
+        for out_name, out_spec in outputs.items():
+            t = _field_type(out_spec)
+            if t == preferred_type:
+                return out_name, t
+
+    # 3) preferred name regardless of type
+    for name in preferred_names:
+        if name in outputs:
+            t = _field_type(outputs.get(name)) or "string"
+            return name, t
+
+    # 4) first available
+    first_name = next(iter(outputs))
+    first_type = _field_type(outputs.get(first_name)) or "string"
+    return first_name, first_type
+
+
+def _primary_input_type(cap: dict[str, Any]) -> str | None:
+    inputs = cap.get("inputs")
+    if not isinstance(inputs, dict) or not inputs:
+        return None
+    first_name = next(iter(inputs))
+    return _field_type(inputs.get(first_name)) or "string"
+
+
+def _cap_output_types(cap: dict[str, Any]) -> set[str]:
+    outputs = cap.get("outputs")
+    if not isinstance(outputs, dict):
+        return set()
+    return {_field_type(spec) or "string" for spec in outputs.values()}
+
+
+def _types_compatible(output_type: str | None, input_type: str | None) -> bool:
+    if output_type is None or input_type is None:
+        return True
+    return output_type == input_type
+
+
 def _select_executable_template_caps(
     caps: list[dict[str, Any]],
     max_steps: int,
+    desired_output_type: str,
+    goal_capability_ids: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Select capabilities likely to execute in a single-input chain.
@@ -364,8 +623,7 @@ def _select_executable_template_caps(
 
     viable: list[tuple[int, dict[str, Any]]] = []
     for cap in caps:
-        req = _required_input_fields(cap)
-        if len(req) > 1:
+        if not _is_template_seedable(cap):
             continue
 
         inputs = cap.get("inputs") or {}
@@ -382,10 +640,79 @@ def _select_executable_template_caps(
         if cap_id.startswith("doc.") or cap_id.startswith("table."):
             score -= 2
 
+        output_specs = cap.get("outputs")
+        if isinstance(output_specs, dict):
+            output_types = {_field_type(v) for v in output_specs.values() if _field_type(v)}
+            if desired_output_type in output_types:
+                score += 3
+
         viable.append((score, cap))
 
     viable.sort(key=lambda x: -x[0])
-    selected = [cap for _, cap in viable[:max_steps]]
+    sorted_caps = [cap for _, cap in viable]
+
+    direct_goal_caps = {
+        "text.translate",
+        "text.summarize",
+        "text.classify",
+        "text.entity.extract",
+        "text.keyword.extract",
+        "text.language.detect",
+        "text.embed",
+        "text.extract",
+    }
+    if goal_capability_ids:
+        for goal_id in goal_capability_ids:
+            if goal_id not in direct_goal_caps:
+                continue
+            for cap in sorted_caps:
+                if cap.get("id") != goal_id:
+                    continue
+                input_type = _primary_input_type(cap)
+                output_types = _cap_output_types(cap)
+                if _types_compatible("string", input_type) and (
+                    desired_output_type in output_types or not output_types
+                ):
+                    return [cap]
+
+    terminal_cap: dict[str, Any] | None = None
+    for cap in sorted_caps:
+        types = _cap_output_types(cap)
+        if desired_output_type in types:
+            terminal_cap = cap
+            break
+
+    if terminal_cap is None and sorted_caps:
+        terminal_cap = sorted_caps[0]
+
+    selected: list[dict[str, Any]] = []
+    current_type = "string"
+    remaining = [cap for cap in sorted_caps if cap is not terminal_cap]
+
+    while remaining and len(selected) < max_steps - 1:
+        next_index: int | None = None
+        for idx, cap in enumerate(remaining):
+            input_type = _primary_input_type(cap)
+            if _types_compatible(current_type, input_type):
+                next_index = idx
+                break
+        if next_index is None:
+            break
+
+        cap = remaining.pop(next_index)
+        selected.append(cap)
+        cap_output_types = _cap_output_types(cap)
+        if current_type in cap_output_types:
+            current_type = current_type
+        elif len(cap_output_types) == 1:
+            current_type = next(iter(cap_output_types))
+
+    if terminal_cap is not None:
+        terminal_input_type = _primary_input_type(terminal_cap)
+        if _types_compatible(current_type, terminal_input_type):
+            selected.append(terminal_cap)
+        elif not selected:
+            selected.append(terminal_cap)
 
     if selected:
         return selected
@@ -626,6 +953,84 @@ def _generate_plan_via_bindings(
     return None, None
 
 
+def _build_probe_payload(cap: dict[str, Any], intent_text: str) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    inputs = cap.get("inputs")
+    if not isinstance(inputs, dict):
+        return payload
+
+    text_like = {"text", "content", "query", "input", "document", "prompt", "objective", "goal", "message"}
+    for field_name, field_spec in inputs.items():
+        ftype = _field_type(field_spec) or "string"
+        if field_name in text_like:
+            payload[field_name] = intent_text
+        elif ftype == "boolean":
+            payload[field_name] = False
+        elif ftype == "integer":
+            payload[field_name] = 0
+        elif ftype == "number":
+            payload[field_name] = 0
+        elif ftype == "array":
+            payload[field_name] = []
+        elif ftype == "object":
+            payload[field_name] = {}
+        else:
+            payload[field_name] = "sample"
+
+    return payload
+
+
+def _filter_caps_by_runtime_probe(
+    caps: list[dict[str, Any]],
+    *,
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    intent_text: str,
+    required_conformance_profile: str | None,
+) -> list[dict[str, Any]]:
+    """
+    Keep capabilities that appear executable in the current runtime configuration.
+
+    To avoid side effects in scaffolding, only probes capabilities whose metadata
+    says `properties.side_effects == false`.
+    """
+    try:
+        from customer_facing.neutral_api import NeutralRuntimeAPI
+
+        api = NeutralRuntimeAPI(
+            registry_root=registry_root,
+            runtime_root=runtime_root,
+            host_root=host_root,
+        )
+    except Exception:
+        return caps
+
+    kept: list[dict[str, Any]] = []
+    for cap in caps:
+        cap_id = str(cap.get("id", ""))
+        if not cap_id:
+            continue
+
+        props = cap.get("properties") if isinstance(cap.get("properties"), dict) else {}
+        side_effects = bool(props.get("side_effects", False)) if isinstance(props, dict) else False
+        if side_effects:
+            continue
+
+        probe_payload = _build_probe_payload(cap, intent_text)
+        try:
+            api.execute_capability(
+                cap_id,
+                probe_payload,
+                required_conformance_profile=required_conformance_profile,
+            )
+            kept.append(cap)
+        except Exception:
+            continue
+
+    return kept if kept else caps
+
+
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
@@ -658,6 +1063,7 @@ def generate_skill_from_prompt(
     suggested_id = _suggest_id(intent_description)
     api_key = os.environ.get("OPENAI_API_KEY", "")
     scaffolder_mode = os.environ.get("AGENT_SKILLS_SCAFFOLDER_MODE", "binding-first").strip().lower()
+    goal_capability_ids = _infer_goal_capability_ids(intent_description)
 
     plan_obj, plan_source = (None, None)
     preferred_capability_ids: list[str] = []
@@ -675,6 +1081,10 @@ def generate_skill_from_prompt(
 
     if plan_obj is not None:
         preferred_capability_ids, planning_text = _extract_capability_hints_from_plan(plan_obj, known_ids)
+
+    for goal_capability_id in reversed(goal_capability_ids):
+        if goal_capability_id in known_ids and goal_capability_id not in preferred_capability_ids:
+            preferred_capability_ids.insert(0, goal_capability_id)
 
     if scaffolder_mode == "direct-openai" and api_key and capabilities:
         # --- LLM mode ---
@@ -707,8 +1117,17 @@ def generate_skill_from_prompt(
             capabilities,
             preferred_capability_ids=preferred_capability_ids,
         )
+        if reg_root is not None:
+            matched = _filter_caps_by_runtime_probe(
+                matched,
+                registry_root=reg_root,
+                runtime_root=rt_root,
+                host_root=hs_root,
+                intent_text=intent_description,
+                required_conformance_profile=required_conformance_profile,
+            )
         skill_yaml = _build_template_skill(
-            intent_description, suggested_id, matched, target_channel
+            intent_description, suggested_id, matched, target_channel, goal_capability_ids=goal_capability_ids
         )
 
     # Parse and validate
