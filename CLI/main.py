@@ -448,15 +448,26 @@ def _cmd_scaffold(
         registry_root=str(registry_root),
         target_channel=channel,
         model=model,
+        runtime_root=str(runtime_root),
+        host_root=str(host_root),
     )
 
     skill_yaml: str = result["skill_yaml"]
     suggested_id: str = result["suggested_id"]
     capabilities_used: list = result["capabilities_used"]
     validation_errors: list = result["validation_errors"]
+    planning_source: str | None = result.get("planning_source")
+    planning_capability_id: str = result.get("planning_capability_id", "agent.plan.generate")
+    scaffolder_mode: str = result.get("scaffolder_mode", "binding-first")
 
     print(f"[scaffold] Suggested id   : {suggested_id}")
     print(f"[scaffold] Capabilities   : {', '.join(capabilities_used) or '(none detected)'}")
+    print(f"[scaffold] Planner mode   : {scaffolder_mode}")
+    print(
+        "[scaffold] Planner source : "
+        f"{planning_source or 'none'}"
+        f" (capability: {planning_capability_id})"
+    )
 
     if validation_errors:
         print("[scaffold] Validation warnings:")

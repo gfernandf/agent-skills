@@ -6,7 +6,8 @@ metadata:
   description: >
     Skill scaffold service. Generates valid skill YAML from a natural-language
     intent description using the local capability catalog as context.
-    Operates in LLM mode (OpenAI) when OPENAI_API_KEY is set, otherwise
-    falls back to keyword-based template generation.
+    Default mode is binding-first: planning goes through capability
+    agent.plan.generate using the runtime binding stack. Optional direct OpenAI
+    mode can be enabled with AGENT_SKILLS_SCAFFOLDER_MODE=direct-openai.
   maintained_by: agent-skills
   status: experimental

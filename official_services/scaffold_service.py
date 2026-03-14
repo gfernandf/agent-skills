@@ -1,16 +1,17 @@
 """
 Scaffold service: generate skill YAML from a natural-language intent.
 
-This module is the pythoncall backend for the `skill.generate-from-prompt`
-capability.  It can operate in two modes:
+This module is the pythoncall backend for capability `agent.plan.create`.
 
-1. **LLM mode** (default when OPENAI_API_KEY is set): sends a structured
-   prompt to an OpenAI-compatible chat endpoint and parses the YAML response.
+Default behavior is **binding-first**:
+- Ask `agent.plan.generate` through the runtime capability executor, so planning
+  uses whatever bindings/services the user has configured.
+- Build skill YAML using deterministic template synthesis.
 
-2. **Template mode** (fallback): performs keyword-based capability matching
-   and emits a well-formed skeleton with the most relevant capabilities.
+Optional direct provider mode exists for experimentation via env var:
+`AGENT_SKILLS_SCAFFOLDER_MODE=direct-openai`.
 
-The output is always validated against the skill schema before returning.
+The output is always validated against the runtime skill schema constraints.
 """
 
 from __future__ import annotations
@@ -75,6 +76,22 @@ def _load_capabilities(registry_root: Path) -> list[dict[str, Any]]:
     if isinstance(data, dict):
         return data.get("capabilities", [])
     return []
+
+
+def _find_runtime_root(hint: str | None) -> Path:
+    if hint:
+        p = Path(hint)
+        if p.is_dir():
+            return p
+    return Path(__file__).resolve().parent.parent
+
+
+def _find_host_root(hint: str | None, runtime_root: Path) -> Path:
+    if hint:
+        p = Path(hint)
+        if p.is_dir():
+            return p
+    return runtime_root
 
 
 # ---------------------------------------------------------------------------
@@ -171,6 +188,7 @@ def _suggest_id(intent: str) -> str:
 def _rank_capabilities(
     intent: str,
     capabilities: list[dict[str, Any]],
+    preferred_capability_ids: list[str] | None = None,
     top_n: int = 8,
 ) -> list[dict[str, Any]]:
     """
@@ -200,7 +218,19 @@ def _rank_capabilities(
     def _cap_score(cap: dict[str, Any]) -> int:
         cap_id = cap.get("id", "")
         cap_words = set(re.findall(r"[a-z]+", (cap_id + " " + cap.get("description", "")).lower()))
-        return len(intent_words & cap_words)
+        score = len(intent_words & cap_words)
+
+        # Prefer capabilities whose primary input can be seeded from a text input.
+        input_names = list((cap.get("inputs") or {}).keys())
+        if input_names:
+            first_in = input_names[0]
+            if first_in in {"text", "content", "query", "input", "document", "prompt"}:
+                score += 2
+
+        if preferred_capability_ids and cap_id in preferred_capability_ids:
+            score += 8
+
+        return score
 
     selected: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
@@ -249,27 +279,30 @@ def _build_template_skill(
     slug = parts[1] if len(parts) > 1 else suggested_id
     name = slug.replace("-", " ").title()
 
+    selected_caps = _select_executable_template_caps(matched_caps, max_steps=4)
+
     steps = []
     prev_ref = "inputs.input_text"
-    for i, cap in enumerate(matched_caps[:4]):
+    for i, cap in enumerate(selected_caps):
         cap_id = cap.get("id", "unknown")
         step_id = f"{cap_id.replace('.', '_')}_step{i + 1}"
-        is_last = i == len(matched_caps[:4]) - 1
+        is_last = i == len(selected_caps) - 1
 
         cap_in_fields = list(cap.get("inputs", {}).keys())
         cap_out_fields = list(cap.get("outputs", {}).keys())
         first_in = cap_in_fields[0] if cap_in_fields else "text"
         first_out = cap_out_fields[0] if cap_out_fields else "result"
 
-        local_alias = "outputs.result" if is_last else f"{step_id}_{first_out}"
+        var_alias = f"{step_id}_{first_out}".replace(".", "_")
+        local_target = "outputs.result" if is_last else f"vars.{var_alias}"
 
         steps.append({
             "id": step_id,
             "uses": cap_id,
             "input": {first_in: prev_ref},
-            "output": {first_out: local_alias},
+            "output": {first_out: local_target},
         })
-        prev_ref = f"steps.{step_id}.{first_out}" if not is_last else prev_ref
+        prev_ref = f"vars.{var_alias}" if not is_last else prev_ref
 
     doc = {
         "id": suggested_id,
@@ -297,6 +330,68 @@ def _build_template_skill(
         },
     }
     return yaml.dump(doc, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+
+def _required_input_fields(cap: dict[str, Any]) -> list[str]:
+    required: list[str] = []
+    inputs = cap.get("inputs") or {}
+    if not isinstance(inputs, dict):
+        return required
+    for name, spec in inputs.items():
+        if not isinstance(spec, dict):
+            continue
+        is_required = bool(spec.get("required", False))
+        has_default = "default" in spec and spec.get("default") is not None
+        if is_required and not has_default:
+            required.append(name)
+    return required
+
+
+def _select_executable_template_caps(
+    caps: list[dict[str, Any]],
+    max_steps: int,
+) -> list[dict[str, Any]]:
+    """
+    Select capabilities likely to execute in a single-input chain.
+
+    Heuristic:
+    - Keep capabilities with at most one required input without default.
+    - Prefer capabilities whose input names are text-chain-friendly.
+    """
+    preferred_input_names = {
+        "text", "content", "query", "input", "document", "prompt", "objective", "goal", "message"
+    }
+
+    viable: list[tuple[int, dict[str, Any]]] = []
+    for cap in caps:
+        req = _required_input_fields(cap)
+        if len(req) > 1:
+            continue
+
+        inputs = cap.get("inputs") or {}
+        input_names = list(inputs.keys()) if isinstance(inputs, dict) else []
+        score = 0
+        if input_names:
+            if input_names[0] in preferred_input_names:
+                score += 3
+            if any(n in preferred_input_names for n in input_names):
+                score += 1
+
+        # Penalize operations that often require structured/non-text context.
+        cap_id = str(cap.get("id", ""))
+        if cap_id.startswith("doc.") or cap_id.startswith("table."):
+            score -= 2
+
+        viable.append((score, cap))
+
+    viable.sort(key=lambda x: -x[0])
+    selected = [cap for _, cap in viable[:max_steps]]
+
+    if selected:
+        return selected
+
+    # Fallback: keep at least one capability to avoid empty skill generation.
+    return caps[:1] if caps else []
 
 
 # ---------------------------------------------------------------------------
@@ -327,12 +422,12 @@ steps:
     input:
       capability_input_field: inputs.field_name    # inputs.X = skill input
     output:
-      capability_output_field: step_one_result     # local alias for this step's output
+            capability_output_field: vars.step_one_result  # vars.X for intermediate outputs
 
   - id: step_two
     uses: another.capability
     input:
-      text: steps.step_one.step_one_result         # steps.STEP_ID.ALIAS = previous step output
+            text: vars.step_one_result                    # vars.X = previous step output
     output:
       summary: outputs.result_field                # outputs.X = writes to skill output directly
 
@@ -357,7 +452,7 @@ Your job: given a natural-language intent, output EXACTLY ONE valid skill YAML d
 ## Rules
 
 1. Only use capability IDs from the list above — never invent new ones.
-2. Wire outputs from one step as inputs to the next using `steps.STEP_ID.ALIAS`.
+2. Wire outputs from one step as inputs to the next using `vars.<name>`.
 3. Map the final step output directly to `outputs.FIELD` using `outputs.fieldname`.
 4. Choose the minimum set of capabilities that cover the intent (2–6 steps is typical).
 5. Provide meaningful input/output field names, not just "text" everywhere.
@@ -451,7 +546,84 @@ def _validate_skill_yaml(raw: dict[str, Any], known_cap_ids: set[str]) -> list[s
         elif known_cap_ids and not uses.startswith("skill:") and uses not in known_cap_ids:
             errors.append(f"Step '{sid}': unknown capability '{uses}'")
 
+        output_mapping = step.get("output", {})
+        if not isinstance(output_mapping, dict):
+            errors.append(f"Step '{sid}': output mapping must be an object")
+        else:
+            for out_field, target in output_mapping.items():
+                if not isinstance(target, str) or "." not in target:
+                    errors.append(f"Step '{sid}': invalid output target for '{out_field}' -> {target}")
+                    continue
+                namespace = target.split(".", 1)[0]
+                if namespace not in {"vars", "outputs"}:
+                    errors.append(
+                        f"Step '{sid}': unsupported output namespace '{namespace}' (use vars.* or outputs.*)"
+                    )
+
+        input_mapping = step.get("input", {})
+        if isinstance(input_mapping, dict):
+            for in_field, ref in input_mapping.items():
+                if isinstance(ref, str) and "." in ref:
+                    ns = ref.split(".", 1)[0]
+                    if ns not in {"inputs", "vars", "outputs"}:
+                        errors.append(
+                            f"Step '{sid}': unsupported input ref namespace '{ns}' for '{in_field}'"
+                        )
+
     return errors
+
+
+def _extract_capability_hints_from_plan(
+    plan: Any,
+    known_cap_ids: set[str],
+) -> tuple[list[str], str]:
+    hints: list[str] = []
+
+    if isinstance(plan, dict):
+        suggested = plan.get("suggested_capabilities")
+        if isinstance(suggested, list):
+            for item in suggested:
+                if isinstance(item, str) and item in known_cap_ids and item not in hints:
+                    hints.append(item)
+
+    text = json.dumps(plan, ensure_ascii=False) if plan is not None else ""
+    for match in re.findall(r"\b[a-z]+\.[a-z][a-z0-9_.-]*\b", text):
+        if match in known_cap_ids and match not in hints:
+            hints.append(match)
+
+    return hints, text
+
+
+def _generate_plan_via_bindings(
+    *,
+    intent_description: str,
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    planning_capability_id: str,
+    required_conformance_profile: str | None,
+) -> tuple[Any | None, str | None]:
+    try:
+        from customer_facing.neutral_api import NeutralRuntimeAPI
+
+        api = NeutralRuntimeAPI(
+            registry_root=registry_root,
+            runtime_root=runtime_root,
+            host_root=host_root,
+        )
+
+        result = api.execute_capability(
+            planning_capability_id,
+            {"objective": intent_description},
+            required_conformance_profile=required_conformance_profile,
+        )
+        outputs = result.get("outputs", {}) if isinstance(result, dict) else {}
+        if isinstance(outputs, dict):
+            return outputs.get("plan"), "binding-capability"
+    except Exception:
+        return None, None
+
+    return None, None
 
 
 # ---------------------------------------------------------------------------
@@ -463,6 +635,10 @@ def generate_skill_from_prompt(
     registry_root: str | None = None,
     target_channel: str = "local",
     model: str = "gpt-4o-mini",
+    runtime_root: str | None = None,
+    host_root: str | None = None,
+    planning_capability_id: str = "agent.plan.generate",
+    required_conformance_profile: str | None = None,
 ) -> dict[str, Any]:
     """
     Generate a skill YAML from a natural-language intent description.
@@ -476,11 +652,31 @@ def generate_skill_from_prompt(
     reg_root = _find_registry_root(registry_root)
     capabilities = _load_capabilities(reg_root) if reg_root else []
     known_ids: set[str] = {c.get("id", "") for c in capabilities}
+    rt_root = _find_runtime_root(runtime_root)
+    hs_root = _find_host_root(host_root, rt_root)
 
     suggested_id = _suggest_id(intent_description)
     api_key = os.environ.get("OPENAI_API_KEY", "")
+    scaffolder_mode = os.environ.get("AGENT_SKILLS_SCAFFOLDER_MODE", "binding-first").strip().lower()
 
-    if api_key and capabilities:
+    plan_obj, plan_source = (None, None)
+    preferred_capability_ids: list[str] = []
+    planning_text = ""
+
+    if reg_root is not None:
+        plan_obj, plan_source = _generate_plan_via_bindings(
+            intent_description=intent_description,
+            registry_root=reg_root,
+            runtime_root=rt_root,
+            host_root=hs_root,
+            planning_capability_id=planning_capability_id,
+            required_conformance_profile=required_conformance_profile,
+        )
+
+    if plan_obj is not None:
+        preferred_capability_ids, planning_text = _extract_capability_hints_from_plan(plan_obj, known_ids)
+
+    if scaffolder_mode == "direct-openai" and api_key and capabilities:
         # --- LLM mode ---
         cap_list = _build_capability_list(capabilities)
         system = _SYSTEM_PROMPT.format(
@@ -488,7 +684,13 @@ def generate_skill_from_prompt(
             capability_list=cap_list,
             target_channel=target_channel,
         )
-        raw_text = _call_openai(intent_description, system, model, api_key)
+        llm_prompt = intent_description
+        if planning_text:
+            llm_prompt = (
+                f"{intent_description}\n\n"
+                f"Planning context from {planning_capability_id}:\n{planning_text}"
+            )
+        raw_text = _call_openai(llm_prompt, system, model, api_key)
 
         # Strip markdown fences if present
         raw_text = re.sub(r"^```[a-z]*\n?", "", raw_text.strip(), flags=re.MULTILINE)
@@ -496,8 +698,15 @@ def generate_skill_from_prompt(
         skill_yaml = raw_text.strip() + "\n"
 
     else:
-        # --- Template mode ---
-        matched = _rank_capabilities(intent_description, capabilities)
+        # --- Binding-first template mode ---
+        ranking_intent = intent_description
+        if planning_text:
+            ranking_intent = f"{intent_description} {planning_text}"
+        matched = _rank_capabilities(
+            ranking_intent,
+            capabilities,
+            preferred_capability_ids=preferred_capability_ids,
+        )
         skill_yaml = _build_template_skill(
             intent_description, suggested_id, matched, target_channel
         )
@@ -535,4 +744,7 @@ def generate_skill_from_prompt(
         "suggested_id": suggested_id,
         "capabilities_used": capabilities_used,
         "validation_errors": validation_errors,
+        "planning_source": plan_source,
+        "planning_capability_id": planning_capability_id,
+        "scaffolder_mode": scaffolder_mode,
     }

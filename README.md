@@ -181,6 +181,16 @@ privately and only request officialization when they are ready.
 python skills.py scaffold "summarize incoming support email and store summary in memory"
 ```
 
+Scaffolder defaults to `binding-first` mode:
+
+- It asks capability `agent.plan.generate` through the runtime/binding stack,
+  so user binding overrides apply automatically.
+- Direct OpenAI mode is optional for experimentation only:
+
+```powershell
+$env:AGENT_SKILLS_SCAFFOLDER_MODE = "direct-openai"
+```
+
 2. Prepare a promotion package:
 
 ```powershell
