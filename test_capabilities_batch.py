@@ -45,7 +45,7 @@ TEST_DATA = {
     "doc.chunk": {"text": "This is a long document. " * 50, "chunk_size": 1000},
     "email.read": {"mailbox": "inbox"},
     "email.send": {"to": "test@example.com", "subject": "Test Subject", "body": "Test message body"},
-    "fs.read": {"path": "C:\\Windows\\System32\\drivers\\etc\\hosts", "mode": "text"},
+    "fs.read": {"path": str(Path(__file__).resolve()), "mode": "text"},
     "image.caption.generate": {"image": b"fake image data"},
     "image.classify": {"image": b"fake image data", "labels": ["cat", "dog", "bird"]},
     "memory.retrieve": {"key": "test_key"},
@@ -59,7 +59,7 @@ TEST_DATA = {
         "trace": {"duration_ms": 1200, "error_count": 1},
         "thresholds": {"max_duration_ms": 2000, "max_errors": 2}
     },
-    "pdf.read": {"path": "/tmp/test.pdf"},
+    "pdf.read": {"path": str(Path(__file__).parent / "artifacts" / "test.pdf")},
     "policy.constraint.validate": {
         "payload": {"title": "Hello", "body": "World"},
         "constraint": {"required_keys": ["title"], "forbidden_keys": ["password"]}
