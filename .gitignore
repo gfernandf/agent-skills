@@ -14,3 +14,9 @@ artifacts/
 
 # Generated parity diffs
 tooling/snapshots/*.actual.json
+
+# Local user-defined skills — instance-specific, not for shared repos
+# Track only the seed files (README + .gitkeep); ignore actual skill trees.
+skills/local/**/
+!skills/local/README.md
+!skills/local/.gitkeep

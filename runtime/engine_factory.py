@@ -11,6 +11,7 @@ from runtime.binding_registry import BindingRegistry
 from runtime.binding_resolver import BindingResolver
 from runtime.capability_executor import DefaultCapabilityExecutor
 from runtime.capability_loader import YamlCapabilityLoader
+from runtime.composite_skill_loader import CompositeSkillLoader
 from runtime.execution_engine import ExecutionEngine
 from runtime.execution_planner import ExecutionPlanner
 from runtime.default_mcp_client_registry import DefaultMCPClientRegistry
@@ -38,7 +39,7 @@ class _UnavailableMCPClientRegistry:
 @dataclass(frozen=True)
 class RuntimeComponents:
     engine: ExecutionEngine
-    skill_loader: YamlSkillLoader
+    skill_loader: YamlSkillLoader | CompositeSkillLoader
     capability_loader: YamlCapabilityLoader
     capability_executor: DefaultCapabilityExecutor
 
@@ -49,8 +50,20 @@ def build_runtime_components(
     host_root: Path,
     *,
     mcp_client_registry: Any | None = None,
+    local_skills_root: Path | None = None,
 ) -> RuntimeComponents:
-    skill_loader = YamlSkillLoader(registry_root)
+    registry_skill_loader = YamlSkillLoader(registry_root)
+
+    # If a local skills directory exists (or was explicitly provided), layer it
+    # on top of the registry so local/user skills take resolution priority.
+    resolved_local = local_skills_root or (runtime_root / "skills" / "local")
+    if resolved_local.exists() and any(resolved_local.iterdir()):
+        skill_loader: YamlSkillLoader | CompositeSkillLoader = CompositeSkillLoader(
+            [YamlSkillLoader(resolved_local.parent), registry_skill_loader]
+        )
+    else:
+        skill_loader = registry_skill_loader
+
     capability_loader = YamlCapabilityLoader(registry_root)
 
     planner = ExecutionPlanner()

@@ -53,6 +53,16 @@ def main() -> None:
         cmd_parser.add_argument("--registry-root", type=Path, default=None, help="Path to the registry root directory")
         cmd_parser.add_argument("--runtime-root", type=Path, default=None, help="Path to the runtime root directory")
         cmd_parser.add_argument("--host-root", type=Path, default=None, help="Path to the host root directory")
+        cmd_parser.add_argument(
+            "--local-skills-root",
+            type=Path,
+            default=None,
+            help=(
+                "Path to a local skills directory containing user-defined workflows. "
+                "Defaults to <runtime-root>/skills/local if the directory exists. "
+                "Skills here take resolution priority over the shared registry."
+            ),
+        )
 
     run_cmd = sub.add_parser("run", help="Execute a skill")
     run_cmd.add_argument("skill_id")
@@ -156,6 +166,7 @@ def main() -> None:
     runtime_root = args.runtime_root or Path.cwd()
     registry_root = args.registry_root or (runtime_root.parent / "agent-skill-registry")
     host_root = args.host_root or runtime_root
+    local_skills_root = getattr(args, "local_skills_root", None)
 
     if args.command == "run":
 
@@ -169,6 +180,7 @@ def main() -> None:
             args.trace_id,
             args.required_conformance_profile,
             args.audit_mode,
+            local_skills_root,
         )
 
     elif args.command == "describe":
@@ -191,6 +203,7 @@ def main() -> None:
             args.trace_id,
             args.required_conformance_profile,
             args.audit_mode,
+            local_skills_root,
         )
 
     elif args.command == "explain-capability":
@@ -287,6 +300,7 @@ def _cmd_run(
     trace_id: str | None,
     required_conformance_profile: str | None,
     audit_mode: str | None,
+    local_skills_root: Path | None = None,
 ) -> None:
 
     if input_json and input_file:
@@ -305,7 +319,7 @@ def _cmd_run(
 
         inputs = {}
 
-    engine = _build_engine(registry_root, runtime_root, host_root)
+    engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
 
     request = ExecutionRequest(
         skill_id=skill_id,
@@ -355,6 +369,7 @@ def _cmd_trace(
     trace_id: str | None,
     required_conformance_profile: str | None,
     audit_mode: str | None,
+    local_skills_root: Path | None = None,
 ) -> None:
     if input_json and input_file:
         raise ValueError("Use either --input or --input-file")
@@ -372,7 +387,7 @@ def _cmd_trace(
 
         inputs = {}
 
-    engine = _build_engine(registry_root, runtime_root, host_root)
+    engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
 
     request = ExecutionRequest(
         skill_id=skill_id,
@@ -578,12 +593,14 @@ def _build_engine(
     registry_root: Path,
     runtime_root: Path,
     host_root: Path,
+    local_skills_root: Path | None = None,
 ) -> ExecutionEngine:
     components = build_runtime_components(
         registry_root=registry_root,
         runtime_root=runtime_root,
         host_root=host_root,
         mcp_client_registry=None,
+        local_skills_root=local_skills_root,
     )
     return components.engine
 
