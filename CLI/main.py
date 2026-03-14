@@ -213,6 +213,43 @@ def main() -> None:
     )
     add_root_args(package_validate_cmd)
 
+    package_pr_cmd = sub.add_parser(
+        "package-pr",
+        help="Create a registry PR directly from a validated promotion package",
+    )
+    package_pr_cmd.add_argument(
+        "package_path",
+        type=Path,
+        help="Path to package directory produced by package-prepare.",
+    )
+    package_pr_cmd.add_argument(
+        "--registry-repo-root",
+        type=Path,
+        default=None,
+        help="Path to local agent-skill-registry git repo (defaults to --registry-root).",
+    )
+    package_pr_cmd.add_argument(
+        "--remote",
+        default="origin",
+        help="Git remote name to push branch to (default: origin).",
+    )
+    package_pr_cmd.add_argument(
+        "--base",
+        default="main",
+        help="Base branch for PR creation (default: main).",
+    )
+    package_pr_cmd.add_argument(
+        "--draft",
+        action="store_true",
+        help="Create PR as draft.",
+    )
+    package_pr_cmd.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print planned operations but do not run git/gh commands.",
+    )
+    add_root_args(package_pr_cmd)
+
     openapi_cmd = sub.add_parser("openapi", help="Run OpenAPI verification and diagnostics")
     openapi_sub = openapi_cmd.add_subparsers(dest="openapi_command", required=True)
 
@@ -350,6 +387,18 @@ def main() -> None:
             registry_root,
             args.package_path,
             args.print_pr_command,
+        )
+
+    elif args.command == "package-pr":
+
+        _cmd_package_pr(
+            registry_root,
+            args.registry_repo_root,
+            args.package_path,
+            args.remote,
+            args.base,
+            args.draft,
+            args.dry_run,
         )
 
     elif args.command == "openapi":
@@ -526,6 +575,138 @@ def _print_pr_commands(registry_root: Path, package_path: Path) -> None:
         f"{skill_id} to {target_channel}\" --body-file \"{pr_template}\""
     )
     print(f"     # Fill checklist answers from: {evidence_answers}")
+
+
+def _cmd_package_pr(
+    registry_root: Path,
+    registry_repo_root: Path | None,
+    package_path: Path,
+    remote: str,
+    base: str,
+    draft: bool,
+    dry_run: bool,
+) -> None:
+    # Always validate package before any git/gh side effects.
+    validation = validate_officialization_package(
+        package_root=package_path,
+        registry_root=registry_root,
+    )
+    if validation.errors:
+        print("[package-pr] Validation errors:")
+        for err in validation.errors:
+            print(f"  - {err}")
+        raise SystemExit(2)
+
+    if not validation.skill_id or not validation.target_channel:
+        raise SystemExit("[package-pr] Missing skill_id or target_channel in package manifest.")
+
+    skill_id = validation.skill_id
+    target_channel = validation.target_channel
+    if "." not in skill_id:
+        raise SystemExit(f"[package-pr] Invalid skill id in package: {skill_id}")
+    domain, slug = skill_id.split(".", 1)
+
+    repo_root = registry_repo_root or registry_root
+    if not repo_root.exists():
+        raise SystemExit(f"[package-pr] registry repo root does not exist: {repo_root}")
+
+    payload_skill = package_path / "payload" / "skills" / target_channel / domain / slug / "skill.yaml"
+    if not payload_skill.exists():
+        raise SystemExit(f"[package-pr] Missing payload skill: {payload_skill}")
+
+    pr_template = package_path / "pr_body_template.md"
+    if not pr_template.exists():
+        raise SystemExit(f"[package-pr] Missing PR template file: {pr_template}")
+
+    target_rel = Path("skills") / target_channel / domain / slug / "skill.yaml"
+    target_abs = repo_root / target_rel
+    branch_name = f"promote/{target_channel}/{skill_id}".replace(".", "-")
+
+    def _run(cmd: list[str]) -> subprocess.CompletedProcess:
+        return subprocess.run(cmd, cwd=repo_root, check=False, text=True, capture_output=True)
+
+    def _require_ok(cp: subprocess.CompletedProcess, label: str) -> None:
+        if cp.returncode != 0:
+            detail = (cp.stderr or cp.stdout or "").strip()
+            raise SystemExit(f"[package-pr] {label} failed: {detail}")
+
+    print("[package-pr] Plan")
+    print(f"  Repo root    : {repo_root}")
+    print(f"  Branch       : {branch_name}")
+    print(f"  Skill        : {skill_id}")
+    print(f"  Target file  : {target_abs}")
+    print(f"  Remote/base  : {remote} / {base}")
+
+    if dry_run:
+        print("[package-pr] Dry-run enabled. No git/gh commands executed.")
+        return
+
+    # Pre-flight checks.
+    try:
+        git_check = _run(["git", "rev-parse", "--is-inside-work-tree"])
+    except FileNotFoundError as exc:
+        raise SystemExit("[package-pr] git executable not found in PATH.") from exc
+    _require_ok(git_check, "git repository check")
+
+    try:
+        gh_check = _run(["gh", "--version"])
+    except FileNotFoundError as exc:
+        raise SystemExit("[package-pr] gh executable not found in PATH.") from exc
+    _require_ok(gh_check, "gh availability check")
+
+    status = _run(["git", "status", "--porcelain"])
+    _require_ok(status, "git status")
+    if status.stdout.strip():
+        raise SystemExit(
+            "[package-pr] Registry repo has uncommitted changes. "
+            "Commit/stash them first to avoid mixing unrelated changes."
+        )
+
+    # Create branch from current HEAD.
+    cp = _run(["git", "checkout", "-b", branch_name])
+    _require_ok(cp, "branch creation")
+
+    target_abs.parent.mkdir(parents=True, exist_ok=True)
+    target_abs.write_text(payload_skill.read_text(encoding="utf-8"), encoding="utf-8")
+
+    # Run required governance checks before PR creation.
+    for cmd, label in [
+        (["python", "tools/validate_registry.py"], "validate_registry"),
+        (["python", "tools/generate_catalog.py"], "generate_catalog"),
+        (["python", "tools/governance_guardrails.py"], "governance_guardrails"),
+    ]:
+        cp = _run(cmd)
+        _require_ok(cp, label)
+
+    cp = _run(["git", "add", str(target_rel), "catalog/capabilities.json", "catalog/skills.json", "catalog/graph.json"])
+    _require_ok(cp, "git add")
+
+    cp = _run(["git", "commit", "-m", f"Promote {skill_id} to {target_channel}"])
+    _require_ok(cp, "git commit")
+
+    cp = _run(["git", "push", "-u", remote, "HEAD"])
+    _require_ok(cp, "git push")
+
+    pr_cmd = [
+        "gh",
+        "pr",
+        "create",
+        "--base",
+        base,
+        "--title",
+        f"Promote {skill_id} to {target_channel}",
+        "--body-file",
+        str(pr_template),
+    ]
+    if draft:
+        pr_cmd.append("--draft")
+
+    cp = _run(pr_cmd)
+    _require_ok(cp, "gh pr create")
+
+    print("[package-pr] PR created successfully.")
+    if cp.stdout.strip():
+        print(cp.stdout.strip())
 
 
 def _cmd_openapi(args, runtime_root: Path) -> None:
