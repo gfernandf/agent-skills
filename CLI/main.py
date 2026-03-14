@@ -195,6 +195,11 @@ def main() -> None:
         default=None,
         help="Package output root. Defaults to <runtime-root>/artifacts/officialization_packages/.",
     )
+    package_prepare_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
+    )
     add_root_args(package_prepare_cmd)
 
     package_validate_cmd = sub.add_parser(
@@ -210,6 +215,11 @@ def main() -> None:
         "--print-pr-command",
         action="store_true",
         help="Print suggested git/gh commands to create a PR when package is valid.",
+    )
+    package_validate_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
     )
     add_root_args(package_validate_cmd)
 
@@ -384,6 +394,7 @@ def main() -> None:
             args.skill_file,
             args.target_channel,
             args.out_root,
+            args.json,
         )
 
     elif args.command == "package-validate":
@@ -392,6 +403,7 @@ def main() -> None:
             registry_root,
             args.package_path,
             args.print_pr_command,
+            args.json,
         )
 
     elif args.command == "package-pr":
@@ -492,6 +504,7 @@ def _cmd_package_prepare(
     skill_file: Path | None,
     target_channel: str,
     out_root: Path | None,
+    json_output: bool,
 ) -> None:
     resolved_local = local_skills_root or (runtime_root / "skills" / "local")
     package_out_root = out_root or (runtime_root / "artifacts" / "officialization_packages")
@@ -506,6 +519,28 @@ def _cmd_package_prepare(
         skill_file=skill_file,
     )
 
+    if json_output:
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "command": "package-prepare",
+                    "skill_id": result.skill_id,
+                    "target_channel": result.target_channel,
+                    "package_root": str(result.package_root),
+                    "payload_skill_path": str(result.payload_skill_path),
+                    "next": {
+                        "validate_command": (
+                            f'python skills.py package-validate "{result.package_root}" --print-pr-command --json'
+                        )
+                    },
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return
+
     print("[package-prepare] Package created")
     print(f"[package-prepare] Skill ID       : {result.skill_id}")
     print(f"[package-prepare] Target channel: {result.target_channel}")
@@ -519,11 +554,29 @@ def _cmd_package_validate(
     registry_root: Path,
     package_path: Path,
     print_pr_command: bool,
+    json_output: bool,
 ) -> None:
     result = validate_officialization_package(
         package_root=package_path,
         registry_root=registry_root,
     )
+
+    payload = {
+        "ok": len(result.errors) == 0,
+        "command": "package-validate",
+        "skill_id": result.skill_id,
+        "target_channel": result.target_channel,
+        "warnings": result.warnings,
+        "errors": result.errors,
+    }
+
+    if json_output:
+        if print_pr_command and not result.errors:
+            payload["suggested_pr_flow"] = _build_pr_flow_payload(registry_root, package_path)
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        if result.errors:
+            raise SystemExit(2)
+        return
 
     print(f"[package-validate] Skill ID       : {result.skill_id or '(unknown)'}")
     print(f"[package-validate] Target channel: {result.target_channel or '(unknown)'}")
@@ -545,10 +598,10 @@ def _cmd_package_validate(
         _print_pr_commands(registry_root, package_path)
 
 
-def _print_pr_commands(registry_root: Path, package_path: Path) -> None:
+def _build_pr_flow_payload(registry_root: Path, package_path: Path) -> dict[str, object] | None:
     manifest_path = package_path / "package_manifest.json"
     if not manifest_path.exists():
-        return
+        return None
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     skill_id = manifest.get("skill_id", "unknown.skill")
@@ -565,21 +618,46 @@ def _print_pr_commands(registry_root: Path, package_path: Path) -> None:
     branch_name = f"promote/{target_channel}/{skill_id}".replace(".", "-")
     target_rel = f"skills/{target_channel}/{domain}/{slug}/skill.yaml"
 
+    return {
+        "branch": branch_name,
+        "target_rel": target_rel,
+        "payload_skill": str(payload_skill),
+        "pr_template": str(pr_template),
+        "evidence_answers": str(evidence_answers),
+        "commands": [
+            f'Set-Location "{registry_root}"',
+            f'git checkout -b "{branch_name}"',
+            f'New-Item -ItemType Directory -Force -Path "skills/{target_channel}/{domain}/{slug}" | Out-Null',
+            f'Copy-Item "{payload_skill}" "{target_rel}"',
+            "python tools/validate_registry.py",
+            "python tools/generate_catalog.py",
+            "python tools/governance_guardrails.py",
+            f'git add "{target_rel}" catalog/*.json',
+            f'git commit -m "Promote {skill_id} to {target_channel}"',
+            "git push -u origin HEAD",
+            (
+                "gh pr create --title \"Promote "
+                f"{skill_id} to {target_channel}\" --body-file \"{pr_template}\""
+            ),
+        ],
+    }
+
+
+def _print_pr_commands(registry_root: Path, package_path: Path) -> None:
+    flow = _build_pr_flow_payload(registry_root, package_path)
+    if flow is None:
+        return
+
+    branch_name = flow.get("branch")
+    target_rel = flow.get("target_rel")
+    payload_skill = flow.get("payload_skill")
+    pr_template = flow.get("pr_template")
+    evidence_answers = flow.get("evidence_answers")
+    commands = flow.get("commands", [])
+
     print("[package-validate] Suggested PR flow (manual review + explicit commands):")
-    print(f"  1. Set-Location \"{registry_root}\"")
-    print(f"  2. git checkout -b \"{branch_name}\"")
-    print(f"  3. New-Item -ItemType Directory -Force -Path \"skills/{target_channel}/{domain}/{slug}\" | Out-Null")
-    print(f"  4. Copy-Item \"{payload_skill}\" \"{target_rel}\"")
-    print("  5. python tools/validate_registry.py")
-    print("  6. python tools/generate_catalog.py")
-    print("  7. python tools/governance_guardrails.py")
-    print(f"  8. git add \"{target_rel}\" catalog/*.json")
-    print(f"  9. git commit -m \"Promote {skill_id} to {target_channel}\"")
-    print(" 10. git push -u origin HEAD")
-    print(
-        " 11. gh pr create --title \"Promote "
-        f"{skill_id} to {target_channel}\" --body-file \"{pr_template}\""
-    )
+    for idx, cmd in enumerate(commands, start=1):
+        print(f" {idx:>2}. {cmd}")
     print(f"     # Fill checklist answers from: {evidence_answers}")
 
 
