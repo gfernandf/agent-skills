@@ -78,6 +78,11 @@ Expected baseline:
 - coverage: 45/45
 - skills executable: 31/31
 
+Note on counts:
+
+- The shared registry catalog (agent-skill-registry) is the source of truth for total definitions.
+- The baseline above reflects the runtime-supported executable subset in this repository.
+
 ## 4) Run a Skill (2 min)
 
 Basic run:

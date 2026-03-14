@@ -22,6 +22,12 @@ Latest local verification snapshot:
 - Skill executability: 31/31 executable (ratio 1.0)
 - Runtime inventory: 45 capabilities, 45 official defaults, 20 services, 31 skills
 
+Catalog context (canonical source of total definitions):
+
+- Registry catalog snapshot (pinned ref): 101 capabilities, 31 skills
+- Runtime inventory above reflects the currently supported executable subset in this repo
+- Canonical metrics reference: `../agent-skill-registry/docs/CANONICAL_METRICS.md`
+
 ## Security and Reliability Status
 
 Implemented and active:

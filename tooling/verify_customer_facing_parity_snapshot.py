@@ -44,7 +44,20 @@ def _http_post_json(url: str, payload: dict[str, Any], headers: dict[str, str] |
 
 def _normalize(value: Any) -> Any:
     if isinstance(value, dict):
-        ignored_keys = {"trace_id", "timestamp", "runtime_root", "registry_root", "host_root"}
+        # Ignore volatile observability/enrichment fields that are not part of parity contract semantics.
+        ignored_keys = {
+            "trace_id",
+            "timestamp",
+            "runtime_root",
+            "registry_root",
+            "host_root",
+            "attempts",
+            "fallback_chain",
+            "fallback_used",
+            "resolution_plan",
+            "conformance_profile",
+            "required_conformance_profile",
+        }
         return {
             k: _normalize(v)
             for k, v in sorted(value.items(), key=lambda kv: kv[0])

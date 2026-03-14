@@ -258,12 +258,14 @@ jobs:
 
       - name: Validate registry
         run: |
-          python ../agent-skill-registry/tools/validate_registry.py
+          cd ../agent-skill-registry
+          python tools/validate_registry.py
 
       - name: Regenerate registry catalog and stats
         run: |
-          python ../agent-skill-registry/tools/generate_catalog.py
-          python ../agent-skill-registry/tools/registry_stats.py
+          cd ../agent-skill-registry
+          python tools/generate_catalog.py
+          python tools/registry_stats.py
 
       - name: Verify catalog freshness
         run: |

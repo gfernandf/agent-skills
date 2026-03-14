@@ -230,6 +230,7 @@ All package workflow commands support machine-readable output for UI/backend orc
 - 10-minute onboarding for new contributors: `docs/ONBOARDING_10_MIN.md`
 - Runtime runner architecture and operations: `docs/RUNNER_GUIDE.md`
 - Observability and trace/redaction controls: `docs/OBSERVABILITY.md`
+- Canonical registry metrics source (counts and generation): `../agent-skill-registry/docs/CANONICAL_METRICS.md`
 - Pre-MCP/OpenAPI readiness baseline: `docs/PRE_MCP_OPENAPI_READINESS.md`
 - OpenAPI v1 phase-0 governance and technical foundation: `docs/OPENAPI_PHASE0_FOUNDATION.md`
 - OpenAPI v1 phase-1 smoke rollout plan: `docs/OPENAPI_PHASE1_SMOKE_PLAN.md`
