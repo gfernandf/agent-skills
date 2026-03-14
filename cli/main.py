@@ -702,6 +702,7 @@ def _cmd_package_pr(
     }
     branch_created = False
     original_branch: str | None = None
+    gh_available = True
 
     def _record_step(name: str, ok: bool, detail: str | None = None) -> None:
         step = {"name": name, "ok": ok}
@@ -836,9 +837,18 @@ def _cmd_package_pr(
 
     try:
         gh_check = _run(["gh", "--version"])
-    except FileNotFoundError as exc:
-        raise SystemExit("[package-pr] gh executable not found in PATH.") from exc
-    _require_ok(gh_check, "gh availability check")
+        gh_available = gh_check.returncode == 0
+    except FileNotFoundError:
+        gh_available = False
+
+    if gh_available:
+        _record_step("gh availability check", True)
+    else:
+        _record_step(
+            "gh availability check",
+            False,
+            "gh executable not found; package-pr will output a manual gh pr create command",
+        )
 
     status = _run(["git", "status", "--porcelain"])
     _require_ok(status, "git status")
@@ -904,22 +914,49 @@ def _cmd_package_pr(
     if draft:
         pr_cmd.append("--draft")
 
-    cp = _run(pr_cmd)
-    _require_ok(cp, "gh pr create")
+    if gh_available:
+        cp = _run(pr_cmd)
+        _require_ok(cp, "gh pr create")
 
-    pr_output = (cp.stdout or "").strip()
-    result_payload["pr"] = {
-        "title": f"Promote {skill_id} to {target_channel}",
-        "base": base,
-        "remote": remote,
-        "draft": draft,
-        "output": pr_output,
-    }
+        pr_output = (cp.stdout or "").strip()
+        result_payload["pr"] = {
+            "created": True,
+            "title": f"Promote {skill_id} to {target_channel}",
+            "base": base,
+            "remote": remote,
+            "draft": draft,
+            "output": pr_output,
+        }
 
-    if not json_output:
-        print("[package-pr] PR created successfully.")
-        if pr_output:
-            print(pr_output)
+        if not json_output:
+            print("[package-pr] PR created successfully.")
+            if pr_output:
+                print(pr_output)
+    else:
+        manual_cmd = " ".join(
+            [
+                "gh",
+                "pr",
+                "create",
+                "--base",
+                base,
+                "--title",
+                f'"Promote {skill_id} to {target_channel}"',
+                "--body-file",
+                f'"{pr_template}"',
+                "--draft" if draft else "",
+            ]
+        ).strip()
+
+        result_payload["pr"] = {
+            "created": False,
+            "reason": "gh not available",
+            "manual_command": manual_cmd,
+        }
+        if not json_output:
+            print("[package-pr] Branch pushed, but gh is not available in PATH.")
+            print("[package-pr] Create the PR manually with:")
+            print(f"  {manual_cmd}")
 
     _finish_success()
 
