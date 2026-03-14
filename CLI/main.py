@@ -173,7 +173,7 @@ def main() -> None:
 
     package_prepare_cmd = sub.add_parser(
         "package-prepare",
-        help="Prepare a promotion package from a local skill to experimental/community/official",
+        help="Prepare a registry promotion package from a local skill",
     )
     package_prepare_target = package_prepare_cmd.add_mutually_exclusive_group(required=True)
     package_prepare_target.add_argument("--skill-id", default=None, help="Skill ID to package (domain.slug).")
@@ -187,13 +187,13 @@ def main() -> None:
         "--target-channel",
         choices=["experimental", "community", "official"],
         default="experimental",
-        help="Target registry channel for the package.",
+        help="Target registry channel for the package (official is typically maintainer-led).",
     )
     package_prepare_cmd.add_argument(
         "--out-root",
         type=Path,
         default=None,
-        help="Package output root. Defaults to <runtime-root>/artifacts/officialization_packages/.",
+        help="Package output root. Defaults to <runtime-root>/artifacts/officialization_packages/ (legacy internal directory name).",
     )
     package_prepare_cmd.add_argument(
         "--json",
@@ -225,7 +225,7 @@ def main() -> None:
 
     package_pr_cmd = sub.add_parser(
         "package-pr",
-        help="Create a registry PR directly from a validated promotion package",
+        help="Create a registry PR from a validated promotion package",
     )
     package_pr_cmd.add_argument(
         "package_path",

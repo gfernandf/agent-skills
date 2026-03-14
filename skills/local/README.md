@@ -33,13 +33,22 @@ The runtime auto-detects this directory; no configuration is needed.
 | Steps must reference **official or experimental capabilities** only (no custom capability ids). | Guarantees that each step maps to a real, tested execution binding. |
 | IDs must not conflict with existing `official/` skills unless the intent is to **override** that skill. | Avoids silent shadowing. |
 | A `metadata.channel: local` field is strongly recommended. | Makes it clear in governance reports that the skill is not registry-controlled. |
-| Do NOT commit this directory to a shared repository unless the skill is being promoted to `community/` or `official/`. | Keeps instance-local work private. |
+| Do NOT commit this directory to the shared registry. Promotion is done by packaging the skill into a registry PR. | Keeps instance-local work private and avoids leaking local overrides. |
 
 ## Lifecycle
 
 1. **Draft** — author the skill here, run it locally.
-2. **Promote to `community/`** — open a PR on `agent-skill-registry`, placing the skill under `skills/community/<domain>/<slug>/`.  The PR template will guide you through the admission checklist.
-3. **Promote to `official/`** — after community validation, maintainers move the skill to `skills/official/`.
+2. **Promote to `experimental/`** — package the skill and open a PR on `agent-skill-registry` when you want early shared review with lighter gates.
+3. **Promote to `community/`** — move to `skills/community/<domain>/<slug>/` once the admission checklist is complete and peer review is appropriate.
+4. **Promote to `official/`** — maintainers may later move a proven community skill into `skills/official/`.
+
+Typical CLI flow from this directory:
+
+```powershell
+python skills.py package-prepare --skill-id <domain.slug> --target-channel experimental
+python skills.py package-validate "<package_path>" --print-pr-command
+python skills.py package-pr "<package_path>"
+```
 
 ## Gitignore
 

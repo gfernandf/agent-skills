@@ -173,7 +173,7 @@ classified using internal evidence and readiness scoring.
 ## Local-to-Registry Workflow (User UX)
 
 The platform now supports a complete local-first workflow so users can iterate
-privately and only request officialization when they are ready.
+privately and only request shared-registry promotion when they are ready.
 
 1. Generate a local skill from plain language:
 
@@ -197,6 +197,12 @@ $env:AGENT_SKILLS_SCAFFOLDER_MODE = "direct-openai"
 python skills.py package-prepare --skill-id text.summarize-incoming-support --target-channel experimental
 ```
 
+Typical targets are:
+
+- `experimental` for early shared review with light gate requirements
+- `community` when the admission checklist is already complete
+- `official` only for maintainer-led final promotion
+
 3. Validate package quality and governance readiness:
 
 ```powershell
@@ -208,6 +214,9 @@ python skills.py package-validate "<package_path>" --print-pr-command
 ```powershell
 python skills.py package-pr "<package_path>"
 ```
+
+`package-pr` prepares the branch and opens the PR, but it does not auto-merge,
+auto-approve, or bypass channel governance.
 
 All package workflow commands support machine-readable output for UI/backend orchestration:
 
