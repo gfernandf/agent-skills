@@ -82,9 +82,11 @@ Current default behavior without evidence files:
 
 Current workflow gates:
 
+- pin_drift_guard: enforces maximum drift budget between `REGISTRY_REF` and registry `origin/main`
 - smoke: critical capabilities
 - contracts: capability output shape/type/error contracts
 - registry_consistency: registry validation + catalog freshness guard
+- runtime_canary: binding fallback/conformance + customer-facing neutral checks + coverage/executability ratio enforcement
 - full_batch: scheduled/on-demand full suite
 
 ## Registry Consistency Review

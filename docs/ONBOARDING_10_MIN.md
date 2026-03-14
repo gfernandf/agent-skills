@@ -21,7 +21,7 @@ inputs -> step input mapping -> capability execution -> output mapping -> final 
 
 At runtime, the key orchestration path is:
 
-- CLI/main.py
+- cli/main.py
 - runtime/execution_engine.py
 - runtime/binding_executor.py
 
@@ -82,20 +82,20 @@ Expected baseline:
 
 Basic run:
 
-- python CLI/main.py run <skill_id>
+- python cli/main.py run <skill_id>
 
 With inline input:
 
-- python CLI/main.py run <skill_id> --input "{\"key\":\"value\"}"
+- python cli/main.py run <skill_id> --input "{\"key\":\"value\"}"
 
 With input file:
 
-- python CLI/main.py run <skill_id> --input-file input.json
+- python cli/main.py run <skill_id> --input-file input.json
 
 With trace correlation:
 
-- python CLI/main.py run <skill_id> --trace-id onboarding-001
-- python CLI/main.py trace <skill_id> --trace-id onboarding-001
+- python cli/main.py run <skill_id> --trace-id onboarding-001
+- python cli/main.py trace <skill_id> --trace-id onboarding-001
 
 Use trace_id to correlate runtime and service logs.
 

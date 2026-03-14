@@ -4,6 +4,9 @@ Date: 2026-03-11
 
 This checklist captures the current system state before integrating MCP/OpenAPI adapters.
 
+Historical note: this document captures a pre-integration snapshot.
+For the latest baseline numbers, use `docs/PROJECT_STATUS.md`.
+
 ## Quality Gates Status
 
 - Functional batch: `33/33`, `0` stubs, `0` errors.

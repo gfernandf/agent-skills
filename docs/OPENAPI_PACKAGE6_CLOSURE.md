@@ -152,6 +152,9 @@ All artifacts follow pattern:
 
 ### 3. Regression Matrix
 
+Historical note: metrics below refer to the construction-phase closure snapshot.
+Current runtime-wide metrics are tracked in `docs/PROJECT_STATUS.md`.
+
 Clear test gates ensure no regressions:
 - Smoke: 8/8 capabilities with official binding
 - Contracts: 33/33 checks with 99 verifications

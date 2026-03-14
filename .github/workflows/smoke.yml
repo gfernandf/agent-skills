@@ -23,9 +23,36 @@ env:
   # Pinned registry ref for deterministic cross-repo smoke runs.
   # Update intentionally when advancing the runtime/registry compatibility baseline.
   REGISTRY_REF: 8aff407
+  # Operational guardrail: fail if the pin drifts too far behind origin/main.
+  MAX_PIN_DRIFT_COMMITS: 25
 
 jobs:
+  pin_drift_guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+          git -C ../agent-skill-registry fetch origin main --quiet
+          git -C ../agent-skill-registry rev-parse --verify "${REGISTRY_REF}^{commit}" >/dev/null
+
+      - name: Enforce registry pin drift budget
+        run: |
+          DRIFT=$(git -C ../agent-skill-registry rev-list --count "${REGISTRY_REF}..origin/main")
+          echo "Pinned registry drift commits: ${DRIFT}"
+          if [ "${DRIFT}" -gt "${MAX_PIN_DRIFT_COMMITS}" ]; then
+            echo "REGISTRY_REF drift (${DRIFT}) exceeds MAX_PIN_DRIFT_COMMITS (${MAX_PIN_DRIFT_COMMITS})." >&2
+            echo "Update REGISTRY_REF after validating runtime/registry compatibility." >&2
+            exit 1
+          fi
+
   smoke:
+    needs: pin_drift_guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -138,6 +165,7 @@ jobs:
           PY
 
   contracts:
+    needs: pin_drift_guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -200,6 +228,7 @@ jobs:
           PY
 
   registry_consistency:
+    needs: pin_drift_guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -249,13 +278,28 @@ jobs:
         if: always()
         run: |
           python - << 'PY'
+          import subprocess
           from pathlib import Path
-          summary = "## Registry Consistency\n\n- Validation: completed\n- Catalog freshness: no pending diffs\n"
+
+          cp = subprocess.run(
+            ["git", "-C", "../agent-skill-registry", "status", "--porcelain"],
+            check=False,
+            text=True,
+            capture_output=True,
+          )
+          has_diffs = bool((cp.stdout or "").strip())
+          freshness = "pending diffs detected" if has_diffs else "no pending diffs"
+          summary = (
+            "## Registry Consistency\n\n"
+            "- Validation: completed\n"
+            f"- Catalog freshness: {freshness}\n"
+          )
           with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
               f.write(summary)
           PY
 
   openapi_verification:
+    needs: pin_drift_guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -333,7 +377,112 @@ jobs:
               f.write("\n".join(summary) + "\n")
           PY
 
+  runtime_canary:
+    needs: pin_drift_guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+          git -C ../agent-skill-registry checkout "${REGISTRY_REF}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml requests beautifulsoup4 PyPDF2
+
+      - name: Run runtime canary checks
+        run: |
+          mkdir -p artifacts
+          python tooling/verify_binding_fallback_policy.py | tee artifacts/binding_fallback.log
+          python tooling/verify_binding_conformance_suite.py | tee artifacts/binding_conformance_suite.log
+          python tooling/verify_customer_facing_neutral.py | tee artifacts/customer_facing_neutral.log
+          python tooling/compute_runtime_coverage.py > artifacts/runtime_coverage.json
+          python tooling/compute_skill_executability.py > artifacts/skill_executability.json
+
+      - name: Enforce coverage and executability ratios
+        run: |
+          python - << 'PY'
+          import json
+          from pathlib import Path
+
+          coverage = json.loads(Path('artifacts/runtime_coverage.json').read_text(encoding='utf-8'))
+          skills = json.loads(Path('artifacts/skill_executability.json').read_text(encoding='utf-8'))
+
+          coverage_ratio = float(coverage.get('coverage_ratio', 0.0) or 0.0)
+          executability_ratio = float(skills.get('executability_ratio', 0.0) or 0.0)
+
+          if coverage_ratio < 1.0:
+              raise SystemExit(f"Coverage ratio below 1.0: {coverage_ratio}")
+          if executability_ratio < 1.0:
+              raise SystemExit(f"Skill executability ratio below 1.0: {executability_ratio}")
+          PY
+
+      - name: Publish runtime canary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-canary-report
+          path: |
+            artifacts/binding_fallback.log
+            artifacts/binding_conformance_suite.log
+            artifacts/customer_facing_neutral.log
+            artifacts/runtime_coverage.json
+            artifacts/skill_executability.json
+
+      - name: Append runtime canary summary
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          from pathlib import Path
+
+          lines = ['## Runtime Canary', '']
+
+          coverage_path = Path('artifacts/runtime_coverage.json')
+          skills_path = Path('artifacts/skill_executability.json')
+
+          if coverage_path.exists():
+              coverage = json.loads(coverage_path.read_text(encoding='utf-8'))
+              lines.append(f"- Coverage ratio: {coverage.get('coverage_ratio', 'n/a')}")
+          else:
+              lines.append('- Coverage ratio: report missing')
+
+          if skills_path.exists():
+              skills = json.loads(skills_path.read_text(encoding='utf-8'))
+              lines.append(f"- Skill executability ratio: {skills.get('executability_ratio', 'n/a')}")
+          else:
+              lines.append('- Skill executability ratio: report missing')
+
+          for log_name in [
+              'binding_fallback.log',
+              'binding_conformance_suite.log',
+              'customer_facing_neutral.log',
+          ]:
+              log_path = Path('artifacts') / log_name
+              lines.append(f"- {log_name}: {'present' if log_path.exists() else 'missing'}")
+
+          with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+              f.write('\n'.join(lines) + '\n')
+          PY
+
   full_batch:
+    needs: pin_drift_guard
     if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_full_batch == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30

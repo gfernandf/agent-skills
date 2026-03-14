@@ -655,6 +655,8 @@ def _build_pr_flow_payload(registry_root: Path, package_path: Path) -> dict[str,
             "python tools/validate_registry.py",
             "python tools/generate_catalog.py",
             "python tools/governance_guardrails.py",
+            "python tools/capability_governance_guardrails.py",
+            "python tools/enforce_capability_sunset.py",
             f'git add "{target_rel}" catalog/*.json',
             f'git commit -m "Promote {skill_id} to {target_channel}"',
             "git push -u origin HEAD",
@@ -867,6 +869,9 @@ def _cmd_package_pr(
     cp = _run(["git", "checkout", base])
     _require_ok(cp, f"checkout base branch '{base}'")
 
+    cp = _run(["git", "pull", "--ff-only", remote, base])
+    _require_ok(cp, f"fast-forward base branch '{base}' from {remote}")
+
     cp = _run(["git", "rev-parse", "--verify", branch_name])
     if cp.returncode == 0:
         _finish_with_error(
@@ -887,11 +892,13 @@ def _cmd_package_pr(
         ([sys.executable, "tools/validate_registry.py"], "validate_registry"),
         ([sys.executable, "tools/generate_catalog.py"], "generate_catalog"),
         ([sys.executable, "tools/governance_guardrails.py"], "governance_guardrails"),
+        ([sys.executable, "tools/capability_governance_guardrails.py"], "capability_governance_guardrails"),
+        ([sys.executable, "tools/enforce_capability_sunset.py"], "enforce_capability_sunset"),
     ]:
         cp = _run(cmd)
         _require_ok(cp, label)
 
-    cp = _run(["git", "add", str(target_rel), "catalog/capabilities.json", "catalog/skills.json", "catalog/graph.json"])
+    cp = _run(["git", "add", str(target_rel), "catalog/*.json"])
     _require_ok(cp, "git add")
 
     cp = _run(["git", "commit", "-m", f"Promote {skill_id} to {target_channel}"])

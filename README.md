@@ -1,15 +1,15 @@
-# Agent Skill Registry
+# Agent Skills Runtime
 
-An open registry of reusable **AI agent skills** and **capability definitions**.
+Runtime implementation for executing reusable **AI agent skills** and **capability bindings**.
 
-The registry provides a standardized, declarative way to define:
+This repository provides the execution layer for:
 
 - primitive **capabilities**
 - composable **skills (workflows)**
 - shared **vocabulary**
-- machine-readable **catalogs**
+- machine-readable **runtime artifacts**
 
-It acts as the **source of truth for agent workflows** that can be executed by compatible runtimes.
+The registry source of truth (contracts and canonical definitions) lives in the companion repository `agent-skill-registry`.
 
 ## Runtime Quality & Observability
 
@@ -234,6 +234,7 @@ All package workflow commands support machine-readable output for UI/backend orc
 - OpenAPI v1 phase-0 governance and technical foundation: `docs/OPENAPI_PHASE0_FOUNDATION.md`
 - OpenAPI v1 phase-1 smoke rollout plan: `docs/OPENAPI_PHASE1_SMOKE_PLAN.md`
 - OpenAPI construction packages and commit strategy: `docs/OPENAPI_CONSTRUCTION_PACKAGES.md`
+- Cross-repo registry pin policy (compatibility drift control): `docs/CROSS_REPO_PIN_POLICY.md`
 - **OpenAPI construction guide (copy-paste templates)**: `docs/OPENAPI_CONSTRUCTION_GUIDE.md`
 - **OpenAPI population checklist (gate criteria + regression tests)**: `docs/OPENAPI_POPULATION_CHECKLIST.md`
 - **OpenAPI construction phase closure (Package 6 summary)**: `docs/OPENAPI_PACKAGE6_CLOSURE.md`
@@ -255,14 +256,14 @@ However, most implementations today are:
 - difficult to reuse across systems
 - inconsistent in naming and structure
 
-The **Agent Skill Registry** addresses this by providing:
+The **Agent Skills Runtime** addresses this by providing:
 
-- a **common vocabulary**
-- a **declarative workflow model**
-- a **shared registry of reusable skills**
-- a **machine-readable catalog for runtimes**
+- a **deterministic execution engine**
+- a **binding-driven integration layer**
+- a **local-first developer workflow**
+- a **verification and observability surface for runtime operations**
 
-The goal is to make agent capabilities **discoverable, composable, and reusable**.
+The goal is to make agent capabilities **reliable, composable, and production-ready** in local and CI environments.
 
 ---
 

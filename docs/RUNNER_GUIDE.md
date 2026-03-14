@@ -12,7 +12,7 @@ The runner is the execution subsystem in runtime/ that:
 - maps capability/service responses back into skill outputs
 - emits execution events and structured logs
 
-Primary entrypoint for manual usage is CLI/main.py.
+Primary entrypoint for manual usage is cli/main.py.
 
 ## 2) End-to-End Flow
 
@@ -113,25 +113,25 @@ Trace propagation:
 
 Basic execution:
 
-- python CLI/main.py run <skill_id>
-- python CLI/main.py run <skill_id> --input "{\"key\":\"value\"}"
-- python CLI/main.py run <skill_id> --input-file input.json
+- python cli/main.py run <skill_id>
+- python cli/main.py run <skill_id> --input "{\"key\":\"value\"}"
+- python cli/main.py run <skill_id> --input-file input.json
 
 Execution with trace correlation:
 
-- python CLI/main.py run <skill_id> --trace-id trace-001
-- python CLI/main.py trace <skill_id> --trace-id trace-001
+- python cli/main.py run <skill_id> --trace-id trace-001
+- python cli/main.py trace <skill_id> --trace-id trace-001
 
 System checks:
 
-- python CLI/main.py doctor
+- python cli/main.py doctor
 
 OpenAPI checks from CLI:
 
-- python CLI/main.py openapi verify-bindings --all
-- python CLI/main.py openapi verify-bindings --scenario tooling/openapi_scenarios/data.schema.validate.mock.json
-- python CLI/main.py openapi verify-invoker
-- python CLI/main.py openapi verify-errors
+- python cli/main.py openapi verify-bindings --all
+- python cli/main.py openapi verify-bindings --scenario tooling/openapi_scenarios/data.schema.validate.mock.json
+- python cli/main.py openapi verify-invoker
+- python cli/main.py openapi verify-errors
 
 ## 6) Validation and Health Commands
 
@@ -203,8 +203,8 @@ Current runner behavior intentionally keeps:
 
 As documented in docs/PROJECT_STATUS.md, runner baseline is currently stable with:
 
-- 33/33 contract pass
+- 45/45 contract pass
 - 8/8 smoke pass
-- full capability coverage and skill executability
+- full capability coverage and skill executability (45/45 capabilities, 31/31 skills)
 
 This is the recommended baseline before starting MCP/OpenAPI adapter expansion.
