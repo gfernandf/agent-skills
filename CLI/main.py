@@ -41,6 +41,10 @@ from runtime.mcp_invoker import MCPInvoker
 from runtime.pythoncall_invoker import PythonCallInvoker
 from runtime.engine_factory import build_runtime_components
 from runtime.models import ExecutionOptions, ExecutionRequest
+from tooling.officialization_package import (
+    prepare_officialization_package,
+    validate_officialization_package,
+)
 
 
 def main() -> None:
@@ -167,6 +171,48 @@ def main() -> None:
     )
     add_root_args(scaffold_cmd)
 
+    package_prepare_cmd = sub.add_parser(
+        "package-prepare",
+        help="Prepare a promotion package from a local skill to experimental/community/official",
+    )
+    package_prepare_target = package_prepare_cmd.add_mutually_exclusive_group(required=True)
+    package_prepare_target.add_argument("--skill-id", default=None, help="Skill ID to package (domain.slug).")
+    package_prepare_target.add_argument(
+        "--skill-file",
+        type=Path,
+        default=None,
+        help="Explicit path to local skill.yaml to package.",
+    )
+    package_prepare_cmd.add_argument(
+        "--target-channel",
+        choices=["experimental", "community", "official"],
+        default="experimental",
+        help="Target registry channel for the package.",
+    )
+    package_prepare_cmd.add_argument(
+        "--out-root",
+        type=Path,
+        default=None,
+        help="Package output root. Defaults to <runtime-root>/artifacts/officialization_packages/.",
+    )
+    add_root_args(package_prepare_cmd)
+
+    package_validate_cmd = sub.add_parser(
+        "package-validate",
+        help="Validate a prepared promotion package",
+    )
+    package_validate_cmd.add_argument(
+        "package_path",
+        type=Path,
+        help="Path to package directory produced by package-prepare.",
+    )
+    package_validate_cmd.add_argument(
+        "--print-pr-command",
+        action="store_true",
+        help="Print suggested git/gh commands to create a PR when package is valid.",
+    )
+    add_root_args(package_validate_cmd)
+
     openapi_cmd = sub.add_parser("openapi", help="Run OpenAPI verification and diagnostics")
     openapi_sub = openapi_cmd.add_subparsers(dest="openapi_command", required=True)
 
@@ -286,6 +332,26 @@ def main() -> None:
             args.out_dir,
         )
 
+    elif args.command == "package-prepare":
+
+        _cmd_package_prepare(
+            registry_root,
+            runtime_root,
+            local_skills_root,
+            args.skill_id,
+            args.skill_file,
+            args.target_channel,
+            args.out_root,
+        )
+
+    elif args.command == "package-validate":
+
+        _cmd_package_validate(
+            registry_root,
+            args.package_path,
+            args.print_pr_command,
+        )
+
     elif args.command == "openapi":
 
         _cmd_openapi(args, runtime_root)
@@ -361,6 +427,105 @@ def _cmd_scaffold(
     print(f"           1. Review and edit {target_file}")
     print(f"           2. Run: skills run {suggested_id} --input '{{}}' to test")
     print( "           3. Promote to experimental/ or community/ via PR when ready")
+
+
+def _cmd_package_prepare(
+    registry_root: Path,
+    runtime_root: Path,
+    local_skills_root: Path | None,
+    skill_id: str | None,
+    skill_file: Path | None,
+    target_channel: str,
+    out_root: Path | None,
+) -> None:
+    resolved_local = local_skills_root or (runtime_root / "skills" / "local")
+    package_out_root = out_root or (runtime_root / "artifacts" / "officialization_packages")
+    package_out_root.mkdir(parents=True, exist_ok=True)
+
+    result = prepare_officialization_package(
+        local_skills_root=resolved_local,
+        registry_root=registry_root,
+        target_channel=target_channel,
+        out_root=package_out_root,
+        skill_id=skill_id,
+        skill_file=skill_file,
+    )
+
+    print("[package-prepare] Package created")
+    print(f"[package-prepare] Skill ID       : {result.skill_id}")
+    print(f"[package-prepare] Target channel: {result.target_channel}")
+    print(f"[package-prepare] Package root   : {result.package_root}")
+    print(f"[package-prepare] Payload skill  : {result.payload_skill_path}")
+    print("[package-prepare] Next step:")
+    print(f"  python skills.py package-validate \"{result.package_root}\" --print-pr-command")
+
+
+def _cmd_package_validate(
+    registry_root: Path,
+    package_path: Path,
+    print_pr_command: bool,
+) -> None:
+    result = validate_officialization_package(
+        package_root=package_path,
+        registry_root=registry_root,
+    )
+
+    print(f"[package-validate] Skill ID       : {result.skill_id or '(unknown)'}")
+    print(f"[package-validate] Target channel: {result.target_channel or '(unknown)'}")
+
+    if result.warnings:
+        print("[package-validate] Warnings:")
+        for warning in result.warnings:
+            print(f"  - {warning}")
+
+    if result.errors:
+        print("[package-validate] Errors:")
+        for error in result.errors:
+            print(f"  - {error}")
+        raise SystemExit(2)
+
+    print("[package-validate] Validation: OK")
+
+    if print_pr_command:
+        _print_pr_commands(registry_root, package_path)
+
+
+def _print_pr_commands(registry_root: Path, package_path: Path) -> None:
+    manifest_path = package_path / "package_manifest.json"
+    if not manifest_path.exists():
+        return
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    skill_id = manifest.get("skill_id", "unknown.skill")
+    target_channel = manifest.get("target_channel", "experimental")
+
+    if isinstance(skill_id, str) and "." in skill_id:
+        domain, slug = skill_id.split(".", 1)
+    else:
+        domain, slug = "unknown", "skill"
+
+    payload_skill = package_path / "payload" / "skills" / target_channel / domain / slug / "skill.yaml"
+    evidence_answers = package_path / "evidence" / "admission_answers.yaml"
+    pr_template = package_path / "pr_body_template.md"
+    branch_name = f"promote/{target_channel}/{skill_id}".replace(".", "-")
+    target_rel = f"skills/{target_channel}/{domain}/{slug}/skill.yaml"
+
+    print("[package-validate] Suggested PR flow (manual review + explicit commands):")
+    print(f"  1. Set-Location \"{registry_root}\"")
+    print(f"  2. git checkout -b \"{branch_name}\"")
+    print(f"  3. New-Item -ItemType Directory -Force -Path \"skills/{target_channel}/{domain}/{slug}\" | Out-Null")
+    print(f"  4. Copy-Item \"{payload_skill}\" \"{target_rel}\"")
+    print("  5. python tools/validate_registry.py")
+    print("  6. python tools/generate_catalog.py")
+    print("  7. python tools/governance_guardrails.py")
+    print(f"  8. git add \"{target_rel}\" catalog/*.json")
+    print(f"  9. git commit -m \"Promote {skill_id} to {target_channel}\"")
+    print(" 10. git push -u origin HEAD")
+    print(
+        " 11. gh pr create --title \"Promote "
+        f"{skill_id} to {target_channel}\" --body-file \"{pr_template}\""
+    )
+    print(f"     # Fill checklist answers from: {evidence_answers}")
 
 
 def _cmd_openapi(args, runtime_root: Path) -> None:
