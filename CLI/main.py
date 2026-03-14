@@ -41,9 +41,9 @@ from runtime.mcp_invoker import MCPInvoker
 from runtime.pythoncall_invoker import PythonCallInvoker
 from runtime.engine_factory import build_runtime_components
 from runtime.models import ExecutionOptions, ExecutionRequest
-from tooling.officialization_package import (
-    prepare_officialization_package,
-    validate_officialization_package,
+from tooling.promotion_package import (
+    prepare_promotion_package,
+    validate_promotion_package,
 )
 
 
@@ -193,7 +193,10 @@ def main() -> None:
         "--out-root",
         type=Path,
         default=None,
-        help="Package output root. Defaults to <runtime-root>/artifacts/officialization_packages/ (legacy internal directory name).",
+        help=(
+            "Package output root. Defaults to <runtime-root>/artifacts/promotion_packages/ "
+            "(falls back to legacy officialization_packages if it already exists)."
+        ),
     )
     package_prepare_cmd.add_argument(
         "--json",
@@ -518,10 +521,19 @@ def _cmd_package_prepare(
     json_output: bool,
 ) -> None:
     resolved_local = local_skills_root or (runtime_root / "skills" / "local")
-    package_out_root = out_root or (runtime_root / "artifacts" / "officialization_packages")
+    if out_root is not None:
+        package_out_root = out_root
+    else:
+        default_promotion_root = runtime_root / "artifacts" / "promotion_packages"
+        legacy_officialization_root = runtime_root / "artifacts" / "officialization_packages"
+        package_out_root = (
+            legacy_officialization_root
+            if legacy_officialization_root.exists() and not default_promotion_root.exists()
+            else default_promotion_root
+        )
     package_out_root.mkdir(parents=True, exist_ok=True)
 
-    result = prepare_officialization_package(
+    result = prepare_promotion_package(
         local_skills_root=resolved_local,
         registry_root=registry_root,
         target_channel=target_channel,
@@ -567,7 +579,7 @@ def _cmd_package_validate(
     print_pr_command: bool,
     json_output: bool,
 ) -> None:
-    result = validate_officialization_package(
+    result = validate_promotion_package(
         package_root=package_path,
         registry_root=registry_root,
     )
@@ -734,7 +746,7 @@ def _cmd_package_pr(
             print(json.dumps(result_payload, indent=2, ensure_ascii=False))
 
     # Always validate package before any git/gh side effects.
-    validation = validate_officialization_package(
+    validation = validate_promotion_package(
         package_root=package_path,
         registry_root=registry_root,
     )
