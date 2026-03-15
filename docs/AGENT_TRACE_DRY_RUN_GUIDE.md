@@ -64,6 +64,7 @@ Scripts:
 
 - `npm run dry-run`: baseline risk scenario
 - `npm run dry-run:mitigated`: mitigation scenario
+- `npm run dry-run:real-agent`: uses OpenAI to generate iterative recommendations and feeds each step into `agent.trace`
 
 PowerShell launcher (same terminal where your OpenAI key is already active):
 
@@ -71,6 +72,7 @@ PowerShell launcher (same terminal where your OpenAI key is already active):
 $env:PATH="C:\Program Files\nodejs;" + $env:PATH
 & "C:\Program Files\nodejs\npm.cmd" run dry-run --prefix "c:\Users\Usuario\agent-skills\artifacts\trace-instance\npm-dry-run"
 & "C:\Program Files\nodejs\npm.cmd" run dry-run:mitigated --prefix "c:\Users\Usuario\agent-skills\artifacts\trace-instance\npm-dry-run"
+& "C:\Program Files\nodejs\npm.cmd" run dry-run:real-agent --prefix "c:\Users\Usuario\agent-skills\artifacts\trace-instance\npm-dry-run"
 ```
 
 ## 5) Baselines captured
@@ -82,6 +84,10 @@ Blocked baseline snapshot:
 Mitigated baseline snapshot:
 
 - `artifacts/trace-instance/npm-dry-run/baselines/2026-03-15-openai-mitigated-v1/`
+
+Real-agent blocked baseline snapshot:
+
+- `artifacts/trace-instance/npm-dry-run/baselines/2026-03-15-openai-real-agent-blocked-v1/`
 
 Each baseline folder includes:
 
@@ -113,6 +119,12 @@ Mitigated scenario:
 - Added mitigation events and validation evidence.
 - Final status moved to `ok` while still exposing non-zero risk flags.
 
+Real-agent scenario (OpenAI-generated steps):
+
+- Session continuity preserved across all 3 cycles.
+- `analysis_source` stayed in `openai` mode across cycles.
+- Final status remained `blocked`, with persistent risk flags requiring governance replan.
+
 This is expected and desirable for governance: no hidden risk, but controlled progression.
 
 ## 8) Recommended operational policy
@@ -128,4 +140,5 @@ For first production usage:
 
 - If OpenAI key is missing in the running process, analysis falls back to heuristic mode.
 - Node/npm must be available in PATH (or launched via absolute executable path on Windows).
+- On Windows, real-agent subprocesses should force UTF-8 (`PYTHONIOENCODING=utf-8`, `PYTHONUTF8=1`) to avoid Unicode print errors in multi-cycle runs.
 - The local trace service is instance-scoped under artifacts and intended for controlled experiments before official promotion.
