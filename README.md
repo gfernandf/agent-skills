@@ -243,6 +243,7 @@ All package workflow commands support machine-readable output for UI/backend orc
 - **Consumer-facing neutral API (HTTP + MCP adapters)**: `docs/CONSUMER_FACING_NEUTRAL_API.md`
 - **MCP integration rollout slices and verification**: `docs/MCP_INTEGRATION_SLICES.md`
 - **Skill governance manifesto (trust model + architecture changes)**: `docs/SKILL_GOVERNANCE_MANIFESTO.md`
+- **Agent trace dry-run guide (cycles, baselines, npm scenarios)**: `docs/AGENT_TRACE_DRY_RUN_GUIDE.md`
 
 ---
 
