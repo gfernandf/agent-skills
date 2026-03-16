@@ -22,7 +22,7 @@ permissions:
 env:
   # Pinned registry ref for deterministic cross-repo smoke runs.
   # Update intentionally when advancing the runtime/registry compatibility baseline.
-  REGISTRY_REF: 8aff407
+  REGISTRY_REF: 8680217
   # Operational guardrail: fail if the pin drifts too far behind origin/main.
   MAX_PIN_DRIFT_COMMITS: 25
 
