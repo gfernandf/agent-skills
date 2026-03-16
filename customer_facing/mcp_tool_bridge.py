@@ -5,6 +5,7 @@ import sys
 from typing import Any
 
 from customer_facing.neutral_api import NeutralRuntimeAPI
+from gateway.core import SkillGateway
 from runtime.openapi_error_contract import map_runtime_error_to_http
 
 
@@ -16,8 +17,9 @@ class MCPToolBridge:
     MCP server transport implementation.
     """
 
-    def __init__(self, api: NeutralRuntimeAPI) -> None:
+    def __init__(self, api: NeutralRuntimeAPI, gateway: SkillGateway) -> None:
         self.api = api
+        self.gateway = gateway
 
     def list_tools(self) -> list[dict[str, Any]]:
         return [
@@ -34,6 +36,69 @@ class MCPToolBridge:
                     "required": ["skill_id"],
                     "properties": {
                         "skill_id": {"type": "string"},
+                    },
+                },
+            },
+            {
+                "name": "skill.list",
+                "description": "List available skills with optional filters.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "domain": {"type": "string"},
+                        "role": {"type": "string"},
+                        "status": {"type": "string"},
+                        "invocation": {"type": "string"},
+                    },
+                },
+            },
+            {
+                "name": "skill.discover",
+                "description": "Discover and rank skills for a user intent.",
+                "input_schema": {
+                    "type": "object",
+                    "required": ["intent"],
+                    "properties": {
+                        "intent": {"type": "string"},
+                        "domain": {"type": "string"},
+                        "role": {"type": "string"},
+                        "limit": {"type": "integer"},
+                    },
+                },
+            },
+            {
+                "name": "skill.diagnostics",
+                "description": "Return gateway diagnostics including cache stats.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {},
+                },
+            },
+            {
+                "name": "skill.metrics.reset",
+                "description": "Reset gateway diagnostics metrics and optionally clear caches.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "clear_cache": {"type": "boolean"},
+                    },
+                },
+            },
+            {
+                "name": "skill.attach",
+                "description": "Attach a skill to a target and execute it.",
+                "input_schema": {
+                    "type": "object",
+                    "required": ["skill_id", "target_type", "target_ref"],
+                    "properties": {
+                        "skill_id": {"type": "string"},
+                        "target_type": {"type": "string"},
+                        "target_ref": {"type": "string"},
+                        "inputs": {"type": "object"},
+                        "trace_id": {"type": "string"},
+                        "include_trace": {"type": "boolean"},
+                        "required_conformance_profile": {"type": "string"},
+                        "audit_mode": {"type": "string"},
                     },
                 },
             },
@@ -100,6 +165,73 @@ class MCPToolBridge:
 
         if name == "skill.describe":
             return self.api.describe_skill(str(args.get("skill_id", "")))
+
+        if name == "skill.list":
+            return {
+                "skills": [
+                    s.to_dict()
+                    for s in self.gateway.list_skills(
+                        domain=args.get("domain") if isinstance(args.get("domain"), str) else None,
+                        role=args.get("role") if isinstance(args.get("role"), str) else None,
+                        status=args.get("status") if isinstance(args.get("status"), str) else None,
+                        invocation=args.get("invocation") if isinstance(args.get("invocation"), str) else None,
+                    )
+                ]
+            }
+
+        if name == "skill.discover":
+            intent = args.get("intent")
+            if not isinstance(intent, str) or not intent:
+                raise ValueError("skill.discover requires non-empty string argument 'intent'")
+            limit = int(args.get("limit", 10)) if isinstance(args.get("limit"), int) else 10
+            return {
+                "intent": intent,
+                "results": [
+                    r.to_dict()
+                    for r in self.gateway.discover(
+                        intent=intent,
+                        domain=args.get("domain") if isinstance(args.get("domain"), str) else None,
+                        role_filter=args.get("role") if isinstance(args.get("role"), str) else None,
+                        limit=limit,
+                    )
+                ],
+            }
+
+        if name == "skill.diagnostics":
+            return self.gateway.diagnostics()
+
+        if name == "skill.metrics.reset":
+            return self.gateway.reset_diagnostics_metrics(
+                clear_cache=bool(args.get("clear_cache", False))
+            )
+
+        if name == "skill.attach":
+            target_type = args.get("target_type")
+            target_ref = args.get("target_ref")
+            if not isinstance(target_type, str) or not target_type:
+                raise ValueError("skill.attach requires non-empty string argument 'target_type'")
+            if not isinstance(target_ref, str) or not target_ref:
+                raise ValueError("skill.attach requires non-empty string argument 'target_ref'")
+
+            result = self.gateway.attach(
+                skill_id=str(args.get("skill_id", "")),
+                target_type=target_type,
+                target_ref=target_ref,
+                inputs=args.get("inputs") if isinstance(args.get("inputs"), dict) else {},
+                trace_id=args.get("trace_id") if isinstance(args.get("trace_id"), str) else None,
+                include_trace=bool(args.get("include_trace", False)),
+                required_conformance_profile=(
+                    args.get("required_conformance_profile")
+                    if isinstance(args.get("required_conformance_profile"), str)
+                    else None
+                ),
+                audit_mode=(
+                    args.get("audit_mode")
+                    if isinstance(args.get("audit_mode"), str)
+                    else None
+                ),
+            )
+            return result.to_dict()
 
         if name == "skill.execute":
             return self.api.execute_skill(

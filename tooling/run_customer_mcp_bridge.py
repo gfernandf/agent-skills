@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
 
 from customer_facing.mcp_tool_bridge import MCPToolBridge, run_stdio_bridge
 from customer_facing.neutral_api import NeutralRuntimeAPI
+from gateway.core import SkillGateway
 
 
 def main() -> int:
@@ -30,7 +31,12 @@ def main() -> int:
         runtime_root=runtime_root,
         host_root=host_root,
     )
-    bridge = MCPToolBridge(api)
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+    )
+    bridge = MCPToolBridge(api, gateway)
     return run_stdio_bridge(bridge)
 
 

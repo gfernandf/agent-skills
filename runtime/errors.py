@@ -95,3 +95,7 @@ class MaxSkillDepthExceededError(RuntimeErrorBase):
 
 class InvalidExecutionOptionsError(RuntimeErrorBase):
     """Raised when execution options are invalid."""
+
+
+class AttachValidationError(RuntimeErrorBase):
+    """Raised when a requested attach operation violates skill classification rules."""

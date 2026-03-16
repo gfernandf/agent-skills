@@ -92,6 +92,11 @@ jobs:
           python tooling/verify_mcp_text_summarize.py | tee artifacts/mcp_text_summarize.log
           python tooling/verify_mcp_data_web_slices.py | tee artifacts/mcp_data_web_slices.log
 
+      - name: Build attach target index and run gateway smoke
+        run: |
+          python tooling/build_attach_target_index.py --runtime-root . | tee artifacts/attach_target_index.log
+          python tooling/smoke_gateway_slice3.py --runtime-root . --registry-root ../agent-skill-registry --host-root . | tee artifacts/gateway_slice3.log
+
       - name: Publish smoke report artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -103,6 +108,9 @@ jobs:
             artifacts/customer_parity_snapshot.log
             artifacts/mcp_text_summarize.log
             artifacts/mcp_data_web_slices.log
+            artifacts/attach_target_index.log
+            artifacts/gateway_slice3.log
+            artifacts/attach_targets/index.json
             tooling/snapshots/consumer_facing_parity_v1.actual.json
 
       - name: Append smoke summary
@@ -148,7 +156,8 @@ jobs:
               (Path('artifacts/customer_http_controls.log'), 'Customer-facing HTTP controls verification passed.'),
               (Path('artifacts/customer_parity_snapshot.log'), 'Customer-facing parity snapshot verification passed.'),
               (Path('artifacts/mcp_text_summarize.log'), 'MCP text.summarize verification passed.'),
-                (Path('artifacts/mcp_data_web_slices.log'), 'MCP data/web slice verification passed.'),
+              (Path('artifacts/mcp_data_web_slices.log'), 'MCP data/web slice verification passed.'),
+              (Path('artifacts/gateway_slice3.log'), '[smoke] slice3 PASSED'),
           ]
 
           lines = ['## Customer-Facing Smoke Checks', '']

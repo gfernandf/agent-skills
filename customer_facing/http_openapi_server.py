@@ -11,6 +11,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from customer_facing.neutral_api import NeutralRuntimeAPI
+from gateway.core import SkillGateway
 from runtime.openapi_error_contract import build_http_error_payload, map_runtime_error_to_http
 
 
@@ -29,6 +30,7 @@ class ServerConfig:
 
 class _RequestHandler(BaseHTTPRequestHandler):
     api: NeutralRuntimeAPI | None = None
+    gateway: SkillGateway | None = None
     openapi_spec_path: Path | None = None
     config: ServerConfig = ServerConfig()
     _rate_lock = threading.Lock()
@@ -71,6 +73,28 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 )
                 return
 
+            if parsed.path == "/v1/skills/list":
+                query = parse_qs(parsed.query or "")
+                self._write_json(
+                    200,
+                    {
+                        "skills": [
+                            s.to_dict()
+                            for s in self._gateway().list_skills(
+                                domain=query.get("domain", [None])[0],
+                                role=query.get("role", [None])[0],
+                                status=query.get("status", [None])[0],
+                                invocation=query.get("invocation", [None])[0],
+                            )
+                        ]
+                    },
+                )
+                return
+
+            if parsed.path == "/v1/skills/diagnostics":
+                self._write_json(200, self._gateway().diagnostics())
+                return
+
             self._write_json(404, {"error": {"code": "not_found", "message": "Route not found", "type": "NotFound"}})
         except Exception as e:  # pragma: no cover
             self._write_runtime_error(e)
@@ -87,6 +111,67 @@ class _RequestHandler(BaseHTTPRequestHandler):
             body = self._read_json_body()
 
             skill_prefix = "/v1/skills/"
+            if parsed.path == "/v1/skills/discover":
+                intent = body.get("intent") if isinstance(body, dict) else None
+                if not isinstance(intent, str) or not intent:
+                    raise ValueError("discover requires non-empty string field 'intent'")
+
+                limit_raw = body.get("limit", 10) if isinstance(body, dict) else 10
+                limit = int(limit_raw) if isinstance(limit_raw, int) else 10
+
+                response = {
+                    "intent": intent,
+                    "results": [
+                        r.to_dict()
+                        for r in self._gateway().discover(
+                            intent=intent,
+                            domain=(body.get("domain") if isinstance(body.get("domain"), str) else None),
+                            role_filter=(body.get("role") if isinstance(body.get("role"), str) else None),
+                            limit=limit,
+                        )
+                    ],
+                }
+                self._write_json(200, response)
+                return
+
+            if parsed.path.startswith(skill_prefix) and parsed.path.endswith("/attach"):
+                skill_id = parsed.path[len(skill_prefix) : -len("/attach")]
+                if not isinstance(body, dict):
+                    raise ValueError("Request body must be a JSON object")
+
+                target_type = body.get("target_type")
+                target_ref = body.get("target_ref")
+                inputs = body.get("inputs") if isinstance(body.get("inputs"), dict) else {}
+
+                if not isinstance(target_type, str) or not target_type:
+                    raise ValueError("attach requires non-empty string field 'target_type'")
+                if not isinstance(target_ref, str) or not target_ref:
+                    raise ValueError("attach requires non-empty string field 'target_ref'")
+
+                trace_id = self._extract_trace_id(body)
+                include_trace = bool(body.get("include_trace", False))
+                required_profile = None
+                value = body.get("required_conformance_profile")
+                if isinstance(value, str) and value:
+                    required_profile = value
+                audit_mode = None
+                value = body.get("audit_mode")
+                if isinstance(value, str) and value:
+                    audit_mode = value
+
+                response = self._gateway().attach(
+                    skill_id=skill_id,
+                    target_type=target_type,
+                    target_ref=target_ref,
+                    inputs=inputs,
+                    trace_id=trace_id,
+                    include_trace=include_trace,
+                    required_conformance_profile=required_profile,
+                    audit_mode=audit_mode,
+                )
+                self._write_json(200, response.to_dict())
+                return
+
             if parsed.path.startswith(skill_prefix) and parsed.path.endswith("/execute"):
                 skill_id = parsed.path[len(skill_prefix) : -len("/execute")]
                 inputs = body.get("inputs") if isinstance(body, dict) else {}
@@ -155,6 +240,11 @@ class _RequestHandler(BaseHTTPRequestHandler):
         if self.api is None:
             raise RuntimeError("NeutralRuntimeAPI is not configured")
         return self.api
+
+    def _gateway(self) -> SkillGateway:
+        if self.gateway is None:
+            raise RuntimeError("SkillGateway is not configured")
+        return self.gateway
 
     def _authorize(self, path: str) -> bool:
         config = self.config
@@ -318,6 +408,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
 
 def run_server(
     api: NeutralRuntimeAPI,
+    gateway: SkillGateway,
     *,
     config: ServerConfig = ServerConfig(),
     openapi_spec_path: Path | None = None,
@@ -329,6 +420,7 @@ def run_server(
         )
 
     _RequestHandler.api = api
+    _RequestHandler.gateway = gateway
     _RequestHandler.openapi_spec_path = openapi_spec_path
     _RequestHandler.config = config
     _RequestHandler._rate_state = {}

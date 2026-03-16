@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from runtime.errors import (
+    AttachValidationError,
     CapabilityExecutionError,
     CapabilityNotFoundError,
     FinalOutputValidationError,
@@ -44,7 +45,7 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
             message=sanitize_error_message(error),
         )
 
-    if isinstance(error, (InputMappingError, ReferenceResolutionError, OutputMappingError)):
+    if isinstance(error, (InputMappingError, ReferenceResolutionError, OutputMappingError, AttachValidationError)):
         return HttpErrorContract(
             status_code=400,
             code="invalid_request",

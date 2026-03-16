@@ -7,6 +7,36 @@ This checklist captures the current system state before integrating MCP/OpenAPI 
 Historical note: this document captures a pre-integration snapshot.
 For the latest baseline numbers, use `docs/PROJECT_STATUS.md`.
 
+## Post-Baseline Update (2026-03-16)
+
+The following gateway-level surfaces are now implemented and validated in
+runtime smoke and local product demo flows:
+
+- HTTP gateway routes:
+  - `GET /v1/skills/list`
+  - `GET /v1/skills/diagnostics`
+  - `POST /v1/skills/discover`
+  - `POST /v1/skills/{skill_id}/attach`
+- MCP tools:
+  - `skill.list`, `skill.discover`, `skill.attach`, `skill.diagnostics`, `skill.metrics.reset`
+- CLI gateway commands:
+  - `list`, `discover`, `attach`, `gateway-diagnostics`, `gateway-reset-metrics`
+
+Validation status additions:
+
+- Gateway parity smoke (`tooling/smoke_gateway_slice3.py`) verifies CLI/HTTP/MCP
+  contract alignment, diagnostics, metrics reset, and attach validation behavior.
+- Local MCP dual-job orchestration demo (`tooling/demo_mcp_dual_job_trace.py`)
+  validates policy-guided decomposition into primary skill execution plus
+  sidecar attach workflow.
+
+Notes:
+
+- Discovery ranking remains heuristic and should be combined with product
+  selection policy.
+- Sidecar execution is skill-category based (`role=sidecar`) and should be
+  treated as a generic pattern, not a hard-coded single-skill exception.
+
 ## Quality Gates Status
 
 - Functional batch: `33/33`, `0` stubs, `0` errors.

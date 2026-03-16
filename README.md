@@ -16,6 +16,30 @@ The registry source of truth (contracts and canonical definitions) lives in the 
 - Observability implementation details: `docs/OBSERVABILITY.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
 
+## Agent Gateway Operation Model
+
+The runtime exposes a gateway-oriented execution model for agents that need to
+discover and orchestrate skills without coupling to internal binding mechanics.
+
+Canonical operations across CLI/HTTP/MCP:
+
+- `skill.list`: enumerate available skills with classification filters.
+- `skill.discover`: rank skills for a user intent.
+- `skill.execute`: execute a selected skill directly.
+- `skill.attach`: execute a skill against an existing target (`task|run|output|transcript|artifact`).
+- `skill.diagnostics` / `skill.metrics.reset`: operational visibility and reset controls.
+
+Recommended orchestration pattern for product-facing agents:
+
+1. Discover candidate skills for the primary user objective.
+2. Select primary skill using policy (not only top-1 ranking score).
+3. Execute primary skill.
+4. Optionally attach sidecar skills for monitoring/control/reporting.
+5. Return user-facing result plus operational trace summary.
+
+This pattern is skill-agnostic: sidecar behavior is not hard-coded to one
+specific skill and applies to any skill classified as `invocation: attach|both`.
+
 ## Skill Execution Audit Layer
 
 The runtime supports persisted execution audit records per skill run.
@@ -244,6 +268,7 @@ All package workflow commands support machine-readable output for UI/backend orc
 - **MCP integration rollout slices and verification**: `docs/MCP_INTEGRATION_SLICES.md`
 - **Skill governance manifesto (trust model + architecture changes)**: `docs/SKILL_GOVERNANCE_MANIFESTO.md`
 - **Agent trace dry-run guide (cycles, baselines, npm scenarios)**: `docs/AGENT_TRACE_DRY_RUN_GUIDE.md`
+- **Gateway release go/no-go checklist (product gates)**: `docs/GATEWAY_RELEASE_GO_NO_GO.md`
 
 ---
 

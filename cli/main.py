@@ -41,6 +41,7 @@ from runtime.mcp_invoker import MCPInvoker
 from runtime.pythoncall_invoker import PythonCallInvoker
 from runtime.engine_factory import build_runtime_components
 from runtime.models import ExecutionOptions, ExecutionRequest
+from gateway.core import SkillGateway
 from tooling.promotion_package import (
     prepare_promotion_package,
     validate_promotion_package,
@@ -90,6 +91,78 @@ def main() -> None:
     describe_cmd = sub.add_parser("describe", help="Describe a skill")
     describe_cmd.add_argument("skill_id")
     add_root_args(describe_cmd)
+
+    discover_cmd = sub.add_parser("discover", help="Discover skills for an intent")
+    discover_cmd.add_argument("intent", help="Natural language intent used for ranking")
+    discover_cmd.add_argument("--domain", default=None, help="Optional domain filter")
+    discover_cmd.add_argument(
+        "--role",
+        default=None,
+        choices=["procedure", "utility", "sidecar"],
+        help="Optional role filter",
+    )
+    discover_cmd.add_argument("--limit", type=int, default=10, help="Max results to return")
+    discover_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    add_root_args(discover_cmd)
+
+    list_cmd = sub.add_parser("list", help="List skills with optional filters")
+    list_cmd.add_argument("--domain", default=None, help="Filter by domain")
+    list_cmd.add_argument(
+        "--role",
+        default=None,
+        choices=["procedure", "utility", "sidecar"],
+        help="Filter by classification role",
+    )
+    list_cmd.add_argument("--status", default=None, help="Filter by metadata status")
+    list_cmd.add_argument(
+        "--invocation",
+        default=None,
+        choices=["direct", "attach", "both"],
+        help="Filter by classification invocation",
+    )
+    list_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    add_root_args(list_cmd)
+
+    attach_cmd = sub.add_parser("attach", help="Attach a skill to an existing target and execute")
+    attach_cmd.add_argument("skill_id", help="Skill id to attach")
+    attach_cmd.add_argument(
+        "--target-type",
+        required=True,
+        choices=["task", "run", "output", "transcript", "artifact"],
+        help="Attach target type",
+    )
+    attach_cmd.add_argument("--target-ref", required=True, help="Opaque reference to target instance")
+    attach_cmd.add_argument("--input", default=None, help="Inline JSON object for skill inputs")
+    attach_cmd.add_argument("--input-file", default=None, help="Path to JSON file with skill inputs")
+    attach_cmd.add_argument("--trace-id", default=None, help="Optional trace id for correlation")
+    attach_cmd.add_argument("--include-trace", action="store_true", help="Include execution event trace")
+    attach_cmd.add_argument(
+        "--required-conformance-profile",
+        choices=["strict", "standard", "experimental"],
+        default=None,
+        help="Optional minimum conformance profile for all capabilities executed by this run.",
+    )
+    attach_cmd.add_argument(
+        "--audit-mode",
+        choices=["off", "standard", "full"],
+        default=None,
+        help="Audit record mode for this run. Defaults to runtime configuration.",
+    )
+    attach_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    add_root_args(attach_cmd)
+
+    gateway_diag_cmd = sub.add_parser("gateway-diagnostics", help="Show gateway cache diagnostics")
+    gateway_diag_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    add_root_args(gateway_diag_cmd)
+
+    gateway_reset_cmd = sub.add_parser("gateway-reset-metrics", help="Reset gateway diagnostics metrics")
+    gateway_reset_cmd.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help="Also clear in-memory gateway caches when resetting metrics.",
+    )
+    gateway_reset_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    add_root_args(gateway_reset_cmd)
 
     activate_cmd = sub.add_parser("activate", help="Apply override activation")
     activate_cmd.add_argument("--capability", default=None)
@@ -319,6 +392,74 @@ def main() -> None:
     elif args.command == "describe":
 
         _cmd_describe(registry_root, args.skill_id)
+
+    elif args.command == "discover":
+
+        _cmd_discover(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.intent,
+            args.domain,
+            args.role,
+            args.limit,
+            args.json,
+            local_skills_root,
+        )
+
+    elif args.command == "list":
+
+        _cmd_list_skills(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.domain,
+            args.role,
+            args.status,
+            args.invocation,
+            args.json,
+            local_skills_root,
+        )
+
+    elif args.command == "attach":
+
+        _cmd_attach(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.skill_id,
+            args.target_type,
+            args.target_ref,
+            args.input,
+            args.input_file,
+            args.trace_id,
+            args.include_trace,
+            args.required_conformance_profile,
+            args.audit_mode,
+            args.json,
+            local_skills_root,
+        )
+
+    elif args.command == "gateway-diagnostics":
+
+        _cmd_gateway_diagnostics(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.json,
+            local_skills_root,
+        )
+
+    elif args.command == "gateway-reset-metrics":
+
+        _cmd_gateway_reset_metrics(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.clear_cache,
+            args.json,
+            local_skills_root,
+        )
 
     elif args.command == "activate":
 
@@ -1080,6 +1221,207 @@ def _cmd_describe(registry_root: Path, skill_id: str) -> None:
             ensure_ascii=False,
         )
     )
+
+
+def _cmd_discover(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    intent: str,
+    domain: str | None,
+    role: str | None,
+    limit: int,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+        local_skills_root=local_skills_root,
+    )
+    results = gateway.discover(
+        intent=intent,
+        domain=domain,
+        role_filter=role,
+        limit=limit,
+    )
+
+    payload = {
+        "intent": intent,
+        "domain": domain,
+        "role_filter": role,
+        "limit": limit,
+        "results": [r.to_dict() for r in results],
+    }
+
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+def _cmd_list_skills(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    domain: str | None,
+    role: str | None,
+    status: str | None,
+    invocation: str | None,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+        local_skills_root=local_skills_root,
+    )
+    results = gateway.list_skills(
+        domain=domain,
+        role=role,
+        status=status,
+        invocation=invocation,
+    )
+
+    payload = {
+        "filters": {
+            "domain": domain,
+            "role": role,
+            "status": status,
+            "invocation": invocation,
+        },
+        "count": len(results),
+        "skills": [s.to_dict() for s in results],
+    }
+
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+def _cmd_attach(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    skill_id: str,
+    target_type: str,
+    target_ref: str,
+    input_json: str | None,
+    input_file: str | None,
+    trace_id: str | None,
+    include_trace: bool,
+    required_conformance_profile: str | None,
+    audit_mode: str | None,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    if input_json and input_file:
+        raise ValueError("Use either --input or --input-file")
+
+    if input_file:
+        # Accept UTF-8 files with or without BOM for smoother PowerShell interop.
+        with open(input_file, "r", encoding="utf-8-sig") as f:
+            inputs = json.load(f)
+    elif input_json:
+        inputs = json.loads(input_json)
+    else:
+        inputs = {}
+
+    if not isinstance(inputs, dict):
+        raise ValueError("attach inputs must be a JSON object")
+
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+        local_skills_root=local_skills_root,
+    )
+
+    try:
+        result = gateway.attach(
+            skill_id=skill_id,
+            target_type=target_type,
+            target_ref=target_ref,
+            inputs=inputs,
+            trace_id=trace_id,
+            include_trace=include_trace,
+            required_conformance_profile=required_conformance_profile,
+            audit_mode=audit_mode,
+        )
+    except Exception as e:
+        if json_output:
+            print(
+                json.dumps(
+                    {
+                        "ok": False,
+                        "error": {
+                            "type": type(e).__name__,
+                            "message": str(e),
+                        },
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
+            raise SystemExit(2)
+        raise
+
+    payload = result.to_dict()
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+def _cmd_gateway_diagnostics(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+        local_skills_root=local_skills_root,
+    )
+    payload = gateway.diagnostics()
+
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+def _cmd_gateway_reset_metrics(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    clear_cache: bool,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+        local_skills_root=local_skills_root,
+    )
+    payload = gateway.reset_diagnostics_metrics(clear_cache=clear_cache)
+
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
 
 
 def _cmd_trace(

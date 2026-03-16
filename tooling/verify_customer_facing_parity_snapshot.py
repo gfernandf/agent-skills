@@ -20,6 +20,7 @@ if str(ROOT) not in sys.path:
 
 from customer_facing.mcp_tool_bridge import MCPToolBridge
 from customer_facing.neutral_api import NeutralRuntimeAPI
+from gateway.core import SkillGateway
 
 
 def _http_get_json(url: str, headers: dict[str, str] | None = None) -> dict[str, Any]:
@@ -74,7 +75,12 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
         runtime_root=ROOT,
         host_root=ROOT,
     )
-    bridge = MCPToolBridge(api)
+    gateway = SkillGateway(
+        registry_root=REGISTRY_ROOT,
+        runtime_root=ROOT,
+        host_root=ROOT,
+    )
+    bridge = MCPToolBridge(api, gateway)
 
     headers = {"x-api-key": api_key}
 

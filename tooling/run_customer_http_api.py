@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
 
 from customer_facing.http_openapi_server import ServerConfig, run_server
 from customer_facing.neutral_api import NeutralRuntimeAPI
+from gateway.core import SkillGateway
 
 
 def main() -> int:
@@ -42,9 +43,15 @@ def main() -> int:
         runtime_root=runtime_root,
         host_root=host_root,
     )
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+    )
 
     run_server(
         api,
+        gateway,
         config=ServerConfig(
             host=args.host,
             port=args.port,
