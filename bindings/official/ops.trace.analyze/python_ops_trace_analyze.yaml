@@ -1,0 +1,29 @@
+id: python_ops_trace_analyze
+capability: ops.trace.analyze
+service: ops_baseline
+protocol: pythoncall
+operation: analyze_trace
+request:
+  goal: input.goal
+  events: input.events
+  context: input.context
+  trace_state: input.trace_state
+  trace_session_id: input.trace_session_id
+  state_mode: input.state_mode
+  mode: input.mode
+  output_views: input.output_views
+  thresholds: input.thresholds
+response:
+  trace_session_id: response.trace_session_id
+  updated_trace_state: response.updated_trace_state
+  state_checksum: response.state_checksum
+  trace_version: response.trace_version
+  decision_graph: response.decision_graph
+  assumptions: response.assumptions
+  alternative_paths: response.alternative_paths
+  confidence: response.confidence
+  risk_candidates: response.risk_candidates
+  summary: response.summary
+metadata:
+  description: Official binding for ops.trace.analyze using ops_baseline service.
+  status: stable

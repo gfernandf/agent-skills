@@ -18,6 +18,7 @@ if str(ROOT) not in sys.path:
 
 from customer_facing.mcp_tool_bridge import MCPToolBridge
 from customer_facing.neutral_api import NeutralRuntimeAPI
+from gateway.core import SkillGateway
 
 
 def _http_get_json(url: str) -> dict:
@@ -76,7 +77,12 @@ def main() -> int:
             runtime_root=ROOT,
             host_root=ROOT,
         )
-        bridge = MCPToolBridge(api)
+        gateway = SkillGateway(
+            registry_root=REGISTRY_ROOT,
+            runtime_root=ROOT,
+            host_root=ROOT,
+        )
+        bridge = MCPToolBridge(api, gateway)
         tools = bridge.list_tools()
         if not any(t.get("name") == "skill.execute" for t in tools):
             raise RuntimeError("MCP bridge did not expose skill.execute")
