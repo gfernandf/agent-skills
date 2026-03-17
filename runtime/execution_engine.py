@@ -244,6 +244,10 @@ class ExecutionEngine:
             )
 
             meta: dict | None = None
+            attempts_count = None
+            fallback_used = None
+            conformance_profile = None
+            required_profile = None
             if step.uses.startswith("skill:"):
                 produced = self.nested_skill_runner.execute(
                     step.uses,
@@ -266,10 +270,6 @@ class ExecutionEngine:
                 else:
                     produced, meta = result, None
 
-                attempts_count = None
-                fallback_used = None
-                conformance_profile = None
-                required_profile = None
                 if isinstance(meta, dict):
                     attempts = meta.get("attempts")
                     if isinstance(attempts, list):

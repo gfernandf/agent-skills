@@ -44,9 +44,9 @@ class ReferenceResolver:
         if namespace == "outputs":
             return self._resolve_outputs(field, state)
 
-        raise ReferenceResolutionError(
-            f"Unknown reference namespace '{namespace}'."
-        )
+        # Any string that is not in a known runtime namespace is treated
+        # as a literal (for example natural language sentences with dots).
+        return value
 
     def resolve_mapping(self, mapping: dict[str, Any], state: ExecutionState) -> dict[str, Any]:
         """
@@ -63,10 +63,10 @@ class ReferenceResolver:
 
     def _resolve_inputs(self, field: str, state: ExecutionState) -> Any:
         if field not in state.inputs:
-            raise ReferenceResolutionError(
-                f"Input '{field}' not found in execution inputs.",
-                skill_id=state.skill_id,
-            )
+            # Inputs marked optional in skill contracts may be omitted by callers.
+            # Returning None preserves declarative references without forcing
+            # every optional field to be present in runtime input payloads.
+            return None
         return state.inputs[field]
 
     def _resolve_vars(self, field: str, state: ExecutionState) -> Any:

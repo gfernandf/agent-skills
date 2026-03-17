@@ -113,6 +113,9 @@ class OpenAPIInvoker:
                 "content_type": response.headers.get("Content-Type"),
             }
 
+        if response_mode == "json":
+            body = self._enrich_chat_completion_json(body)
+
         duration_ms = round((time.perf_counter() - start_time) * 1000, 3)
 
         return InvocationResponse(
@@ -212,6 +215,43 @@ class OpenAPIInvoker:
             )
 
         return normalized
+
+    def _enrich_chat_completion_json(self, body: Any) -> Any:
+        """
+        Enrich OpenAI-style chat completion JSON responses by parsing any JSON
+        object embedded in choices[*].message.content.
+
+        This allows bindings to map structured outputs through paths like:
+            response.choices.0.message.content_json.field
+        while preserving the original response body unchanged for other bindings.
+        """
+        if not isinstance(body, dict):
+            return body
+
+        choices = body.get("choices")
+        if not isinstance(choices, list):
+            return body
+
+        for choice in choices:
+            if not isinstance(choice, dict):
+                continue
+            message = choice.get("message")
+            if not isinstance(message, dict):
+                continue
+            content = message.get("content")
+            if not isinstance(content, str):
+                continue
+            parsed = self._try_parse_json(content)
+            if parsed is not None:
+                message["content_json"] = parsed
+
+        return body
+
+    def _try_parse_json(self, value: str) -> Any | None:
+        try:
+            return json.loads(value)
+        except (TypeError, json.JSONDecodeError):
+            return None
 
     def _resolve_env_placeholders(
         self,

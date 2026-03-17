@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 from typing import Any
 
 from runtime.binding_models import BindingSpec
@@ -8,6 +10,9 @@ from runtime.errors import RuntimeErrorBase
 
 class RequestBuildError(RuntimeErrorBase):
     """Raised when a binding request payload cannot be constructed."""
+
+
+_INPUT_TEMPLATE_RE = re.compile(r"\$\{(input\.[^}]+)\}")
 
 
 class RequestBuilder:
@@ -112,6 +117,35 @@ class RequestBuilder:
         step_input: dict[str, Any],
         binding: BindingSpec,
     ) -> Any:
+        template_matches = list(_INPUT_TEMPLATE_RE.finditer(value))
+        if template_matches:
+            if len(template_matches) == 1 and template_matches[0].span() == (0, len(value)):
+                return self._resolve_string_reference(
+                    template_matches[0].group(1),
+                    step_input=step_input,
+                    binding=binding,
+                )
+
+            rendered_parts: list[str] = []
+            last_index = 0
+            for match in template_matches:
+                rendered_parts.append(value[last_index:match.start()])
+                resolved = self._resolve_string_reference(
+                    match.group(1),
+                    step_input=step_input,
+                    binding=binding,
+                )
+                if isinstance(resolved, (dict, list)):
+                    rendered_parts.append(json.dumps(resolved, ensure_ascii=True))
+                elif resolved is None:
+                    rendered_parts.append("null")
+                else:
+                    rendered_parts.append(str(resolved))
+                last_index = match.end()
+
+            rendered_parts.append(value[last_index:])
+            return "".join(rendered_parts)
+
         if "." not in value:
             return value
 

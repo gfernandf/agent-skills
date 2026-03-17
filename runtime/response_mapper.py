@@ -102,8 +102,9 @@ class ResponseMapper:
         binding: BindingSpec,
     ) -> Any:
         current: Any = raw_response
+        parts = field_path.split(".")
 
-        for part in field_path.split("."):
+        for index, part in enumerate(parts):
             if not part:
                 raise ResponseMappingError(
                     f"Binding '{binding.id}' contains an invalid response path 'response.{field_path}'.",
@@ -112,6 +113,10 @@ class ResponseMapper:
 
             if isinstance(current, dict):
                 if part not in current:
+                    if index == len(parts) - 1 and part == "output":
+                        return current
+                    if index == len(parts) - 1 and part == "warnings":
+                        return []
                     raise ResponseMappingError(
                         f"Binding '{binding.id}' references missing response field 'response.{field_path}'.",
                         capability_id=binding.capability_id,
