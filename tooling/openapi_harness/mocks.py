@@ -418,17 +418,17 @@ class ModelResearchHandler(BaseHTTPRequestHandler):
 
     def _from_schema(self, schema: Any) -> Any:
         if not isinstance(schema, dict):
-            return {}
+            return {"error": "mock-error: invalid schema for mock response"}
 
         schema_type = schema.get("type")
         if schema_type == "string":
-            return "mock-text"
+            return "mock-error: this is a mock response, not real output"
         if schema_type == "number":
-            return 0.0
+            return -9999.0
         if schema_type == "integer":
-            return 0
+            return -9999
         if schema_type == "boolean":
-            return True
+            return False
         if schema_type == "array":
             item_schema = schema.get("items", {"type": "string"})
             return [self._from_schema(item_schema)]
@@ -441,9 +441,9 @@ class ModelResearchHandler(BaseHTTPRequestHandler):
             return obj
 
         if schema_type == "object" or schema_type is None:
-            return {}
+            return {"error": "mock-error: object type in mock response"}
 
-        return {}
+        return {"error": f"mock-error: unknown schema type {schema_type}"}
 
     def _write_json(self, status: int, body: dict[str, Any]) -> None:
         encoded = json.dumps(body).encode("utf-8")

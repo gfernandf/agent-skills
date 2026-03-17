@@ -8,6 +8,72 @@ import time
 
 from runtime.observability import elapsed_ms, log_event
 
+
+def resolve_corpus_sources(items):
+    print("[DEBUG] resolve_corpus_sources called with", len(items), "items")
+    resolved = []
+    for raw_item in (items or []):
+        item = dict(raw_item)
+        if item.get("content"):
+            resolved.append(item)
+            continue
+
+        source_ref = item.get("source_ref") or {}
+        ref_type = source_ref.get("type", "")
+        location = source_ref.get("location", "")
+        print(f"[DEBUG] resolving type={ref_type} location={location}")
+
+        if ref_type == "pdf_path":
+            result = read_pdf(location)
+            item["content"] = result.get("text", "")
+            item.setdefault("type", "report")
+            pdf_meta = result.get("metadata") or {}
+            if pdf_meta.get("title"):
+                item.setdefault("title", pdf_meta["title"])
+
+        elif ref_type == "fs_path":
+            try:
+                norm = os.path.realpath(location)
+                if not os.path.isfile(norm):
+                    item["content"] = ""
+                    item["resolution_error"] = f"File not found: {location}"
+                else:
+                    with open(norm, "r", encoding="utf-8", errors="replace") as f:
+                        item["content"] = f.read()
+                item.setdefault("type", "report")
+            except Exception as exc:
+                item["content"] = ""
+                item["resolution_error"] = f"Error reading file: {exc}"
+
+        elif ref_type == "url":
+            try:
+                import requests as _requests
+                resp = _requests.get(location, timeout=30)
+                resp.raise_for_status()
+                item["content"] = resp.text
+                item.setdefault("type", "web_page")
+            except Exception as exc:
+                item["content"] = ""
+                item["resolution_error"] = f"Error fetching URL: {exc}"
+
+        elif ref_type == "raw_text":
+            item["content"] = location
+            item.setdefault("type", "raw_text")
+
+        else:
+            # memory_key and unknown types: pass through, add warning
+            item.setdefault("content", "")
+            if ref_type:
+                item["resolution_warning"] = (
+                    f"source_ref.type '{ref_type}' cannot be resolved locally; "
+                    "content left empty."
+                )
+
+        resolved.append(item)
+
+    print("[DEBUG] resolve_corpus_sources returning", len(resolved), "items")
+    return {"items": resolved}
+
 _MAX_PDF_BYTES = 50 * 1024 * 1024   # 50 MB
 _MAX_PDF_PAGES = 500
 

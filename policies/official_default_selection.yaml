@@ -23,6 +23,7 @@ defaults:
   ops.budget.estimate: python_ops_budget_estimate
   ops.trace.analyze: python_ops_trace_analyze
   ops.trace.monitor: python_ops_trace_monitor
+  corpus.source.resolve: python_corpus_source_resolve
   pdf.read: python_pdf_read
   policy.constraint.validate: python_policy_constraint_validate
   provenance.citation.generate: python_provenance_citation_generate
@@ -47,5 +48,5 @@ defaults:
   web.page.extract: python_web_page_extract
   web.source.verify: python_web_source_verify
   web.search: python_web_search
-  model.output.generate: openapi_model_output_generate_mock
-  model.response.validate: openapi_model_response_validate_mock
+  model.output.generate: openapi_model_output_generate_openai_chat
+  model.response.validate: openapi_model_response_validate_openai_chat

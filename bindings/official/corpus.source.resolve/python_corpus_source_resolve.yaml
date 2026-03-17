@@ -1,0 +1,18 @@
+id: python_corpus_source_resolve
+capability: corpus.source.resolve
+service: doc_baseline
+protocol: pythoncall
+operation: resolve_corpus_sources
+
+request:
+  items: input.items
+
+response:
+  items: response.items
+
+metadata:
+  description: >
+    Official binding for corpus.source.resolve. Resolves source_refs in corpus
+    items to actual text content: reads PDFs via PyPDF2, filesystem files via
+    open(), and URLs via requests. Items with existing content are passed through.
+  status: stable

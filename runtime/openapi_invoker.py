@@ -57,6 +57,15 @@ class OpenAPIInvoker:
             capability_id=capability_id,
         )
 
+        # Volcado explícito a log para diagnóstico
+        try:
+            with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
+                f.write(f"\n[DEBUG] OpenAI request: {json.dumps(request.payload)[:2000]}\n")
+        except Exception as e:
+            print(f"[DEBUG] Error writing OpenAI request log: {e}")
+
+        print("[DEBUG] OpenAI request:", json.dumps(request.payload)[:1000])
+
         try:
             response = requests.request(
                 method=method,
@@ -77,6 +86,15 @@ class OpenAPIInvoker:
                 capability_id=capability_id,
                 cause=e,
             ) from e
+
+        # Volcado explícito a log para diagnóstico
+        try:
+            with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
+                f.write(f"[DEBUG] OpenAI response: status={response.status_code} body={response.text[:2000]}\n")
+        except Exception as e:
+            print(f"[DEBUG] Error writing OpenAI response log: {e}")
+
+        print(f"[DEBUG] OpenAI response: status={response.status_code} body={{}}".format(response.text[:1000]))
 
         if not response.ok:
             preview = self._safe_text_preview(response.text)
