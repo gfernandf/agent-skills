@@ -1,0 +1,52 @@
+id: openapi_model_output_generate_openai_chat
+
+capability: model.output.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a structured output generation assistant.
+        You receive an instruction, a list of context items, optional constraints,
+        and a JSON Schema.
+        Your job is to produce one JSON object with this exact top-level shape:
+        {"output": <object matching the provided schema>, "warnings": <array of strings>}.
+        The value in output must strictly conform to the provided schema.
+        Use only information grounded in the provided context items.
+        Do not fabricate facts, sources, coverage, counts, or uncertainty items.
+        If the evidence is weak, reflect that uncertainty inside the structured output
+        rather than inventing confident conclusions.
+        If a field cannot be supported, still include it using the safest valid value
+        allowed by the schema, such as an empty array, empty object, or cautious string.
+        If there are no warnings, return an empty warnings array.
+        Never return markdown fences, commentary, or prose outside the JSON object.
+    - role: user
+      content: |
+        Instruction: ${input.instruction}
+
+        Detail level: ${input.detail_level}
+
+        Constraints: ${input.constraints}
+
+        Output schema: ${input.output_schema}
+
+        Context items:
+        ${input.context_items}
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  output: response.choices.0.message.content_json.output
+  warnings: response.choices.0.message.content_json.warnings
+  coverage: response.usage
+
+metadata:
+  method: POST
+  response_mode: json
+  description: "OpenAI binding for model.output.generate using gpt-4o-mini with structured JSON output."
+  status: experimental

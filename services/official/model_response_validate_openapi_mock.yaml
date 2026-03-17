@@ -1,0 +1,10 @@
+id: model_response_validate_openapi_mock
+kind: openapi
+base_url: http://127.0.0.1:8765
+spec_ref: services/official/specs/model_response_validate_openapi_mock.yaml
+
+metadata:
+  description: "OpenAPI mock service for model.response.validate. Used for pipeline smoke testing without a live LLM."
+  maintained_by: "agent-skills"
+  status: experimental
+  purpose: smoke-openapi-mock

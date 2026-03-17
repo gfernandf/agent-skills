@@ -1,0 +1,23 @@
+id: openapi_model_output_generate_mock
+
+capability: model.output.generate
+service: model_output_generate_openapi_mock
+protocol: openapi
+operation: generate
+
+request:
+  instruction: input.instruction
+  context_items: input.context_items
+  output_schema: input.output_schema
+  detail_level: input.detail_level
+  constraints: input.constraints
+
+response:
+  output: response.output
+  warnings: response.warnings
+  coverage: response.coverage
+
+metadata:
+  method: POST
+  description: "OpenAPI mock binding for model.output.generate. Use for pipeline smoke testing."
+  status: experimental

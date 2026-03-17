@@ -1,0 +1,38 @@
+openapi: 3.0.3
+info:
+  title: Model Response Validate Mock API
+  version: 1.0.0
+paths:
+  /model/response/validate:
+    post:
+      operationId: validate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [output, validation_policy]
+              properties:
+                output:
+                  type: object
+                validation_policy:
+                  type: object
+                evidence_context:
+                  type: array
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  issues:
+                    type: array
+                  confidence_adjustment:
+                    type: number
+                  rationale:
+                    type: string

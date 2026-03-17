@@ -366,6 +366,97 @@ class AgentRouteHandler(BaseHTTPRequestHandler):
         return
 
 
+class ModelResearchHandler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path not in {"/model/output/generate", "/model/response/validate", "/generate", "/validate"}:
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        payload = self._read_json()
+        if payload is None:
+            return
+
+        if self.path in {"/model/output/generate", "/generate"}:
+            output_schema = payload.get("output_schema")
+            output_obj = self._from_schema(output_schema)
+            if not isinstance(output_obj, dict):
+                output_obj = {}
+
+            self._write_json(
+                200,
+                {
+                    "output": output_obj,
+                    "warnings": [],
+                    "coverage": {
+                        "processed_items": len(payload.get("context_items", []) if isinstance(payload.get("context_items"), list) else []),
+                        "ignored_items": 0,
+                    },
+                },
+            )
+            return
+
+        self._write_json(
+            200,
+            {
+                "valid": True,
+                "issues": [],
+                "confidence_adjustment": 0.0,
+                "rationale": "Mock validation passed.",
+            },
+        )
+
+    def _read_json(self) -> dict[str, Any] | None:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(content_length)
+        try:
+            decoded = json.loads(raw_body.decode("utf-8"))
+            return decoded if isinstance(decoded, dict) else {}
+        except json.JSONDecodeError:
+            self._write_json(400, {"error": "invalid_json"})
+            return None
+
+    def _from_schema(self, schema: Any) -> Any:
+        if not isinstance(schema, dict):
+            return {}
+
+        schema_type = schema.get("type")
+        if schema_type == "string":
+            return "mock-text"
+        if schema_type == "number":
+            return 0.0
+        if schema_type == "integer":
+            return 0
+        if schema_type == "boolean":
+            return True
+        if schema_type == "array":
+            item_schema = schema.get("items", {"type": "string"})
+            return [self._from_schema(item_schema)]
+
+        props = schema.get("properties")
+        if isinstance(props, dict):
+            obj: dict[str, Any] = {}
+            for key, value in props.items():
+                obj[key] = self._from_schema(value)
+            return obj
+
+        if schema_type == "object" or schema_type is None:
+            return {}
+
+        return {}
+
+    def _write_json(self, status: int, body: dict[str, Any]) -> None:
+        encoded = json.dumps(body).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A003
+        return
+
+
 HANDLER_BY_TYPE = {
     "data_schema_validate": DataSchemaValidateHandler,
     "text_summarize": TextSummarizeHandler,
@@ -375,6 +466,7 @@ HANDLER_BY_TYPE = {
     "audio_transcribe": AudioTranscribeHandler,
     "fs_read": FsReadHandler,
     "agent_route": AgentRouteHandler,
+    "model_research": ModelResearchHandler,
 }
 
 

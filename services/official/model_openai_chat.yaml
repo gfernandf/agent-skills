@@ -1,0 +1,12 @@
+id: model_openai_chat
+kind: openapi
+base_url: https://api.openai.com/v1
+
+metadata:
+  description: "Official OpenAI Chat Completions service for model-level capabilities (output generation, response validation)."
+  maintained_by: "agent-skills"
+  status: experimental
+  timeout_seconds: 60
+  headers:
+    Authorization: "Bearer ${OPENAI_API_KEY}"
+    Content-Type: "application/json"

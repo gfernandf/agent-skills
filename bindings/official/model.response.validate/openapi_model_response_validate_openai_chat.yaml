@@ -1,0 +1,45 @@
+id: openapi_model_response_validate_openai_chat
+
+capability: model.response.validate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a structured output validation assistant.
+        You receive a model-generated output object, a validation policy, and optional evidence context.
+        Evaluate the output against the policy dimensions: coherence, grounding, coverage, and uncertainty surfacing.
+        Return a JSON object with: valid (boolean), issues (array of objects with dimension, severity, description),
+        confidence_adjustment (number between -0.3 and 0.0, negative only), and rationale (string).
+        Be conservative: only mark valid=true if all required dimensions pass.
+        If evidence context is insufficient, report that as an issue instead of guessing.
+        Return valid JSON only. No markdown fences, no prose outside the JSON object.
+    - role: user
+      content: |
+        Output to validate:
+        ${input.output}
+
+        Validation policy:
+        ${input.validation_policy}
+
+        Evidence context:
+        ${input.evidence_context}
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  valid: response.choices.0.message.content_json.valid
+  issues: response.choices.0.message.content_json.issues
+  confidence_adjustment: response.choices.0.message.content_json.confidence_adjustment
+  rationale: response.choices.0.message.content_json.rationale
+
+metadata:
+  method: POST
+  response_mode: json
+  description: "OpenAI binding for model.response.validate using gpt-4o-mini with structured JSON output."
+  status: experimental

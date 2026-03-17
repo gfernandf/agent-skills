@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: Model Output Generate Mock API
+  version: 1.0.0
+paths:
+  /model/output/generate:
+    post:
+      operationId: generate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [instruction, context_items, output_schema]
+              properties:
+                instruction:
+                  type: string
+                context_items:
+                  type: array
+                output_schema:
+                  type: object
+                detail_level:
+                  type: string
+                constraints:
+                  type: object
+      responses:
+        "200":
+          description: Structured output generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  output:
+                    type: object
+                  warnings:
+                    type: array
+                  coverage:
+                    type: object

@@ -1,0 +1,22 @@
+id: openapi_model_response_validate_mock
+
+capability: model.response.validate
+service: model_response_validate_openapi_mock
+protocol: openapi
+operation: validate
+
+request:
+  output: input.output
+  validation_policy: input.validation_policy
+  evidence_context: input.evidence_context
+
+response:
+  valid: response.valid
+  issues: response.issues
+  confidence_adjustment: response.confidence_adjustment
+  rationale: response.rationale
+
+metadata:
+  method: POST
+  description: "OpenAPI mock binding for model.response.validate. Use for pipeline smoke testing."
+  status: experimental
