@@ -1,4 +1,4 @@
-id: python_skill_generate_from_prompt
+id: python_agent_plan_create
 
 capability: agent.plan.create
 service: scaffold_service

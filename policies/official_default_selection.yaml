@@ -1,6 +1,7 @@
 defaults:
 
   agent.delegate: python_agent_delegate
+  agent.plan.create: python_agent_plan_create
   agent.plan.generate: python_agent_plan_generate
   agent.route: python_agent_route
   audio.transcribe: python_audio_transcribe
@@ -20,6 +21,7 @@ defaults:
   memory.store: python_memory_store
   message.send: python_message_send
   ops.budget.estimate: python_ops_budget_estimate
+  ops.trace.analyze: python_ops_trace_analyze
   ops.trace.monitor: python_ops_trace_monitor
   pdf.read: python_pdf_read
   policy.constraint.validate: python_policy_constraint_validate
@@ -45,3 +47,5 @@ defaults:
   web.page.extract: python_web_page_extract
   web.source.verify: python_web_source_verify
   web.search: python_web_search
+  model.output.generate: openapi_model_output_generate_mock
+  model.response.validate: openapi_model_response_validate_mock
