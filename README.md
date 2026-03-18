@@ -14,12 +14,25 @@ The registry source of truth (contracts and canonical definitions) lives in the 
 ## Runtime Quality & Observability
 
 - Observability implementation details: `docs/OBSERVABILITY.md`
+- DAG scheduler (parallel/sequential step execution): `docs/SCHEDULER.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
 
 ## Agent Gateway Operation Model
 
 The runtime exposes a gateway-oriented execution model for agents that need to
 discover and orchestrate skills without coupling to internal binding mechanics.
+
+### Execution Model
+
+Steps within a skill are scheduled by a DAG-based scheduler (`runtime/scheduler.py`).
+By default, steps execute sequentially (backward-compatible). Steps that declare
+`config.depends_on: []` may execute in parallel. See `docs/SCHEDULER.md`.
+
+### Validated Skills
+
+- `agent.trace` v0.1.0: 3-step sidecar for incremental execution control.
+- `research.synthesize` v0.2.0: 2-step fast-path research synthesis (1 LLM call).
+  Resolves PDF/URL/text sources transparently via `research.source.retrieve`.
 
 Canonical operations across CLI/HTTP/MCP:
 

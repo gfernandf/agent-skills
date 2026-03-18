@@ -1,6 +1,6 @@
 # Project Status
 
-Date: 2026-03-11
+Date: 2026-03-18
 Scope: agent-skills runtime + agent-skill-registry consistency check
 
 ## Executive Summary
@@ -11,6 +11,8 @@ The project is in a stable pre-integration state.
 - Critical paths are covered by smoke checks in CI.
 - High-risk services are hardened and instrumented.
 - Registry consistency is healthy with no detected mismatches.
+- DAG-based step scheduler enables parallel execution with backward-compatible defaults.
+- `agent.trace` v0.1.0 and `research.synthesize` v0.2.0 are validated and closed.
 
 ## Verified Quality Gates
 
@@ -19,8 +21,10 @@ Latest local verification snapshot:
 - Functional smoke suite: 8/8 pass
 - Capability contracts: 45/45 pass (135 checks, 0 violations)
 - Runtime coverage: 45/45 capabilities executable (ratio 1.0)
-- Skill executability: 31/31 executable (ratio 1.0)
-- Runtime inventory: 45 capabilities, 45 official defaults, 20 services, 31 skills
+- Skill executability: 36/36 executable (ratio 1.0)
+- Runtime inventory: 45 capabilities, 45 official defaults, 20 services, 36 skills
+- Scheduler functional tests: 5/5
+- Scheduler stress tests: 5/5
 
 Catalog context (canonical source of total definitions):
 
@@ -109,9 +113,33 @@ Current review result:
 ## Documentation Map
 
 - docs/RUNNER_GUIDE.md: runtime runner architecture and operations
+- docs/SCHEDULER.md: DAG-based step scheduler (parallel/sequential execution)
 - docs/OBSERVABILITY.md: logging, trace_id, redaction, tuning
+- docs/AGENT_TRACE_DRY_RUN_GUIDE.md: agent.trace practical usage and dry-run scenarios
 - docs/PRE_MCP_OPENAPI_READINESS.md: readiness checklist and next integrations
 - docs/PROJECT_STATUS.md: current project closure snapshot
+
+## Closed Skills
+
+### agent.trace v0.1.0
+
+3-step pipeline: validate_events → analyze_trace → monitor_trace.
+Explicit `depends_on` declarations. Sidecar classification (attach to run/output/transcript).
+Tested with baseline, mitigated, and real-agent dry-run scenarios.
+
+### research.synthesize v0.2.0
+
+Rewritten from 5 steps / 6 LLM calls to 2 steps / 1 LLM call (fast path).
+Steps: research.source.retrieve (0 LLM, resolves PDF/URL/text) → model.output.generate (1 LLM).
+Stable output contract: 9 fields (summary, key_points, insights, tensions, uncertainties,
+source_coverage, next_steps, synthesis_quality, human_readable).
+Tested with 3-item corpus (23s) and 6-page legal PDF (22s).
+
+### model.output.generate Binding Tuning
+
+- `max_tokens`: 16384 (prevents output truncation on large contexts)
+- `timeout_seconds`: 120 (supports large-context LLM calls)
+- Model: `gpt-4o-mini` via OpenAI Chat Completions
 
 ## Known Non-Blocking Notes
 

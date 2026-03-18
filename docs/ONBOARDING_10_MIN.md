@@ -15,14 +15,18 @@ If you only read one deep document later, read docs/RUNNER_GUIDE.md.
 
 ## 1) Mental Model (1 min)
 
-Think of the runner as a deterministic pipeline:
+Think of the runner as a DAG-based pipeline:
 
-inputs -> step input mapping -> capability execution -> output mapping -> final outputs
+inputs -> scheduler builds step DAG -> step input mapping -> capability execution -> output mapping -> final outputs
+
+Steps run sequentially by default (backward-compatible). Steps that declare
+`config.depends_on: []` may run in parallel. See docs/SCHEDULER.md.
 
 At runtime, the key orchestration path is:
 
 - cli/main.py
 - runtime/execution_engine.py
+- runtime/scheduler.py
 - runtime/binding_executor.py
 
 ## 2) Project Landmarks (1 min)
@@ -38,6 +42,7 @@ Start here:
 Core runtime modules:
 
 - runtime/execution_engine.py
+- runtime/scheduler.py (DAG step scheduler)
 - runtime/input_mapper.py
 - runtime/output_mapper.py
 - runtime/binding_registry.py
@@ -76,7 +81,9 @@ Expected baseline:
 - smoke: 8/8 pass
 - contracts: 45/45 pass
 - coverage: 45/45
-- skills executable: 31/31
+- skills executable: 36/36
+- scheduler functional: 5/5
+- scheduler stress: 5/5
 
 Note on counts:
 
@@ -160,5 +167,6 @@ You are in a good state when:
 After this onboarding, continue with:
 
 - docs/RUNNER_GUIDE.md for full architecture
+- docs/SCHEDULER.md for DAG scheduler details
 - docs/OBSERVABILITY.md for trace and redaction tuning
 - docs/PRE_MCP_OPENAPI_READINESS.md for integration baseline

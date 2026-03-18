@@ -13,6 +13,9 @@ Per cycle it:
 2. Analyzes execution state and emits structured trace artifacts.
 3. Monitors thresholds and returns control signals.
 
+Steps use explicit `config.depends_on` declarations and execute sequentially
+through the DAG scheduler (see docs/SCHEDULER.md).
+
 Main outputs used by orchestrators:
 
 - `updated_trace_state`

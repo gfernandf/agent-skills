@@ -20,8 +20,8 @@ Execution path (high-level):
 
 1. CLI builds ExecutionRequest
 2. ExecutionEngine loads skill and initializes ExecutionState
-3. ExecutionPlanner returns ordered steps
-4. For each step:
+3. Scheduler builds DAG from step `config.depends_on` declarations
+4. Scheduler dispatches steps (parallel when dependencies allow, sequential by default):
    - InputMapper resolves step input from inputs/vars/outputs refs
    - If uses starts with skill:, NestedSkillRunner executes recursively
    - Else CapabilityExecutor delegates to BindingExecutor
@@ -48,6 +48,7 @@ Planning and orchestration:
 - runtime/skill_loader.py: loads and normalizes skill specs
 - runtime/capability_loader.py: loads and normalizes capability specs
 - runtime/execution_planner.py: prepares step order
+- runtime/scheduler.py: DAG-based step scheduler (parallel/sequential)
 - runtime/execution_engine.py: orchestrates whole run
 - runtime/nested_skill_runner.py: executes skill:<id> steps
 
@@ -194,10 +195,14 @@ Host-level overrides (.agent-skills):
 
 Current runner behavior intentionally keeps:
 
-- deterministic step ordering from declared plan
+- DAG-based step scheduling with backward-compatible implicit sequential deps
+- explicit `depends_on: []` to opt into parallel execution
 - explicit mapping instead of implicit field matching
 - strict response mapping (missing fields fail fast)
 - protocol abstraction via invoker routing
+- thread-safe state mutations via _StateLock during parallel execution
+
+See docs/SCHEDULER.md for full scheduler documentation.
 
 ## 10) Current Baseline
 
@@ -205,6 +210,8 @@ As documented in docs/PROJECT_STATUS.md, runner baseline is currently stable wit
 
 - 45/45 contract pass
 - 8/8 smoke pass
-- full capability coverage and skill executability (45/45 capabilities, 31/31 skills)
+- full capability coverage and skill executability (45/45 capabilities, 36/36 skills)
+- DAG scheduler functional tests: 5/5
+- DAG scheduler stress tests: 5/5
 
 This is the recommended baseline before starting MCP/OpenAPI adapter expansion.

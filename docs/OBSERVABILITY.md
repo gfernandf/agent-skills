@@ -44,6 +44,14 @@ Common fields:
 - `error_type`
 - `error_message`
 
+### Parallel Step Events
+
+When the DAG scheduler executes steps in parallel (see docs/SCHEDULER.md),
+`step.execute.start` / `step.execute.completed` events from concurrent steps
+may interleave in the log stream. Correlation is by `step_id` within a given
+`trace_id`. The `skill.execute.completed` event is emitted only after all
+steps finish.
+
 ## Service Events
 
 Instrumented baseline services:
