@@ -13,5 +13,5 @@ response:
   chunks: response.chunks
 
 metadata:
-  description: "Official binding for doc.chunk using the doc_baseline service."
+  description: "Official binding for doc.chunk usando doc_baseline. Inputs alineados a capability."
   status: stable

@@ -1,5 +1,5 @@
-id: python_corpus_source_resolve
-capability: corpus.source.resolve
+id: python_research_source_retrieve
+capability: research.source.retrieve
 service: doc_baseline
 protocol: pythoncall
 operation: resolve_corpus_sources
@@ -12,7 +12,7 @@ response:
 
 metadata:
   description: >
-    Official binding for corpus.source.resolve. Resolves source_refs in corpus
+    Official binding for research.source.retrieve. Resolves source_refs in corpus
     items to actual text content: reads PDFs via PyPDF2, filesystem files via
     open(), and URLs via requests. Items with existing content are passed through.
   status: stable

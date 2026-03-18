@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Callable, List
+
+from runtime.errors import InvalidSkillSpecError
+
+
+class _StateLock:
+    """
+    Context-manager wrapper around a threading.Lock used to serialize
+    mutations to ExecutionState (vars, outputs, events, written_targets).
+    Attached to the execution context so the engine can acquire it only
+    around state-mutating calls, leaving the actual capability execution
+    (LLM calls, HTTP, etc.) free to run in parallel.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+
+    def __enter__(self):
+        self._lock.acquire()
+        return self
+
+    def __exit__(self, *exc):
+        self._lock.release()
+
+    @staticmethod
+    def noop():
+        """No-op lock for sequential execution contexts."""
+        return _NoopLock()
+
+
+class _NoopLock:
+    """No-op context manager — used when no parallelism is active."""
+    def __enter__(self):
+        return self
+    def __exit__(self, *exc):
+        pass
+
+
+class Scheduler:
+    """
+    DAG-based step scheduler with backward-compatible implicit dependencies.
+
+    Dependency rules:
+      1. If a step declares ``config.depends_on``, those are its explicit deps.
+      2. If a step does NOT declare ``depends_on``, it implicitly depends on the
+         immediately preceding step in declared order (preserves v1 sequential
+         semantics for all existing skills).
+
+    Thread safety:
+      All mutations to shared ExecutionState happen inside the step_executor
+      callback, which the engine already serializes through apply_step_output
+      and emit_event.  The scheduler wraps each step_executor call so that
+      state writes are protected by ``state_lock``.
+    """
+
+    def __init__(self, max_workers: int = 8, storage_manager=None):
+        self.max_workers = max_workers
+        self.storage_manager = storage_manager
+
+    def schedule(
+        self,
+        plan: List[Any],
+        context,
+        step_executor: Callable,
+        trace_callback=None,
+    ) -> List[Any]:
+        if not plan:
+            return []
+
+        step_map = {step.id: step for step in plan}
+        step_order = [step.id for step in plan]
+
+        # --- Build dependency graph ---
+        dependencies: dict[str, set[str]] = {}
+        for idx, step in enumerate(plan):
+            explicit = step.config.get("depends_on")
+            if explicit is not None:
+                dependencies[step.id] = set(explicit)
+            elif idx == 0:
+                dependencies[step.id] = set()
+            else:
+                # Implicit: depend on immediately preceding step
+                dependencies[step.id] = {step_order[idx - 1]}
+
+        # Validate references
+        skill_id = getattr(getattr(context, "state", None), "skill_id", None)
+        for step_id, deps in dependencies.items():
+            for dep in deps:
+                if dep not in step_map:
+                    raise InvalidSkillSpecError(
+                        f"Step '{step_id}' depends on unknown step '{dep}'.",
+                        skill_id=skill_id,
+                    )
+
+        # --- Execution loop ---
+        state_lock = _StateLock()
+        # Attach lock to context so engine can use it around state mutations
+        context.state_lock = state_lock
+        completed: set[str] = set()
+        failed: set[str] = set()
+        results: list = []
+        running: set[str] = set()
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures: dict = {}
+            while len(completed) + len(failed) < len(plan):
+                ready = [
+                    sid for sid, deps in dependencies.items()
+                    if sid not in completed
+                    and sid not in failed
+                    and sid not in running
+                    and deps.issubset(completed)
+                    and not deps.intersection(failed)
+                ]
+                for sid in ready:
+                    step = step_map[sid]
+                    future = executor.submit(
+                        step_executor, step, context.state.skill_id,
+                        context, trace_callback,
+                    )
+                    futures[future] = sid
+                    running.add(sid)
+
+                if not futures:
+                    unresolved = [
+                        sid for sid in step_order
+                        if sid not in completed and sid not in failed
+                    ]
+                    if not unresolved:
+                        break
+                    # Check which unresolved steps are blocked by failures
+                    blocked = [
+                        sid for sid in unresolved
+                        if dependencies[sid].intersection(failed)
+                    ]
+                    if blocked:
+                        if getattr(context.options, "fail_fast", True):
+                            raise RuntimeError(
+                                "Blocked steps due to failed dependencies: "
+                                + ", ".join(sorted(blocked))
+                            )
+                        # fail_fast=False: mark blocked steps as skipped
+                        from runtime.models import StepResult as SR
+                        for sid in blocked:
+                            skip = SR(
+                                step_id=sid,
+                                uses=step_map[sid].uses,
+                                status="skipped",
+                                resolved_input={},
+                                produced_output=None,
+                                error_message="Skipped: dependency failed",
+                                started_at=None,
+                                finished_at=None,
+                            )
+                            results.append(skip)
+                            failed.add(sid)
+                        continue
+                    raise RuntimeError(
+                        "Execution deadlock detected. Check circular or "
+                        "unsatisfied dependencies: "
+                        + ", ".join(sorted(unresolved))
+                    )
+
+                next(as_completed(futures))
+                for future in list(futures):
+                    if future.done():
+                        sid = futures.pop(future)
+                        running.discard(sid)
+                        result = future.result()
+                        results.append(result)
+                        if result.status == "completed":
+                            completed.add(sid)
+                        else:
+                            failed.add(sid)
+                            if getattr(context.options, "fail_fast", True):
+                                for f in futures:
+                                    f.cancel()
+                                return results
+        return results

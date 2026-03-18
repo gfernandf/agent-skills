@@ -26,6 +26,7 @@ from runtime.models import (
 )
 from runtime.observability import elapsed_ms, log_event, reset_current_trace_id, set_current_trace_id
 from runtime.output_mapper import apply_step_output
+from runtime.scheduler import Scheduler, _NoopLock
 
 
 class ExecutionEngine:
@@ -50,6 +51,7 @@ class ExecutionEngine:
         capability_executor,
         nested_skill_runner,
         audit_recorder,
+        scheduler=None,  # Nuevo parámetro opcional
     ) -> None:
         self.skill_loader = skill_loader
         self.capability_loader = capability_loader
@@ -58,6 +60,7 @@ class ExecutionEngine:
         self.capability_executor = capability_executor
         self.nested_skill_runner = nested_skill_runner
         self.audit_recorder = audit_recorder
+        self.scheduler = scheduler or Scheduler()
 
     def execute(
         self,
@@ -114,10 +117,13 @@ class ExecutionEngine:
 
             plan = self.execution_planner.build_plan(skill)
 
-            for step in plan:
-                result = self._execute_step(step, skill.id, context, trace_callback)
-                record_step_result(state, result)
+            # --- INTEGRACIÓN DEL SCHEDULER ---
+            def step_executor(step, skill_id, context, trace_callback):
+                return self._execute_step(step, skill_id, context, trace_callback)
 
+            results = self.scheduler.schedule(plan, context, step_executor, trace_callback)
+            for result in results:
+                record_step_result(state, result)
                 if result.status != "completed":
                     if context.options.fail_fast:
                         mark_finished(state, "failed")
@@ -126,14 +132,14 @@ class ExecutionEngine:
                             level="error",
                             trace_id=trace_id,
                             skill_id=skill.id,
-                            failed_step_id=step.id,
+                            failed_step_id=result.step_id,
                             duration_ms=elapsed_ms(start_time),
                             reason=result.error_message,
                         )
                         raise StepExecutionError(
-                            f"Step '{step.id}' failed: {result.error_message}",
+                            f"Step '{result.step_id}' failed: {result.error_message}",
                             skill_id=skill.id,
-                            step_id=step.id,
+                            step_id=result.step_id,
                         )
 
             self._validate_final_outputs(skill, state)
@@ -215,6 +221,7 @@ class ExecutionEngine:
         trace_callback=None,
     ) -> StepResult:
         state = context.state
+        state_lock = getattr(context, "state_lock", _NoopLock())
         step_start = time.perf_counter()
         step_started_at = _utc_now()
 
@@ -226,23 +233,24 @@ class ExecutionEngine:
             uses=step.uses,
         )
 
-        emit_event(
-            state,
-            "step_start",
-            f"Starting step '{step.id}'.",
-            step_id=step.id,
-        )
+        with state_lock:
+            emit_event(
+                state,
+                "step_start",
+                f"Starting step '{step.id}'.",
+                step_id=step.id,
+            )
 
-        if trace_callback:
-            trace_callback(state.events[-1])
+            if trace_callback:
+                trace_callback(state.events[-1])
 
-        try:
             step_input = build_step_input(
                 step,
                 state,
                 self.reference_resolver,
             )
 
+        try:
             meta: dict | None = None
             attempts_count = None
             fallback_used = None
@@ -282,28 +290,29 @@ class ExecutionEngine:
                     if isinstance(meta.get("required_conformance_profile"), str):
                         required_profile = meta.get("required_conformance_profile")
 
-            apply_step_output(
-                step,
-                produced,
-                state,
-            )
+            with state_lock:
+                apply_step_output(
+                    step,
+                    produced,
+                    state,
+                )
 
-            # emit completion event including produced output and metadata
-            event_data: dict[str, Any] = {}
-            if produced is not None:
-                event_data["produced_output"] = produced
-            if meta:
-                event_data.update(meta)
+                # emit completion event including produced output and metadata
+                event_data: dict[str, Any] = {}
+                if produced is not None:
+                    event_data["produced_output"] = produced
+                if meta:
+                    event_data.update(meta)
 
-            emit_event(
-                state,
-                "step_completed",
-                f"Step '{step.id}' completed.",
-                step_id=step.id,
-                data=event_data if event_data else None,
-            )
-            if trace_callback:
-                trace_callback(state.events[-1])
+                emit_event(
+                    state,
+                    "step_completed",
+                    f"Step '{step.id}' completed.",
+                    step_id=step.id,
+                    data=event_data if event_data else None,
+                )
+                if trace_callback:
+                    trace_callback(state.events[-1])
 
             log_event(
                 "step.execute.completed",
@@ -344,15 +353,16 @@ class ExecutionEngine:
                 error_type=type(e).__name__,
                 error_message=str(e),
             )
-            emit_event(
-                state,
-                "step_failed",
-                f"Step '{step.id}' failed.",
-                step_id=step.id,
-                data={"error": str(e)},
-            )
-            if trace_callback:
-                trace_callback(state.events[-1])
+            with state_lock:
+                emit_event(
+                    state,
+                    "step_failed",
+                    f"Step '{step.id}' failed.",
+                    step_id=step.id,
+                    data={"error": str(e)},
+                )
+                if trace_callback:
+                    trace_callback(state.events[-1])
 
             return StepResult(
                 step_id=step.id,
