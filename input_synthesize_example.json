@@ -1,0 +1,21 @@
+{
+  "items": [
+    {
+      "id": "doc-1",
+      "content": "El mercado de IA está creciendo rápidamente. Las inversiones aumentan cada año y la adopción empresarial es generalizada."
+    },
+    {
+      "id": "doc-2",
+      "content": "Existen riesgos regulatorios en Europa para la IA, especialmente en sectores críticos. La incertidumbre legal es una barrera."
+    },
+    {
+      "id": "doc-3",
+      "content": "El costo de entrada para nuevas startups de IA es alto, pero la demanda de talento y soluciones sigue en aumento."
+    }
+  ],
+  "topic": "Mercado de IA en Europa",
+  "goal": "Evaluar oportunidades y riesgos para expansión",
+  "focus": "priorizar riesgos",
+  "max_detail": "standard",
+  "quality_profile": "standard"
+}

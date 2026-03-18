@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "id": "doc-1",
+      "content": "The ability to manipulate cell fate in vitro has revolutionized regenerative medicine. The most striking breakthrough in the field occurred when Yamanaka first demonstrated the ability of adult differentiated cells to give rise to pluripotent cells (induced pluripotent stem cells [iPSCs]) upon the simultaneous expression of four transcriptional factors, OCT4, SOX2, KLF4, and MYC (OSKM) (Takahashi and Yamanaka, 2006). During reprogramming, a fraction of adult somatic cells shut down the transcriptional programs linked to their cell identity and progressively activate the transcriptional network of pluripotency (Deng et al., 2021; Takahashi and Yamanaka, 2006). In mice, OSKM expression recapitulates the events of cellular dedifferentiation in multiple tissues and leads to the emergence of pluripotent cells (Abad et al., 2013; Mosteiro et al., 2016; Ohnishi et al., 2014). The ultimate manifestation of complete reprogramming in vivo is the formation of teratomas, a tumor originated from iPSCs differentiating into all three germ layers (Abad et al., 2013; Ohnishi et al., 2014)."
+    }
+  ],
+  "topic": "Cell reprogramming and iPSCs",
+  "goal": "Summarize the main advances and mechanisms in cell fate manipulation",
+  "focus": "executive summary",
+  "max_chunk_size": 1000,
+  "max_detail": "brief",
+  "quality_profile": "standard"
+}

@@ -6,7 +6,7 @@ metadata:
   description: "Official OpenAI Chat Completions service for model-level capabilities (output generation, response validation)."
   maintained_by: "agent-skills"
   status: experimental
-  timeout_seconds: 60
+  timeout_seconds: 120
   headers:
     Authorization: "Bearer ${OPENAI_API_KEY}"
     Content-Type: "application/json"

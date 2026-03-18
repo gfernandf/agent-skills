@@ -37,6 +37,7 @@ request:
         Context items:
         ${input.context_items}
   temperature: 0.2
+  max_tokens: 16384
   response_format:
     type: json_object
 

@@ -1,3 +1,40 @@
 {
-  "text": "This is a test of the runtime"
+  "goal": "Evaluate whether the agent correctly identified regulatory risks before recommending market entry",
+  "events": [
+    {
+      "type": "task_start",
+      "timestamp": "2026-03-18T10:00:00Z",
+      "data": { "task": "market_entry_analysis", "region": "EU" }
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-18T10:00:05Z",
+      "data": { "tool": "web.search", "query": "EU AI regulation 2026", "status": "success" }
+    },
+    {
+      "type": "decision",
+      "timestamp": "2026-03-18T10:00:12Z",
+      "data": { "decision": "proceed_with_analysis", "confidence": 0.85, "rationale": "Sufficient data found" }
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-18T10:00:18Z",
+      "data": { "tool": "doc.summarize", "input_length": 4500, "status": "success" }
+    },
+    {
+      "type": "decision",
+      "timestamp": "2026-03-18T10:00:25Z",
+      "data": { "decision": "recommend_entry", "confidence": 0.72, "rationale": "Market growth outweighs regulatory risk" }
+    },
+    {
+      "type": "output",
+      "timestamp": "2026-03-18T10:00:30Z",
+      "data": { "recommendation": "Enter EU market with phased approach", "risk_level": "moderate" }
+    }
+  ],
+  "trace_session_id": "trace-mkt-001",
+  "thresholds": {
+    "max_duration_ms": 60000,
+    "max_errors": 2
+  }
 }

@@ -15,6 +15,16 @@ artifacts/
 # Generated parity diffs
 tooling/snapshots/*.actual.json
 
+# Test output / debug logs
+result_*.json
+*.log
+logs_*.txt
+output_*.txt
+
+# Ad-hoc test scripts with personal paths
+input_synthesize_pdf.json
+run_pdf_test.py
+
 # Local user-defined skills — instance-specific, not for shared repos
 # Track only the seed files (README + .gitkeep); ignore actual skill trees.
 skills/local/**/
