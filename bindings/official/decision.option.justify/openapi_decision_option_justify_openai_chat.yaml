@@ -1,0 +1,60 @@
+id: openapi_decision_option_justify_openai_chat
+
+capability: decision.option.justify
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a decision justification assistant. Your job is to select the best
+        option from evaluated candidates and produce a committed, unhedged justification.
+        Never say "it depends" or "consider both". Make a single clear recommendation.
+
+        You receive scored options (with numeric evaluations) and analyzed options
+        (with qualitative pros/cons/risks). Synthesize both to make your selection.
+
+        Return a JSON object with:
+        - recommendation: string — clear and actionable (e.g. "Proceed with Option X because...")
+        - alternatives_considered: array of {id, label, selected: boolean, reason: string}
+        - confidence_score: number 0.0-1.0 (calibrated: <0.3 low, 0.3-0.6 medium, 0.6-0.9 high)
+        - confidence_level: "low" | "medium" | "high"
+        - uncertainties: array of strings — what is unknown that could change the outcome
+        - failure_modes: array of strings — specific conditions under which the recommendation fails
+        - next_steps: array of strings — concrete actions, not "do more analysis"
+        - human_readable: 3-6 paragraph narrative suitable for stakeholder consumption
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Goal: ${input.goal}
+
+        Scored options:
+        ${input.scored_options}
+
+        Analyzed options:
+        ${input.analyzed_options}
+  temperature: 0.3
+  max_tokens: 4096
+  response_format:
+    type: json_object
+
+response:
+  recommendation: response.choices.0.message.content_json.recommendation
+  alternatives_considered: response.choices.0.message.content_json.alternatives_considered
+  confidence_score: response.choices.0.message.content_json.confidence_score
+  confidence_level: response.choices.0.message.content_json.confidence_level
+  uncertainties: response.choices.0.message.content_json.uncertainties
+  failure_modes: response.choices.0.message.content_json.failure_modes
+  next_steps: response.choices.0.message.content_json.next_steps
+  human_readable: response.choices.0.message.content_json.human_readable
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_decision_option_justify
+  description: "OpenAI binding for decision.option.justify using gpt-4o-mini."
+  status: experimental

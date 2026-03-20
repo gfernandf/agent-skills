@@ -1,0 +1,16 @@
+id: python_analysis_split
+capability: analysis.split
+service: analysis_baseline
+protocol: pythoncall
+operation: split_problem
+request:
+  problem: input.problem
+  strategy: input.strategy
+response:
+  components: response.components
+  gaps: response.gaps
+  overlaps: response.overlaps
+  decomposition_notes: response.decomposition_notes
+metadata:
+  description: Official binding for analysis.split using analysis_baseline service.
+  status: stable

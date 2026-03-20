@@ -1,0 +1,50 @@
+{
+  "identified_risks": [
+    {
+      "id": "r1",
+      "description": "Incomplete information may lead to suboptimal outcomes (broad scope).",
+      "category": "operational",
+      "severity_hint": "medium",
+      "related_assumptions": [
+        "a1"
+      ]
+    },
+    {
+      "id": "r2",
+      "description": "External conditions may change after analysis.",
+      "category": "strategic",
+      "severity_hint": "low",
+      "related_assumptions": []
+    }
+  ],
+  "critical_assumptions": [
+    {
+      "id": "a1",
+      "statement": "Available information is representative and current.",
+      "fragility_hint": "medium",
+      "related_risks": [
+        "r1"
+      ]
+    }
+  ],
+  "failure_modes": [
+    {
+      "id": "f1",
+      "description": "Target artifact relies on an assumption that turns out false.",
+      "trigger_conditions": "Assumption a1 is invalidated by new data.",
+      "related_risks": [
+        "r1"
+      ]
+    }
+  ],
+  "mitigation_ideas": [
+    {
+      "risk_id": "r1",
+      "suggestion": "Validate key inputs before proceeding.",
+      "effort_hint": "low"
+    }
+  ],
+  "unknowns": "Baseline extraction with broad scope.",
+  "risk_categories": "operational",
+  "risk_quality": 100.0
+}

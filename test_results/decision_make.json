@@ -1,0 +1,64 @@
+{
+  "criteria_used": [
+    {
+      "name": "feasibility",
+      "description": "How feasible is this option?",
+      "weight": 1.0
+    },
+    {
+      "name": "impact",
+      "description": "What is the expected impact?",
+      "weight": 1.0
+    },
+    {
+      "name": "risk",
+      "description": "What is the risk level?",
+      "weight": 1.0
+    }
+  ],
+  "evaluation_summary": "All 4 options scored on 3 criteria.",
+  "tradeoffs": [
+    {
+      "tension": "Feasibility vs Impact",
+      "gained": "Lower risk",
+      "lost": "Potentially lower reward"
+    }
+  ],
+  "recommendation": "Proceed with Option 1: Conservative.",
+  "alternatives_considered": [
+    {
+      "id": "opt-conservative",
+      "label": "Option 1: Conservative",
+      "selected": true
+    },
+    {
+      "id": "opt-balanced",
+      "label": "Option 2: Balanced",
+      "selected": false
+    },
+    {
+      "id": "opt-aggressive",
+      "label": "Option 3: Aggressive",
+      "selected": false
+    },
+    {
+      "id": "opt-alternative",
+      "label": "Option 4: Alternative",
+      "selected": false
+    }
+  ],
+  "confidence_score": 0.9,
+  "confidence_level": "high",
+  "uncertainties": [
+    "Baseline analysis — real uncertainties require deeper evaluation."
+  ],
+  "failure_modes": [
+    "Key assumptions may not hold under changing conditions."
+  ],
+  "next_steps": [
+    "Validate recommendation with domain experts.",
+    "Run a pilot if feasible."
+  ],
+  "human_readable": "Based on the evaluation, the recommended option is 'Option 1: Conservative'. This selection reflects a high confidence level (0.9). Risk tolerance was set to medium. Next steps include expert validation and a pilot run.",
+  "decision_quality": 100.0
+}

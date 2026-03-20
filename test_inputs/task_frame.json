@@ -1,0 +1,5 @@
+{
+  "task": "We need to evaluate whether to build our own ML inference platform or buy a managed service, considering our 6-month deadline and limited DevOps team.",
+  "context": "Series B startup, 50 engineers, 3 DevOps. Current workload: 10K inference requests/day, growing 20% monthly. Budget approved for infrastructure.",
+  "goal_hint": "decision"
+}

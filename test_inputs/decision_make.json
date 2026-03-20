@@ -1,0 +1,13 @@
+{
+  "goal": "Should we expand our AI product to the European market?",
+  "context_items": [
+    {"id": "synthesis-1", "content": "Market research shows strong demand for AI in EU healthcare and finance but high regulatory uncertainty under the AI Act."},
+    {"id": "synthesis-2", "content": "Competitor X entered 8 months ago with moderate success. Key barrier is data residency and GDPR compliance."}
+  ],
+  "constraints": {
+    "budget": "500K EUR",
+    "timeline": "12 months",
+    "regulation": "Must comply with EU AI Act and GDPR"
+  },
+  "risk_tolerance": "medium"
+}

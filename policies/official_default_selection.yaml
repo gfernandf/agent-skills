@@ -2,8 +2,8 @@ defaults:
 
   agent.delegate: python_agent_delegate
   agent.plan.create: python_agent_plan_create
-  agent.plan.generate: python_agent_plan_generate
-  agent.route: python_agent_route
+  agent.plan.generate: openapi_agent_plan_generate_openai_chat
+  agent.route: openapi_agent_route_openai_chat
   audio.transcribe: python_audio_transcribe
   code.diff.extract: python_code_diff_extract
   code.execute: python_code_execute
@@ -27,26 +27,32 @@ defaults:
   pdf.read: python_pdf_read
   policy.constraint.validate: python_policy_constraint_validate
   provenance.citation.generate: python_provenance_citation_generate
-  provenance.claim.verify: python_provenance_claim_verify
-  eval.output.score: python_eval_output_score
+  provenance.claim.verify: openapi_provenance_claim_verify_openai_chat
+  eval.output.score: openapi_eval_output_score_openai_chat
   security.output.gate: python_security_output_gate
   security.pii.detect: python_security_pii_detect
   security.pii.redact: python_security_pii_redact
   security.secret.detect: python_security_secret_detect
   table.filter: python_table_filter
-  text.classify: python_text_classify
+  text.classify: openapi_text_classify_openai_chat
   text.embed: python_text_embed
-  text.entity.extract: python_text_entity_extract
+  text.entity.extract: openapi_text_entity_extract_openai_chat
   text.extract: python_text_extract
   text.keyword.extract: python_text_keyword_extract
-  text.language.detect: python_text_language_detect
-  text.summarize: python_text_summarize
+  text.language.detect: openapi_text_language_detect_openai_chat
+  text.summarize: openapi_text_summarize_openai_chat
   text.template: python_text_template
-  text.translate: python_text_translate
+  text.translate: openapi_text_translate_openai_chat
   video.frame.extract: python_video_frame_extract
   web.fetch: python_web_fetch
   web.page.extract: python_web_page_extract
   web.source.verify: python_web_source_verify
   web.search: python_web_search
+  agent.option.generate: openapi_agent_option_generate_openai_chat
+  analysis.risk.extract: openapi_analysis_risk_extract_openai_chat
+  analysis.split: openapi_analysis_split_openai_chat
+  decision.option.justify: openapi_decision_option_justify_openai_chat
+  eval.option.analyze: openapi_eval_option_analyze_openai_chat
+  eval.option.score: openapi_eval_option_score_openai_chat
   model.output.generate: openapi_model_output_generate_openai_chat
   model.response.validate: openapi_model_response_validate_openai_chat

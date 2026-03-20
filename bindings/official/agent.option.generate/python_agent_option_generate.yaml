@@ -1,0 +1,13 @@
+id: python_agent_option_generate
+capability: agent.option.generate
+service: agent_baseline
+protocol: pythoncall
+operation: generate_options
+request:
+  goal: input.goal
+response:
+  options: response.options
+  generation_notes: response.generation_notes
+metadata:
+  description: Official binding for agent.option.generate using agent_baseline service.
+  status: stable

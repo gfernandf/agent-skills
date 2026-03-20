@@ -1,0 +1,21 @@
+id: python_decision_option_justify
+capability: decision.option.justify
+service: decision_baseline
+protocol: pythoncall
+operation: justify_option
+request:
+  scored_options: input.scored_options
+  analyzed_options: input.analyzed_options
+  goal: input.goal
+response:
+  recommendation: response.recommendation
+  alternatives_considered: response.alternatives_considered
+  confidence_score: response.confidence_score
+  confidence_level: response.confidence_level
+  uncertainties: response.uncertainties
+  failure_modes: response.failure_modes
+  next_steps: response.next_steps
+  human_readable: response.human_readable
+metadata:
+  description: Official binding for decision.option.justify using decision_baseline service.
+  status: stable

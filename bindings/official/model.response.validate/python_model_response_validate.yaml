@@ -1,0 +1,15 @@
+id: python_model_response_validate
+capability: model.response.validate
+service: model_baseline
+protocol: pythoncall
+operation: validate_response
+request:
+  output: input.output
+response:
+  valid: response.valid
+  issues: response.issues
+  confidence_adjustment: response.confidence_adjustment
+  rationale: response.rationale
+metadata:
+  description: Official pythoncall binding for model.response.validate.
+  status: stable

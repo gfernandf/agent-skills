@@ -1,0 +1,7 @@
+id: analysis_baseline
+kind: pythoncall
+module: official_services.analysis_baseline
+
+metadata:
+  description: "Baseline local implementations for analysis-domain capabilities."
+  maintained_by: "agent-skills"

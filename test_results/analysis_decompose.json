@@ -1,0 +1,42 @@
+{
+  "decomposition_strategy": "themes",
+  "components": [
+    {
+      "id": "c1",
+      "label": "Component 1 (themes)",
+      "description": "Dimension 1 of 'Evaluate the feasibility and strategy for migrating our mono' decomposed by themes.",
+      "dependencies": [],
+      "analysis_order": 1
+    },
+    {
+      "id": "c2",
+      "label": "Component 2 (themes)",
+      "description": "Dimension 2 of 'Evaluate the feasibility and strategy for migrating our mono' decomposed by themes.",
+      "dependencies": [
+        "c1"
+      ],
+      "analysis_order": 2
+    },
+    {
+      "id": "c3",
+      "label": "Component 3 (themes)",
+      "description": "Dimension 3 of 'Evaluate the feasibility and strategy for migrating our mono' decomposed by themes.",
+      "dependencies": [
+        "c2"
+      ],
+      "analysis_order": 3
+    },
+    {
+      "id": "c4",
+      "label": "Component 4 (themes)",
+      "description": "Dimension 4 of 'Evaluate the feasibility and strategy for migrating our mono' decomposed by themes.",
+      "dependencies": [
+        "c3"
+      ],
+      "analysis_order": 4
+    }
+  ],
+  "gaps": [],
+  "overlaps": [],
+  "decomposition_quality": 50.0
+}

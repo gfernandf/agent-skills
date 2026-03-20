@@ -1,0 +1,16 @@
+id: python_analysis_risk_extract
+capability: analysis.risk.extract
+service: analysis_baseline
+protocol: pythoncall
+operation: extract_risks
+request:
+  target: input.target
+response:
+  risks: response.risks
+  assumptions: response.assumptions
+  failure_modes: response.failure_modes
+  mitigation_ideas: response.mitigation_ideas
+  extraction_notes: response.extraction_notes
+metadata:
+  description: Official binding for analysis.risk.extract using analysis_baseline service.
+  status: stable

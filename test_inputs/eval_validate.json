@@ -1,0 +1,16 @@
+{
+  "artifact": {
+    "recommendation": "Proceed with pilot entry in EU market",
+    "confidence_score": 0.72,
+    "uncertainties": ["Regulatory timeline unclear"],
+    "failure_modes": ["Budget overrun if compliance costs exceed estimates"],
+    "evaluation_summary": "All options scored; pilot approach balances risk and opportunity.",
+    "alternatives_considered": [
+      {"id": "full-entry", "label": "Full Market Entry"},
+      {"id": "pilot", "label": "Pilot Entry"},
+      {"id": "defer", "label": "Defer 12 Months"}
+    ]
+  },
+  "validation_goal": "Verify this decision artifact is complete, internally consistent, and has adequate coverage of risks and alternatives.",
+  "context": "Decision was made based on market research synthesis and competitor analysis."
+}

@@ -1,0 +1,9 @@
+{
+  "options": [
+    {"id": "aws", "label": "AWS", "description": "Amazon Web Services — mature, broad service catalog, high market share.", "key_attributes": {"cost": "medium-high", "latency": "low", "ecosystem": "largest"}},
+    {"id": "gcp", "label": "Google Cloud", "description": "Strong in AI/ML, competitive pricing, growing enterprise presence.", "key_attributes": {"cost": "medium", "latency": "low", "ecosystem": "growing"}},
+    {"id": "azure", "label": "Azure", "description": "Microsoft Azure — strong enterprise integration, hybrid cloud, AI services.", "key_attributes": {"cost": "medium", "latency": "low", "ecosystem": "enterprise-focused"}}
+  ],
+  "comparison_goal": "Which cloud provider best fits our needs for an AI workload with low latency, moderate budget, and strong ML tooling?",
+  "context": "Our team has experience with Python and TensorFlow. We need GPU instances and managed Kubernetes."
+}

@@ -1,0 +1,46 @@
+id: openapi_eval_option_analyze_openai_chat
+
+capability: eval.option.analyze
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a qualitative analysis assistant for decision options.
+        For each option provided, identify specific pros, cons, risks (with severity),
+        and underlying assumptions. Ground your analysis in the goal and context —
+        do not invent facts not present in the input. Be specific, not generic.
+        Do NOT assign numeric scores — only qualitative assessment.
+
+        Return a JSON object with:
+        - analyzed_options: array, each with option_id (string matching the input option id),
+          pros (array of strings), cons (array of strings),
+          risks (array of {description, severity: low|medium|high}),
+          assumptions (array of strings).
+        - analysis_notes: brief string on methodology or evidence gaps.
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Goal: ${input.goal}
+
+        Options to analyze:
+        ${input.options}
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  analyzed_options: response.choices.0.message.content_json.analyzed_options
+  analysis_notes: response.choices.0.message.content_json.analysis_notes
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_eval_option_analyze
+  description: "OpenAI binding for eval.option.analyze using gpt-4o-mini."
+  status: experimental

@@ -1,0 +1,5 @@
+{
+  "problem": "Evaluate the feasibility and strategy for migrating our monolithic e-commerce platform to a microservices architecture.",
+  "context": "Current system: 500K LOC Python monolith, 200 RPS peak, 15 developers. Pain points: slow deployments, scaling bottlenecks, team coupling.",
+  "decomposition_mode": "dimensions"
+}

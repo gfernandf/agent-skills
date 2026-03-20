@@ -1,0 +1,21 @@
+{
+  "validation_passed": true,
+  "consistency_issues": [
+    {
+      "dimension": "coherence",
+      "severity": "medium",
+      "description": "The recommendation lacks a clear connection to the provided evaluation summary and alternatives considered."
+    },
+    {
+      "dimension": "grounding",
+      "severity": "high",
+      "description": "The output does not provide sufficient grounding in the evidence context, which is vague and does not directly support the recommendation."
+    },
+    {
+      "dimension": "coverage",
+      "severity": "medium",
+      "description": "The uncertainties mentioned are not fully addressed in the evaluation summary or the recommendation."
+    }
+  ],
+  "validation_summary": "The output fails to meet the coherence and grounding requirements, and there are coverage issues regarding uncertainties."
+}

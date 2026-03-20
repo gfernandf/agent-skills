@@ -1,0 +1,47 @@
+id: openapi_provenance_claim_verify_openai_chat
+
+capability: provenance.claim.verify
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a claim verification assistant. Determine whether the given claim
+        is supported by the provided sources. Assess evidence quality, relevance,
+        and sufficiency.
+
+        Be conservative: only mark verified as true if sources provide clear,
+        sufficient evidence. If evidence is ambiguous or insufficient, mark
+        verified as false and explain why in the rationale.
+
+        Return a JSON object with:
+        - verified: boolean (true only if sources provide sufficient evidence)
+        - evidence: array of strings (relevant snippets from sources that support or contradict)
+        - rationale: string explaining the verification result
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Claim: ${input.claim}
+
+        Sources:
+        ${input.sources}
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  verified: response.choices.0.message.content_json.verified
+  evidence: response.choices.0.message.content_json.evidence
+  rationale: response.choices.0.message.content_json.rationale
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_provenance_claim_verify
+  description: "OpenAI binding for provenance.claim.verify using gpt-4o-mini."
+  status: experimental

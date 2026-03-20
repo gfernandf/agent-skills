@@ -1,0 +1,35 @@
+id: openapi_text_translate_openai_chat
+
+capability: text.translate
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a translation assistant. Translate the text to the target language
+        accurately, preserving meaning, tone, and nuance. If source language is
+        provided, use it as reference; otherwise detect automatically.
+        Return a JSON object with: translation (string containing the translated text).
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Text: ${input.text}
+
+        Target language: ${input.target_language}
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  translation: response.choices.0.message.content_json.translation
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_text_translate
+  description: "OpenAI binding for text.translate using gpt-4o-mini."
+  status: experimental

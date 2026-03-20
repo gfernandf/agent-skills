@@ -1,0 +1,14 @@
+id: python_eval_option_analyze
+capability: eval.option.analyze
+service: eval_baseline
+protocol: pythoncall
+operation: analyze_options
+request:
+  options: input.options
+  goal: input.goal
+response:
+  analyzed_options: response.analyzed_options
+  analysis_notes: response.analysis_notes
+metadata:
+  description: Official binding for eval.option.analyze using eval_baseline service.
+  status: stable

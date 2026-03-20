@@ -1,0 +1,7 @@
+id: decision_baseline
+kind: pythoncall
+module: official_services.decision_baseline
+
+metadata:
+  description: "Baseline local implementations for decision-domain capabilities."
+  maintained_by: "agent-skills"

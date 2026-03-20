@@ -1,0 +1,50 @@
+id: openapi_analysis_risk_extract_openai_chat
+
+capability: analysis.risk.extract
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a risk analysis assistant. Examine the target artifact and extract:
+
+        1. Risks: each with id (slug), description, category (operational|strategic|
+           regulatory|technical|financial), severity_hint (low|medium|high|critical),
+           related_assumptions (array of assumption ids).
+        2. Assumptions: each with id (slug), statement, fragility_hint (low|medium|high),
+           related_risks (array of risk ids).
+        3. Failure modes: each with id (slug), description, trigger_conditions (string),
+           related_risks (array of risk ids).
+        4. Mitigation ideas: each with risk_id, suggestion, effort_hint (low|medium|high).
+
+        Be specific to the artifact — do not generate generic risks. Identify implicit
+        assumptions that stakeholders might overlook. Focus on the risk scope if provided.
+
+        Return JSON with: risks, assumptions, failure_modes, mitigation_ideas, extraction_notes.
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Target artifact to analyze:
+        ${input.target}
+  temperature: 0.2
+  max_tokens: 4096
+  response_format:
+    type: json_object
+
+response:
+  risks: response.choices.0.message.content_json.risks
+  assumptions: response.choices.0.message.content_json.assumptions
+  failure_modes: response.choices.0.message.content_json.failure_modes
+  mitigation_ideas: response.choices.0.message.content_json.mitigation_ideas
+  extraction_notes: response.choices.0.message.content_json.extraction_notes
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_analysis_risk_extract
+  description: "OpenAI binding for analysis.risk.extract using gpt-4o-mini."
+  status: experimental

@@ -1,0 +1,42 @@
+id: openapi_agent_option_generate_openai_chat
+
+capability: agent.option.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a strategic option generation assistant.
+        Given a decision problem (goal), optional context, and constraints,
+        generate 2-5 distinct, plausible options. Each option must be
+        meaningfully different from the others — avoid variants of the same idea.
+        Ground options in the provided context. Do not fabricate facts.
+
+        Return a JSON object with:
+        - options: array of objects, each with id (short slug like "opt-xxx"),
+          label (human-readable name), description (1-3 sentences),
+          key_attributes (object with relevant properties like cost, risk, speed, timeline).
+        - generation_notes: brief string explaining how options were derived.
+
+        Return valid JSON only. No markdown fences or prose outside the JSON.
+    - role: user
+      content: |
+        Goal: ${input.goal}
+  temperature: 0.4
+  response_format:
+    type: json_object
+
+response:
+  options: response.choices.0.message.content_json.options
+  generation_notes: response.choices.0.message.content_json.generation_notes
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_option_generate
+  description: "OpenAI binding for agent.option.generate using gpt-4o-mini."
+  status: experimental

@@ -1,0 +1,52 @@
+id: openapi_eval_option_score_openai_chat
+
+capability: eval.option.score
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a multi-criteria decision scoring assistant.
+        Score each option against evaluation criteria on a 0.0 to 1.0 scale.
+        If criteria are not provided, infer 3-5 relevant criteria from the goal.
+
+        Return a JSON object with EXACTLY these four top-level keys:
+
+        1. "scored_options": array of objects, each with option_id, label,
+           overall_score (weighted average 0.0-1.0),
+           per_criterion_scores (object mapping criterion name to score 0.0-1.0),
+           strengths (array of strings), weaknesses (array of strings).
+
+        2. "criteria_used": array of {name, description, weight}.
+
+        3. "comparative_summary": narrative string comparing top options.
+
+        4. "tradeoffs": array of {tension, gained, lost}.
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Goal: ${input.goal}
+
+        Options to score:
+        ${input.options}
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  scored_options: response.choices.0.message.content_json.scored_options
+  criteria_used: response.choices.0.message.content_json.criteria_used
+  comparative_summary: response.choices.0.message.content_json.comparative_summary
+  tradeoffs: response.choices.0.message.content_json.tradeoffs
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_eval_option_score
+  description: "OpenAI binding for eval.option.score using gpt-4o-mini."
+  status: experimental

@@ -1,0 +1,134 @@
+{
+  "analyzed_options": [
+    {
+      "option_id": "aws",
+      "pros": [
+        "AWS addresses the stated goal."
+      ],
+      "cons": [
+        "AWS may have hidden costs or complexity."
+      ],
+      "risks": [
+        {
+          "description": "Risk associated with AWS.",
+          "severity": "medium"
+        }
+      ],
+      "assumptions": [
+        "Assumes AWS is feasible within current constraints."
+      ]
+    },
+    {
+      "option_id": "gcp",
+      "pros": [
+        "Google Cloud addresses the stated goal."
+      ],
+      "cons": [
+        "Google Cloud may have hidden costs or complexity."
+      ],
+      "risks": [
+        {
+          "description": "Risk associated with Google Cloud.",
+          "severity": "medium"
+        }
+      ],
+      "assumptions": [
+        "Assumes Google Cloud is feasible within current constraints."
+      ]
+    },
+    {
+      "option_id": "azure",
+      "pros": [
+        "Azure addresses the stated goal."
+      ],
+      "cons": [
+        "Azure may have hidden costs or complexity."
+      ],
+      "risks": [
+        {
+          "description": "Risk associated with Azure.",
+          "severity": "medium"
+        }
+      ],
+      "assumptions": [
+        "Assumes Azure is feasible within current constraints."
+      ]
+    }
+  ],
+  "scored_options": [
+    {
+      "option_id": "aws",
+      "label": "AWS",
+      "overall_score": 90.0,
+      "per_criterion_scores": {
+        "feasibility": 90.0,
+        "impact": 90.0,
+        "risk": 90.0
+      },
+      "strengths": [
+        "AWS has a clear definition."
+      ],
+      "weaknesses": [
+        "AWS needs more detailed evaluation."
+      ]
+    },
+    {
+      "option_id": "gcp",
+      "label": "Google Cloud",
+      "overall_score": 90.0,
+      "per_criterion_scores": {
+        "feasibility": 90.0,
+        "impact": 90.0,
+        "risk": 90.0
+      },
+      "strengths": [
+        "Google Cloud has a clear definition."
+      ],
+      "weaknesses": [
+        "Google Cloud needs more detailed evaluation."
+      ]
+    },
+    {
+      "option_id": "azure",
+      "label": "Azure",
+      "overall_score": 90.0,
+      "per_criterion_scores": {
+        "feasibility": 90.0,
+        "impact": 90.0,
+        "risk": 90.0
+      },
+      "strengths": [
+        "Azure has a clear definition."
+      ],
+      "weaknesses": [
+        "Azure needs more detailed evaluation."
+      ]
+    }
+  ],
+  "criteria_used": [
+    {
+      "name": "feasibility",
+      "description": "How feasible is this option?",
+      "weight": 1.0
+    },
+    {
+      "name": "impact",
+      "description": "What is the expected impact?",
+      "weight": 1.0
+    },
+    {
+      "name": "risk",
+      "description": "What is the risk level?",
+      "weight": 1.0
+    }
+  ],
+  "comparative_summary": "All 3 options scored on 3 criteria.",
+  "tradeoffs": [
+    {
+      "tension": "Feasibility vs Impact",
+      "gained": "Lower risk",
+      "lost": "Potentially lower reward"
+    }
+  ],
+  "comparison_quality": 100.0
+}

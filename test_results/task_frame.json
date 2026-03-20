@@ -1,0 +1,13 @@
+{
+  "task_type": "analysis",
+  "problem_statement": "We need to evaluate whether to build our own ML inference platform or buy a managed service, considering our 6-month deadline and limited DevOps team.",
+  "recommended_approach": {
+    "objective": "We need to evaluate whether to build our own ML inference platform or buy a managed service, considering our 6-month deadline and limited DevOps team.",
+    "steps": [
+      "Step 1: Analyse requirements for: We need to evaluate whether to build our own ML inference platform or buy a managed service, considering our 6-month deadline and limited DevOps team.",
+      "Step 2: Execute",
+      "Step 3: Verify"
+    ]
+  },
+  "suggested_next_skills": "analysis"
+}

@@ -1,0 +1,16 @@
+id: python_eval_option_score
+capability: eval.option.score
+service: eval_baseline
+protocol: pythoncall
+operation: score_options
+request:
+  options: input.options
+  goal: input.goal
+response:
+  scored_options: response.scored_options
+  criteria_used: response.criteria_used
+  comparative_summary: response.comparative_summary
+  tradeoffs: response.tradeoffs
+metadata:
+  description: Official binding for eval.option.score using eval_baseline service.
+  status: stable

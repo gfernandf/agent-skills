@@ -1,0 +1,33 @@
+id: openapi_text_language_detect_openai_chat
+
+capability: text.language.detect
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a language detection assistant. Identify the language of the
+        provided text. Return a JSON object with: language (ISO 639-1 two-letter
+        code, e.g. "en", "es", "fr", "de", "zh", "ja", "pt", "it", "ru", "ar", "ko"),
+        confidence (number 0.0-1.0).
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "${input.text}"
+  temperature: 0.0
+  response_format:
+    type: json_object
+
+response:
+  language: response.choices.0.message.content_json.language
+  confidence: response.choices.0.message.content_json.confidence
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_text_language_detect
+  description: "OpenAI binding for text.language.detect using gpt-4o-mini."
+  status: experimental

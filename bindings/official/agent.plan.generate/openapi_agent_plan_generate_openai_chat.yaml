@@ -1,0 +1,42 @@
+id: openapi_agent_plan_generate_openai_chat
+
+capability: agent.plan.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a planning assistant. Given an objective, generate a structured
+        execution plan with concrete, actionable steps and clear dependencies.
+
+        Return a JSON object with:
+        - plan: object containing:
+          - objective: the restated objective
+          - steps: array of {id (string slug), action (verb phrase),
+            description (1-2 sentences), dependencies (array of step ids),
+            estimated_effort: low|medium|high}
+          - assumptions: array of strings — what must be true for this plan to work
+          - risks: array of strings — what could go wrong
+
+        Generate 3-8 steps. Order them logically. Identify parallelizable steps
+        (those without mutual dependencies). Be specific to the objective.
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "Objective: ${input.objective}"
+  temperature: 0.3
+  response_format:
+    type: json_object
+
+response:
+  plan: response.choices.0.message.content_json.plan
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_plan_generate
+  description: "OpenAI binding for agent.plan.generate using gpt-4o-mini."
+  status: experimental

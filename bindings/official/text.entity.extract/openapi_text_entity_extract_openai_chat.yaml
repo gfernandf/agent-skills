@@ -1,0 +1,33 @@
+id: openapi_text_entity_extract_openai_chat
+
+capability: text.entity.extract
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a named entity recognition assistant. Extract all named entities
+        from the text. For each entity provide: text (the entity string as it
+        appears in the input), type (one of: PERSON, ORGANIZATION, LOCATION,
+        DATE, TIME, MONEY, PERCENT, PRODUCT, EVENT, LAW, LANGUAGE, WORK_OF_ART, OTHER).
+        Return a JSON object with: entities (array of {text, type}).
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "${input.text}"
+  temperature: 0.0
+  response_format:
+    type: json_object
+
+response:
+  entities: response.choices.0.message.content_json.entities
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_text_entity_extract
+  description: "OpenAI binding for text.entity.extract using gpt-4o-mini."
+  status: experimental
