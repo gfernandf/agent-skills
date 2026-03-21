@@ -1,0 +1,17 @@
+id: python_analysis_theme_cluster
+capability: analysis.theme.cluster
+service: analysis_baseline
+protocol: pythoncall
+operation: cluster_themes
+
+request:
+  items: input.items
+
+response:
+  clusters: response.clusters
+  unclustered: response.unclustered
+  cluster_quality: response.cluster_quality
+
+metadata:
+  description: Official binding for analysis.theme.cluster using analysis_baseline service.
+  status: stable

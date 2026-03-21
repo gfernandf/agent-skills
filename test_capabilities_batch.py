@@ -101,7 +101,7 @@ TEST_DATA = {
     "web.fetch": {"url": "https://www.google.com"},
     "web.page.extract": {"content": "<html><body><h1>Web Page</h1><p>Main content here.</p></body></html>"},
     "web.source.verify": {"url": "https://example.com/news"},
-    "web.search": {"query": "machine learning"},
+    "web.source.search": {"query": "machine learning"},
 }
 
 

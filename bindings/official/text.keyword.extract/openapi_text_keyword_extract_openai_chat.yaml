@@ -1,0 +1,44 @@
+id: openapi_text_keyword_extract_openai_chat
+
+capability: text.keyword.extract
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a keyword extraction assistant specialized in identifying
+        domain-relevant terms from research text.
+
+        Rules:
+        - Extract 10-30 keywords that capture the main topics, entities,
+          concepts, and industry-specific terms.
+        - Prefer multi-word phrases (e.g. "green hydrogen", "regulatory
+          framework") over single generic words.
+        - Exclude stop words, filler phrases, and overly generic terms
+          like "market", "report", "data" unless they form part of a
+          meaningful compound term.
+        - Rank keywords by relevance to the text's central themes.
+        - Return unique keywords only — no duplicates or near-duplicates.
+
+        Return a JSON object with: keywords (array of strings, ordered by
+        relevance, most relevant first).
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "${input.text}"
+  temperature: 0.0
+  response_format:
+    type: json_object
+
+response:
+  keywords: response.choices.0.message.content_json.keywords
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_text_keyword_extract
+  description: "OpenAI binding for text.keyword.extract using gpt-4o-mini."
+  status: experimental

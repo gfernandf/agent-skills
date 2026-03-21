@@ -38,7 +38,7 @@ defaults:
   text.embed: python_text_embed
   text.entity.extract: openapi_text_entity_extract_openai_chat
   text.extract: python_text_extract
-  text.keyword.extract: python_text_keyword_extract
+  text.keyword.extract: openapi_text_keyword_extract_openai_chat
   text.language.detect: openapi_text_language_detect_openai_chat
   text.summarize: openapi_text_summarize_openai_chat
   text.template: python_text_template
@@ -47,7 +47,7 @@ defaults:
   web.fetch: python_web_fetch
   web.page.extract: python_web_page_extract
   web.source.verify: python_web_source_verify
-  web.search: python_web_search
+  web.source.search: python_web_source_search
   agent.option.generate: openapi_agent_option_generate_openai_chat
   analysis.risk.extract: openapi_analysis_risk_extract_openai_chat
   analysis.split: openapi_analysis_split_openai_chat
@@ -56,3 +56,6 @@ defaults:
   eval.option.score: openapi_eval_option_score_openai_chat
   model.output.generate: openapi_model_output_generate_openai_chat
   model.response.validate: openapi_model_response_validate_openai_chat
+  analysis.theme.cluster: openapi_analysis_theme_cluster_openai_chat
+  web.source.normalize: python_web_source_normalize
+  text.merge: python_text_merge

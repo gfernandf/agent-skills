@@ -10,19 +10,19 @@ from runtime.observability import elapsed_ms, log_event
 
 
 def resolve_corpus_sources(items):
-    print("[DEBUG] resolve_corpus_sources called with", len(items), "items")
+    from official_services.web_baseline import _repair_mojibake
+
     resolved = []
     for raw_item in (items or []):
         item = dict(raw_item)
         if item.get("content"):
+            item["content"] = _repair_mojibake(item["content"])
             resolved.append(item)
             continue
 
         source_ref = item.get("source_ref") or {}
         ref_type = source_ref.get("type", "")
         location = source_ref.get("location", "")
-        print(f"[DEBUG] resolving type={ref_type} location={location}")
-
         if ref_type == "pdf_path":
             result = read_pdf(location)
             item["content"] = result.get("text", "")
@@ -47,13 +47,28 @@ def resolve_corpus_sources(items):
 
         elif ref_type == "url":
             try:
-                import requests as _requests
-                resp = _requests.get(location, timeout=30)
-                resp.raise_for_status()
-                item["content"] = resp.text
+                from official_services.web_baseline import fetch_webpage
+                from official_services.text_baseline import extract_text
+                fetch_result = fetch_webpage(location)
+                status = fetch_result.get("status", 0)
+                raw_content = fetch_result.get("content", "")
+                if status >= 400 or not raw_content:
+                    # Fallback to snippet from metadata if fetch failed
+                    snippet = (item.get("metadata") or {}).get("snippet", "")
+                    item["content"] = _repair_mojibake(snippet)
+                    item["resolution_error"] = f"Fetch failed (HTTP {status}): {raw_content[:200]}"
+                else:
+                    # Strip HTML to plain text for LLM consumption
+                    cleaned = extract_text(raw_content)
+                    text = cleaned.get("text", raw_content) if isinstance(cleaned, dict) else raw_content
+                    # Truncate to 15KB to avoid token limits downstream
+                    if len(text) > 15000:
+                        text = text[:15000] + "\n[... truncated]"
+                    item["content"] = text
                 item.setdefault("type", "web_page")
             except Exception as exc:
-                item["content"] = ""
+                snippet = (item.get("metadata") or {}).get("snippet", "")
+                item["content"] = _repair_mojibake(snippet)
                 item["resolution_error"] = f"Error fetching URL: {exc}"
 
         elif ref_type == "raw_text":
@@ -71,7 +86,6 @@ def resolve_corpus_sources(items):
 
         resolved.append(item)
 
-    print("[DEBUG] resolve_corpus_sources returning", len(resolved), "items")
     return {"items": resolved}
 
 _MAX_PDF_BYTES = 50 * 1024 * 1024   # 50 MB

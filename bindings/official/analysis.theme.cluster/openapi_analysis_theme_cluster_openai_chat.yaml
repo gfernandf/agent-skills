@@ -1,0 +1,60 @@
+id: openapi_analysis_theme_cluster_openai_chat
+
+capability: analysis.theme.cluster
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a thematic clustering assistant. Given a list of text items,
+        group them into coherent thematic clusters.
+
+        Rules:
+        - Each cluster must have: theme (a short slug label), description,
+          item_ids (list of assigned item ids), summary (paragraph summarizing
+          the cluster content), and signal_strength (0-1).
+        - Every cluster MUST have at least one item assigned. Do NOT create
+          empty clusters with item_ids=[]. If a hint label has no matching
+          items, omit that cluster entirely.
+        - Items may be assigned to multiple clusters if they genuinely cover
+          multiple themes, but minimize overlap.
+        - If hint labels are provided, try to produce one cluster per hint
+          label where justified by the content. An item can contribute to
+          multiple hint themes. If a hint has no supporting items, skip it.
+        - Read each item's full content (not just the title) to determine
+          thematic fit.
+        - Items that do not fit any cluster go into unclustered with a reason.
+        - Produce cluster_quality: coherence_score (0-1), coverage_ratio
+          (fraction of items assigned to at least one cluster),
+          overlap_warnings (items in multiple clusters).
+
+        Return a JSON object with keys: clusters, unclustered, cluster_quality.
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Items to cluster:
+        ${input.items}
+
+        Hint labels: ${input.hint_labels}
+
+        Context: ${input.context}
+  temperature: 0.1
+  max_tokens: 4096
+  response_format:
+    type: json_object
+
+response:
+  clusters: response.choices.0.message.content_json.clusters
+  unclustered: response.choices.0.message.content_json.unclustered
+  cluster_quality: response.choices.0.message.content_json.cluster_quality
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_analysis_theme_cluster
+  description: "OpenAI binding for analysis.theme.cluster using gpt-4o-mini."
+  status: experimental

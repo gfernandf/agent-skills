@@ -91,5 +91,82 @@ def extract_risks(target, context=None, risk_scope=None):
         "assumptions": assumptions,
         "failure_modes": failure_modes,
         "mitigation_ideas": mitigation_ideas,
-        "extraction_notes": f"Baseline extraction with {scope} scope.",
+        "extraction_notes": f"Baseline fallback extraction ({scope} scope). These are generic placeholder risks — use the OpenAI binding for content-specific analysis.",
+        "_fallback": True,
+    }
+
+
+def cluster_themes(items, hint_labels=None, max_clusters=None, context=None):
+    """
+    Group items into thematic clusters.
+
+    Baseline heuristic: assigns items round-robin to hint_labels (or generic
+    themes). Each cluster gets a summary built from its items' content.
+    Production bindings should use an LLM or embedding-based clustering.
+    """
+    if max_clusters is None:
+        max_clusters = 8
+    max_clusters = min(max_clusters, 15)
+
+    if not items:
+        return {"clusters": [], "unclustered": [], "cluster_quality": {
+            "coherence_score": 0.0, "coverage_ratio": 0.0, "overlap_warnings": [],
+        }}
+
+    # Determine theme labels
+    if hint_labels and len(hint_labels) > 0:
+        labels = list(hint_labels[:max_clusters])
+    else:
+        n = min(len(items), max_clusters, 5)
+        labels = [f"theme_{i+1}" for i in range(n)]
+
+    # Build cluster buckets
+    buckets = {label: [] for label in labels}
+    for idx, item in enumerate(items):
+        target = labels[idx % len(labels)]
+        buckets[target].append(item)
+
+    clusters = []
+    for label in labels:
+        bucket_items = buckets[label]
+        if not bucket_items:
+            continue
+        # Build summary from item content
+        snippets = []
+        item_ids = []
+        for it in bucket_items:
+            item_ids.append(it.get("id", f"item_{id(it)}"))
+            content = it.get("content", "")
+            if content:
+                snippets.append(content[:200])
+
+        summary = "; ".join(snippets) if snippets else "No content available."
+        clusters.append({
+            "theme": label,
+            "description": f"Cluster for theme '{label}' containing {len(bucket_items)} items.",
+            "item_ids": item_ids,
+            "summary": summary,
+            "signal_strength": round(len(bucket_items) / len(items), 2),
+        })
+
+    assigned_ids = set()
+    for c in clusters:
+        assigned_ids.update(c["item_ids"])
+
+    unclustered = []
+    for it in items:
+        iid = it.get("id", f"item_{id(it)}")
+        if iid not in assigned_ids:
+            unclustered.append({"id": iid, "reason": "No matching theme."})
+
+    coverage = len(assigned_ids) / len(items) if items else 0.0
+
+    return {
+        "clusters": clusters,
+        "unclustered": unclustered,
+        "cluster_quality": {
+            "coherence_score": 0.6,
+            "coverage_ratio": round(coverage, 2),
+            "overlap_warnings": [],
+        },
     }

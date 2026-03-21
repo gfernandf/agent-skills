@@ -1,6 +1,6 @@
-id: python_web_search
+id: python_web_source_search
 
-capability: web.search
+capability: web.source.search
 service: web_baseline
 protocol: pythoncall
 operation: search_web
@@ -12,5 +12,5 @@ response:
   results: response.results
 
 metadata:
-  description: "Official binding for web.search using the web_baseline service."
+  description: "Official binding for web.source.search using the web_baseline service."
   status: stable

@@ -9,7 +9,7 @@
     {
       "type": "tool_call",
       "timestamp": "2026-03-18T10:00:05Z",
-      "data": { "tool": "web.search", "query": "EU AI regulation 2026", "status": "success" }
+      "data": { "tool": "web.source.search", "query": "EU AI regulation 2026", "status": "success" }
     },
     {
       "type": "decision",

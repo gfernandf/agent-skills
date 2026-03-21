@@ -37,15 +37,20 @@ def embed_text(text):
 def extract_entities(text):
     """
     Extract named entities from text.
-    
-    Args:
-        text (str): The text to analyze.
-    
-    Returns:
-        dict: {"entities": list}
+    Baseline: regex-based capitalized phrase extraction (degraded mode).
     """
-    # Baseline implementation: empty list
-    return {"entities": []}
+    if not text:
+        return {"entities": [], "_fallback": True}
+    # Extract capitalized multi-word phrases as candidate entities
+    candidates = re.findall(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b', text)
+    seen = set()
+    entities = []
+    for c in candidates:
+        key = c.lower()
+        if key not in seen:
+            seen.add(key)
+            entities.append({"text": c, "type": "OTHER"})
+    return {"entities": entities[:30], "_fallback": True}
 
 def extract_text(document):
     """
@@ -94,33 +99,35 @@ def extract_text(document):
 def extract_keywords(text):
     """
     Extract keywords from text.
-    
-    Args:
-        text (str): The text to analyze.
-    
-    Returns:
-        dict: {"keywords": list}
+    Baseline: frequency-weighted unique terms (degraded mode, no TF-IDF).
     """
-    # Remove common stop words and extract meaningful words
-    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'of', 'with', 'by', 'from', 'as', 'it', 'that', 'which', 'who', 'what', 'where', 'when', 'why', 'how'}
-    
-    # Convert to lowercase and split
-    words = text.lower().split()
-    
-    # Filter out stop words and short words
-    keywords = [w for w in words if w not in stop_words and len(w) > 3]
-    
-    # Return top 10 unique keywords
-    unique_keywords = []
-    seen = set()
-    for kw in keywords:
-        if kw not in seen:
-            unique_keywords.append(kw)
-            seen.add(kw)
-            if len(unique_keywords) >= 10:
-                break
-    
-    return {"keywords": unique_keywords}
+    stop_words = {
+        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to',
+        'for', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have',
+        'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+        'should', 'may', 'might', 'can', 'of', 'with', 'by', 'from', 'as',
+        'it', 'its', 'that', 'which', 'who', 'what', 'where', 'when',
+        'why', 'how', 'this', 'these', 'those', 'not', 'no', 'so', 'if',
+        'than', 'then', 'also', 'about', 'up', 'out', 'just', 'into',
+        'more', 'other', 'some', 'such', 'only', 'over', 'very', 'own',
+        'all', 'each', 'every', 'both', 'few', 'many', 'most', 'any',
+        'new', 'one', 'two', 'first', 'last', 'our', 'your', 'their',
+        'we', 'they', 'you', 'he', 'she', 'my', 'his', 'her', 'its',
+        'said', 'like', 'well', 'back', 'much', 'made', 'after', 'year',
+        'years', 'make', 'way', 'been', 'through', 'between', 'being',
+        'market', 'report', 'data', 'based', 'according', 'using',
+    }
+    # Clean and tokenize
+    cleaned = re.sub(r'[^a-zA-Z\s]', ' ', text.lower())
+    words = [w for w in cleaned.split() if w not in stop_words and len(w) > 3]
+    # Frequency count
+    freq = {}
+    for w in words:
+        freq[w] = freq.get(w, 0) + 1
+    # Sort by frequency descending
+    ranked = sorted(freq.items(), key=lambda x: x[1], reverse=True)
+    keywords = [w for w, _ in ranked[:20]]
+    return {"keywords": keywords, "_fallback": True}
 
 def detect_language(text):
     """
@@ -211,3 +218,48 @@ def translate_text(text, target_language):
     """
     # Baseline implementation: return original text (would use translation API in production)
     return {"translation": text}
+
+
+def merge_texts(items, separator=None, include_headers=None):
+    """
+    Merge multiple text items into a single text block.
+
+    Args:
+        items (list): Items with 'content' field (string). May include 'id'
+            and 'title' for section headers.
+        separator (str): Separator between items. Defaults to double newline.
+        include_headers (bool): Include titles as headers. Defaults to True
+            when items have titles.
+
+    Returns:
+        dict: {"text": str, "item_count": int}
+    """
+    if separator is None:
+        separator = "\n\n"
+
+    # Auto-detect include_headers if not specified
+    if include_headers is None:
+        include_headers = any(
+            it.get("title") for it in (items or []) if isinstance(it, dict)
+        )
+
+    parts = []
+    count = 0
+
+    for item in (items or []):
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content", "")
+        if not content:
+            continue
+
+        count += 1
+        if include_headers and item.get("title"):
+            parts.append(f"## {item['title']}\n{content}")
+        else:
+            parts.append(content)
+
+    return {
+        "text": separator.join(parts),
+        "item_count": count,
+    }
