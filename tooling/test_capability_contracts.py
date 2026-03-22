@@ -44,14 +44,14 @@ _TYPE_MAP: dict[str, tuple] = {
 # (used for the graceful-error contract test)
 # ---------------------------------------------------------------------------
 INVALID_INPUTS: dict[str, dict] = {
-    "code.execute":          {"code": "", "language": "python"},
-    "web.fetch":             {"url": "ftp://not-allowed.example.com"},
-    "pdf.read":              {"path": "/nonexistent/path/file.pdf"},
-    "audio.transcribe":      {"audio": ""},
-    "fs.read":               {"path": "", "mode": "text"},
+    "code.snippet.execute":          {"code": "", "language": "python"},
+    "web.page.fetch":             {"url": "ftp://not-allowed.example.com"},
+    "pdf.document.read":              {"path": "/nonexistent/path/file.pdf"},
+    "audio.speech.transcribe":      {"audio": ""},
+    "fs.file.read":               {"path": "", "mode": "text"},
     "image.caption.generate":{"image": None},
-    "text.summarize":        {"text": ""},
-    "code.format":           {"code": "", "language": "python"},
+    "text.content.summarize":        {"text": ""},
+    "code.source.format":           {"code": "", "language": "python"},
     "data.json.parse":       {"text": ""},
     "data.schema.validate":  {"data": {}, "schema": {}},
 }

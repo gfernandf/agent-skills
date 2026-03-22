@@ -1,0 +1,17 @@
+id: python_text_translate
+
+capability: text.content.translate
+service: text_baseline
+protocol: pythoncall
+operation: translate_text
+
+request:
+  text: input.text
+  target_language: input.target_language
+
+response:
+  translation: response.translation
+
+metadata:
+  description: "Official binding for text.content.translate using the text_baseline service."
+  status: stable

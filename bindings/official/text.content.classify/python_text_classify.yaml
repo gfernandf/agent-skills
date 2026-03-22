@@ -1,0 +1,14 @@
+id: python_text_classify
+capability: text.content.classify
+service: text_baseline
+protocol: pythoncall
+operation: classify_text
+request:
+  text: input.text
+  categories: input.labels
+response:
+  label: response.label
+  confidence: response.confidence
+metadata:
+  description: Official binding for text.content.classify using the text_baseline service.
+  status: stable

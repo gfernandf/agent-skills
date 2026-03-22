@@ -4,6 +4,7 @@ import json
 import logging
 import threading
 import time
+import traceback
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -12,10 +13,8 @@ from urllib.parse import parse_qs, urlparse
 
 from customer_facing.neutral_api import NeutralRuntimeAPI
 from gateway.core import SkillGateway
+from runtime.observability import elapsed_ms, log_event
 from runtime.openapi_error_contract import build_http_error_payload, map_runtime_error_to_http
-
-
-logger = logging.getLogger("customer_facing.http")
 
 
 @dataclass(frozen=True)
@@ -39,7 +38,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         try:
             parsed = urlparse(self.path)
-            self._request_start = time.time()
+            self._request_start = time.perf_counter()
             self._request_path = parsed.path
             if not self._authorize(parsed.path):
                 return
@@ -102,7 +101,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         try:
             parsed = urlparse(self.path)
-            self._request_start = time.time()
+            self._request_start = time.perf_counter()
             self._request_path = parsed.path
             if not self._authorize(parsed.path):
                 return
@@ -256,7 +255,15 @@ class _RequestHandler(BaseHTTPRequestHandler):
             return True
 
         provided = self.headers.get("x-api-key")
+        client_ip = self.client_address[0] if self.client_address else "unknown"
         if not provided:
+            log_event(
+                "http.auth.rejected",
+                level="warning",
+                reason="missing_api_key",
+                client=client_ip,
+                path=path,
+            )
             self._write_json(
                 401,
                 {
@@ -270,6 +277,13 @@ class _RequestHandler(BaseHTTPRequestHandler):
             return False
 
         if provided != config.api_key:
+            log_event(
+                "http.auth.rejected",
+                level="warning",
+                reason="invalid_api_key",
+                client=client_ip,
+                path=path,
+            )
             self._write_json(
                 403,
                 {
@@ -303,6 +317,14 @@ class _RequestHandler(BaseHTTPRequestHandler):
 
             if len(events) >= max_requests:
                 self._rate_state[client_id] = events
+                log_event(
+                    "http.rate_limit.exceeded",
+                    level="warning",
+                    client=client_id,
+                    path=path,
+                    window_seconds=window_seconds,
+                    max_requests=max_requests,
+                )
                 self._write_json(
                     429,
                     {
@@ -362,12 +384,15 @@ class _RequestHandler(BaseHTTPRequestHandler):
 
     def _write_runtime_error(self, error: Exception) -> None:
         trace_id = self.headers.get("x-trace-id")
-        logger.exception(
-            "customer_http_error method=%s path=%s trace_id=%s error_type=%s",
-            self.command,
-            getattr(self, "_request_path", self.path),
-            trace_id or "-",
-            type(error).__name__,
+        log_event(
+            "http.request.error",
+            level="error",
+            method=self.command,
+            path=getattr(self, "_request_path", self.path),
+            trace_id=trace_id,
+            error_type=type(error).__name__,
+            error_detail=str(error),
+            tb=traceback.format_exc(),
         )
         contract = map_runtime_error_to_http(error)
         payload = build_http_error_payload(error, trace_id=trace_id)
@@ -381,10 +406,10 @@ class _RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-        elapsed_ms = -1
+        duration = -1.0
         request_start = getattr(self, "_request_start", None)
         if isinstance(request_start, float):
-            elapsed_ms = int((time.time() - request_start) * 1000)
+            duration = elapsed_ms(request_start)
 
         error_code = "-"
         error_obj = body.get("error") if isinstance(body, dict) else None
@@ -392,14 +417,14 @@ class _RequestHandler(BaseHTTPRequestHandler):
             error_code = error_obj["code"]
 
         client_id = self.client_address[0] if self.client_address else "unknown"
-        logger.info(
-            "customer_http_request method=%s path=%s status=%s client=%s duration_ms=%s error_code=%s",
-            self.command,
-            getattr(self, "_request_path", self.path),
-            status,
-            client_id,
-            elapsed_ms,
-            error_code,
+        log_event(
+            "http.request",
+            method=self.command,
+            path=getattr(self, "_request_path", self.path),
+            status=status,
+            client=client_id,
+            duration_ms=duration,
+            error_code=error_code,
         )
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
@@ -427,13 +452,13 @@ def run_server(
 
     server = ThreadingHTTPServer((config.host, config.port), _RequestHandler)
     print(f"customer-facing API listening on http://{config.host}:{config.port}")
-    logger.info(
-        "customer_http_server_started host=%s port=%s auth_enabled=%s rate_limit_requests=%s rate_limit_window_seconds=%s",
-        config.host,
-        config.port,
-        bool(config.api_key),
-        config.rate_limit_requests,
-        config.rate_limit_window_seconds,
+    log_event(
+        "http.server.started",
+        host=config.host,
+        port=config.port,
+        auth_enabled=bool(config.api_key),
+        rate_limit_requests=config.rate_limit_requests,
+        rate_limit_window_seconds=config.rate_limit_window_seconds,
     )
     try:
         server.serve_forever()

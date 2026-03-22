@@ -16,9 +16,9 @@ This document tracks the incremental MCP rollout pattern used in this repository
 
 ## Current Slices
 
-1. text.summarize
+1. text.content.summarize
 - Service: `services/official/text_mcp_inprocess.yaml`
-- Binding: `bindings/official/text.summarize/mcp_text_summarize_inprocess.yaml`
+- Binding: `bindings/official/text.content.summarize/mcp_text_summarize_inprocess.yaml`
 - Verification: `python tooling/verify_mcp_text_summarize.py`
 
 2. data.schema.validate
@@ -26,9 +26,9 @@ This document tracks the incremental MCP rollout pattern used in this repository
 - Binding: `bindings/official/data.schema.validate/mcp_data_schema_validate_inprocess.yaml`
 - Verification: `python tooling/verify_mcp_data_web_slices.py`
 
-3. web.fetch
+3. web.page.fetch
 - Service: `services/official/web_mcp_inprocess.yaml`
-- Binding: `bindings/official/web.fetch/mcp_web_fetch_inprocess.yaml`
+- Binding: `bindings/official/web.page.fetch/mcp_web_fetch_inprocess.yaml`
 - Verification: `python tooling/verify_mcp_data_web_slices.py`
 
 ## Runtime Wiring

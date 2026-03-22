@@ -6,7 +6,7 @@ from typing import Any
 
 def summarize_text(text: str, max_length: int | None = None) -> dict[str, Any]:
     """
-    Deterministic local implementation for the capability `text.summarize`.
+    Deterministic local implementation for the capability `text.content.summarize`.
 
     v1 behavior:
     - normalize whitespace

@@ -1,0 +1,17 @@
+id: python_doc_chunk
+
+capability: doc.content.chunk
+service: doc_baseline
+protocol: pythoncall
+operation: chunk_document
+
+request:
+  text: input.text
+  chunk_size: input.chunk_size
+
+response:
+  chunks: response.chunks
+
+metadata:
+  description: "Official binding for doc.content.chunk usando doc_baseline. Inputs alineados a capability."
+  status: stable

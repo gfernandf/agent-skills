@@ -86,10 +86,10 @@ def main():
     issues = validate_binding_inputs()
 
     if not issues:
-        print("✅ All bindings are valid!")
+        print("[OK] All bindings are valid!")
         return 0
 
-    print(f"❌ Found {len(issues)} binding validation issues:")
+    print(f"[FAIL] Found {len(issues)} binding validation issues:")
     print()
 
     for issue in issues:

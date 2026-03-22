@@ -83,15 +83,15 @@ User-managed deletion is available via:
 The runtime now includes initial MCP-backed capability slices without changing
 the official default binding selection.
 
-- `text.summarize`
+- `text.content.summarize`
 	- Service: `services/official/text_mcp_inprocess.yaml`
-	- Binding: `bindings/official/text.summarize/mcp_text_summarize_inprocess.yaml`
+	- Binding: `bindings/official/text.content.summarize/mcp_text_summarize_inprocess.yaml`
 - `data.schema.validate`
 	- Service: `services/official/data_mcp_inprocess.yaml`
 	- Binding: `bindings/official/data.schema.validate/mcp_data_schema_validate_inprocess.yaml`
-- `web.fetch`
+- `web.page.fetch`
 	- Service: `services/official/web_mcp_inprocess.yaml`
-	- Binding: `bindings/official/web.fetch/mcp_web_fetch_inprocess.yaml`
+	- Binding: `bindings/official/web.page.fetch/mcp_web_fetch_inprocess.yaml`
 
 Verifications:
 
@@ -103,11 +103,11 @@ before broader external MCP service rollout.
 
 ## OpenAI Access (Local Runtime)
 
-An experimental official OpenAPI service/binding is available for `text.summarize`
+An experimental official OpenAPI service/binding is available for `text.content.summarize`
 using OpenAI Chat Completions.
 
 - Service: `services/official/text_openai_chat.yaml`
-- Binding: `bindings/official/text.summarize/openapi_text_summarize_openai_chat.yaml`
+- Binding: `bindings/official/text.content.summarize/openapi_text_summarize_openai_chat.yaml`
 - Verifier: `python tooling/verify_openai_text_summarize.py`
 
 Credentials are resolved from the local environment at runtime:
@@ -152,8 +152,8 @@ Behavior:
 
 CLI explain surface:
 
-- `python cli/main.py explain-capability text.summarize`
-- `python cli/main.py explain-capability text.summarize --required-conformance-profile strict`
+- `python cli/main.py explain-capability text.content.summarize`
+- `python cli/main.py explain-capability text.content.summarize --required-conformance-profile strict`
 
 Consumer-facing explain endpoints:
 

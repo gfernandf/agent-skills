@@ -1,0 +1,12 @@
+id: python_email_read
+capability: email.inbox.read
+service: email_baseline
+protocol: pythoncall
+operation: read_emails
+request:
+  mailbox: input.mailbox
+response:
+  messages: response.messages
+metadata:
+  description: Official binding for email.inbox.read using the email_baseline service.
+  status: stable

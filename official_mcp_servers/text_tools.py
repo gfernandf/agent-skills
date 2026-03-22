@@ -6,7 +6,7 @@ from official_services import text_baseline
 
 
 _SUPPORTED_TOOLS = {
-    "text.summarize": text_baseline.summarize_text,
+    "text.content.summarize": text_baseline.summarize_text,
 }
 
 

@@ -15,6 +15,10 @@ from runtime.protocol_router import ProtocolRouter
 class BindingExecutionError(RuntimeErrorBase):
     """Raised when a binding invocation fails."""
 
+    def __init__(self, *args: Any, conformance_unmet: bool = False, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.conformance_unmet = conformance_unmet
+
 
 _CONFORMANCE_RANK = {
     "experimental": 0,
@@ -186,6 +190,7 @@ class BindingExecutor:
                     f"for capability '{capability_id}'."
                 ),
                 capability_id=capability_id,
+                conformance_unmet=True,
             )
 
         raise BindingExecutionError(

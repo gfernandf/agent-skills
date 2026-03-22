@@ -1,0 +1,13 @@
+id: python_image_classify
+capability: image.content.classify
+service: image_baseline
+protocol: pythoncall
+operation: classify_image
+request:
+  image_data: input.image
+response:
+  label: response.label
+  confidence: response.confidence
+metadata:
+  description: Official binding for image.content.classify using the image_baseline service.
+  status: stable

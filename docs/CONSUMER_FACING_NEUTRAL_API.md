@@ -49,12 +49,14 @@ Base version: `/v1`
 1. `GET /v1/health`
 2. `GET /v1/skills/{skill_id}/describe`
 3. `GET /v1/skills/list`
-4. `GET /v1/skills/diagnostics`
-5. `POST /v1/skills/discover`
-6. `POST /v1/skills/{skill_id}/attach`
-7. `POST /v1/skills/{skill_id}/execute`
-8. `POST /v1/capabilities/{capability_id}/execute`
-9. `GET /openapi.json`
+4. `GET /v1/skills/governance`
+5. `GET /v1/skills/diagnostics`
+6. `POST /v1/skills/discover`
+7. `POST /v1/skills/{skill_id}/attach`
+8. `POST /v1/skills/{skill_id}/execute`
+9. `POST /v1/capabilities/{capability_id}/execute`
+10. `POST /v1/capabilities/{capability_id}/explain`
+11. `GET /openapi.json`
 
 Security model (configurable):
 

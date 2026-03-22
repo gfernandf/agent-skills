@@ -72,10 +72,10 @@ Executed from `agent-skills/tooling`:
   - step lifecycle
   - capability execution lifecycle
 - High-risk service instrumentation:
-  - `code.execute`
-  - `web.fetch`
-  - `pdf.read`
-  - `audio.transcribe`
+  - `code.snippet.execute`
+  - `web.page.fetch`
+  - `pdf.document.read`
+  - `audio.speech.transcribe`
 - Trace correlation:
   - end-to-end `trace_id` on skill/step/capability events
   - nested skill execution propagates parent trace id

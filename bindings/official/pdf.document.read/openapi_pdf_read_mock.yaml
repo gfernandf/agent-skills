@@ -1,0 +1,18 @@
+id: openapi_pdf_read_mock
+
+capability: pdf.document.read
+service: pdf_read_openapi_mock
+protocol: openapi
+operation: read
+
+request:
+  path: input.path
+
+response:
+  text: response.text
+  metadata: response.metadata
+
+metadata:
+  method: POST
+  description: "OpenAPI mock binding for pdf.document.read."
+  status: experimental

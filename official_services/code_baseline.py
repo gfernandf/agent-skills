@@ -65,7 +65,7 @@ def execute_code(code, language):
 
     def _finish(payload, status, error_type=None):
         log_event(
-            "service.code.execute",
+            "service.code.snippet.execute",
             status=status,
             language=language,
             code_bytes=code_bytes,
@@ -76,7 +76,7 @@ def execute_code(code, language):
         return payload
 
     log_event(
-        "service.code.execute.start",
+        "service.code.snippet.execute.start",
         language=language,
         code_bytes=code_bytes,
     )

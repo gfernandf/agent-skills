@@ -1,0 +1,17 @@
+id: mcp_web_fetch_inprocess
+
+capability: web.page.fetch
+service: web_mcp_inprocess
+protocol: mcp
+operation: web.page.fetch
+
+request:
+  url: input.url
+
+response:
+  content: response.content
+  status: response.status
+
+metadata:
+  description: "Official MCP binding for web.page.fetch using the in-process MCP web server."
+  status: experimental

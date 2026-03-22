@@ -1,30 +1,30 @@
 defaults:
 
-  agent.delegate: python_agent_delegate
+  agent.task.delegate: python_agent_delegate
   agent.plan.create: python_agent_plan_create
   agent.plan.generate: openapi_agent_plan_generate_openai_chat
-  agent.route: openapi_agent_route_openai_chat
-  audio.transcribe: python_audio_transcribe
+  agent.input.route: openapi_agent_route_openai_chat
+  audio.speech.transcribe: python_audio_transcribe
   code.diff.extract: python_code_diff_extract
-  code.execute: python_code_execute
-  code.format: python_code_format
+  code.snippet.execute: python_code_execute
+  code.source.format: python_code_format
   data.json.parse: python_data_json_parse
   data.record.deduplicate: python_data_record_deduplicate
   data.schema.validate: python_data_schema_validate
-  doc.chunk: python_doc_chunk
-  email.read: python_email_read
-  email.send: python_email_send
-  fs.read: python_fs_read
+  doc.content.chunk: python_doc_chunk
+  email.inbox.read: python_email_read
+  email.message.send: python_email_send
+  fs.file.read: python_fs_read
   image.caption.generate: python_image_caption_generate
-  image.classify: python_image_classify
-  memory.retrieve: python_memory_retrieve
-  memory.store: python_memory_store
-  message.send: python_message_send
+  image.content.classify: python_image_classify
+  memory.entry.retrieve: python_memory_retrieve
+  memory.entry.store: python_memory_store
+  message.notification.send: python_message_send
   ops.budget.estimate: python_ops_budget_estimate
   ops.trace.analyze: python_ops_trace_analyze
   ops.trace.monitor: python_ops_trace_monitor
   research.source.retrieve: python_research_source_retrieve
-  pdf.read: python_pdf_read
+  pdf.document.read: python_pdf_read
   policy.constraint.validate: python_policy_constraint_validate
   provenance.citation.generate: python_provenance_citation_generate
   provenance.claim.verify: openapi_provenance_claim_verify_openai_chat
@@ -33,24 +33,24 @@ defaults:
   security.pii.detect: python_security_pii_detect
   security.pii.redact: python_security_pii_redact
   security.secret.detect: python_security_secret_detect
-  table.filter: python_table_filter
-  text.classify: openapi_text_classify_openai_chat
-  text.embed: python_text_embed
+  table.row.filter: python_table_filter
+  text.content.classify: openapi_text_classify_openai_chat
+  text.content.embed: python_text_embed
   text.entity.extract: openapi_text_entity_extract_openai_chat
-  text.extract: python_text_extract
+  text.content.extract: python_text_extract
   text.keyword.extract: openapi_text_keyword_extract_openai_chat
   text.language.detect: openapi_text_language_detect_openai_chat
-  text.summarize: openapi_text_summarize_openai_chat
-  text.template: python_text_template
-  text.translate: openapi_text_translate_openai_chat
+  text.content.summarize: openapi_text_summarize_openai_chat
+  text.content.template: python_text_template
+  text.content.translate: openapi_text_translate_openai_chat
   video.frame.extract: python_video_frame_extract
-  web.fetch: python_web_fetch
+  web.page.fetch: python_web_fetch
   web.page.extract: python_web_page_extract
   web.source.verify: python_web_source_verify
   web.source.search: python_web_source_search
   agent.option.generate: openapi_agent_option_generate_openai_chat
   analysis.risk.extract: openapi_analysis_risk_extract_openai_chat
-  analysis.split: openapi_analysis_split_openai_chat
+  analysis.problem.split: openapi_analysis_split_openai_chat
   decision.option.justify: openapi_decision_option_justify_openai_chat
   eval.option.analyze: openapi_eval_option_analyze_openai_chat
   eval.option.score: openapi_eval_option_score_openai_chat
@@ -58,4 +58,4 @@ defaults:
   model.response.validate: openapi_model_response_validate_openai_chat
   analysis.theme.cluster: openapi_analysis_theme_cluster_openai_chat
   web.source.normalize: python_web_source_normalize
-  text.merge: python_text_merge
+  text.content.merge: python_text_merge

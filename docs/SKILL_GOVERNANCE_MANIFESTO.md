@@ -42,14 +42,14 @@ Capabilities must be high-level enough for agent composition but narrow enough t
 ### 3.1 Risk classes
 
 A. Deterministic operations (low epistemic risk)
-- Examples: data.schema.validate, data.json.parse, table.filter.
+- Examples: data.schema.validate, data.json.parse, table.row.filter.
 
 B. Retrieval operations (medium risk)
-- Examples: web.fetch, fs.read, pdf.read.
+- Examples: web.page.fetch, fs.file.read, pdf.document.read.
 - Variability comes from source quality and external system behavior.
 
 C. Generative and decision operations (higher risk)
-- Examples: text.summarize, text.classify, agent.plan.generate, agent.route.
+- Examples: text.content.summarize, text.content.classify, agent.plan.generate, agent.input.route.
 - Variability comes from model behavior and provider differences.
 
 ### 3.2 Design rule

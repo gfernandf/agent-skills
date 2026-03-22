@@ -409,7 +409,7 @@ class BindingRegistry:
 
     def _read_yaml(self, path: Path) -> Any:
         try:
-            with path.open("r", encoding="utf-8") as f:
+            with path.open("r", encoding="utf-8-sig") as f:
                 return yaml.safe_load(f)
         except yaml.YAMLError as e:
             raise BindingRegistryError(

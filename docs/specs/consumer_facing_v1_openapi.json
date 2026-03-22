@@ -423,6 +423,109 @@
           }
         }
       }
+    },
+    "/v1/capabilities/{capability_id}/explain": {
+      "post": {
+        "operationId": "explainCapabilityResolution",
+        "summary": "Explain binding resolution chain for a capability.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "capability_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "required_conformance_profile": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolution plan with fallback chain"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "403": {
+            "description": "Invalid API key"
+          },
+          "404": {
+            "description": "Capability not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "500": {
+            "description": "Runtime error"
+          }
+        }
+      }
+    },
+    "/v1/skills/governance": {
+      "get": {
+        "operationId": "listSkillGovernance",
+        "summary": "List skill governance catalog entries filtered by lifecycle state.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "min_state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "validated", "lab-verified", "trusted", "recommended"]
+            },
+            "description": "Minimum lifecycle state filter."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20
+            },
+            "description": "Maximum entries to return."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Governance catalog entries"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "403": {
+            "description": "Invalid API key"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
     }
   }
 }

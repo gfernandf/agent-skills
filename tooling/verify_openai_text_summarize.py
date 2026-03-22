@@ -23,7 +23,7 @@ _SERVICE_ID = "text_openai_chat"
 def _write_active_binding(host_root: Path) -> None:
     state_dir = host_root / ".agent-skills"
     state_dir.mkdir(parents=True, exist_ok=True)
-    payload = {"text.summarize": _BINDING_ID}
+    payload = {"text.content.summarize": _BINDING_ID}
     (state_dir / "active_bindings.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -38,7 +38,7 @@ def main() -> int:
 
     sample_text = (
         "Model Context Protocol helps standardize tool access. "
-        "This verifier checks a real OpenAI-backed text.summarize binding end to end."
+        "This verifier checks a real OpenAI-backed text.content.summarize binding end to end."
     )
 
     with tempfile.TemporaryDirectory(prefix="agent-skills-openai-") as tmpdir:
@@ -51,7 +51,7 @@ def main() -> int:
             host_root=host_root,
         )
         result = api.execute_capability(
-            "text.summarize",
+            "text.content.summarize",
             {"text": sample_text, "max_length": 90},
         )
 
@@ -72,7 +72,7 @@ def main() -> int:
             f"Expected service_id '{_SERVICE_ID}', got '{meta.get('service_id')}'."
         )
 
-    print("OpenAI text.summarize verification passed.")
+    print("OpenAI text.content.summarize verification passed.")
     print(f"Summary preview: {summary[:160]!r}")
     return 0
 

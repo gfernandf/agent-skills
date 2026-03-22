@@ -1,0 +1,13 @@
+id: python_table_filter
+capability: table.row.filter
+service: table_baseline
+protocol: pythoncall
+operation: filter_table
+request:
+  table_data: input.table
+  filter_criteria: input.condition
+response:
+  table: response.table
+metadata:
+  description: Official binding for table.row.filter using the table_baseline service.
+  status: stable

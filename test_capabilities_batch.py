@@ -25,13 +25,13 @@ from runtime.binding_models import BindingSpec
 
 # Test data generators - names must match binding input fields
 TEST_DATA = {
-    "agent.delegate": {"agent": "agent1", "task": "summarize text"},
+    "agent.task.delegate": {"agent": "agent1", "task": "summarize text"},
     "agent.plan.generate": {"objective": "Build a web scraper"},
-    "agent.route": {"input": "What is machine learning?"},
-    "audio.transcribe": {"audio": b"fake audio data"},
+    "agent.input.route": {"input": "What is machine learning?"},
+    "audio.speech.transcribe": {"audio": b"fake audio data"},
     "code.diff.extract": {"code_a": "x = 5", "code_b": "x = 10"},
-    "code.execute": {"code": "x = 5 + 3; print(x)", "language": "python"},
-    "code.format": {"code": "def foo( x,y ):\n  return x+y", "language": "python"},
+    "code.snippet.execute": {"code": "x = 5 + 3; print(x)", "language": "python"},
+    "code.source.format": {"code": "def foo( x,y ):\n  return x+y", "language": "python"},
     "data.json.parse": {"text": '{"name": "John", "age": 30}'},
     "data.record.deduplicate": {
         "records": [
@@ -42,15 +42,15 @@ TEST_DATA = {
         "key_fields": ["id"]
     },
     "data.schema.validate": {"data": {"name": "John"}, "schema": {"type": "object"}},
-    "doc.chunk": {"text": "This is a long document. " * 50, "chunk_size": 1000},
-    "email.read": {"mailbox": "inbox"},
-    "email.send": {"to": "test@example.com", "subject": "Test Subject", "body": "Test message body"},
-    "fs.read": {"path": str(Path(__file__).resolve()), "mode": "text"},
+    "doc.content.chunk": {"text": "This is a long document. " * 50, "chunk_size": 1000},
+    "email.inbox.read": {"mailbox": "inbox"},
+    "email.message.send": {"to": "test@example.com", "subject": "Test Subject", "body": "Test message body"},
+    "fs.file.read": {"path": str(Path(__file__).resolve()), "mode": "text"},
     "image.caption.generate": {"image": b"fake image data"},
-    "image.classify": {"image": b"fake image data", "labels": ["cat", "dog", "bird"]},
-    "memory.retrieve": {"key": "test_key"},
-    "memory.store": {"key": "test_key", "value": "test_value"},
-    "message.send": {"message": "Test message", "recipient": "test_user"},
+    "image.content.classify": {"image": b"fake image data", "labels": ["cat", "dog", "bird"]},
+    "memory.entry.retrieve": {"key": "test_key"},
+    "memory.entry.store": {"key": "test_key", "value": "test_value"},
+    "message.notification.send": {"message": "Test message", "recipient": "test_user"},
     "ops.budget.estimate": {
         "plan": {"steps": [{"id": "s1"}, {"id": "s2"}]},
         "limits": {"max_cost": 1.0, "max_duration_ms": 5000}
@@ -59,7 +59,7 @@ TEST_DATA = {
         "trace": {"duration_ms": 1200, "error_count": 1},
         "thresholds": {"max_duration_ms": 2000, "max_errors": 2}
     },
-    "pdf.read": {"path": str(Path(__file__).parent / "artifacts" / "test.pdf")},
+    "pdf.document.read": {"path": str(Path(__file__).parent / "artifacts" / "test.pdf")},
     "policy.constraint.validate": {
         "payload": {"title": "Hello", "body": "World"},
         "constraint": {"required_keys": ["title"], "forbidden_keys": ["password"]}
@@ -87,18 +87,18 @@ TEST_DATA = {
     "security.pii.detect": {"text": "Email me at test@example.com"},
     "security.pii.redact": {"text": "Phone +1 650 555 1234 and email test@example.com"},
     "security.secret.detect": {"text": "token=sk-1234567890ABCDEFGHIJ"},
-    "table.filter": {"table": [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 30}], "condition": {"age": {"$gt": 26}}},
-    "text.classify": {"text": "I love this product! It's amazing!", "labels": ["positive", "negative", "neutral"]},
-    "text.embed": {"text": "This is a test sentence for embedding."},
+    "table.row.filter": {"table": [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 30}], "condition": {"age": {"$gt": 26}}},
+    "text.content.classify": {"text": "I love this product! It's amazing!", "labels": ["positive", "negative", "neutral"]},
+    "text.content.embed": {"text": "This is a test sentence for embedding."},
     "text.entity.extract": {"text": "John Smith works at Google in Mountain View."},
-    "text.extract": {"text": "<html><body><h1>Title</h1><p>This is a test paragraph with important information.</p></body></html>"},
+    "text.content.extract": {"text": "<html><body><h1>Title</h1><p>This is a test paragraph with important information.</p></body></html>"},
     "text.keyword.extract": {"text": "Python is a great programming language for machine learning and data science applications."},
     "text.language.detect": {"text": "This is English text."},
-    "text.summarize": {"text": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on the development of algorithms that can access data and use it to learn for themselves."},
-    "text.template": {"template": "Hello {{name}}, welcome to {{place}}!", "variables": {"name": "John", "place": "Agent Skills"}},
-    "text.translate": {"text": "Hello world", "target_language": "es"},
+    "text.content.summarize": {"text": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on the development of algorithms that can access data and use it to learn for themselves."},
+    "text.content.template": {"template": "Hello {{name}}, welcome to {{place}}!", "variables": {"name": "John", "place": "Agent Skills"}},
+    "text.content.translate": {"text": "Hello world", "target_language": "es"},
     "video.frame.extract": {"video": b"fake video data"},
-    "web.fetch": {"url": "https://www.google.com"},
+    "web.page.fetch": {"url": "https://www.google.com"},
     "web.page.extract": {"content": "<html><body><h1>Web Page</h1><p>Main content here.</p></body></html>"},
     "web.source.verify": {"url": "https://example.com/news"},
     "web.source.search": {"query": "machine learning"},

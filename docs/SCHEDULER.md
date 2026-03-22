@@ -42,15 +42,15 @@ Parallel (explicit empty deps):
 ```yaml
 steps:
   - id: fetch_a
-    uses: web.fetch
+    uses: web.page.fetch
     config:
       depends_on: []        # no dependencies
   - id: fetch_b
-    uses: web.fetch
+    uses: web.page.fetch
     config:
       depends_on: []        # no dependencies
   - id: combine
-    uses: text.template
+    uses: text.content.template
     config:
       depends_on: [fetch_a, fetch_b]  # waits for both
 ```

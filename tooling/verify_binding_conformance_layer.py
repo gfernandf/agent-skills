@@ -21,7 +21,7 @@ def _write_invalid_local_binding(host_root: Path) -> None:
     agent_dir.mkdir(parents=True, exist_ok=True)
 
     (agent_dir / "active_bindings.json").write_text(
-        json.dumps({"text.summarize": "local_text_summarize_invalid_profile"}, indent=2, ensure_ascii=False) + "\n",
+        json.dumps({"text.content.summarize": "local_text_summarize_invalid_profile"}, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 
@@ -34,12 +34,12 @@ def _write_invalid_local_binding(host_root: Path) -> None:
         encoding="utf-8",
     )
 
-    binding_dir = agent_dir / "bindings" / "local" / "text.summarize"
+    binding_dir = agent_dir / "bindings" / "local" / "text.content.summarize"
     binding_dir.mkdir(parents=True, exist_ok=True)
 
     (binding_dir / "invalid_profile.yaml").write_text(
         """id: local_text_summarize_invalid_profile
-capability: text.summarize
+capability: text.content.summarize
 service: local_text_baseline
 protocol: pythoncall
 operation: summarize_text
@@ -59,7 +59,7 @@ metadata:
 
 def _verify_default_profile_exposed() -> None:
     api = NeutralRuntimeAPI(registry_root=REGISTRY_ROOT, runtime_root=ROOT, host_root=ROOT)
-    result = api.execute_capability("text.summarize", {"text": "conformance default profile check"})
+    result = api.execute_capability("text.content.summarize", {"text": "conformance default profile check"})
     meta = result.get("meta", {})
 
     profile = meta.get("conformance_profile")
@@ -78,7 +78,7 @@ def _verify_invalid_profile_rejected() -> None:
                 runtime_root=ROOT,
                 host_root=host_root,
             )
-            api.execute_capability("text.summarize", {"text": "hello"})
+            api.execute_capability("text.content.summarize", {"text": "hello"})
         except Exception as e:
             message = str(e)
             if "conformance_profile" not in message:

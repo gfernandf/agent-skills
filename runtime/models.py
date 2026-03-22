@@ -22,7 +22,7 @@ class StepSpec:
     """
     Declarative execution step inside a skill.
 
-    - uses: capability id or skill reference (e.g. "text.summarize", "skill:text.simple-summarize")
+    - uses: capability id or skill reference (e.g. "text.content.summarize", "skill:text.simple-summarize")
     - input_mapping: declarative mapping resolved by the runtime against ExecutionState
     - output_mapping: mapping from step-produced fields to runtime targets (vars.* / outputs.*)
     - config: reserved extension point for future step-level policies/options

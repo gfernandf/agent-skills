@@ -155,7 +155,7 @@ jobs:
           checks = [
               (Path('artifacts/customer_http_controls.log'), 'Customer-facing HTTP controls verification passed.'),
               (Path('artifacts/customer_parity_snapshot.log'), 'Customer-facing parity snapshot verification passed.'),
-              (Path('artifacts/mcp_text_summarize.log'), 'MCP text.summarize verification passed.'),
+              (Path('artifacts/mcp_text_summarize.log'), 'MCP text.content.summarize verification passed.'),
               (Path('artifacts/mcp_data_web_slices.log'), 'MCP data/web slice verification passed.'),
               (Path('artifacts/gateway_slice3.log'), '[smoke] slice3 PASSED'),
           ]

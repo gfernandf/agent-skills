@@ -36,10 +36,10 @@ Catalog context (canonical source of total definitions):
 
 Implemented and active:
 
-- code.execute: sandboxed builtins, input/output size limits, timeout guard
-- web.fetch: scheme allow-list and SSRF guard, timeout and response limits
-- pdf.read: file/path validation, size and page limits
-- audio.transcribe: format and size validation
+- code.snippet.execute: sandboxed builtins, input/output size limits, timeout guard
+- web.page.fetch: scheme allow-list and SSRF guard, timeout and response limits
+- pdf.document.read: file/path validation, size and page limits
+- audio.speech.transcribe: format and size validation
 
 ## Observability Status
 

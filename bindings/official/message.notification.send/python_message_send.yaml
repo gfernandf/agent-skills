@@ -1,0 +1,13 @@
+id: python_message_send
+capability: message.notification.send
+service: message_baseline
+protocol: pythoncall
+operation: send_message
+request:
+  channel: input.message
+  message: input.message
+response:
+  sent: response.sent
+metadata:
+  description: Official binding for message.notification.send using the message_baseline service.
+  status: stable

@@ -4,7 +4,7 @@ base_url: http://127.0.0.1:8765
 spec_ref: services/official/specs/code_execute_openapi_mock.yaml
 
 metadata:
-  description: "OpenAPI mock service for code.execute."
+  description: "OpenAPI mock service for code.snippet.execute."
   maintained_by: "agent-skills"
   status: experimental
   purpose: smoke-openapi-mock

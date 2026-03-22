@@ -282,19 +282,19 @@ def _infer_goal_capability_ids(intent: str) -> list[str]:
         (("named", "entity"), "text.entity.extract"),
         (("keyword",), "text.keyword.extract"),
         (("keywords",), "text.keyword.extract"),
-        (("translate",), "text.translate"),
-        (("translation",), "text.translate"),
-        (("summarize",), "text.summarize"),
-        (("summary",), "text.summarize"),
+        (("translate",), "text.content.translate"),
+        (("translation",), "text.content.translate"),
+        (("summarize",), "text.content.summarize"),
+        (("summary",), "text.content.summarize"),
         (("detect", "language"), "text.language.detect"),
         (("identify", "language"), "text.language.detect"),
-        (("sentiment",), "text.classify"),
-        (("classify",), "text.classify"),
-        (("classification",), "text.classify"),
-        (("categorize",), "text.classify"),
-        (("embed",), "text.embed"),
-        (("embedding",), "text.embed"),
-        (("extract", "text"), "text.extract"),
+        (("sentiment",), "text.content.classify"),
+        (("classify",), "text.content.classify"),
+        (("classification",), "text.content.classify"),
+        (("categorize",), "text.content.classify"),
+        (("embed",), "text.content.embed"),
+        (("embedding",), "text.content.embed"),
+        (("extract", "text"), "text.content.extract"),
     ]
 
     goal_ids: list[str] = []
@@ -480,9 +480,9 @@ def _build_step_input_mapping(cap: dict[str, Any], first_in: str, prev_ref: str,
         mapping[field_name] = _default_input_value(field_name, inputs.get(field_name), intent_text)
 
     # Some bindings require fields that are not marked as required in catalog specs.
-    if cap_id == "text.classify" and "labels" in inputs and "labels" not in mapping:
+    if cap_id == "text.content.classify" and "labels" in inputs and "labels" not in mapping:
         mapping["labels"] = _default_input_value("labels", inputs.get("labels"), intent_text)
-    if cap_id == "text.translate":
+    if cap_id == "text.content.translate":
         if "source_language" in inputs and "source_language" not in mapping:
             mapping["source_language"] = _default_input_value("source_language", inputs.get("source_language"), intent_text)
         if "target_language" in inputs and "target_language" not in mapping:
@@ -652,14 +652,14 @@ def _select_executable_template_caps(
     sorted_caps = [cap for _, cap in viable]
 
     direct_goal_caps = {
-        "text.translate",
-        "text.summarize",
-        "text.classify",
+        "text.content.translate",
+        "text.content.summarize",
+        "text.content.classify",
         "text.entity.extract",
         "text.keyword.extract",
         "text.language.detect",
-        "text.embed",
-        "text.extract",
+        "text.content.embed",
+        "text.content.extract",
     }
     if goal_capability_ids:
         for goal_id in goal_capability_ids:

@@ -169,7 +169,7 @@ def fetch_webpage(url):
 
     def _finish(payload, status):
         log_event(
-            "service.web.fetch",
+            "service.web.page.fetch",
             status=status,
             http_status=payload.get("status"),
             scheme=(parsed_url.scheme if parsed_url else None),
@@ -179,7 +179,7 @@ def fetch_webpage(url):
         return payload
 
     log_event(
-        "service.web.fetch.start",
+        "service.web.page.fetch.start",
         url=url,
         scheme=(parsed_url.scheme if parsed_url else None),
         host=(parsed_url.netloc if parsed_url else None),
@@ -192,7 +192,7 @@ def fetch_webpage(url):
     try:
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "AgentSkills/1.0 (capability=web.fetch)"}
+            headers={"User-Agent": "AgentSkills/1.0 (capability=web.page.fetch)"}
         )
         with urllib.request.urlopen(req, timeout=_FETCH_TIMEOUT_SECONDS) as response:
             # Reject binary content types (PDFs, images, etc.)

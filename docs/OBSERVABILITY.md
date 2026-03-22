@@ -56,10 +56,10 @@ steps finish.
 
 Instrumented baseline services:
 
-- `code.execute` via `service.code.execute.start` and `service.code.execute`
-- `web.fetch` via `service.web.fetch.start` and `service.web.fetch`
-- `pdf.read` via `service.pdf.read.start` and `service.pdf.read`
-- `audio.transcribe` via `service.audio.transcribe.start` and `service.audio.transcribe`
+- `code.snippet.execute` via `service.code.snippet.execute.start` and `service.code.snippet.execute`
+- `web.page.fetch` via `service.web.page.fetch.start` and `service.web.page.fetch`
+- `pdf.document.read` via `service.pdf.document.read.start` and `service.pdf.document.read`
+- `audio.speech.transcribe` via `service.audio.speech.transcribe.start` and `service.audio.speech.transcribe`
 
 Each service event includes status (`completed`, `rejected`, `failed`) and latency.
 
@@ -68,7 +68,7 @@ When service logs are emitted inside runtime execution, `trace_id` is propagated
 ## Example Log
 
 ```json
-{"ts":"2026-03-11T10:21:07Z","event":"service.web.fetch","status":"completed","http_status":200,"scheme":"https","host":"www.google.com","duration_ms":595.717}
+{"ts":"2026-03-11T10:21:07Z","event":"service.web.page.fetch","status":"completed","http_status":200,"scheme":"https","host":"www.google.com","duration_ms":595.717}
 ```
 
 ## Notes

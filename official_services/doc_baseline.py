@@ -121,7 +121,7 @@ def read_pdf(path):
     def _finish(payload, status, error_type=None):
         metadata = payload.get("metadata") if isinstance(payload, dict) else {}
         log_event(
-            "service.pdf.read",
+            "service.pdf.document.read",
             status=status,
             file_path=path,
             pages=(metadata.get("pages") if isinstance(metadata, dict) else None),
@@ -131,7 +131,7 @@ def read_pdf(path):
         )
         return payload
 
-    log_event("service.pdf.read.start", file_path=path)
+    log_event("service.pdf.document.read.start", file_path=path)
 
     if not isinstance(path, str) or not path.strip():
         return _finish({"text": "Invalid input: 'path' must be a non-empty string.", "metadata": {}}, "rejected", "ValidationError")

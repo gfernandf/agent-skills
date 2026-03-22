@@ -38,7 +38,7 @@ class YamlSkillLoader:
         path = self._get_skill_path(skill_id)
 
         try:
-            with path.open("r", encoding="utf-8") as f:
+            with path.open("r", encoding="utf-8-sig") as f:
                 raw = yaml.safe_load(f)
         except FileNotFoundError as e:
             raise SkillNotFoundError(
@@ -93,7 +93,7 @@ class YamlSkillLoader:
                 continue
 
             try:
-                with path.open("r", encoding="utf-8") as f:
+                with path.open("r", encoding="utf-8-sig") as f:
                     raw = yaml.safe_load(f)
             except Exception:
                 # Invalid files are ignored at indexing time and will fail

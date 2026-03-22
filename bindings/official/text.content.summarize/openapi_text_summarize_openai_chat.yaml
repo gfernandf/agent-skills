@@ -1,0 +1,24 @@
+id: openapi_text_summarize_openai_chat
+
+capability: text.content.summarize
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: "You are a concise summarization assistant. Return only the summary text."
+    - role: user
+      content: input.text
+  temperature: 0.2
+
+response:
+  summary: response.choices.0.message.content
+
+metadata:
+  method: POST
+  response_mode: json
+  description: "OpenAPI OpenAI binding for text.content.summarize."
+  status: experimental

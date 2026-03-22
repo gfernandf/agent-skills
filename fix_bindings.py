@@ -125,7 +125,7 @@ def _guess_input_mapping(missing_inputs: Set[str], available_inputs: Set[str]) -
         (['categories'], ['labels']),
 
         # Multiple input mappings to single input
-        (['agents', 'query'], ['input']),  # agent.route
+        (['agents', 'query'], ['input']),  # agent.input.route
         (['frame_rate', 'video_data'], ['video']),  # video.frame.extract
         (['code_after', 'code_before'], ['code_a', 'code_b']),
         (['filter_criteria', 'table_data'], ['condition', 'table']),
@@ -224,8 +224,8 @@ def main():
     successful_fixes = [f for f in fixes if f.get('fixed', False)]
     failed_fixes = [f for f in fixes if not f.get('fixed', False)]
 
-    print(f"\n✅ Successfully fixed {len(successful_fixes)} bindings")
-    print(f"❌ Could not fix {len(failed_fixes)} bindings")
+    print(f"\n[OK] Successfully fixed {len(successful_fixes)} bindings")
+    print(f"[FAIL] Could not fix {len(failed_fixes)} bindings")
 
     if successful_fixes:
         print("\nFixed bindings:")

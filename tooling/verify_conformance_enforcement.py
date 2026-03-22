@@ -21,7 +21,7 @@ def _assert_strict_requirement_fails_without_strict_binding() -> None:
 
     try:
         api.execute_capability(
-            "text.summarize",
+            "text.content.summarize",
             {"text": "strict enforcement should reject standard bindings"},
             required_conformance_profile="strict",
         )
@@ -41,7 +41,7 @@ def _write_strict_local_binding(host_root: Path) -> None:
     agent_dir.mkdir(parents=True, exist_ok=True)
 
     (agent_dir / "active_bindings.json").write_text(
-        json.dumps({"text.summarize": "local_text_summarize_strict"}, indent=2, ensure_ascii=False) + "\n",
+        json.dumps({"text.content.summarize": "local_text_summarize_strict"}, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 
@@ -54,12 +54,12 @@ def _write_strict_local_binding(host_root: Path) -> None:
         encoding="utf-8",
     )
 
-    binding_dir = agent_dir / "bindings" / "local" / "text.summarize"
+    binding_dir = agent_dir / "bindings" / "local" / "text.content.summarize"
     binding_dir.mkdir(parents=True, exist_ok=True)
 
     (binding_dir / "strict_text_summarize.yaml").write_text(
         """id: local_text_summarize_strict
-capability: text.summarize
+capability: text.content.summarize
 service: local_text_baseline_strict
 protocol: pythoncall
 operation: summarize_text
@@ -88,7 +88,7 @@ def _assert_strict_requirement_passes_with_strict_binding() -> None:
             host_root=host_root,
         )
         result = api.execute_capability(
-            "text.summarize",
+            "text.content.summarize",
             {"text": "strict enforcement should allow strict binding"},
             required_conformance_profile="strict",
         )

@@ -1,0 +1,17 @@
+id: mcp_text_summarize_inprocess
+
+capability: text.content.summarize
+service: text_mcp_inprocess
+protocol: mcp
+operation: text.content.summarize
+
+request:
+  text: input.text
+  max_length: input.max_length
+
+response:
+  summary: response.summary
+
+metadata:
+  description: "Official MCP binding for text.content.summarize using the in-process MCP text server."
+  status: experimental

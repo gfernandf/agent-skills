@@ -54,7 +54,7 @@ def transcribe_audio(audio_data):
 
     def _finish(payload, status, error_type=None):
         log_event(
-            "service.audio.transcribe",
+            "service.audio.speech.transcribe",
             status=status,
             input_type=type(audio_data).__name__,
             duration_ms=elapsed_ms(start_time),
@@ -62,7 +62,7 @@ def transcribe_audio(audio_data):
         )
         return payload
 
-    log_event("service.audio.transcribe.start", input_type=type(audio_data).__name__)
+    log_event("service.audio.speech.transcribe.start", input_type=type(audio_data).__name__)
 
     if audio_data is None:
         return _finish({"transcript": "No audio provided."}, "rejected", "ValidationError")

@@ -1,0 +1,20 @@
+{
+  "id": "code.snippet.execute.openapi.mock",
+  "capability_id": "code.snippet.execute",
+  "binding_id": "openapi_code_execute_mock",
+  "input": {
+    "code": "x = 5 + 3; print(x)",
+    "language": "python"
+  },
+  "expected_output": {
+    "result": null,
+    "stdout": "8\n",
+    "stderr": ""
+  },
+  "mock_server": {
+    "type": "code_execute",
+    "host": "127.0.0.1",
+    "port": 8765
+  },
+  "expected_service_id": "code_execute_openapi_mock"
+}

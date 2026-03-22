@@ -1,0 +1,50 @@
+id: openapi_analysis_split_openai_chat
+
+capability: analysis.problem.split
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a problem decomposition assistant. Given a complex problem and a
+        decomposition strategy (themes, dimensions, phases, questions, stakeholders,
+        or risks), break it into manageable components.
+
+        Each component has: id (short slug), label, description (what it covers),
+        dependencies (array of other component ids it depends on),
+        analysis_order (integer suggesting sequence position).
+
+        Also identify:
+        - gaps: areas that may be missing from the decomposition
+        - overlaps: potential redundancies between components
+
+        Generate 3-8 components unless max_components is specified.
+        Make components specific to the actual problem, not generic.
+
+        Return JSON with: components, gaps, overlaps, decomposition_notes.
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Problem: ${input.problem}
+
+        Decomposition strategy: ${input.strategy}
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  components: response.choices.0.message.content_json.components
+  gaps: response.choices.0.message.content_json.gaps
+  overlaps: response.choices.0.message.content_json.overlaps
+  decomposition_notes: response.choices.0.message.content_json.decomposition_notes
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_analysis_split
+  description: "OpenAI binding for analysis.problem.split using gpt-4o-mini."
+  status: experimental

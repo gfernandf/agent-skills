@@ -1,0 +1,39 @@
+id: openapi_agent_route_openai_chat
+
+capability: agent.input.route
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a routing assistant. Given an input describing a task or query,
+        determine the most appropriate route (handler, agent, or service) to
+        process it. Consider the nature of the task, required capabilities,
+        and domain expertise needed.
+
+        If the input contains a list of available agents or handlers, choose from them
+        and explain why. If not, suggest a descriptive route name.
+
+        Return a JSON object with: route (string — the selected handler name).
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Input to route:
+        ${input.input}
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  route: response.choices.0.message.content_json.route
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_route
+  description: "OpenAI binding for agent.input.route using gpt-4o-mini."
+  status: experimental

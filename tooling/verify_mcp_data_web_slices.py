@@ -30,7 +30,7 @@ def _write_active_bindings(host_root: Path) -> None:
     state_dir.mkdir(parents=True, exist_ok=True)
     payload = {
         "data.schema.validate": _DATA_BINDING_ID,
-        "web.fetch": _WEB_BINDING_ID,
+        "web.page.fetch": _WEB_BINDING_ID,
     }
     (state_dir / "active_bindings.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
@@ -91,7 +91,7 @@ def main() -> int:
             expected_service=_DATA_SERVICE_ID,
         )
 
-        web_result = api.execute_capability("web.fetch", web_input)
+        web_result = api.execute_capability("web.page.fetch", web_input)
         _assert_mcp_result(
             web_result,
             expected_outputs=expected_web,

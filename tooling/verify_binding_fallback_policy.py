@@ -26,7 +26,7 @@ def _write_local_override_files(host_root: Path) -> None:
     agent_dir.mkdir(parents=True, exist_ok=True)
 
     (agent_dir / "active_bindings.json").write_text(
-        json.dumps({"text.summarize": _PRIMARY_BINDING_ID}, indent=2, ensure_ascii=False) + "\n",
+        json.dumps({"text.content.summarize": _PRIMARY_BINDING_ID}, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 
@@ -41,12 +41,12 @@ def _write_local_override_files(host_root: Path) -> None:
         encoding="utf-8",
     )
 
-    binding_dir = agent_dir / "bindings" / "local" / "text.summarize"
+    binding_dir = agent_dir / "bindings" / "local" / "text.content.summarize"
     binding_dir.mkdir(parents=True, exist_ok=True)
 
     (binding_dir / "failing_text_summarize.yaml").write_text(
         """id: local_text_summarize_failing
-capability: text.summarize
+capability: text.content.summarize
 service: failing_openapi_local
 protocol: openapi
 operation: summarize
@@ -82,7 +82,7 @@ def main() -> int:
         )
 
         result = api.execute_capability(
-            "text.summarize",
+            "text.content.summarize",
             {"text": sample_text, "max_length": 48},
         )
 

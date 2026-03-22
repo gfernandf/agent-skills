@@ -1,0 +1,19 @@
+id: python_code_execute
+
+capability: code.snippet.execute
+service: code_baseline
+protocol: pythoncall
+operation: execute_code
+
+request:
+  code: input.code
+  language: input.language
+
+response:
+  result: response.result
+  stdout: response.stdout
+  stderr: response.stderr
+
+metadata:
+  description: "Official binding for code.snippet.execute using the code_baseline service."
+  status: stable

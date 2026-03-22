@@ -1,0 +1,17 @@
+{
+  "id": "audio.speech.transcribe.openapi.mock",
+  "capability_id": "audio.speech.transcribe",
+  "binding_id": "openapi_audio_transcribe_mock",
+  "input": {
+    "audio": "memory:fake-audio-data"
+  },
+  "expected_output": {
+    "transcript": "Transcription from source descriptor: memory:fake-audio-data."
+  },
+  "mock_server": {
+    "type": "audio_transcribe",
+    "host": "127.0.0.1",
+    "port": 8765
+  },
+  "expected_service_id": "audio_transcribe_openapi_mock"
+}

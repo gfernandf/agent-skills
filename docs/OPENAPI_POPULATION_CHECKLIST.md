@@ -32,42 +32,42 @@ This checklist guides the population phase: systematically adding OpenAPI bindin
 
 Based on [tooling/verify_smoke_capabilities.py](tooling/verify_smoke_capabilities.py):
 
-### 1. text.summarize
+### 1. text.content.summarize
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_text_summarize_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Core text capability; consider mock first, then simple text provider
 
-### 2. code.execute
+### 2. code.snippet.execute
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_code_execute_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Execution capability; mock can return static code output
 
-### 3. web.fetch
+### 3. web.page.fetch
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_web_fetch_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Fetches external URLs; mock can return hardcoded HTML
 
-### 4. pdf.read
+### 4. pdf.document.read
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_pdf_read_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: PDF extraction; mock returns mock text content
 
-### 5. audio.transcribe
+### 5. audio.speech.transcribe
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_audio_transcribe_mock)
 - **Real Service**: ⚪ TODO
 - **Notes**: Audio to text; mock returns static transcription
 
-### 6. fs.read
+### 6. fs.file.read
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_fs_read_mock)
@@ -82,7 +82,7 @@ Based on [tooling/verify_smoke_capabilities.py](tooling/verify_smoke_capabilitie
 - **Commits**: 79a3429, 3eeea9b, 72b52c7, b07ba84, 49665f3
 - **Notes**: Reference implementation; copy pattern for remaining capabilities
 
-### 8. agent.route
+### 8. agent.input.route
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_agent_route_mock)
@@ -120,7 +120,7 @@ Expected output: All tests green ✅
 
 ### Per-Capability Gate ✅
 
-For each capability in queue (text.summarize → agent.route):
+For each capability in queue (text.content.summarize → agent.input.route):
 
 #### Phase 1: Mock Binding & Scenario (20 min)
 
@@ -316,13 +316,13 @@ Real services use auto-increment ports starting from 8780:
 | Capability | Port | Service File |
 |------------|------|--------------|
 | data.schema.validate | 8780 | verify_openapi_data_schema_validate_local_real.py |
-| text.summarize | 8781 | verify_openapi_text_summarize_local_real.py (pending) |
-| code.execute | 8782 | verify_openapi_code_execute_local_real.py (pending) |
-| web.fetch | 8783 | verify_openapi_web_fetch_local_real.py (pending) |
-| pdf.read | 8784 | verify_openapi_pdf_read_local_real.py (pending) |
-| audio.transcribe | 8785 | verify_openapi_audio_transcribe_local_real.py (pending) |
-| fs.read | 8786 | verify_openapi_fs_read_local_real.py (pending) |
-| agent.route | 8787 | verify_openapi_agent_route_local_real.py (pending) |
+| text.content.summarize | 8781 | verify_openapi_text_summarize_local_real.py (pending) |
+| code.snippet.execute | 8782 | verify_openapi_code_execute_local_real.py (pending) |
+| web.page.fetch | 8783 | verify_openapi_web_fetch_local_real.py (pending) |
+| pdf.document.read | 8784 | verify_openapi_pdf_read_local_real.py (pending) |
+| audio.speech.transcribe | 8785 | verify_openapi_audio_transcribe_local_real.py (pending) |
+| fs.file.read | 8786 | verify_openapi_fs_read_local_real.py (pending) |
+| agent.input.route | 8787 | verify_openapi_agent_route_local_real.py (pending) |
 
 ---
 

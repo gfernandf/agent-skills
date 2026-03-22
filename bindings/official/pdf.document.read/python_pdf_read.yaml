@@ -1,0 +1,13 @@
+id: python_pdf_read
+capability: pdf.document.read
+service: doc_baseline
+protocol: pythoncall
+operation: read_pdf
+request:
+  path: input.path
+response:
+  text: response.text
+  metadata: response.metadata
+metadata:
+  description: Official binding for pdf.document.read using the doc_baseline service.
+  status: stable

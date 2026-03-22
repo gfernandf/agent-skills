@@ -38,7 +38,7 @@ class YamlCapabilityLoader:
         path = self._get_capability_path(capability_id)
 
         try:
-            with path.open("r", encoding="utf-8") as f:
+            with path.open("r", encoding="utf-8-sig") as f:
                 raw = yaml.safe_load(f)
         except FileNotFoundError as e:
             raise CapabilityNotFoundError(
@@ -113,7 +113,7 @@ class YamlCapabilityLoader:
                 continue
 
             try:
-                with path.open("r", encoding="utf-8") as f:
+                with path.open("r", encoding="utf-8-sig") as f:
                     raw = yaml.safe_load(f)
             except Exception:
                 # Invalid files are ignored at indexing time and will fail

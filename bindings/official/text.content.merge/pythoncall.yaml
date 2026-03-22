@@ -1,0 +1,16 @@
+id: python_text_merge
+capability: text.content.merge
+service: text_baseline
+protocol: pythoncall
+operation: merge_texts
+
+request:
+  items: input.items
+
+response:
+  text: response.text
+  item_count: response.item_count
+
+metadata:
+  description: Official binding for text.content.merge using text_baseline service.
+  status: stable

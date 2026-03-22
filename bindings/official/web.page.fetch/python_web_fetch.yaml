@@ -1,0 +1,17 @@
+id: python_web_fetch
+
+capability: web.page.fetch
+service: web_baseline
+protocol: pythoncall
+operation: fetch_webpage
+
+request:
+  url: input.url
+
+response:
+  content: response.content
+  status: response.status
+
+metadata:
+  description: "Official binding for web.page.fetch using the web_baseline service."
+  status: stable

@@ -6,7 +6,7 @@ from official_services import web_baseline
 
 
 _SUPPORTED_TOOLS = {
-    "web.fetch": web_baseline.fetch_webpage,
+    "web.page.fetch": web_baseline.fetch_webpage,
 }
 
 
