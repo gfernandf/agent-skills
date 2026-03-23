@@ -13,6 +13,8 @@ The project is in a stable pre-integration state.
 - Registry consistency is healthy with no detected mismatches.
 - DAG-based step scheduler enables parallel execution with backward-compatible defaults.
 - CognitiveState v1 extends ExecutionState with structured cognitive blocks (frame, working, output, trace, extensions).
+- Cognitive hints provide semantic type annotations for auto-wire resolution across capabilities.
+- Safety enforcement protects side-effecting capabilities via trust levels, gates, and confirmation.
 - `agent.trace` v0.1.0 and `research.synthesize` v0.2.0 are validated and closed.
 
 ## Verified Quality Gates
@@ -28,6 +30,8 @@ Latest local verification snapshot:
 - Scheduler stress tests: 5/5
 - CognitiveState v1 regression tests: 86/86
 - CognitiveState v1 integration tests: 99/99
+- Cognitive hints tests: 27/27
+- Safety enforcement tests: 44/44
 
 Catalog context (canonical source of total definitions):
 
@@ -43,6 +47,20 @@ Implemented and active:
 - web.page.fetch: scheme allow-list and SSRF guard, timeout and response limits
 - pdf.document.read: file/path validation, size and page limits
 - audio.speech.transcribe: format and size validation
+
+## Safety Enforcement Status
+
+Implemented and active:
+
+- Safety block in capability contracts (v2 enforcement: required for `side_effects: true`)
+- Runtime trust-level enforcement (sandbox < standard < elevated < privileged)
+- Human confirmation gate (`requires_confirmation` + `confirmed_capabilities`)
+- Mandatory pre/post gates with per-gate failure policies (block, warn, degrade, require_human)
+- Degraded step status for graceful degrade policy
+- 3 typed safety errors: SafetyTrustLevelError, SafetyGateFailedError, SafetyConfirmationRequiredError
+- Safety vocabulary: `vocabulary/safety_vocabulary.yaml` (trust_levels, data_classifications, failure_policies, allowed_targets, scope_constraints)
+- Registry validation enforces safety vocabulary and v2 policy
+- 5 capabilities annotated: agent.task.delegate, code.snippet.execute, email.message.send, memory.entry.store, message.notification.send
 
 ## Observability Status
 
@@ -118,6 +136,7 @@ Current review result:
 - docs/RUNNER_GUIDE.md: runtime runner architecture and operations
 - docs/COGNITIVE_STATE_V1.md: CognitiveState v1 cognitive execution model reference
 - docs/SCHEDULER.md: DAG-based step scheduler (parallel/sequential execution)
+- docs/RUNNER_GUIDE.md § 12: Safety enforcement (trust levels, gates, confirmation)
 - docs/OBSERVABILITY.md: logging, trace_id, redaction, tuning, CognitiveState trace
 - docs/AGENT_TRACE_DRY_RUN_GUIDE.md: agent.trace practical usage and dry-run scenarios
 - docs/PRE_MCP_OPENAPI_READINESS.md: readiness checklist and next integrations

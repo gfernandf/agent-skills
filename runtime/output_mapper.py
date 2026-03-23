@@ -21,6 +21,8 @@ def apply_step_output(
     step: StepSpec,
     step_output: dict[str, Any],
     state: ExecutionState,
+    *,
+    mapping_override: dict[str, str] | None = None,
 ) -> None:
     """
     Apply a step-produced output payload into runtime targets.
@@ -63,7 +65,7 @@ def apply_step_output(
             step_id=step.id,
         )
 
-    for produced_field, target_ref in step.output_mapping.items():
+    for produced_field, target_ref in (mapping_override or step.output_mapping).items():
         try:
             produced_value = _resolve_produced_path(step_output, produced_field, state=state)
         except OutputMappingError:

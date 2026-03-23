@@ -71,6 +71,23 @@ Consumer-facing neutral API:
 - customer_facing/mcp_tool_bridge.py
 - docs/CONSUMER_FACING_NEUTRAL_API.md
 
+## 2b) Safety Enforcement (30 sec)
+
+Capabilities with `side_effects: true` carry a `safety` block that the runtime
+enforces automatically:
+
+- **trust_level** — execution is rejected if the context trust rank is too low
+- **requires_confirmation** — pauses for human approval unless pre-confirmed
+- **mandatory_pre/post_gates** — gate capabilities run before/after execution
+
+Safety policy is declared in `agent-skill-registry/capabilities/*.yaml` and
+enforced in `runtime/execution_engine.py`.
+
+See:
+- `agent-skill-registry/docs/CAPABILITIES.md` — safety contract schema
+- `agent-skill-registry/vocabulary/safety_vocabulary.yaml` — controlled enumerations
+- `docs/RUNNER_GUIDE.md` — runtime enforcement details
+
 ## 3) First Commands to Run (2 min)
 
 From agent-skills root:

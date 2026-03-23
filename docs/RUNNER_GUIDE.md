@@ -248,3 +248,57 @@ As documented in docs/PROJECT_STATUS.md, runner baseline is currently stable wit
 - CognitiveState v1 integration tests: 99/99
 
 This is the recommended baseline before starting MCP/OpenAPI adapter expansion.
+
+## 12) Safety Enforcement
+
+Capabilities that declare a `safety` block are subject to runtime enforcement
+during step execution. The enforcement runs inside `_execute_step()` and is
+transparent to the rest of the pipeline.
+
+### Enforcement sequence
+
+Before capability execution:
+
+1. **Trust-level check** — The capability's `safety.trust_level` rank is compared
+   against `ExecutionOptions.trust_level`. If the context rank is lower, a
+   `SafetyTrustLevelError` is raised. Ranks: sandbox=0, standard=1, elevated=2,
+   privileged=3.
+
+2. **Confirmation check** — If `safety.requires_confirmation` is true and the
+   capability id is not in `ExecutionOptions.confirmed_capabilities`, a
+   `SafetyConfirmationRequiredError` is raised.
+
+3. **Mandatory pre-gates** — Each gate in `safety.mandatory_pre_gates` is
+   executed as a capability. If the gate returns `{"allowed": false}`, the
+   `on_fail` policy determines behavior:
+   - `block` — raises `SafetyGateFailedError` (default)
+   - `warn` — emits a `safety_gate_warning` event and continues
+   - `degrade` — returns a `degraded` StepResult (step skipped)
+   - `require_human` — raises `SafetyConfirmationRequiredError`
+
+After capability execution:
+
+4. **Mandatory post-gates** — Same mechanism as pre-gates, but receives the
+   produced output as input.
+
+### Capabilities without safety
+
+Capabilities that do not declare a `safety` block are executed without any
+additional checks. The enforcement is zero-cost for the ~80% of capabilities
+that have no side effects.
+
+### ExecutionOptions safety fields
+
+- `trust_level: str` — Runtime trust level for the execution context
+  (default: `"standard"`).
+- `confirmed_capabilities: frozenset[str]` — Set of capability ids
+  pre-confirmed by the caller, bypassing `requires_confirmation`.
+
+### Error types
+
+- `SafetyTrustLevelError` — trust level insufficient
+- `SafetyGateFailedError` — a mandatory gate blocked execution
+- `SafetyConfirmationRequiredError` — human confirmation required
+
+All three inherit from `RuntimeErrorBase` and carry `capability_id` and
+`step_id` context.

@@ -99,3 +99,15 @@ class InvalidExecutionOptionsError(RuntimeErrorBase):
 
 class AttachValidationError(RuntimeErrorBase):
     """Raised when a requested attach operation violates skill classification rules."""
+
+
+class SafetyTrustLevelError(RuntimeErrorBase):
+    """Raised when a capability requires a higher trust level than the execution context provides."""
+
+
+class SafetyGateFailedError(RuntimeErrorBase):
+    """Raised when a mandatory safety gate blocks execution (on_fail=block)."""
+
+
+class SafetyConfirmationRequiredError(RuntimeErrorBase):
+    """Raised when a capability requires human confirmation before execution."""

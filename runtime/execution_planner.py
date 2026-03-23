@@ -6,6 +6,48 @@ from runtime.errors import InvalidSkillSpecError
 from runtime.models import SkillSpec, StepSpec
 
 
+def validate_consumes_chain(
+    steps: tuple[StepSpec, ...],
+    capability_loader,
+) -> list[str]:
+    """
+    Check that each step's capability consumes types that upstream steps produce.
+
+    Returns a list of warning strings (empty when the chain is satisfied).
+    Only inspects steps backed by capabilities with cognitive_hints.
+    """
+    warnings: list[str] = []
+    produced_types: set[str] = set()
+
+    for step in steps:
+        if step.uses.startswith("skill:"):
+            continue
+        try:
+            cap = capability_loader.get_capability(step.uses)
+        except Exception:
+            continue
+        hints = getattr(cap, "cognitive_hints", None)
+        if not hints or not isinstance(hints, dict):
+            continue
+
+        consumes = hints.get("consumes")
+        if isinstance(consumes, list):
+            for t in consumes:
+                if isinstance(t, str) and t not in produced_types:
+                    warnings.append(
+                        f"Step '{step.id}' (capability {step.uses}) consumes type "
+                        f"'{t}' which has not been produced by any upstream step."
+                    )
+
+        produces = hints.get("produces")
+        if isinstance(produces, dict):
+            for field_spec in produces.values():
+                if isinstance(field_spec, dict) and isinstance(field_spec.get("type"), str):
+                    produced_types.add(field_spec["type"])
+
+    return warnings
+
+
 class ExecutionPlanner:
     """
     Produces the ordered execution plan for a skill.

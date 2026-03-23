@@ -8,6 +8,9 @@ from typing import Any
 from runtime.errors import (
     FinalOutputValidationError,
     InvalidExecutionOptionsError,
+    SafetyConfirmationRequiredError,
+    SafetyGateFailedError,
+    SafetyTrustLevelError,
     StepExecutionError,
 )
 from runtime.execution_state import (
@@ -17,6 +20,7 @@ from runtime.execution_state import (
     mark_started,
     record_step_result,
 )
+from runtime.execution_planner import validate_consumes_chain
 from runtime.input_mapper import build_step_input
 from runtime.models import (
     ExecutionContext,
@@ -28,6 +32,51 @@ from runtime.models import (
 from runtime.observability import elapsed_ms, log_event, reset_current_trace_id, set_current_trace_id
 from runtime.output_mapper import apply_step_output
 from runtime.scheduler import Scheduler, _NoopLock
+
+# Trust-level ranks used for safety enforcement.
+_TRUST_LEVEL_RANK: dict[str, int] = {
+    "sandbox": 0,
+    "standard": 1,
+    "elevated": 2,
+    "privileged": 3,
+}
+
+
+def _build_auto_wire_mapping(
+    capability,
+    cognitive_types: dict[str, Any],
+) -> dict[str, str] | None:
+    """
+    Build a synthetic output mapping from cognitive_hints.produces when the
+    step has no explicit output_mapping.
+
+    Resolution: for each field in produces, use the field's target override
+    if present, otherwise the type's default_slot from cognitive_types.
+    Returns None if no mapping can be derived.
+    """
+    hints = getattr(capability, "cognitive_hints", None)
+    if not hints or not isinstance(hints, dict):
+        return None
+    produces = hints.get("produces")
+    if not produces or not isinstance(produces, dict):
+        return None
+
+    types_defs = cognitive_types.get("types", {})
+    mapping: dict[str, str] = {}
+    for field_name, field_spec in produces.items():
+        if not isinstance(field_spec, dict):
+            continue
+        target = field_spec.get("target")
+        if isinstance(target, str) and target:
+            mapping[field_name] = target
+            continue
+        type_name = field_spec.get("type")
+        type_def = types_defs.get(type_name) if isinstance(type_name, str) else None
+        if isinstance(type_def, dict):
+            slot = type_def.get("default_slot")
+            if isinstance(slot, str) and slot:
+                mapping[field_name] = slot
+    return mapping or None
 
 
 class ExecutionEngine:
@@ -62,6 +111,164 @@ class ExecutionEngine:
         self.nested_skill_runner = nested_skill_runner
         self.audit_recorder = audit_recorder
         self.scheduler = scheduler or Scheduler()
+
+    # ------------------------------------------------------------------
+    # Safety enforcement
+    # ------------------------------------------------------------------
+
+    def _enforce_safety(
+        self,
+        capability,
+        step,
+        context: ExecutionContext,
+        step_input: dict[str, Any],
+    ) -> str | None:
+        """
+        Enforce safety policy declared on a capability.
+
+        Returns None on success.  May return a reason string when the gate
+        policy is 'degrade' (caller should skip the step).  Raises on
+        'block' or 'require_human' policies.
+        """
+        safety: dict[str, Any] | None = getattr(capability, "safety", None)
+        if not safety:
+            return None
+
+        # 1. Trust-level check
+        required_trust = safety.get("trust_level")
+        if isinstance(required_trust, str):
+            required_rank = _TRUST_LEVEL_RANK.get(required_trust, 1)
+            context_rank = _TRUST_LEVEL_RANK.get(
+                context.options.trust_level, 1,
+            )
+            if context_rank < required_rank:
+                raise SafetyTrustLevelError(
+                    f"Capability '{capability.id}' requires trust_level "
+                    f"'{required_trust}' (rank {required_rank}) but context "
+                    f"provides '{context.options.trust_level}' "
+                    f"(rank {context_rank}).",
+                    capability_id=capability.id,
+                    step_id=step.id,
+                )
+
+        # 2. requires_confirmation
+        if safety.get("requires_confirmation") is True:
+            confirmed = context.options.confirmed_capabilities
+            if capability.id not in confirmed:
+                raise SafetyConfirmationRequiredError(
+                    f"Capability '{capability.id}' requires human "
+                    f"confirmation before execution.",
+                    capability_id=capability.id,
+                    step_id=step.id,
+                )
+
+        # 3. mandatory_pre_gates
+        degrade = self._run_gates(
+            safety.get("mandatory_pre_gates"),
+            capability,
+            step,
+            context,
+            step_input,
+            phase="pre",
+        )
+        if degrade is not None:
+            return degrade
+
+        return None
+
+    def _run_gates(
+        self,
+        gates: list[dict[str, str]] | None,
+        capability,
+        step,
+        context: ExecutionContext,
+        step_input: dict[str, Any],
+        phase: str,
+    ) -> str | None:
+        """
+        Run a list of gate capabilities.
+
+        Returns None if all gates pass.  Returns a reason string when a gate
+        triggers the 'degrade' policy.  Raises on 'block' or 'require_human'.
+        """
+        if not gates:
+            return None
+
+        for gate in gates:
+            gate_cap_id = gate.get("capability", "")
+            on_fail = gate.get("on_fail", "block")
+
+            try:
+                gate_cap = self.capability_loader.get_capability(gate_cap_id)
+                gate_result = self.capability_executor.execute(
+                    gate_cap,
+                    step_input,
+                    trace_id=context.trace_id,
+                )
+                produced = gate_result[0] if isinstance(gate_result, tuple) else gate_result
+            except Exception as exc:
+                produced = {"allowed": False, "reason": str(exc)}
+
+            allowed = True
+            reason = ""
+            if isinstance(produced, dict):
+                allowed = produced.get("allowed", True) is not False
+                reason = produced.get("reason", "")
+
+            if not allowed:
+                if on_fail == "warn":
+                    emit_event(
+                        context.state,
+                        "safety_gate_warning",
+                        f"Safety gate '{gate_cap_id}' ({phase}) warned: {reason}",
+                        step_id=step.id,
+                    )
+                    continue
+                if on_fail == "degrade":
+                    return (
+                        f"Safety gate '{gate_cap_id}' ({phase}) "
+                        f"triggered degrade: {reason}"
+                    )
+                if on_fail == "require_human":
+                    raise SafetyConfirmationRequiredError(
+                        f"Safety gate '{gate_cap_id}' ({phase}) "
+                        f"requires human review: {reason}",
+                        capability_id=capability.id,
+                        step_id=step.id,
+                    )
+                # default: block
+                raise SafetyGateFailedError(
+                    f"Safety gate '{gate_cap_id}' ({phase}) "
+                    f"blocked execution: {reason}",
+                    capability_id=capability.id,
+                    step_id=step.id,
+                )
+        return None
+
+    def _run_post_gates(
+        self,
+        capability,
+        step,
+        context: ExecutionContext,
+        produced: Any,
+    ) -> None:
+        """Run mandatory_post_gates after successful capability execution."""
+        safety: dict[str, Any] | None = getattr(capability, "safety", None)
+        if not safety:
+            return
+        post_gates = safety.get("mandatory_post_gates")
+        if not post_gates:
+            return
+        # Post gates receive the produced output as their input.
+        gate_input = produced if isinstance(produced, dict) else {"output": produced}
+        self._run_gates(
+            post_gates,
+            capability,
+            step,
+            context,
+            gate_input,
+            phase="post",
+        )
 
     def execute(
         self,
@@ -118,6 +325,10 @@ class ExecutionEngine:
 
             plan = self.execution_planner.build_plan(skill)
 
+            consumes_warnings = validate_consumes_chain(plan, self.capability_loader)
+            for w in consumes_warnings:
+                emit_event(state, "consumes_warning", w)
+
             # --- INTEGRACIÓN DEL SCHEDULER ---
             def step_executor(step, skill_id, context, trace_callback):
                 return self._execute_step(step, skill_id, context, trace_callback)
@@ -125,7 +336,7 @@ class ExecutionEngine:
             results = self.scheduler.schedule(plan, context, step_executor, trace_callback)
             for result in results:
                 record_step_result(state, result)
-                if result.status != "completed":
+                if result.status not in ("completed", "degraded"):
                     if context.options.fail_fast:
                         mark_finished(state, "failed")
                         log_event(
@@ -270,6 +481,30 @@ class ExecutionEngine:
             else:
                 capability = self.capability_loader.get_capability(step.uses)
 
+                # --- Safety enforcement (pre-execution) ---
+                degrade_reason = self._enforce_safety(
+                    capability, step, context, step_input,
+                )
+                if degrade_reason is not None:
+                    with state_lock:
+                        emit_event(
+                            state,
+                            "step_degraded",
+                            f"Step '{step.id}' degraded: {degrade_reason}",
+                            step_id=step.id,
+                        )
+                    return StepResult(
+                        step_id=step.id,
+                        uses=step.uses,
+                        status="degraded",
+                        resolved_input=step_input,
+                        produced_output=None,
+                        error_message=degrade_reason,
+                        started_at=step_started_at,
+                        finished_at=_utc_now(),
+                        latency_ms=elapsed_ms(step_start),
+                    )
+
                 result = self.capability_executor.execute(
                     capability,
                     step_input,
@@ -282,6 +517,9 @@ class ExecutionEngine:
                     produced, meta = result
                 else:
                     produced, meta = result, None
+
+                # --- Safety enforcement (post-execution) ---
+                self._run_post_gates(capability, step, context, produced)
 
                 if isinstance(meta, dict):
                     attempts = meta.get("attempts")
@@ -296,10 +534,16 @@ class ExecutionEngine:
                         required_profile = meta.get("required_conformance_profile")
 
             with state_lock:
+                auto_wire = None
+                if not step.output_mapping and not step.uses.startswith("skill:"):
+                    ct = getattr(self.capability_loader, "get_cognitive_types", None)
+                    if ct is not None:
+                        auto_wire = _build_auto_wire_mapping(capability, ct())
                 apply_step_output(
                     step,
                     produced,
                     state,
+                    mapping_override=auto_wire,
                 )
 
                 # emit completion event including produced output and metadata
@@ -377,6 +621,8 @@ class ExecutionEngine:
                 latency_ms=step_latency_ms,
             )
 
+        except (SafetyTrustLevelError, SafetyGateFailedError, SafetyConfirmationRequiredError):
+            raise
         except Exception as e:
             fail_latency_ms = elapsed_ms(step_start)
             fail_finished_at = _utc_now()

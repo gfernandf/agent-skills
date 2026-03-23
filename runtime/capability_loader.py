@@ -33,6 +33,7 @@ class YamlCapabilityLoader:
         self.repo_root = repo_root
         self.capabilities_root = self.repo_root / "capabilities"
         self._capability_index: dict[str, Path] | None = None
+        self._cognitive_types: dict[str, Any] | None = None
 
     def get_capability(self, capability_id: str) -> CapabilitySpec:
         path = self._get_capability_path(capability_id)
@@ -102,6 +103,19 @@ class YamlCapabilityLoader:
         
         return capabilities
 
+    def get_cognitive_types(self) -> dict[str, Any]:
+        """Return the cognitive_types vocabulary, loading lazily from vocabulary/cognitive_types.yaml."""
+        if self._cognitive_types is not None:
+            return self._cognitive_types
+        vocab_path = self.repo_root / "vocabulary" / "cognitive_types.yaml"
+        if vocab_path.is_file():
+            with vocab_path.open("r", encoding="utf-8-sig") as f:
+                raw = yaml.safe_load(f)
+            self._cognitive_types = raw if isinstance(raw, dict) else {}
+        else:
+            self._cognitive_types = {}
+        return self._cognitive_types
+
     def _build_capability_index(self) -> dict[str, Path]:
         index: dict[str, Path] = {}
 
@@ -148,6 +162,8 @@ class YamlCapabilityLoader:
         deprecated = self._normalize_deprecated(raw.get("deprecated"), metadata, path)
         replacement = self._normalize_optional_string(raw.get("replacement"), "replacement", path)
         aliases = self._normalize_aliases(raw.get("aliases"), path)
+        cognitive_hints = self._normalize_cognitive_hints(raw.get("cognitive_hints"), path)
+        safety = self._normalize_safety(raw.get("safety"), path)
 
         return CapabilitySpec(
             id=capability_id,
@@ -162,6 +178,8 @@ class YamlCapabilityLoader:
             replacement=replacement,
             aliases=aliases,
             source_file=self._safe_relpath(path),
+            cognitive_hints=cognitive_hints,
+            safety=safety,
         )
 
     def _normalize_fields(
@@ -309,6 +327,47 @@ class YamlCapabilityLoader:
             normalized.append(item)
 
         return tuple(normalized)
+
+    def _normalize_cognitive_hints(self, raw: Any, path: Path) -> dict[str, Any] | None:
+        if raw is None:
+            return None
+        if not isinstance(raw, dict):
+            raise InvalidCapabilitySpecError(
+                f"Capability '{self._safe_relpath(path)}' field 'cognitive_hints' must be a mapping if present."
+            )
+        hints: dict[str, Any] = {}
+        role = raw.get("role")
+        if role is not None:
+            hints["role"] = [role] if isinstance(role, str) else list(role)
+        produces = raw.get("produces")
+        if isinstance(produces, dict):
+            hints["produces"] = dict(produces)
+        consumes = raw.get("consumes")
+        if isinstance(consumes, list):
+            hints["consumes"] = list(consumes)
+        return hints if hints else None
+
+    def _normalize_safety(self, raw: Any, path: Path) -> dict[str, Any] | None:
+        if raw is None:
+            return None
+        if not isinstance(raw, dict):
+            raise InvalidCapabilitySpecError(
+                f"Capability '{self._safe_relpath(path)}' field 'safety' must be a mapping if present."
+            )
+        safety: dict[str, Any] = dict(raw)
+        # Normalize gate entries: string → {capability: str, on_fail: "block"}
+        for gate_key in ("mandatory_pre_gates", "mandatory_post_gates"):
+            gates = safety.get(gate_key)
+            if not isinstance(gates, list):
+                continue
+            normalized_gates: list[dict[str, str]] = []
+            for g in gates:
+                if isinstance(g, str):
+                    normalized_gates.append({"capability": g, "on_fail": "block"})
+                elif isinstance(g, dict):
+                    normalized_gates.append(dict(g))
+            safety[gate_key] = normalized_gates
+        return safety if safety else None
 
     def _require_non_empty_string(self, raw: dict[str, Any], key: str, path: Path) -> str:
         value = raw.get(key)
