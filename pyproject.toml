@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-skills"
+version = "0.1.0"
+description = "Runtime for executing reusable AI agent skills and capability bindings"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [{name = "Guillermo Fernandez Alvarez", email = "gfernandf@gmail.com"}]
+requires-python = ">=3.11"
+keywords = ["ai", "agents", "skills", "capabilities", "workflows", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "pyyaml>=6.0",
+    "requests>=2.28",
+]
+
+[project.optional-dependencies]
+pdf = ["PyPDF2>=3.0"]
+web = ["beautifulsoup4>=4.12"]
+all = ["PyPDF2>=3.0", "beautifulsoup4>=4.12"]
+dev = ["pytest>=7.0", "PyPDF2>=3.0", "beautifulsoup4>=4.12"]
+
+[project.scripts]
+agent-skills = "cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/gfernandf/agent-skills"
+Repository = "https://github.com/gfernandf/agent-skills"
+Registry = "https://github.com/gfernandf/agent-skill-registry"
+
+[tool.setuptools.packages.find]
+include = [
+    "cli*",
+    "runtime*",
+    "gateway*",
+    "customer_facing*",
+    "customization*",
+    "official_services*",
+    "official_mcp_servers*",
+]

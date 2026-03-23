@@ -2,6 +2,22 @@
 
 Runtime implementation for executing reusable **AI agent skills** and **capability bindings**.
 
+## Quick Start
+
+```bash
+pip install -e ".[all]"          # install with all optional extras
+agent-skills --help              # verify CLI
+agent-skills doctor              # check environment health
+```
+
+See [docs/INSTALLATION.md](docs/INSTALLATION.md) for full setup instructions, optional extras, and environment variable reference.
+
+## License
+
+Apache 2.0 — see [LICENSE](LICENSE).
+
+---
+
 This repository provides the execution layer for:
 
 - primitive **capabilities**
