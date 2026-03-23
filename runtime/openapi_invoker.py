@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import ipaddress
 import json
+import logging
 import os
 import re
+import socket
 import time
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 
@@ -30,6 +34,24 @@ class OpenAPIInvoker:
     DEFAULT_TIMEOUT_SECONDS = 30.0
     ALLOWED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
     _ENV_PLACEHOLDER = re.compile(r"\$\{([A-Z][A-Z0-9_]*)\}")
+
+    # Cloud metadata endpoints that are ALWAYS blocked regardless of allow_private_networks.
+    _BLOCKED_METADATA_IPS = frozenset({
+        "169.254.169.254",  # AWS / GCP / Azure instance metadata
+        "100.100.100.200",  # Alibaba Cloud metadata
+        "fd00:ec2::254",    # AWS IPv6 metadata
+    })
+
+    def __init__(self, *, allow_private_networks: bool = True) -> None:
+        """
+        Args:
+            allow_private_networks: When True (default) private/loopback IPs are
+                allowed so local services (e.g. localhost OpenAI proxy) work.
+                Set to False in hardened deployments to block RFC-1918, loopback,
+                and link-local addresses.
+        """
+        self._allow_private_networks = allow_private_networks
+        self._logger = logging.getLogger(__name__)
 
     def invoke(self, request: InvocationRequest) -> InvocationResponse:
         start_time = time.perf_counter()
@@ -57,12 +79,14 @@ class OpenAPIInvoker:
             capability_id=capability_id,
         )
 
-        # Volcado explícito a log para diagnóstico
-        try:
-            with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
-                f.write(f"\n[DEBUG] OpenAI request: {json.dumps(request.payload)[:2000]}\n")
-        except Exception:
-            pass  # non-critical debug logging
+        if os.getenv("AGENT_SKILLS_DEBUG"):
+            try:
+                safe_headers = self._redact_headers(headers or {})
+                with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
+                    f.write(f"\n[DEBUG] OpenAI request: headers={json.dumps(safe_headers)} "
+                            f"payload={json.dumps(request.payload)[:2000]}\n")
+            except Exception:
+                pass
 
         try:
             response = requests.request(
@@ -85,12 +109,13 @@ class OpenAPIInvoker:
                 cause=e,
             ) from e
 
-        # Volcado explícito a log para diagnóstico
-        try:
-            with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
-                f.write(f"[DEBUG] OpenAI response: status={response.status_code} body={response.text[:2000]}\n")
-        except Exception:
-            pass  # non-critical debug logging
+        if os.getenv("AGENT_SKILLS_DEBUG"):
+            try:
+                with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
+                    f.write(f"[DEBUG] OpenAI response: status={response.status_code} "
+                            f"body={response.text[:2000]}\n")
+            except Exception:
+                pass
 
         if not response.ok:
             preview = self._safe_text_preview(response.text)
@@ -148,7 +173,50 @@ class OpenAPIInvoker:
     def _build_url(self, base_url: str, operation_id: str) -> str:
         base = base_url.rstrip("/")
         path = operation_id.lstrip("/")
-        return f"{base}/{path}"
+        url = f"{base}/{path}"
+        self._validate_url(url)
+        return url
+
+    def _validate_url(self, url: str) -> None:
+        """Guard against SSRF by validating the resolved URL."""
+        parsed = urlparse(url)
+
+        if parsed.scheme not in ("http", "https"):
+            raise OpenAPIInvocationError(
+                f"Blocked request to disallowed scheme '{parsed.scheme}'. "
+                "Only http and https are permitted."
+            )
+
+        hostname = parsed.hostname
+        if not hostname:
+            raise OpenAPIInvocationError("Blocked request: URL has no hostname.")
+
+        try:
+            resolved_ips = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+        except socket.gaierror as e:
+            raise OpenAPIInvocationError(
+                f"Cannot resolve hostname '{hostname}'.",
+                cause=e,
+            ) from e
+
+        for family, _type, _proto, _canonname, sockaddr in resolved_ips:
+            ip_str = sockaddr[0]
+
+            # Always block cloud metadata endpoints (even when private networks allowed).
+            if ip_str in self._BLOCKED_METADATA_IPS:
+                raise OpenAPIInvocationError(
+                    f"Blocked request to cloud metadata IP {ip_str} "
+                    f"(hostname '{hostname}'). This is never allowed."
+                )
+
+            if not self._allow_private_networks:
+                addr = ipaddress.ip_address(ip_str)
+                if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved:
+                    raise OpenAPIInvocationError(
+                        f"Blocked request to private/reserved IP {ip_str} "
+                        f"(hostname '{hostname}'). Set allow_private_networks=True "
+                        "to permit local-network services."
+                    )
 
     def _resolve_method(self, raw_method: Any, capability_id: str | None) -> str:
         if not isinstance(raw_method, str) or not raw_method:
@@ -318,3 +386,17 @@ class OpenAPIInvoker:
             return ""
         compact = " ".join(text.split())
         return compact[:max_len]
+
+    _SENSITIVE_HEADER_NAMES = frozenset({
+        "authorization", "x-api-key", "api-key", "x-secret", "cookie",
+    })
+
+    def _redact_headers(self, headers: dict[str, str]) -> dict[str, str]:
+        """Return a copy of *headers* with sensitive values replaced by '***'."""
+        redacted: dict[str, str] = {}
+        for k, v in headers.items():
+            if k.lower() in self._SENSITIVE_HEADER_NAMES:
+                redacted[k] = "***"
+            else:
+                redacted[k] = v
+        return redacted

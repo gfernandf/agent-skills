@@ -24,6 +24,7 @@ class ServerConfig:
     api_key: str | None = None
     rate_limit_requests: int = 60
     rate_limit_window_seconds: int = 60
+    max_request_body_bytes: int = 2 * 1024 * 1024  # 2 MB — ample for JSON skill payloads
     unauthenticated_paths: tuple[str, ...] = ("/openapi.json", "/v1/health")
 
 
@@ -311,6 +312,14 @@ class _RequestHandler(BaseHTTPRequestHandler):
         client_id = self.client_address[0] if self.client_address else "unknown"
 
         with self._rate_lock:
+            # Garbage-collect stale entries to prevent unbounded memory growth.
+            stale_clients = [
+                cid for cid, timestamps in self._rate_state.items()
+                if not timestamps or timestamps[-1] < now - window_seconds
+            ]
+            for cid in stale_clients:
+                del self._rate_state[cid]
+
             events = self._rate_state.get(client_id, [])
             cutoff = now - window_seconds
             events = [ts for ts in events if ts >= cutoff]
@@ -356,6 +365,12 @@ class _RequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers.get("Content-Length", "0"))
         if content_length == 0:
             return {}
+        max_bytes = self.config.max_request_body_bytes
+        if content_length > max_bytes:
+            raise ValueError(
+                f"Request body too large ({content_length} bytes). "
+                f"Maximum allowed is {max_bytes} bytes."
+            )
         raw = self.rfile.read(content_length)
         try:
             parsed = json.loads(raw.decode("utf-8"))
