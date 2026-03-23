@@ -78,11 +78,15 @@ Execution order: `validate_events → analyze_trace → monitor_trace`
 ## Thread Safety
 
 The scheduler uses `ThreadPoolExecutor` for parallel step execution.
-All mutations to shared `ExecutionState` (vars, outputs, events) are serialized
-through `_StateLock`, which is attached to the execution context.
+All mutations to shared `ExecutionState` (vars, outputs, events, working,
+output, extensions, trace) are serialized through `_StateLock`, which is
+attached to the execution context.
 
 Key invariant: capability execution (LLM calls, HTTP requests, etc.) runs
 outside the lock. Only state mutations are serialized.
+
+CognitiveState v1 namespaces (working, output, extensions, trace) follow the
+same thread-safety guarantees as legacy namespaces. See docs/COGNITIVE_STATE_V1.md.
 
 ## Failure Handling
 

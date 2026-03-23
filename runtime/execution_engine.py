@@ -23,6 +23,7 @@ from runtime.models import (
     ExecutionRequest,
     SkillExecutionResult,
     StepResult,
+    TraceStep,
 )
 from runtime.observability import elapsed_ms, log_event, reset_current_trace_id, set_current_trace_id
 from runtime.output_mapper import apply_step_output
@@ -233,7 +234,11 @@ class ExecutionEngine:
             uses=step.uses,
         )
 
+        # CognitiveState v1: track current step and updated_at
         with state_lock:
+            state.current_step = step.id
+            state.updated_at = _utc_now()
+
             emit_event(
                 state,
                 "step_start",
@@ -325,6 +330,33 @@ class ExecutionEngine:
                 service_id=(meta.get("service_id") if meta else None),
             )
 
+            # CognitiveState v1: enrich trace
+            step_latency_ms = elapsed_ms(step_start)
+            step_finished_at = _utc_now()
+            reads = tuple(self._collect_reads(step.input_mapping))
+            writes = tuple(step.output_mapping.values())
+
+            with state_lock:
+                state.trace.steps.append(TraceStep(
+                    step_id=step.id,
+                    capability_id=step.uses,
+                    status="completed",
+                    started_at=step_started_at,
+                    ended_at=step_finished_at,
+                    reads=reads,
+                    writes=writes,
+                    latency_ms=step_latency_ms,
+                ))
+                state.trace.metrics.step_count += 1
+                state.trace.metrics.elapsed_ms += step_latency_ms
+                if isinstance(meta, dict):
+                    state.trace.metrics.llm_calls += meta.get("llm_calls", 0)
+                    state.trace.metrics.tool_calls += meta.get("tool_calls", 0)
+                    state.trace.metrics.tokens_in += meta.get("tokens_in", 0)
+                    state.trace.metrics.tokens_out += meta.get("tokens_out", 0)
+                state.current_step = None
+                state.updated_at = step_finished_at
+
             return StepResult(
                 step_id=step.id,
                 uses=step.uses,
@@ -339,9 +371,15 @@ class ExecutionEngine:
                 required_conformance_profile=required_profile,
                 started_at=step_started_at,
                 finished_at=_utc_now(),
+                # CognitiveState v1: data lineage
+                reads=tuple(self._collect_reads(step.input_mapping)),
+                writes=tuple(step.output_mapping.values()),
+                latency_ms=step_latency_ms,
             )
 
         except Exception as e:
+            fail_latency_ms = elapsed_ms(step_start)
+            fail_finished_at = _utc_now()
             log_event(
                 "step.execute.failed",
                 level="error",
@@ -349,7 +387,7 @@ class ExecutionEngine:
                 skill_id=skill_id,
                 step_id=step.id,
                 uses=step.uses,
-                duration_ms=elapsed_ms(step_start),
+                duration_ms=fail_latency_ms,
                 error_type=type(e).__name__,
                 error_message=str(e),
             )
@@ -364,6 +402,22 @@ class ExecutionEngine:
                 if trace_callback:
                     trace_callback(state.events[-1])
 
+                # CognitiveState v1: trace failed step
+                state.trace.steps.append(TraceStep(
+                    step_id=step.id,
+                    capability_id=step.uses,
+                    status="failed",
+                    started_at=step_started_at,
+                    ended_at=fail_finished_at,
+                    reads=tuple(self._collect_reads(step.input_mapping)),
+                    writes=(),
+                    latency_ms=fail_latency_ms,
+                ))
+                state.trace.metrics.step_count += 1
+                state.trace.metrics.elapsed_ms += fail_latency_ms
+                state.current_step = None
+                state.updated_at = fail_finished_at
+
             return StepResult(
                 step_id=step.id,
                 uses=step.uses,
@@ -372,8 +426,16 @@ class ExecutionEngine:
                 produced_output=None,
                 error_message=str(e),
                 started_at=step_started_at,
-                finished_at=_utc_now(),
+                finished_at=fail_finished_at,
+                latency_ms=fail_latency_ms,
             )
+
+    @staticmethod
+    def _collect_reads(input_mapping: dict[str, Any]) -> list[str]:
+        """Extract namespace references from an input mapping (for data lineage)."""
+        refs: list[str] = []
+        _extract_refs(input_mapping, refs)
+        return refs
 
     def _validate_final_outputs(self, skill, state) -> None:
         """
@@ -389,3 +451,23 @@ class ExecutionEngine:
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+# Known runtime namespaces for reference extraction (data lineage).
+_REF_NAMESPACES = frozenset({
+    "inputs", "vars", "outputs", "frame", "working", "output", "extensions",
+})
+
+
+def _extract_refs(value: Any, refs: list[str]) -> None:
+    """Recursively collect namespace references from a mapping value."""
+    if isinstance(value, str) and "." in value:
+        ns = value.split(".", 1)[0]
+        if ns in _REF_NAMESPACES:
+            refs.append(value)
+    elif isinstance(value, dict):
+        for v in value.values():
+            _extract_refs(v, refs)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            _extract_refs(item, refs)

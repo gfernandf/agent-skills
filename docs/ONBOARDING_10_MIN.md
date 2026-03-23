@@ -22,6 +22,11 @@ inputs -> scheduler builds step DAG -> step input mapping -> capability executio
 Steps run sequentially by default (backward-compatible). Steps that declare
 `config.depends_on: []` may run in parallel. See docs/SCHEDULER.md.
 
+Data flows through 7 namespaces: `inputs`, `vars`, `outputs` (legacy), plus
+`frame`, `working`, `output`, `extensions` (CognitiveState v1). Legacy skills
+use only the first three; cognitive skills can use all seven.
+See docs/COGNITIVE_STATE_V1.md.
+
 At runtime, the key orchestration path is:
 
 - cli/main.py
@@ -84,6 +89,8 @@ Expected baseline:
 - skills executable: 36/36
 - scheduler functional: 5/5
 - scheduler stress: 5/5
+- cognitive state regression: 86/86
+- cognitive state integration: 99/99
 
 Note on counts:
 
@@ -121,7 +128,7 @@ For each step in a skill:
 4. RequestBuilder creates payload from input.* template
 5. ProtocolRouter dispatches to pythoncall/openapi/openrpc/mcp invoker
 6. ResponseMapper maps response.* to capability outputs
-7. OutputMapper writes vars.* / outputs.*
+7. OutputMapper writes vars.* / outputs.* (or working.*/output.*/extensions.* for cognitive skills)
 
 ## 6) Where to Debug First (1 min)
 
@@ -167,6 +174,7 @@ You are in a good state when:
 After this onboarding, continue with:
 
 - docs/RUNNER_GUIDE.md for full architecture
+- docs/COGNITIVE_STATE_V1.md for cognitive execution model
 - docs/SCHEDULER.md for DAG scheduler details
 - docs/OBSERVABILITY.md for trace and redaction tuning
 - docs/PRE_MCP_OPENAPI_READINESS.md for integration baseline

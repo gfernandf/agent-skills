@@ -14,6 +14,7 @@ The registry source of truth (contracts and canonical definitions) lives in the 
 ## Runtime Quality & Observability
 
 - Observability implementation details: `docs/OBSERVABILITY.md`
+- CognitiveState v1 cognitive execution model: `docs/COGNITIVE_STATE_V1.md`
 - DAG scheduler (parallel/sequential step execution): `docs/SCHEDULER.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
 
@@ -27,6 +28,26 @@ discover and orchestrate skills without coupling to internal binding mechanics.
 Steps within a skill are scheduled by a DAG-based scheduler (`runtime/scheduler.py`).
 By default, steps execute sequentially (backward-compatible). Steps that declare
 `config.depends_on: []` may execute in parallel. See `docs/SCHEDULER.md`.
+
+### CognitiveState v1
+
+`ExecutionState` now includes structured cognitive blocks for multi-step reasoning:
+
+- **FrameState**: immutable reasoning context (goal, constraints, success_criteria)
+- **WorkingState**: mutable working memory with 10 typed cognitive slots
+- **OutputState**: structured result metadata (result_type, summary, status_reason)
+- **TraceState**: per-step data lineage (reads/writes) and live aggregate metrics
+- **extensions**: open namespace for plugins
+
+Reference resolution supports 7 namespaces (`inputs`, `vars`, `outputs`, `frame`,
+`working`, `output`, `extensions`) with path traversal through dataclass attributes,
+dict keys, and list indices.
+
+Output mapping supports 4 merge strategies (`overwrite`, `append`, `deep_merge`,
+`replace`) across 5 writable namespaces.
+
+All features are backward-compatible — existing skills are unaffected.
+See `docs/COGNITIVE_STATE_V1.md` for the full reference.
 
 ### Validated Skills
 

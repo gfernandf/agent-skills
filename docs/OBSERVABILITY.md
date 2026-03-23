@@ -178,3 +178,60 @@ You can provide a correlation id from CLI:
 
 - `python cli/main.py run <skill_id> --trace-id my-trace-001`
 - `python cli/main.py trace <skill_id> --trace-id my-trace-001`
+
+## CognitiveState v1 Execution Trace
+
+In addition to runtime events and structured logs, CognitiveState v1 adds a
+typed trace structure directly in `ExecutionState.trace`.
+
+### TraceState
+
+Available after execution at `state.trace`:
+
+```python
+state.trace.steps    # list[TraceStep] — one per executed step
+state.trace.metrics  # TraceMetrics — live aggregate counters
+```
+
+### TraceStep (per step)
+
+Each step generates a frozen trace entry with data lineage:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| step_id | str | Step identifier |
+| capability_id | str | Capability invoked |
+| status | str | `completed` or `failed` |
+| started_at | datetime | Step start timestamp |
+| ended_at | datetime | Step end timestamp |
+| reads | tuple[str] | References resolved during input mapping |
+| writes | tuple[str] | Targets written during output mapping |
+| latency_ms | int | Wall-clock time in milliseconds |
+
+Reads and writes enable dependency analysis, impact analysis when a step fails,
+and audit of data flow through capabilities.
+
+### TraceMetrics (aggregate)
+
+Updated after each step completes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| step_count | int | Total steps executed |
+| llm_calls | int | LLM invocations (extracted from step meta) |
+| tool_calls | int | Tool invocations |
+| tokens_in | int | Input tokens consumed |
+| tokens_out | int | Output tokens generated |
+| elapsed_ms | int | Total accumulated wall-clock time |
+
+### Relationship to Existing Observability
+
+The three observability surfaces are complementary:
+
+| Surface | Location | Audience | Granularity |
+|---------|----------|----------|-------------|
+| Runtime events | state.events | skill authors | lifecycle events |
+| Structured logs | JSON stdout | ops/SRE | log lines with trace_id |
+| CognitiveState trace | state.trace | callers / analysis tools | typed per-step lineage |
+
+Full reference: docs/COGNITIVE_STATE_V1.md

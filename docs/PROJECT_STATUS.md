@@ -1,6 +1,6 @@
 # Project Status
 
-Date: 2026-03-18
+Date: 2026-03-19
 Scope: agent-skills runtime + agent-skill-registry consistency check
 
 ## Executive Summary
@@ -12,6 +12,7 @@ The project is in a stable pre-integration state.
 - High-risk services are hardened and instrumented.
 - Registry consistency is healthy with no detected mismatches.
 - DAG-based step scheduler enables parallel execution with backward-compatible defaults.
+- CognitiveState v1 extends ExecutionState with structured cognitive blocks (frame, working, output, trace, extensions).
 - `agent.trace` v0.1.0 and `research.synthesize` v0.2.0 are validated and closed.
 
 ## Verified Quality Gates
@@ -25,6 +26,8 @@ Latest local verification snapshot:
 - Runtime inventory: 45 capabilities, 45 official defaults, 20 services, 36 skills
 - Scheduler functional tests: 5/5
 - Scheduler stress tests: 5/5
+- CognitiveState v1 regression tests: 86/86
+- CognitiveState v1 integration tests: 99/99
 
 Catalog context (canonical source of total definitions):
 
@@ -113,13 +116,24 @@ Current review result:
 ## Documentation Map
 
 - docs/RUNNER_GUIDE.md: runtime runner architecture and operations
+- docs/COGNITIVE_STATE_V1.md: CognitiveState v1 cognitive execution model reference
 - docs/SCHEDULER.md: DAG-based step scheduler (parallel/sequential execution)
-- docs/OBSERVABILITY.md: logging, trace_id, redaction, tuning
+- docs/OBSERVABILITY.md: logging, trace_id, redaction, tuning, CognitiveState trace
 - docs/AGENT_TRACE_DRY_RUN_GUIDE.md: agent.trace practical usage and dry-run scenarios
 - docs/PRE_MCP_OPENAPI_READINESS.md: readiness checklist and next integrations
 - docs/PROJECT_STATUS.md: current project closure snapshot
 
 ## Closed Skills
+
+### CognitiveState v1
+
+ExecutionState extended with typed cognitive blocks: FrameState (immutable reasoning
+context), WorkingState (10 cognitive slots), OutputState (result metadata), TraceState
+(per-step data lineage + aggregate metrics), extensions (plugin namespace).
+Reference resolver supports 7 namespaces with path traversal. Output mapper supports
+5 writable namespaces with 4 merge strategies (overwrite, append, deep_merge, replace).
+Fully backward-compatible — all legacy vars/outputs/events behavior preserved.
+Test coverage: 86 regression + 99 integration tests.
 
 ### agent.trace v0.1.0
 

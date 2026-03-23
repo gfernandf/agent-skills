@@ -39,7 +39,7 @@ Execution path (high-level):
 
 State and model layer:
 
-- runtime/models.py: typed runtime data contracts
+- runtime/models.py: typed runtime data contracts (includes CognitiveState v1 structures)
 - runtime/execution_state.py: mutable execution state + runtime events
 - runtime/errors.py: typed runtime exceptions
 
@@ -54,9 +54,9 @@ Planning and orchestration:
 
 Step input/output mapping:
 
-- runtime/reference_resolver.py: resolves data references
+- runtime/reference_resolver.py: resolves data references (7 namespaces with path traversal)
 - runtime/input_mapper.py: materializes step input
-- runtime/output_mapper.py: writes produced values to runtime targets
+- runtime/output_mapper.py: writes produced values to runtime targets (5 writable namespaces, 4 merge strategies)
 
 Binding execution layer:
 
@@ -92,7 +92,33 @@ Observability:
 
 - runtime/observability.py: structured logs, trace context, redaction
 
-## 4) Trace and Events
+## 4) CognitiveState v1
+
+ExecutionState now includes four cognitive blocks (frame, working, output, trace)
+plus an extensions namespace, enabling structured multi-step reasoning without
+breaking the legacy vars/outputs pipeline.
+
+Key additions:
+
+- FrameState: immutable reasoning context (goal, constraints, success_criteria)
+- WorkingState: mutable working memory with 10 typed cognitive slots
+- OutputState: structured result metadata (result_type, summary, status_reason)
+- TraceState: per-step data lineage (reads/writes) and live aggregate metrics
+- extensions: open namespace for plugins
+
+Reference resolution now supports 7 namespaces with path traversal through
+dataclass attributes, dict keys, and list indices:
+
+    inputs.*, vars.*, outputs.*, frame.*, working.*, output.*, extensions.*
+
+Output mapping supports 5 writable namespaces with 4 merge strategies
+(overwrite, append, deep_merge, replace).
+
+All features are backward-compatible. Existing skills are unaffected.
+
+Full reference: docs/COGNITIVE_STATE_V1.md
+
+## 5) Trace and Events
 
 Two complementary tracing surfaces exist:
 
@@ -104,13 +130,18 @@ Two complementary tracing surfaces exist:
 - service lifecycle for critical services
 - correlation through trace_id
 
+3. CognitiveState v1 trace (in ExecutionState.trace)
+- TraceStep per step: step_id, capability_id, status, reads, writes, latency_ms
+- TraceMetrics aggregate: step_count, llm_calls, tool_calls, tokens_in/out, elapsed_ms
+- Automatically populated by the execution engine
+
 Trace propagation:
 
 - trace_id can be passed in ExecutionRequest
 - CLI supports --trace-id in run and trace commands
 - nested skills inherit parent trace_id
 
-## 5) How to Run
+## 6) How to Run
 
 Basic execution:
 
@@ -134,7 +165,7 @@ OpenAPI checks from CLI:
 - python cli/main.py openapi verify-invoker
 - python cli/main.py openapi verify-errors
 
-## 6) Validation and Health Commands
+## 7) Validation and Health Commands
 
 Contracts:
 
@@ -156,7 +187,7 @@ Registry side:
 - python ../agent-skill-registry/tools/generate_catalog.py
 - python ../agent-skill-registry/tools/registry_stats.py
 
-## 7) Failure Model (Practical)
+## 8) Failure Model (Practical)
 
 Common failure categories:
 
@@ -175,7 +206,7 @@ Debug order that works well:
 4. Inspect binding request/response templates
 5. Confirm service implementation output shape
 
-## 8) Configuration Surfaces
+## 9) Configuration Surfaces
 
 Repository-level:
 
@@ -191,7 +222,7 @@ Host-level overrides (.agent-skills):
 - active_bindings.json
 - overrides.yaml
 
-## 9) Design Constraints
+## 10) Design Constraints
 
 Current runner behavior intentionally keeps:
 
@@ -204,7 +235,7 @@ Current runner behavior intentionally keeps:
 
 See docs/SCHEDULER.md for full scheduler documentation.
 
-## 10) Current Baseline
+## 11) Current Baseline
 
 As documented in docs/PROJECT_STATUS.md, runner baseline is currently stable with:
 
@@ -213,5 +244,7 @@ As documented in docs/PROJECT_STATUS.md, runner baseline is currently stable wit
 - full capability coverage and skill executability (45/45 capabilities, 36/36 skills)
 - DAG scheduler functional tests: 5/5
 - DAG scheduler stress tests: 5/5
+- CognitiveState v1 regression tests: 86/86
+- CognitiveState v1 integration tests: 99/99
 
 This is the recommended baseline before starting MCP/OpenAPI adapter expansion.

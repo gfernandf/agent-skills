@@ -5,6 +5,108 @@ from datetime import datetime
 from typing import Any
 
 
+# ════════════════════════════════════════════════════════════════
+# CognitiveState v1 — Typed cognitive structures
+# ════════════════════════════════════════════════════════════════
+
+
+@dataclass(frozen=True)
+class FrameState:
+    """
+    Immutable reasoning context established when the run is created.
+
+    Answers: Why does this run exist? What are its boundaries?
+    Read-only during execution — set once at creation.
+    """
+
+    goal: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
+    constraints: dict[str, Any] = field(default_factory=dict)
+    success_criteria: dict[str, Any] = field(default_factory=dict)
+    assumptions: tuple[str, ...] = ()
+    priority: str | None = None
+
+
+@dataclass
+class WorkingState:
+    """
+    Mutable working memory for multi-step cognitive processing.
+    Dies with the run — NOT persistent memory.
+
+    Typed slots enable structured reasoning patterns:
+    - artifacts: named intermediate products (free-form)
+    - entities/options/criteria/evidence/risks/hypotheses/uncertainties:
+      cognitive categories, each a typed list of items
+    - intermediate_decisions: reasoning checkpoints
+    - messages: conversation-style accumulator
+    """
+
+    artifacts: dict[str, Any] = field(default_factory=dict)
+    entities: list[dict[str, Any]] = field(default_factory=list)
+    options: list[dict[str, Any]] = field(default_factory=list)
+    criteria: list[dict[str, Any]] = field(default_factory=list)
+    evidence: list[dict[str, Any]] = field(default_factory=list)
+    risks: list[dict[str, Any]] = field(default_factory=list)
+    hypotheses: list[dict[str, Any]] = field(default_factory=list)
+    uncertainties: list[dict[str, Any]] = field(default_factory=list)
+    intermediate_decisions: list[dict[str, Any]] = field(default_factory=list)
+    messages: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
+class OutputState:
+    """
+    Structured result metadata for the run.
+
+    NOT the same as state.outputs (the legacy flat dict contract).
+    Describes the semantic shape and context of the final result.
+    """
+
+    result: Any = None
+    result_type: str | None = None
+    summary: str | None = None
+    status_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class TraceStep:
+    """One step's trace entry with data lineage."""
+
+    step_id: str
+    capability_id: str
+    status: str
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    reads: tuple[str, ...] = ()
+    writes: tuple[str, ...] = ()
+    latency_ms: int | None = None
+
+
+@dataclass
+class TraceMetrics:
+    """Live aggregate execution metrics — updated during execution."""
+
+    step_count: int = 0
+    llm_calls: int = 0
+    tool_calls: int = 0
+    tokens_in: int = 0
+    tokens_out: int = 0
+    elapsed_ms: int = 0
+
+
+@dataclass
+class TraceState:
+    """Execution trace for observability and data lineage."""
+
+    steps: list[TraceStep] = field(default_factory=list)
+    metrics: TraceMetrics = field(default_factory=TraceMetrics)
+
+
+# ════════════════════════════════════════════════════════════════
+# Skill / Capability / Step specifications
+# ════════════════════════════════════════════════════════════════
+
+
 @dataclass(frozen=True)
 class FieldSpec:
     """
@@ -111,6 +213,10 @@ class StepResult:
     error_message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    # CognitiveState v1 — data lineage
+    reads: tuple[str, ...] | None = None
+    writes: tuple[str, ...] | None = None
+    latency_ms: int | None = None
 
 
 @dataclass
@@ -130,6 +236,19 @@ class ExecutionState:
     finished_at: datetime | None = None
     status: str = "pending"
     trace_id: str | None = None
+    # CognitiveState v1 — cognitive structures
+    frame: FrameState = field(default_factory=FrameState)
+    working: WorkingState = field(default_factory=WorkingState)
+    output: OutputState = field(default_factory=OutputState)
+    trace: TraceState = field(default_factory=TraceState)
+    extensions: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # CognitiveState v1 — metadata
+    state_version: str = "1.0.0"
+    skill_version: str | None = None
+    iteration: int = 0
+    current_step: str | None = None
+    parent_run_id: str | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass(frozen=True)

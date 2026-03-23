@@ -55,12 +55,14 @@ class ExecutionPlanner:
 
     def _validate_step_targets(self, skill: SkillSpec) -> None:
         """
-        Validate that output mappings target valid namespaces.
+        Validate that output mappings target valid writable namespaces.
 
-        v1 rule set:
-        - vars.<name>
-        - outputs.<name>
+        Writable:  vars, outputs, working, output, extensions
+        Read-only: inputs, frame, trace
         """
+        writable = {"vars", "outputs", "working", "output", "extensions"}
+        read_only = {"inputs", "frame", "trace"}
+
         for step in skill.steps:
             for produced_field, target in step.output_mapping.items():
                 if not isinstance(target, str) or "." not in target:
@@ -71,7 +73,13 @@ class ExecutionPlanner:
 
                 namespace, _ = target.split(".", 1)
 
-                if namespace not in {"vars", "outputs"}:
+                if namespace in read_only:
+                    raise InvalidSkillSpecError(
+                        f"Step '{step.id}' writes to read-only namespace '{namespace}'.",
+                        skill_id=skill.id,
+                    )
+
+                if namespace not in writable:
                     raise InvalidSkillSpecError(
                         f"Step '{step.id}' writes to unsupported namespace '{namespace}'.",
                         skill_id=skill.id,

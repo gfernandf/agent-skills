@@ -3,17 +3,25 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from runtime.models import ExecutionState, RuntimeEvent, StepResult
+from runtime.models import ExecutionState, FrameState, RuntimeEvent, StepResult
 
 
 def create_execution_state(
     skill_id: str,
     inputs: dict[str, Any],
     trace_id: str | None = None,
+    *,
+    frame: FrameState | None = None,
+    skill_version: str | None = None,
+    parent_run_id: str | None = None,
 ) -> ExecutionState:
     """
     Create the initial mutable execution state for a skill run.
+
+    CognitiveState v1: initialises cognitive structures alongside legacy fields.
+    All new fields have safe defaults so existing callers are unaffected.
     """
+    now = _utc_now()
     return ExecutionState(
         skill_id=skill_id,
         inputs=dict(inputs),
@@ -22,10 +30,15 @@ def create_execution_state(
         step_results={},
         written_targets=set(),
         events=[],
-        started_at=_utc_now(),
+        started_at=now,
         finished_at=None,
         status="pending",
         trace_id=trace_id,
+        # CognitiveState v1
+        frame=frame or FrameState(),
+        skill_version=skill_version,
+        parent_run_id=parent_run_id,
+        updated_at=now,
     )
 
 
