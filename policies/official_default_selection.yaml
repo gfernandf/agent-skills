@@ -35,7 +35,8 @@ defaults:
   security.secret.detect: python_security_secret_detect
   table.row.filter: python_table_filter
   text.content.classify: openapi_text_classify_openai_chat
-  text.content.embed: python_text_embed
+  text.content.embed: openapi_text_embed_openai
+  text.content.generate: openapi_text_generate_openai_chat
   text.entity.extract: openapi_text_entity_extract_openai_chat
   text.content.extract: python_text_extract
   text.keyword.extract: openapi_text_keyword_extract_openai_chat
@@ -43,6 +44,8 @@ defaults:
   text.content.summarize: openapi_text_summarize_openai_chat
   text.content.template: python_text_template
   text.content.translate: openapi_text_translate_openai_chat
+  text.content.transform: openapi_text_transform_openai_chat
+  text.response.extract: openapi_text_response_extract_openai_chat
   video.frame.extract: python_video_frame_extract
   web.page.fetch: python_web_fetch
   web.page.extract: python_web_page_extract

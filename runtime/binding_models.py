@@ -67,7 +67,7 @@ class ResolvedBinding:
     operation_id: str
     protocol: str
     binding_source: str      # official | local | candidate
-    selection_source: str    # local_selection | official_default
+    selection_source: str    # local_selection | environment_preferred | official_default
 
 
 @dataclass(frozen=True)
