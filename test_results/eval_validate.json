@@ -4,18 +4,18 @@
     {
       "dimension": "coherence",
       "severity": "medium",
-      "description": "The recommendation lacks detailed justification based on the provided evidence context."
+      "description": "The recommendation lacks a clear connection to the uncertainties and failure modes presented."
     },
     {
       "dimension": "grounding",
       "severity": "high",
-      "description": "The output does not clearly connect the recommendation to the evidence context provided."
+      "description": "The output does not provide sufficient grounding in the evidence context, which is vague and does not detail how the decision was derived from the market research synthesis and competitor analysis."
     },
     {
       "dimension": "coverage",
       "severity": "medium",
-      "description": "The output does not address how the uncertainties and failure modes relate to the recommendation."
+      "description": "The output does not cover all relevant aspects of the decision-making process, particularly how the alternatives were evaluated against the uncertainties."
     }
   ],
-  "validation_summary": "The output fails to meet the coherence, grounding, and coverage requirements based on the validation policy."
+  "validation_summary": "The output fails to meet the coherence, grounding, and coverage requirements, indicating a lack of clarity and insufficient evidence support for the recommendation."
 }
