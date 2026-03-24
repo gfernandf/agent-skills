@@ -38,6 +38,35 @@ TEST_DATA = {
         ],
         "hint_labels": ["stability", "ux"],
     },
+    "audio.speech.synthesize": {"text": "Hello, welcome to the platform.", "language": "en-US"},
+    "code.source.analyze": {"code": "def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n", "language": "python"},
+    "data.record.transform": {
+        "records": [
+            {"first_name": "Alice", "last_name": "Smith", "age": 30, "internal_id": "x99"},
+            {"first_name": "Bob", "last_name": "Jones", "age": 25, "internal_id": "x42"},
+        ],
+        "mapping": {"rename": {"first_name": "name"}, "select": ["name", "last_name", "age"]},
+    },
+    "fs.file.list": {"path": "."},
+    "fs.file.write": {"path": "test_results/test_write_output.txt", "content": "test write", "mode": "overwrite"},
+    "image.content.extract": {"image": b"fake image data for OCR"},
+    "table.column.aggregate": {
+        "table": [
+            {"dept": "Engineering", "salary": 90000},
+            {"dept": "Engineering", "salary": 85000},
+            {"dept": "Sales", "salary": 70000},
+        ],
+        "aggregations": [{"field": "salary", "function": "avg"}],
+        "group_by": "dept",
+    },
+    "table.row.sort": {
+        "table": [
+            {"name": "Alice", "salary": 85000},
+            {"name": "Bob", "salary": 92000},
+            {"name": "Carol", "salary": 78000},
+        ],
+        "sort_by": [{"field": "salary", "order": "desc"}],
+    },
     "agent.task.delegate": {"agent": "summarizer", "task": {"description": "Summarize the Q3 report", "priority": "high"}},
     "agent.plan.generate": {"objective": "Build a web scraper", "context": "Python preferred, target site uses JS rendering"},
     "agent.input.route": {"query": "Summarize this quarterly earnings report", "agents": ["summarizer", "analyst", "translator"]},

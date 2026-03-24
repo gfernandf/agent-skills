@@ -75,3 +75,38 @@ def classify_image(image_data):
     """
     # Baseline implementation: placeholder
     return {"label": "unknown", "confidence": 0.0}
+
+
+def extract_text(image_data, language=None):
+    """
+    OCR baseline: extract text from an image.
+
+    The baseline cannot perform real OCR — it returns a placeholder
+    describing the input. Production bindings should use Tesseract,
+    Azure Vision, or similar.
+
+    Args:
+        image_data: Image bytes or file path string.
+        language (str): Language hint (unused in baseline).
+
+    Returns:
+        dict: {"text": str, "confidence": float, "regions": list}
+    """
+    lang = language or "en"
+    payload, source_path = _load_image_bytes(image_data)
+
+    if payload is not None:
+        size = len(payload)
+        kind = _infer_image_kind(payload)
+        source_desc = f"'{source_path}'" if source_path else "in-memory"
+        return {
+            "text": f"[OCR baseline] {kind} image from {source_desc} ({size} bytes, lang={lang}). Real OCR requires a production binding.",
+            "confidence": 0.0,
+            "regions": [],
+        }
+
+    return {
+        "text": f"[OCR baseline] No readable image payload (lang={lang}). Real OCR requires a production binding.",
+        "confidence": 0.0,
+        "regions": [],
+    }

@@ -1,0 +1,15 @@
+id: python_audio_synthesize
+capability: audio.speech.synthesize
+service: audio_baseline
+protocol: pythoncall
+operation: synthesize_speech
+request:
+  text: input.text
+  language: input.language
+  voice: input.voice
+response:
+  audio: response.audio
+  metadata: response.metadata
+metadata:
+  description: Official baseline binding for audio.speech.synthesize (TTS).
+  status: stable

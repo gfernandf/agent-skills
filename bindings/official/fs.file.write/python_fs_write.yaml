@@ -1,0 +1,15 @@
+id: python_fs_write
+capability: fs.file.write
+service: fs_baseline
+protocol: pythoncall
+operation: write_file
+request:
+  path: input.path
+  content: input.content
+  mode: input.mode
+response:
+  path: response.path
+  bytes_written: response.bytes_written
+metadata:
+  description: Official binding for fs.file.write using the fs_baseline service.
+  status: stable

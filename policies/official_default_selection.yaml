@@ -5,18 +5,24 @@ defaults:
   agent.plan.generate: openapi_agent_plan_generate_openai_chat
   agent.input.route: openapi_agent_route_openai_chat
   audio.speech.transcribe: python_audio_transcribe
+  audio.speech.synthesize: python_audio_synthesize
   code.diff.extract: python_code_diff_extract
   code.snippet.execute: python_code_execute
   code.source.format: python_code_format
+  code.source.analyze: python_code_analyze
   data.json.parse: python_data_json_parse
   data.record.deduplicate: python_data_record_deduplicate
   data.schema.validate: python_data_schema_validate
+  data.record.transform: python_data_transform
   doc.content.chunk: python_doc_chunk
   email.inbox.read: python_email_read
   email.message.send: python_email_send
   fs.file.read: python_fs_read
+  fs.file.list: python_fs_list
+  fs.file.write: python_fs_write
   image.caption.generate: python_image_caption_generate
   image.content.classify: python_image_classify
+  image.content.extract: python_image_extract
   memory.entry.retrieve: python_memory_retrieve
   memory.entry.store: python_memory_store
   message.notification.send: python_message_send
@@ -34,6 +40,8 @@ defaults:
   security.pii.redact: python_security_pii_redact
   security.secret.detect: python_security_secret_detect
   table.row.filter: python_table_filter
+  table.row.sort: python_table_sort
+  table.column.aggregate: python_table_aggregate
   text.content.classify: openapi_text_classify_openai_chat
   text.content.embed: openapi_text_embed_openai
   text.content.generate: openapi_text_generate_openai_chat

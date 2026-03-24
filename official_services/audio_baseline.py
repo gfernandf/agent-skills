@@ -83,3 +83,42 @@ def transcribe_audio(audio_data):
     if not source:
         return _finish({"transcript": "No audio provided."}, "rejected", "ValidationError")
     return _finish({"transcript": f"Transcription from source descriptor: {source}."}, "completed")
+
+
+def synthesize_speech(text, language=None, voice=None):
+    """
+    Text-to-speech baseline.
+
+    The baseline cannot produce real audio — it returns a placeholder WAV
+    descriptor with metadata. Production bindings should use a real TTS
+    engine (e.g. OpenAI TTS, Azure Speech, Google TTS).
+
+    Args:
+        text (str): Text to synthesize.
+        language (str): Target locale (e.g. "en-US").
+        voice (str): Voice identifier (unused in baseline).
+
+    Returns:
+        dict with 'audio' and 'metadata'.
+    """
+    lang = language or "en-US"
+    text = text or ""
+    words = text.split()
+    char_count = len(text)
+    word_count = len(words)
+    # Rough estimate: ~150 words per minute → ~400ms per word
+    estimated_duration_ms = max(word_count * 400, 500)
+
+    return {
+        "audio": {
+            "data": b"RIFF\x00\x00\x00\x00WAVEfmt ",  # minimal WAV header placeholder
+            "format": "wav",
+            "duration_ms": estimated_duration_ms,
+        },
+        "metadata": {
+            "language": lang,
+            "voice_used": voice or "baseline-default",
+            "char_count": char_count,
+            "word_count": word_count,
+        },
+    }

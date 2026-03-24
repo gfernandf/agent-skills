@@ -1,0 +1,15 @@
+id: python_fs_list
+capability: fs.file.list
+service: fs_baseline
+protocol: pythoncall
+operation: list_files
+request:
+  path: input.path
+  pattern: input.pattern
+  recursive: input.recursive
+response:
+  entries: response.entries
+  total: response.total
+metadata:
+  description: Official binding for fs.file.list using the fs_baseline service.
+  status: stable

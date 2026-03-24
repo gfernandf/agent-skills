@@ -76,3 +76,75 @@ def deduplicate_records(records, key_fields=None):
         deduped.append(item)
 
     return {"records": deduped, "duplicates": duplicates}
+
+
+def transform_records(records, mapping):
+    """
+    Transform records by applying field renames, projections, defaults,
+    and computed fields.
+
+    Args:
+        records (list): Input records.
+        mapping (dict): Transformation spec with optional keys:
+            rename, select, defaults, computed.
+
+    Returns:
+        dict: {"records": list, "transform_summary": dict}
+    """
+    if not isinstance(records, list):
+        return {"records": [], "transform_summary": {"records_in": 0, "records_out": 0}}
+
+    rename_map = mapping.get("rename", {}) if isinstance(mapping, dict) else {}
+    select_fields = mapping.get("select") if isinstance(mapping, dict) else None
+    defaults = mapping.get("defaults", {}) if isinstance(mapping, dict) else {}
+    computed = mapping.get("computed", {}) if isinstance(mapping, dict) else {}
+
+    fields_renamed = 0
+    fields_added = 0
+    fields_dropped = 0
+
+    transformed = []
+    for record in records:
+        if not isinstance(record, dict):
+            transformed.append(record)
+            continue
+
+        row = dict(record)
+
+        # Apply renames
+        for old_key, new_key in rename_map.items():
+            if old_key in row:
+                row[new_key] = row.pop(old_key)
+                fields_renamed += 1
+
+        # Apply defaults
+        for key, default_val in defaults.items():
+            if key not in row:
+                row[key] = default_val
+                fields_added += 1
+
+        # Apply computed fields (simple {{field}} template)
+        import re
+        for key, template in computed.items():
+            value = re.sub(r"\{\{(\w+)\}\}", lambda m: str(row.get(m.group(1), "")), template)
+            row[key] = value
+            fields_added += 1
+
+        # Apply projection (select)
+        if isinstance(select_fields, list):
+            before = len(row)
+            row = {k: v for k, v in row.items() if k in select_fields}
+            fields_dropped += before - len(row)
+
+        transformed.append(row)
+
+    return {
+        "records": transformed,
+        "transform_summary": {
+            "records_in": len(records),
+            "records_out": len(transformed),
+            "fields_renamed": fields_renamed,
+            "fields_added": fields_added,
+            "fields_dropped": fields_dropped,
+        },
+    }

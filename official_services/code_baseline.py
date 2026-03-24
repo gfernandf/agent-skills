@@ -140,3 +140,88 @@ def format_code(code, language):
     """
     # Baseline implementation: return as-is
     return {"formatted_code": code}
+
+
+def analyze_code(code, language):
+    """
+    Analyze source code for structural metrics and quality signals.
+
+    Args:
+        code (str): Source code to analyze.
+        language (str): Programming language.
+
+    Returns:
+        dict: {"metrics": dict, "warnings": list, "summary": str}
+    """
+    if not isinstance(code, str) or not code.strip():
+        return {
+            "metrics": {
+                "total_lines": 0, "code_lines": 0, "blank_lines": 0,
+                "comment_lines": 0, "function_count": 0, "class_count": 0,
+                "complexity_estimate": 0,
+            },
+            "warnings": [],
+            "summary": "Empty or invalid code input.",
+        }
+
+    lines = code.splitlines()
+    total_lines = len(lines)
+    blank_lines = sum(1 for l in lines if not l.strip())
+    code_lines = total_lines - blank_lines
+
+    # Language-aware comment counting + structure detection
+    lang = (language or "").lower()
+    comment_prefix = "#" if lang == "python" else "//"
+    comment_lines = sum(1 for l in lines if l.strip().startswith(comment_prefix))
+    code_lines -= comment_lines
+
+    # Count function and class definitions
+    if lang == "python":
+        function_count = sum(1 for l in lines if l.strip().startswith("def "))
+        class_count = sum(1 for l in lines if l.strip().startswith("class "))
+        # Complexity: count branching keywords
+        branch_keywords = {"if ", "elif ", "for ", "while ", "except ", "with "}
+        complexity = 1 + sum(
+            1 for l in lines
+            for kw in branch_keywords
+            if l.strip().startswith(kw)
+        )
+    elif lang in ("javascript", "typescript", "java", "c", "cpp", "csharp", "go"):
+        function_count = sum(1 for l in lines if "function " in l or "=> " in l)
+        class_count = sum(1 for l in lines if l.strip().startswith("class "))
+        branch_keywords = {"if ", "if(", "else if", "for ", "for(", "while ", "while(", "switch ", "catch "}
+        complexity = 1 + sum(
+            1 for l in lines
+            for kw in branch_keywords
+            if kw in l.strip()
+        )
+    else:
+        function_count = 0
+        class_count = 0
+        complexity = 1
+
+    warnings = []
+    if total_lines > 500:
+        warnings.append({"line": total_lines, "severity": "warning", "message": "File exceeds 500 lines — consider splitting."})
+    if complexity > 15:
+        warnings.append({"line": 1, "severity": "warning", "message": f"High cyclomatic complexity estimate ({complexity})."})
+
+    summary = (
+        f"{lang or 'unknown'} code: {code_lines} code lines, "
+        f"{function_count} functions, {class_count} classes, "
+        f"complexity ~{complexity}."
+    )
+
+    return {
+        "metrics": {
+            "total_lines": total_lines,
+            "code_lines": code_lines,
+            "blank_lines": blank_lines,
+            "comment_lines": comment_lines,
+            "function_count": function_count,
+            "class_count": class_count,
+            "complexity_estimate": complexity,
+        },
+        "warnings": warnings,
+        "summary": summary,
+    }

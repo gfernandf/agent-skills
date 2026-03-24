@@ -1,0 +1,14 @@
+id: python_data_transform
+capability: data.record.transform
+service: data_baseline
+protocol: pythoncall
+operation: transform_records
+request:
+  records: input.records
+  mapping: input.mapping
+response:
+  records: response.records
+  transform_summary: response.transform_summary
+metadata:
+  description: Official binding for data.record.transform using the data_baseline service.
+  status: stable

@@ -1,0 +1,13 @@
+id: python_table_sort
+capability: table.row.sort
+service: table_baseline
+protocol: pythoncall
+operation: sort_table
+request:
+  table_data: input.table
+  sort_by: input.sort_by
+response:
+  table: response.table
+metadata:
+  description: Official binding for table.row.sort using the table_baseline service.
+  status: stable

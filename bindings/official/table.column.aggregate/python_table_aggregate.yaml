@@ -1,0 +1,15 @@
+id: python_table_aggregate
+capability: table.column.aggregate
+service: table_baseline
+protocol: pythoncall
+operation: aggregate_table
+request:
+  table_data: input.table
+  aggregations: input.aggregations
+  group_by: input.group_by
+response:
+  results: response.results
+  row_count: response.row_count
+metadata:
+  description: Official binding for table.column.aggregate using the table_baseline service.
+  status: stable

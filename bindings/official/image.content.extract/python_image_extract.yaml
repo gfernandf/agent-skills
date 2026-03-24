@@ -1,0 +1,15 @@
+id: python_image_extract
+capability: image.content.extract
+service: image_baseline
+protocol: pythoncall
+operation: extract_text
+request:
+  image_data: input.image
+  language: input.language
+response:
+  text: response.text
+  confidence: response.confidence
+  regions: response.regions
+metadata:
+  description: Official baseline binding for image.content.extract (OCR).
+  status: stable
