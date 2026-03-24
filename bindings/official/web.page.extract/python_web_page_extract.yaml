@@ -4,7 +4,7 @@ service: web_baseline
 protocol: pythoncall
 operation: extract_webpage
 request:
-  url: input.content
+  content: input.content
 response:
   title: response.title
   text: response.text

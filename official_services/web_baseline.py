@@ -217,34 +217,32 @@ def fetch_webpage(url):
     except Exception as e:
         return _finish({"content": f"Unexpected error: {type(e).__name__}: {e}", "status": 500}, "failed")
 
-def extract_webpage(url):
+def extract_webpage(content):
     """
-    Extract structured data from a webpage.
-    
+    Extract structured data from raw HTML content.
+
     Args:
-        url (str): The URL to extract from.
-    
+        content (str): Raw HTML content to extract from.
+
     Returns:
         dict: {"title": str, "text": str}
     """
     try:
-        # Fetch the webpage
-        fetch_result = fetch_webpage(url)
-        html_content = fetch_result["content"]
-        
+        html_content = content
+
         # Extract title
         title_match = re.search(r'<title[^>]*>([^<]+)</title>', html_content, re.IGNORECASE)
         title = title_match.group(1).strip() if title_match else "Unknown Title"
-        
+
         # Extract text
         extractor = TextExtractor()
         extractor.feed(html_content)
         text = extractor.get_text()
-        
+
         # Limit text to first 5000 characters to avoid huge responses
         if len(text) > 5000:
             text = text[:5000] + "..."
-        
+
         return {"title": title, "text": text}
     except Exception as e:
         return {"title": "Error", "text": f"Error extracting webpage: {str(e)}"}
