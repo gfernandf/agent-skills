@@ -21,12 +21,15 @@ request:
         Return a JSON object with:
         - score: number 0-100 (overall quality score)
         - dimensions: object mapping dimension names to scores (each 0-100)
+        - quality_level: string (excellent, good, fair, or poor)
 
         Return valid JSON only. No markdown fences.
     - role: user
       content: |
         Output to evaluate:
         ${input.output}
+
+        Context: ${input.context}
   temperature: 0.1
   response_format:
     type: json_object
@@ -34,6 +37,7 @@ request:
 response:
   score: response.choices.0.message.content_json.score
   dimensions: response.choices.0.message.content_json.dimensions
+  quality_level: response.choices.0.message.content_json.quality_level
 
 metadata:
   method: POST

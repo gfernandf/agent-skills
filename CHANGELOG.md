@@ -100,3 +100,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (absent from step input) no longer raise `RequestBuildError`. Missing fields
   are omitted from pythoncall payloads and rendered as empty in template strings.
   Fixes execution failures for all capabilities with optional inputs.
+
+#### eval.* domain review
+- `eval.output.score` bindings updated: context input, quality_level output.
+- `eval_baseline.py`: `score_output()` now accepts `context`, returns
+  `quality_level` (excellent/good/fair/poor).
+- Test data added for `eval.option.analyze` and `eval.option.score`.
+- Functional: 54/114 capabilities (up from 52).

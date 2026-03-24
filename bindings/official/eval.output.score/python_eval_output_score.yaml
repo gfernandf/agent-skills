@@ -6,9 +6,11 @@ operation: score_output
 request:
   output: input.output
   rubric: input.rubric
+  context: input.context
 response:
   score: response.score
   dimensions: response.dimensions
+  quality_level: response.quality_level
 metadata:
   description: Official binding for eval.output.score using eval_baseline service.
   status: stable

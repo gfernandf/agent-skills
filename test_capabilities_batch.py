@@ -82,6 +82,20 @@ TEST_DATA = {
         "output": {"summary": "Short summary", "confidence": 0.9},
         "rubric": {"dimensions": {"completeness": 0.5, "clarity": 0.5}}
     },
+    "eval.option.analyze": {
+        "options": [
+            {"id": "opt-a", "label": "Option A", "description": "Conservative approach"},
+            {"id": "opt-b", "label": "Option B", "description": "Aggressive approach"}
+        ],
+        "goal": "Choose deployment strategy for new service"
+    },
+    "eval.option.score": {
+        "options": [
+            {"id": "opt-a", "label": "Option A", "description": "Conservative approach"},
+            {"id": "opt-b", "label": "Option B", "description": "Aggressive approach"}
+        ],
+        "goal": "Choose deployment strategy for new service"
+    },
     "security.output.gate": {
         "output": {"text": "Contact me at test@example.com"},
         "policy": {"block_pii": True, "block_secrets": True}

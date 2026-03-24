@@ -6,12 +6,12 @@ Provides baseline implementations for scoring outputs.
 from __future__ import annotations
 
 
-def score_output(output, rubric=None):
+def score_output(output, rubric=None, context=None):
     """
     Compute a lightweight quality score based on rubric dimensions.
     """
     if not isinstance(output, dict):
-        return {"score": 0.0, "dimensions": {"valid_output_object": 0.0}}
+        return {"score": 0.0, "dimensions": {"valid_output_object": 0.0}, "quality_level": "poor"}
 
     dimensions = {}
 
@@ -51,7 +51,17 @@ def score_output(output, rubric=None):
         total_weight += weight
 
     score = round(weighted_total / total_weight, 2) if total_weight else 0.0
-    return {"score": score, "dimensions": per_dimension, "_fallback": True}
+
+    if score >= 90:
+        quality_level = "excellent"
+    elif score >= 70:
+        quality_level = "good"
+    elif score >= 50:
+        quality_level = "fair"
+    else:
+        quality_level = "poor"
+
+    return {"score": score, "dimensions": per_dimension, "quality_level": quality_level, "_fallback": True}
 
 
 def analyze_options(options, goal, context=None):
