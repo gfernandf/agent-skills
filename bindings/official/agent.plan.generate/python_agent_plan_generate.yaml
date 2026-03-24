@@ -5,8 +5,11 @@ protocol: pythoncall
 operation: generate_plan
 request:
   goal: input.objective
+  context: input.context
+  max_steps: input.max_steps
 response:
   plan: response.plan
+  step_count: response.step_count
 metadata:
   description: Official binding for agent.plan.generate using the agent_baseline service.
   status: stable

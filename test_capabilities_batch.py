@@ -25,9 +25,11 @@ from runtime.binding_models import BindingSpec
 
 # Test data generators - names must match binding input fields
 TEST_DATA = {
-    "agent.task.delegate": {"agent": "agent1", "task": "summarize text"},
-    "agent.plan.generate": {"objective": "Build a web scraper"},
-    "agent.input.route": {"input": "What is machine learning?"},
+    "agent.task.delegate": {"agent": "summarizer", "task": {"description": "Summarize the Q3 report", "priority": "high"}},
+    "agent.plan.generate": {"objective": "Build a web scraper", "context": "Python preferred, target site uses JS rendering"},
+    "agent.input.route": {"query": "Summarize this quarterly earnings report", "agents": ["summarizer", "analyst", "translator"]},
+    "agent.option.generate": {"goal": "Choose a deployment strategy for the new microservice", "max_options": 3},
+    "agent.plan.create": {"intent_description": "Receive a PDF invoice, extract the text, classify if overdue, store summary"},
     "audio.speech.transcribe": {"audio": b"fake audio data"},
     "code.diff.extract": {"code_a": "x = 5", "code_b": "x = 10"},
     "code.snippet.execute": {"code": "x = 5 + 3; print(x)", "language": "python"},
@@ -203,13 +205,15 @@ def call_capability(capability_id: str, binding: BindingSpec, test_input: Dict[s
         
         # Build arguments from request template
         args = {}
+        sig = inspect.signature(func)
         for param_name, value in binding.request_template.items():
             if isinstance(value, str) and value.startswith("input."):
                 input_field = value[len("input."):]
                 if input_field in test_input:
                     args[param_name] = test_input[input_field]
+                elif param_name in sig.parameters and sig.parameters[param_name].default is not inspect.Parameter.empty:
+                    continue  # skip optional params with defaults
                 else:
-                    # Missing required input
                     return False, f"Missing input field: {input_field} (for param: {param_name})", None
             else:
                 args[param_name] = value

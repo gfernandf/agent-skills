@@ -26,7 +26,7 @@ request:
         (those without mutual dependencies). Be specific to the objective.
         Return valid JSON only. No markdown fences.
     - role: user
-      content: "Objective: ${input.objective}"
+      content: "Objective: ${input.objective}\n\nContext: ${input.context}"
   temperature: 0.3
   response_format:
     type: json_object

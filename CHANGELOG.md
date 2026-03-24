@@ -82,4 +82,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `policies/official_default_selection.yaml`.
 
 #### Documentation closure
-- `docs/BINDING_SELECTION.md` updated with model.* baselines table.
+- `docs/BINDING_SELECTION.md` updated with model.* and agent.* baselines tables.
+
+#### agent.* domain review
+- 3 draft capabilities fleshed out: `agent.input.route`, `agent.plan.generate`,
+  `agent.task.delegate` — enriched contracts with structured inputs/outputs.
+- Bindings updated to match new capability schemas (query/agents for route,
+  context/max_steps for plan.generate, structured task for delegate).
+- Baselines updated: `route_agent()` with keyword matching, `generate_plan()`
+  with structured output (steps/assumptions/risks), `delegate_agent()` with
+  delegation_id.
+- Test data added for `agent.option.generate` and `agent.plan.create`.
+- `docs/BINDING_SELECTION.md` updated with agent.* baselines section.
+
+#### Runtime fix — optional input field handling
+- `runtime/request_builder.py`: bindings referencing optional input fields
+  (absent from step input) no longer raise `RequestBuildError`. Missing fields
+  are omitted from pythoncall payloads and rendered as empty in template strings.
+  Fixes execution failures for all capabilities with optional inputs.

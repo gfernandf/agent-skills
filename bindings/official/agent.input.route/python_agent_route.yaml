@@ -4,8 +4,8 @@ service: agent_baseline
 protocol: pythoncall
 operation: route_agent
 request:
-  query: input.input
-  agents: input.input
+  query: input.query
+  agents: input.agents
 response:
   route: response.route
 metadata:

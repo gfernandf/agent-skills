@@ -6,8 +6,8 @@ protocol: openapi
 operation: route
 
 request:
-  query: input.input
-  agents: input.input
+  query: input.query
+  agents: input.agents
 
 response:
   route: response.route

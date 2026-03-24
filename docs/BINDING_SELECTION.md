@@ -139,7 +139,18 @@ The `model.*` domain has two kinds of capabilities:
 These baselines ensure the system never crashes — but for production use with
 LLM-dependent capabilities, **setting `OPENAI_API_KEY` is strongly
 recommended**.
+### agent.* domain baselines
 
+Three agent.* capabilities use OpenAI for production quality but fall back to
+deterministic baselines. Two are always pythoncall-only.
+
+| Capability | Baseline behaviour |
+|---|---|
+| `agent.input.route` | Keyword match against agent names, first-agent fallback |
+| `agent.option.generate` | 4 template archetypes (conservative/balanced/aggressive/alternative) |
+| `agent.plan.generate` | 3-step stub plan (analyse → execute → verify) |
+| `agent.plan.create` | scaffold_service — LLM if available, template otherwise |
+| `agent.task.delegate` | Always accepts; returns deterministic delegation_id |
 ---
 
 ## Adding Support for Other Providers

@@ -15,6 +15,13 @@ class RequestBuildError(RuntimeErrorBase):
 _INPUT_TEMPLATE_RE = re.compile(r"\$\{(input\.[^}]+)\}")
 
 
+class _MissingInputSentinel:
+    """Sentinel indicating an optional input field was absent."""
+
+
+_MISSING = _MissingInputSentinel()
+
+
 class RequestBuilder:
     """
     Build the concrete invocation payload for a binding.
@@ -66,6 +73,9 @@ class RequestBuilder:
                 f"Binding '{binding.id}' request template must resolve to a mapping.",
                 capability_id=binding.capability_id,
             )
+
+        # Strip keys whose input references were absent (optional fields).
+        payload = {k: v for k, v in payload.items() if not isinstance(v, _MissingInputSentinel)}
 
         return payload
 
@@ -135,7 +145,9 @@ class RequestBuilder:
                     step_input=step_input,
                     binding=binding,
                 )
-                if isinstance(resolved, (dict, list)):
+                if isinstance(resolved, _MissingInputSentinel):
+                    rendered_parts.append("")
+                elif isinstance(resolved, (dict, list)):
                     rendered_parts.append(json.dumps(resolved, ensure_ascii=True))
                 elif resolved is None:
                     rendered_parts.append("null")
@@ -189,10 +201,7 @@ class RequestBuilder:
                 )
 
             if part not in current:
-                raise RequestBuildError(
-                    f"Binding '{binding.id}' references missing input field 'input.{field_path}'.",
-                    capability_id=binding.capability_id,
-                )
+                return _MISSING
 
             current = current[part]
 
