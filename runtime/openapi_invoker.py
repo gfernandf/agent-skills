@@ -20,6 +20,15 @@ class OpenAPIInvocationError(RuntimeErrorBase):
     """Raised when an OpenAPI invocation fails."""
 
 
+# HTTP status codes that are considered transient and eligible for retry.
+_TRANSIENT_STATUS_CODES = frozenset({429, 502, 503, 504})
+
+_DEFAULT_MAX_RETRIES = 3
+_DEFAULT_RETRY_BACKOFF_BASE = 1.0
+_DEFAULT_RETRY_BACKOFF_FACTOR = 2.0
+_MAX_RETRY_AFTER_SECONDS = 60.0
+
+
 class OpenAPIInvoker:
     """
     Execute a binding invocation against an OpenAPI-compatible HTTP service.
@@ -79,6 +88,21 @@ class OpenAPIInvoker:
             capability_id=capability_id,
         )
 
+        max_retries = self._resolve_retry_count(
+            binding.metadata.get("retry_count"),
+            service.metadata.get("retry_count"),
+        )
+        backoff_base = self._resolve_positive_float(
+            binding.metadata.get("retry_backoff_base"),
+            service.metadata.get("retry_backoff_base"),
+            _DEFAULT_RETRY_BACKOFF_BASE,
+        )
+        backoff_factor = self._resolve_positive_float(
+            binding.metadata.get("retry_backoff_factor"),
+            service.metadata.get("retry_backoff_factor"),
+            _DEFAULT_RETRY_BACKOFF_FACTOR,
+        )
+
         if os.getenv("AGENT_SKILLS_DEBUG"):
             try:
                 safe_headers = self._redact_headers(headers or {})
@@ -88,26 +112,55 @@ class OpenAPIInvoker:
             except Exception:
                 pass
 
-        try:
-            response = requests.request(
-                method=method,
-                url=url,
-                json=request.payload,
-                headers=headers or None,
-                timeout=timeout_seconds,
-            )
-        except requests.Timeout as e:
-            raise OpenAPIInvocationError(
-                f"HTTP request timed out for service '{service.id}'.",
-                capability_id=capability_id,
-                cause=e,
-            ) from e
-        except requests.RequestException as e:
-            raise OpenAPIInvocationError(
-                f"HTTP request failed for service '{service.id}'.",
-                capability_id=capability_id,
-                cause=e,
-            ) from e
+        last_error: Exception | None = None
+        last_response: requests.Response | None = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = requests.request(
+                    method=method,
+                    url=url,
+                    json=request.payload,
+                    headers=headers or None,
+                    timeout=timeout_seconds,
+                )
+            except requests.Timeout as e:
+                last_error = e
+                if attempt < max_retries:
+                    self._wait_backoff(attempt, backoff_base, backoff_factor)
+                    continue
+                raise OpenAPIInvocationError(
+                    f"HTTP request timed out for service '{service.id}' "
+                    f"after {max_retries + 1} attempt(s).",
+                    capability_id=capability_id,
+                    cause=e,
+                ) from e
+            except requests.ConnectionError as e:
+                last_error = e
+                if attempt < max_retries:
+                    self._wait_backoff(attempt, backoff_base, backoff_factor)
+                    continue
+                raise OpenAPIInvocationError(
+                    f"HTTP connection failed for service '{service.id}' "
+                    f"after {max_retries + 1} attempt(s).",
+                    capability_id=capability_id,
+                    cause=e,
+                ) from e
+            except requests.RequestException as e:
+                raise OpenAPIInvocationError(
+                    f"HTTP request failed for service '{service.id}'.",
+                    capability_id=capability_id,
+                    cause=e,
+                ) from e
+
+            if response.status_code in _TRANSIENT_STATUS_CODES and attempt < max_retries:
+                last_response = response
+                wait = self._extract_retry_after(response, attempt, backoff_base, backoff_factor)
+                time.sleep(wait)
+                continue
+
+            # Non-transient or last attempt — break out of retry loop.
+            break
 
         if os.getenv("AGENT_SKILLS_DEBUG"):
             try:
@@ -400,3 +453,45 @@ class OpenAPIInvoker:
             else:
                 redacted[k] = v
         return redacted
+
+    # ── Retry helpers ──────────────────────────────────────────────
+
+    @staticmethod
+    def _resolve_retry_count(binding_val: Any, service_val: Any) -> int:
+        chosen = binding_val if binding_val is not None else service_val
+        if chosen is None:
+            return _DEFAULT_MAX_RETRIES
+        if isinstance(chosen, int) and chosen >= 0:
+            return chosen
+        return _DEFAULT_MAX_RETRIES
+
+    @staticmethod
+    def _resolve_positive_float(binding_val: Any, service_val: Any, default: float) -> float:
+        chosen = binding_val if binding_val is not None else service_val
+        if chosen is None:
+            return default
+        if isinstance(chosen, (int, float)) and chosen > 0:
+            return float(chosen)
+        return default
+
+    @staticmethod
+    def _wait_backoff(attempt: int, base: float, factor: float) -> None:
+        delay = base * (factor ** attempt)
+        time.sleep(delay)
+
+    @staticmethod
+    def _extract_retry_after(
+        response: requests.Response,
+        attempt: int,
+        backoff_base: float,
+        backoff_factor: float,
+    ) -> float:
+        """Parse Retry-After header if present; fall back to exponential backoff."""
+        retry_after = response.headers.get("Retry-After")
+        if retry_after is not None:
+            try:
+                wait = float(retry_after)
+                return min(max(wait, 0), _MAX_RETRY_AFTER_SECONDS)
+            except (ValueError, TypeError):
+                pass
+        return backoff_base * (backoff_factor ** attempt)

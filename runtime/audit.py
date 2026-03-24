@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import tempfile
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -31,6 +32,29 @@ _SENSITIVE_KEY_PARTS = {
     "credential",
     "session",
 }
+
+
+def _lock_file(f) -> None:
+    """Acquire an exclusive advisory lock (cross-platform)."""
+    if os.name == "nt":
+        import msvcrt
+        msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+    else:
+        import fcntl
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+
+
+def _unlock_file(f) -> None:
+    """Release the advisory lock."""
+    if os.name == "nt":
+        import msvcrt
+        try:
+            msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+    else:
+        import fcntl
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 
 class AuditRecorder:
@@ -87,8 +111,13 @@ class AuditRecorder:
         )
 
         self.audit_file.parent.mkdir(parents=True, exist_ok=True)
+        line = json.dumps(record, ensure_ascii=True, separators=(",", ":")) + "\n"
         with self.audit_file.open("a", encoding="utf-8", newline="\n") as f:
-            f.write(json.dumps(record, ensure_ascii=True, separators=(",", ":")) + "\n")
+            _lock_file(f)
+            try:
+                f.write(line)
+            finally:
+                _unlock_file(f)
 
     def purge(
         self,
@@ -122,41 +151,61 @@ class AuditRecorder:
         total = 0
         deleted = 0
 
-        with self.audit_file.open("r", encoding="utf-8") as f:
-            for raw in f:
-                line = raw.rstrip("\n")
-                if not line:
-                    continue
-                total += 1
+        # Lock the audit file during the entire read-filter-replace cycle
+        # to prevent concurrent appends from being lost.
+        with self.audit_file.open("r+", encoding="utf-8") as f:
+            _lock_file(f)
+            try:
+                for raw in f:
+                    line = raw.rstrip("\n")
+                    if not line:
+                        continue
+                    total += 1
 
-                item: dict[str, Any] | None = None
+                    item: dict[str, Any] | None = None
+                    try:
+                        parsed = json.loads(line)
+                        if isinstance(parsed, dict):
+                            item = parsed
+                    except json.JSONDecodeError:
+                        kept_lines.append(line)
+                        continue
+
+                    if item is None:
+                        kept_lines.append(line)
+                        continue
+
+                    if self._should_purge_record(
+                        item,
+                        trace_id=trace_id,
+                        skill_id=skill_id,
+                        cutoff=cutoff,
+                        purge_all=purge_all,
+                    ):
+                        deleted += 1
+                        continue
+
+                    kept_lines.append(line)
+
+                # Atomic replace: write to temp file then rename over original.
+                parent = self.audit_file.parent
+                fd, tmp_path = tempfile.mkstemp(
+                    dir=str(parent), prefix=".audit_purge_", suffix=".tmp",
+                )
                 try:
-                    parsed = json.loads(line)
-                    if isinstance(parsed, dict):
-                        item = parsed
-                except json.JSONDecodeError:
-                    kept_lines.append(line)
-                    continue
-
-                if item is None:
-                    kept_lines.append(line)
-                    continue
-
-                if self._should_purge_record(
-                    item,
-                    trace_id=trace_id,
-                    skill_id=skill_id,
-                    cutoff=cutoff,
-                    purge_all=purge_all,
-                ):
-                    deleted += 1
-                    continue
-
-                kept_lines.append(line)
-
-        with self.audit_file.open("w", encoding="utf-8", newline="\n") as f:
-            for line in kept_lines:
-                f.write(line + "\n")
+                    with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as tmp:
+                        for line in kept_lines:
+                            tmp.write(line + "\n")
+                    os.replace(tmp_path, str(self.audit_file))
+                except BaseException:
+                    # Clean up temp file on failure
+                    try:
+                        os.unlink(tmp_path)
+                    except OSError:
+                        pass
+                    raise
+            finally:
+                _unlock_file(f)
 
         return {
             "source": str(self.audit_file),

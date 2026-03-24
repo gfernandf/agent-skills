@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import os
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, List
 
 from runtime.errors import InvalidSkillSpecError
+
+_DEFAULT_MAX_WORKERS = 8
 
 
 class _StateLock:
@@ -57,8 +60,15 @@ class Scheduler:
       state writes are protected by ``state_lock``.
     """
 
-    def __init__(self, max_workers: int = 8, storage_manager=None):
-        self.max_workers = max_workers
+    def __init__(self, max_workers: int | None = None, storage_manager=None):
+        if max_workers is not None:
+            self.max_workers = max_workers
+        else:
+            env_val = os.getenv("AGENT_SKILLS_MAX_WORKERS", "")
+            try:
+                self.max_workers = int(env_val) if env_val else _DEFAULT_MAX_WORKERS
+            except ValueError:
+                self.max_workers = _DEFAULT_MAX_WORKERS
         self.storage_manager = storage_manager
 
     def schedule(
@@ -170,7 +180,24 @@ class Scheduler:
                     if future.done():
                         sid = futures.pop(future)
                         running.discard(sid)
-                        result = future.result()
+                        try:
+                            result = future.result()
+                        except Exception as exc:
+                            # Step executor raised an unhandled exception
+                            # (e.g. safety errors, timeout). Create a failed
+                            # StepResult so the scheduler can continue or
+                            # abort cleanly instead of deadlocking.
+                            from runtime.models import StepResult as SR
+                            result = SR(
+                                step_id=sid,
+                                uses=step_map[sid].uses,
+                                status="failed",
+                                resolved_input={},
+                                produced_output=None,
+                                error_message=str(exc),
+                                started_at=None,
+                                finished_at=None,
+                            )
                         results.append(result)
                         if result.status == "completed":
                             completed.add(sid)

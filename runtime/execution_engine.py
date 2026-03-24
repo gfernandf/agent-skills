@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from datetime import datetime, timezone
 from uuid import uuid4
 from typing import Any
@@ -12,6 +13,7 @@ from runtime.errors import (
     SafetyGateFailedError,
     SafetyTrustLevelError,
     StepExecutionError,
+    StepTimeoutError,
 )
 from runtime.execution_state import (
     create_execution_state,
@@ -40,6 +42,9 @@ _TRUST_LEVEL_RANK: dict[str, int] = {
     "elevated": 2,
     "privileged": 3,
 }
+
+# Default per-step timeout in seconds. Overridable in skill step config.
+_DEFAULT_STEP_TIMEOUT_SECONDS = 60.0
 
 
 def _build_auto_wire_mapping(
@@ -505,13 +510,25 @@ class ExecutionEngine:
                         latency_ms=elapsed_ms(step_start),
                     )
 
-                result = self.capability_executor.execute(
-                    capability,
-                    step_input,
-                    trace_id=context.trace_id,
-                    required_conformance_profile=context.options.required_conformance_profile,
-                    trace_callback=trace_callback,
-                )
+                step_timeout = self._resolve_step_timeout(step, context)
+
+                with ThreadPoolExecutor(max_workers=1) as step_pool:
+                    future = step_pool.submit(
+                        self.capability_executor.execute,
+                        capability,
+                        step_input,
+                        trace_id=context.trace_id,
+                        required_conformance_profile=context.options.required_conformance_profile,
+                        trace_callback=trace_callback,
+                    )
+                    try:
+                        result = future.result(timeout=step_timeout)
+                    except FuturesTimeoutError:
+                        future.cancel()
+                        raise StepTimeoutError(
+                            f"Step '{step.id}' exceeded timeout of {step_timeout}s.",
+                            skill_id=skill_id,
+                        )
 
                 if isinstance(result, tuple):
                     produced, meta = result
@@ -675,6 +692,17 @@ class ExecutionEngine:
                 finished_at=fail_finished_at,
                 latency_ms=fail_latency_ms,
             )
+
+    @staticmethod
+    def _resolve_step_timeout(step, context) -> float:
+        """Resolve timeout for a step: step config > skill-level > default."""
+        step_val = step.config.get("timeout_seconds") if hasattr(step, "config") else None
+        if isinstance(step_val, (int, float)) and step_val > 0:
+            return float(step_val)
+        skill_val = getattr(context.options, "step_timeout_seconds", None)
+        if isinstance(skill_val, (int, float)) and skill_val > 0:
+            return float(skill_val)
+        return _DEFAULT_STEP_TIMEOUT_SECONDS
 
     @staticmethod
     def _collect_reads(input_mapping: dict[str, Any]) -> list[str]:

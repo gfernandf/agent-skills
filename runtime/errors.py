@@ -111,3 +111,7 @@ class SafetyGateFailedError(RuntimeErrorBase):
 
 class SafetyConfirmationRequiredError(RuntimeErrorBase):
     """Raised when a capability requires human confirmation before execution."""
+
+
+class StepTimeoutError(RuntimeErrorBase):
+    """Raised when a step exceeds its configured timeout."""
