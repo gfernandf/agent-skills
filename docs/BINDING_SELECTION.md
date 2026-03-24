@@ -114,6 +114,28 @@ implementation:
 | `text.content.transform` | Wraps text with the goal directive |
 | `text.response.extract` | Returns first sentence of context |
 
+### model.* domain baselines
+
+The `model.*` domain has two kinds of capabilities:
+
+**Deterministic (always pythoncall — no LLM needed):**
+
+| Capability | Baseline behaviour |
+|---|---|
+| `model.output.sanitize` | Regex-based deep PII/harmful/leakage removal |
+| `model.prompt.template` | `${var}` substitution with unresolved tracking |
+
+**LLM-dependent (OpenAI preferred when key is set):**
+
+| Capability | Baseline behaviour |
+|---|---|
+| `model.output.generate` | Mock / OpenAI only (no pythoncall baseline) |
+| `model.response.validate` | Structural check: empty fields, non-dict detection |
+| `model.embedding.generate` | Hash-based pseudo-embedding (128-dim default) |
+| `model.output.classify` | Keyword frequency + field-name heuristics |
+| `model.output.score` | Word overlap, sentence length, length ratio proxies |
+| `model.risk.score` | Pattern matching for toxicity, bias, injection markers |
+
 These baselines ensure the system never crashes — but for production use with
 LLM-dependent capabilities, **setting `OPENAI_API_KEY` is strongly
 recommended**.

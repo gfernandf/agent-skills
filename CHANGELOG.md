@@ -51,3 +51,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Test harness (`test_capabilities_batch.py`): smart fallback to locally
   importable Python baselines; test data for all 13 text.* capabilities.
 - `.gitignore`: `*.egg-info/`.
+
+#### web.* domain review
+- 5/5 web.* capabilities verified functional; promoted to `experimental`.
+- New bindings: `web.page.scrape`, `web.search.query`, `web.link.extract`,
+  `web.content.download`, `web.feed.parse` — OpenAI + pythoncall variants.
+- Python baselines in `official_services/web_baseline.py`.
+- Default selections added to `policies/official_default_selection.yaml`.
+
+#### Binding auto-detection (Option B)
+- `runtime/binding_resolver.py` v2: three-step resolution —
+  local override → environment-preferred → official default → error.
+- `_resolve_environment_preferred()` checks `_ENV_SERVICE_PREFERENCES`
+  for env var availability (e.g. `OPENAI_API_KEY` → prefer `openai` bindings,
+  absent → prefer `pythoncall` baselines).
+- `ResolvedBinding.selection_source` extended with `environment_preferred`.
+- `docs/BINDING_SELECTION.md` created with architecture, resolution flow,
+  precedence rules, and per-domain baseline tables.
+
+#### model.* domain implementation
+- 6 new capability bindings fleshed out: `model.embedding.generate`,
+  `model.output.classify`, `model.output.score`, `model.output.sanitize`,
+  `model.prompt.template`, `model.risk.score`.
+- 10 binding YAMLs: 6 pythoncall + 4 OpenAI (generate, validate, embed,
+  classify).
+- Python baselines in `official_services/model_baseline.py`: 7 functions
+  (`validate_response`, `generate_embedding`, `classify_output`,
+  `score_output`, `sanitize_output`, `template_prompt`, `score_risk`).
+- Default selections for all 8 model.* capabilities in
+  `policies/official_default_selection.yaml`.
+
+#### Documentation closure
+- `docs/BINDING_SELECTION.md` updated with model.* baselines table.
