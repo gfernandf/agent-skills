@@ -1,0 +1,20 @@
+id: openapi_model_embedding_generate_openai
+capability: model.embedding.generate
+service: model_openai_chat
+protocol: openapi
+operation: embeddings
+
+request:
+  model: text-embedding-3-small
+  input: input.text
+
+response:
+  embedding: response.data.0.embedding
+  model: response.model
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_model_embedding_generate
+  description: "OpenAI binding for model.embedding.generate using text-embedding-3-small."
+  status: experimental

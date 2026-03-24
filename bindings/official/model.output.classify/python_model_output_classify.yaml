@@ -1,0 +1,19 @@
+id: python_model_output_classify
+capability: model.output.classify
+service: model_baseline
+protocol: pythoncall
+operation: classify_output
+
+request:
+  output: input.output
+  categories: input.categories
+  context: input.context
+
+response:
+  category: response.category
+  confidence: response.confidence
+  rationale: response.rationale
+
+metadata:
+  description: Official pythoncall binding for model.output.classify.
+  status: experimental

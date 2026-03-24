@@ -1,0 +1,18 @@
+id: python_model_embedding_generate
+capability: model.embedding.generate
+service: model_baseline
+protocol: pythoncall
+operation: generate_embedding
+
+request:
+  text: input.text
+  model: input.model
+  dimensions: input.dimensions
+
+response:
+  embedding: response.embedding
+  model: response.model
+
+metadata:
+  description: Official pythoncall binding for model.embedding.generate.
+  status: experimental

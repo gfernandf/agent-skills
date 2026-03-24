@@ -59,6 +59,12 @@ defaults:
   eval.option.score: openapi_eval_option_score_openai_chat
   model.output.generate: openapi_model_output_generate_openai_chat
   model.response.validate: openapi_model_response_validate_openai_chat
+  model.embedding.generate: openapi_model_embedding_generate_openai
+  model.output.classify: openapi_model_output_classify_openai_chat
+  model.output.score: openapi_model_output_score_openai_chat
+  model.output.sanitize: python_model_output_sanitize
+  model.prompt.template: python_model_prompt_template
+  model.risk.score: openapi_model_risk_score_openai_chat
   analysis.theme.cluster: openapi_analysis_theme_cluster_openai_chat
   web.source.normalize: python_web_source_normalize
   text.content.merge: python_text_merge

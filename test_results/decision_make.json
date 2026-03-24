@@ -1,64 +1,86 @@
 {
   "criteria_used": [
     {
-      "name": "feasibility",
-      "description": "How feasible is this option?",
-      "weight": 1.0
-    },
-    {
-      "name": "impact",
-      "description": "What is the expected impact?",
-      "weight": 1.0
+      "name": "cost",
+      "description": "The financial investment required for the option.",
+      "weight": 0.25
     },
     {
       "name": "risk",
-      "description": "What is the risk level?",
-      "weight": 1.0
+      "description": "The potential risk associated with the option.",
+      "weight": 0.25
+    },
+    {
+      "name": "speed",
+      "description": "The speed at which the option can be implemented.",
+      "weight": 0.25
+    },
+    {
+      "name": "timeline",
+      "description": "The overall timeline for the option's completion.",
+      "weight": 0.25
     }
   ],
-  "evaluation_summary": "All 4 options scored on 3 criteria.",
+  "evaluation_summary": "The option to conduct comprehensive market research scored the highest overall, providing low risk and valuable insights despite a longer timeline. Forming strategic partnerships followed closely, offering a balanced approach with moderate risk and faster entry. The pilot launch option, while providing direct feedback, required a higher investment and had a slightly lower score. Finally, investing in product localization, while crucial for compliance and user satisfaction, scored the lowest due to its high cost and slow implementation.",
   "tradeoffs": [
     {
-      "tension": "Feasibility vs Impact",
-      "gained": "Lower risk",
-      "lost": "Potentially lower reward"
+      "tension": "Cost vs. Risk",
+      "gained": "Lower risk with market research",
+      "lost": "Higher costs and longer timelines"
+    },
+    {
+      "tension": "Speed vs. Thoroughness",
+      "gained": "Faster entry with partnerships",
+      "lost": "Potential lack of deep market understanding"
+    },
+    {
+      "tension": "Investment vs. Feedback",
+      "gained": "Real user feedback from pilot launch",
+      "lost": "Higher initial costs"
     }
   ],
-  "recommendation": "Proceed with Option 1: Conservative.",
+  "recommendation": "Proceed with Option 'Conduct Comprehensive Market Research' because it provides the most thorough understanding of the European market, identifies regulatory requirements, and minimizes the risk of compliance issues, despite its longer implementation timeline.",
   "alternatives_considered": [
     {
-      "id": "opt-conservative",
-      "label": "Option 1: Conservative",
-      "selected": true
+      "id": "opt-market-research",
+      "label": "Conduct Comprehensive Market Research",
+      "selected": true,
+      "reason": "Offers valuable insights and reduces risk of compliance issues."
     },
     {
-      "id": "opt-balanced",
-      "label": "Option 2: Balanced",
-      "selected": false
+      "id": "opt-partnerships",
+      "label": "Form Strategic Partnerships",
+      "selected": false,
+      "reason": "While it leverages local expertise, it carries risks of misalignment and dependence on partner performance."
     },
     {
-      "id": "opt-aggressive",
-      "label": "Option 3: Aggressive",
-      "selected": false
+      "id": "opt-pilot-launch",
+      "label": "Launch a Pilot Program",
+      "selected": false,
+      "reason": "Provides direct feedback but has high initial costs and limited market representation."
     },
     {
-      "id": "opt-alternative",
-      "label": "Option 4: Alternative",
-      "selected": false
+      "id": "opt-localization",
+      "label": "Invest in Product Localization",
+      "selected": false,
+      "reason": "Ensures compliance and user satisfaction but is resource-intensive and slow to implement."
     }
   ],
-  "confidence_score": 0.9,
+  "confidence_score": 0.85,
   "confidence_level": "high",
   "uncertainties": [
-    "Baseline analysis — real uncertainties require deeper evaluation."
+    "The accuracy and relevance of market research findings.",
+    "Potential changes in market conditions during the research period."
   ],
   "failure_modes": [
-    "Key assumptions may not hold under changing conditions."
+    "Inaccurate or outdated market data leading to poor decision-making.",
+    "Market conditions changing significantly during the research period."
   ],
   "next_steps": [
-    "Validate recommendation with domain experts.",
-    "Run a pilot if feasible."
+    "Allocate budget and resources for comprehensive market research.",
+    "Identify and engage a reputable market research firm.",
+    "Establish a timeline for research completion and subsequent analysis."
   ],
-  "human_readable": "Based on the evaluation, the recommended option is 'Option 1: Conservative'. This selection reflects a high confidence level (0.9). Risk tolerance was set to medium. Next steps include expert validation and a pilot run.",
-  "decision_quality": 100.0
+  "human_readable": "After evaluating the options for expanding our AI product to the European market, the recommendation is to proceed with conducting comprehensive market research. This option scored the highest overall and offers significant advantages, including a thorough understanding of market demand and competition, which is crucial for informed decision-making. Additionally, it helps identify regulatory requirements, thereby minimizing compliance risks. Although this approach requires a considerable investment of time and resources, the insights gained will be invaluable for our strategic planning and execution in the European market.\n\nWhile forming strategic partnerships could facilitate market entry and leverage local expertise, it carries risks related to dependence on partner performance and potential misalignment of goals. Similarly, launching a pilot program provides direct user feedback but may not fully represent the broader market and entails higher initial costs. Investing in product localization is essential for compliance and user satisfaction, yet it is resource-intensive and could delay our market entry.\n\nThe confidence in this recommendation is high, but there are uncertainties regarding the accuracy of the market research findings and potential changes in market conditions during the research period. To mitigate these risks, we will allocate the necessary budget and resources for the market research, engage a reputable firm, and establish a clear timeline for completion and analysis. This proactive approach will position us well for a successful expansion into the European market.",
+  "decision_quality": 85
 }

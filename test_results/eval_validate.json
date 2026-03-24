@@ -4,18 +4,18 @@
     {
       "dimension": "coherence",
       "severity": "medium",
-      "description": "The recommendation lacks a clear connection to the provided evaluation summary and alternatives considered."
+      "description": "The recommendation lacks detailed justification based on the provided evidence context."
     },
     {
       "dimension": "grounding",
       "severity": "high",
-      "description": "The output does not provide sufficient grounding in the evidence context, which is vague and does not directly support the recommendation."
+      "description": "The output does not clearly connect the recommendation to the evidence context provided."
     },
     {
       "dimension": "coverage",
       "severity": "medium",
-      "description": "The uncertainties mentioned are not fully addressed in the evaluation summary or the recommendation."
+      "description": "The output does not address how the uncertainties and failure modes relate to the recommendation."
     }
   ],
-  "validation_summary": "The output fails to meet the coherence and grounding requirements, and there are coverage issues regarding uncertainties."
+  "validation_summary": "The output fails to meet the coherence, grounding, and coverage requirements based on the validation policy."
 }

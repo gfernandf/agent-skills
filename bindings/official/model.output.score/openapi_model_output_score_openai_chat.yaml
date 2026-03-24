@@ -1,0 +1,44 @@
+id: openapi_model_output_score_openai_chat
+capability: model.output.score
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a quality scoring assistant for model-generated outputs.
+        You receive an output, the original instruction, an optional reference,
+        and a list of quality dimensions to evaluate.
+        Score each dimension from 0.0 (worst) to 1.0 (best).
+        Compute an overall score as the average.
+        Return a JSON object with: scores (object mapping dimension to score),
+        overall (number), rationale (string summarising findings).
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: |
+        Instruction: ${input.instruction}
+
+        Output to score:
+        ${input.output}
+
+        Reference: ${input.reference}
+
+        Dimensions: ${input.dimensions}
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  scores: response.choices.0.message.content_json.scores
+  overall: response.choices.0.message.content_json.overall
+  rationale: response.choices.0.message.content_json.rationale
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_model_output_score
+  description: "OpenAI binding for model.output.score using gpt-4o-mini."
+  status: experimental

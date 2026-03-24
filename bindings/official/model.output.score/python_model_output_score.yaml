@@ -1,0 +1,20 @@
+id: python_model_output_score
+capability: model.output.score
+service: model_baseline
+protocol: pythoncall
+operation: score_output
+
+request:
+  output: input.output
+  instruction: input.instruction
+  reference: input.reference
+  dimensions: input.dimensions
+
+response:
+  scores: response.scores
+  overall: response.overall
+  rationale: response.rationale
+
+metadata:
+  description: Official pythoncall binding for model.output.score.
+  status: experimental

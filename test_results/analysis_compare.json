@@ -3,55 +3,82 @@
     {
       "option_id": "aws",
       "pros": [
-        "AWS addresses the stated goal."
+        "Mature and reliable platform with extensive documentation.",
+        "Broad service catalog that supports a wide range of AI workloads.",
+        "Low latency capabilities suitable for real-time applications.",
+        "Strong community and third-party support."
       ],
       "cons": [
-        "AWS may have hidden costs or complexity."
+        "Higher cost compared to other providers, which may strain a moderate budget.",
+        "Complex pricing structure can lead to unexpected costs."
       ],
       "risks": [
         {
-          "description": "Risk associated with AWS.",
+          "description": "Potential for budget overruns due to complex pricing.",
+          "severity": "high"
+        },
+        {
+          "description": "Vendor lock-in due to extensive use of AWS-specific services.",
           "severity": "medium"
         }
       ],
       "assumptions": [
-        "Assumes AWS is feasible within current constraints."
+        "The organization values a mature ecosystem and extensive service options.",
+        "The team has the expertise to navigate AWS's complexity."
       ]
     },
     {
       "option_id": "gcp",
       "pros": [
-        "Google Cloud addresses the stated goal."
+        "Strong focus on AI and ML tools, providing advanced capabilities.",
+        "Competitive pricing that aligns well with a moderate budget.",
+        "Low latency performance suitable for AI workloads.",
+        "Growing ecosystem with increasing enterprise adoption."
       ],
       "cons": [
-        "Google Cloud may have hidden costs or complexity."
+        "Less mature than AWS, which may lead to gaps in service offerings.",
+        "Potentially fewer third-party integrations compared to AWS."
       ],
       "risks": [
         {
-          "description": "Risk associated with Google Cloud.",
+          "description": "Risk of insufficient support or documentation due to a smaller user base.",
+          "severity": "medium"
+        },
+        {
+          "description": "Possibility of service disruptions as the platform scales.",
           "severity": "medium"
         }
       ],
       "assumptions": [
-        "Assumes Google Cloud is feasible within current constraints."
+        "The organization is willing to adopt a growing platform with a focus on AI.",
+        "The team is comfortable with potential limitations in service maturity."
       ]
     },
     {
       "option_id": "azure",
       "pros": [
-        "Azure addresses the stated goal."
+        "Strong integration with existing Microsoft products and services.",
+        "Robust hybrid cloud capabilities, beneficial for enterprises.",
+        "Good AI service offerings tailored for enterprise needs.",
+        "Low latency suitable for AI workloads."
       ],
       "cons": [
-        "Azure may have hidden costs or complexity."
+        "Moderate cost may still be a concern for budget-conscious projects.",
+        "Less focus on cutting-edge AI tools compared to GCP."
       ],
       "risks": [
         {
-          "description": "Risk associated with Azure.",
+          "description": "Risk of being tied to Microsoft ecosystem, limiting flexibility.",
+          "severity": "medium"
+        },
+        {
+          "description": "Potential for slower innovation in AI services compared to competitors.",
           "severity": "medium"
         }
       ],
       "assumptions": [
-        "Assumes Azure is feasible within current constraints."
+        "The organization has existing investments in Microsoft technologies.",
+        "The team values strong enterprise support and integration."
       ]
     }
   ],
@@ -59,76 +86,96 @@
     {
       "option_id": "aws",
       "label": "AWS",
-      "overall_score": 90.0,
+      "overall_score": 0.75,
       "per_criterion_scores": {
-        "feasibility": 90.0,
-        "impact": 90.0,
-        "risk": 90.0
+        "latency": 1.0,
+        "cost": 0.6,
+        "ml_tooling": 0.9,
+        "ecosystem": 1.0
       },
       "strengths": [
-        "AWS has a clear definition."
+        "Lowest latency",
+        "Largest ecosystem",
+        "Strong ML tooling"
       ],
       "weaknesses": [
-        "AWS needs more detailed evaluation."
+        "Higher cost"
       ]
     },
     {
       "option_id": "gcp",
       "label": "Google Cloud",
-      "overall_score": 90.0,
+      "overall_score": 0.85,
       "per_criterion_scores": {
-        "feasibility": 90.0,
-        "impact": 90.0,
-        "risk": 90.0
+        "latency": 1.0,
+        "cost": 0.8,
+        "ml_tooling": 1.0,
+        "ecosystem": 0.7
       },
       "strengths": [
-        "Google Cloud has a clear definition."
+        "Strong in AI/ML",
+        "Competitive pricing",
+        "Low latency"
       ],
       "weaknesses": [
-        "Google Cloud needs more detailed evaluation."
+        "Growing ecosystem may lack some enterprise features"
       ]
     },
     {
       "option_id": "azure",
       "label": "Azure",
-      "overall_score": 90.0,
+      "overall_score": 0.7,
       "per_criterion_scores": {
-        "feasibility": 90.0,
-        "impact": 90.0,
-        "risk": 90.0
+        "latency": 1.0,
+        "cost": 0.7,
+        "ml_tooling": 0.8,
+        "ecosystem": 0.8
       },
       "strengths": [
-        "Azure has a clear definition."
+        "Strong enterprise integration",
+        "Good AI services",
+        "Low latency"
       ],
       "weaknesses": [
-        "Azure needs more detailed evaluation."
+        "Higher cost compared to GCP",
+        "Less focus on pure AI/ML compared to GCP"
       ]
     }
   ],
   "criteria_used": [
     {
-      "name": "feasibility",
-      "description": "How feasible is this option?",
-      "weight": 1.0
+      "name": "latency",
+      "description": "The speed of data transfer and processing.",
+      "weight": 0.25
     },
     {
-      "name": "impact",
-      "description": "What is the expected impact?",
-      "weight": 1.0
+      "name": "cost",
+      "description": "The overall expense associated with using the cloud provider.",
+      "weight": 0.25
     },
     {
-      "name": "risk",
-      "description": "What is the risk level?",
-      "weight": 1.0
+      "name": "ml_tooling",
+      "description": "The availability and quality of machine learning tools and services.",
+      "weight": 0.25
+    },
+    {
+      "name": "ecosystem",
+      "description": "The breadth and depth of services and integrations available.",
+      "weight": 0.25
     }
   ],
-  "comparative_summary": "All 3 options scored on 3 criteria.",
+  "comparative_summary": "Google Cloud scores the highest overall due to its strong AI/ML capabilities and competitive pricing, making it an excellent choice for AI workloads. AWS follows closely with the best ecosystem and ML tooling but at a higher cost. Azure, while strong in enterprise integration and low latency, falls slightly behind in AI/ML focus and cost efficiency compared to GCP.",
   "tradeoffs": [
     {
-      "tension": "Feasibility vs Impact",
-      "gained": "Lower risk",
-      "lost": "Potentially lower reward"
+      "tension": "Cost vs. Ecosystem",
+      "gained": "Access to a larger range of services with AWS",
+      "lost": "Higher expenses"
+    },
+    {
+      "tension": "AI/ML Focus vs. Enterprise Integration",
+      "gained": "Strong AI/ML tools with GCP",
+      "lost": "Less enterprise-focused features"
     }
   ],
-  "comparison_quality": 100.0
+  "comparison_quality": 88
 }
