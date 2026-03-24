@@ -1,0 +1,18 @@
+id: python_identity_permission_verify
+capability: identity.permission.verify
+service: identity_baseline
+protocol: pythoncall
+operation: verify_permission
+
+request:
+  principal_id: input.principal_id
+  permission: input.permission
+
+response:
+  verified: response.verified
+  source: response.source
+  evidence: response.evidence
+
+metadata:
+  description: Official pythoncall binding for identity.permission.verify.
+  status: experimental

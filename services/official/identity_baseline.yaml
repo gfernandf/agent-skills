@@ -1,0 +1,7 @@
+id: identity_baseline
+kind: pythoncall
+module: official_services.identity_baseline
+
+metadata:
+  description: "Baseline local implementations for identity-domain capabilities (roles, permissions, risk scoring)."
+  maintained_by: "agent-skills"

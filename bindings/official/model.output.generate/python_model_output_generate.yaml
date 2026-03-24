@@ -1,0 +1,21 @@
+id: python_model_output_generate
+capability: model.output.generate
+service: model_baseline
+protocol: pythoncall
+operation: generate_output
+
+request:
+  instruction: input.instruction
+  context_items: input.context_items
+  output_schema: input.output_schema
+  detail_level: input.detail_level
+  constraints: input.constraints
+
+response:
+  output: response.output
+  warnings: response.warnings
+  coverage: response.coverage
+
+metadata:
+  description: Official pythoncall binding for model.output.generate.
+  status: experimental

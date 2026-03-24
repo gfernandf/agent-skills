@@ -1,0 +1,18 @@
+id: python_ops_event_acknowledge
+capability: ops.event.acknowledge
+service: ops_baseline
+protocol: pythoncall
+operation: acknowledge_event
+
+request:
+  event_id: input.event_id
+  handler: input.handler
+  notes: input.notes
+
+response:
+  acknowledged: response.acknowledged
+  timestamp: response.timestamp
+
+metadata:
+  description: Official pythoncall binding for ops.event.acknowledge.
+  status: experimental

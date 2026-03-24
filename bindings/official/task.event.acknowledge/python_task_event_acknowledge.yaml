@@ -1,0 +1,17 @@
+id: python_task_event_acknowledge
+capability: task.event.acknowledge
+service: task_baseline
+protocol: pythoncall
+operation: acknowledge_event
+
+request:
+  event_id: input.event_id
+  handler: input.handler
+
+response:
+  acknowledged: response.acknowledged
+  timestamp: response.timestamp
+
+metadata:
+  description: Official pythoncall binding for task.event.acknowledge.
+  status: experimental

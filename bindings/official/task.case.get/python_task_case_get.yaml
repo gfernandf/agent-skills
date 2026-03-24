@@ -1,0 +1,16 @@
+id: python_task_case_get
+capability: task.case.get
+service: task_baseline
+protocol: pythoncall
+operation: get_case
+
+request:
+  case_id: input.case_id
+
+response:
+  case: response.case
+  found: response.found
+
+metadata:
+  description: Official pythoncall binding for task.case.get.
+  status: experimental

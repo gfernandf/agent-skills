@@ -1,0 +1,7 @@
+id: integration_baseline
+kind: pythoncall
+module: official_services.integration_baseline
+
+metadata:
+  description: "Baseline local implementations for integration-domain capabilities (connectors, records, mappings)."
+  maintained_by: "agent-skills"

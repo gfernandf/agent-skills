@@ -1,0 +1,18 @@
+id: python_task_sla_monitor
+capability: task.sla.monitor
+service: task_baseline
+protocol: pythoncall
+operation: monitor_sla
+
+request:
+  tasks: input.tasks
+  sla_rules: input.sla_rules
+
+response:
+  compliant: response.compliant
+  breached: response.breached
+  at_risk: response.at_risk
+
+metadata:
+  description: Official pythoncall binding for task.sla.monitor.
+  status: experimental

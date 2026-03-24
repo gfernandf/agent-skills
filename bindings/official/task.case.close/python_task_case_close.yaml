@@ -1,0 +1,17 @@
+id: python_task_case_close
+capability: task.case.close
+service: task_baseline
+protocol: pythoncall
+operation: close_case
+
+request:
+  case_id: input.case_id
+  resolution: input.resolution
+
+response:
+  closed: response.closed
+  timestamp: response.timestamp
+
+metadata:
+  description: Official pythoncall binding for task.case.close.
+  status: experimental

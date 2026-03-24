@@ -1,0 +1,18 @@
+id: python_task_case_create
+capability: task.case.create
+service: task_baseline
+protocol: pythoncall
+operation: create_case
+
+request:
+  title: input.title
+  description: input.description
+  priority: input.priority
+
+response:
+  case_id: response.case_id
+  created: response.created
+
+metadata:
+  description: Official pythoncall binding for task.case.create.
+  status: experimental

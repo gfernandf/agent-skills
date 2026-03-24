@@ -1,0 +1,16 @@
+id: python_identity_role_list
+capability: identity.role.list
+service: identity_baseline
+protocol: pythoncall
+operation: list_roles
+
+request:
+  scope: input.scope
+
+response:
+  roles: response.roles
+  total: response.total
+
+metadata:
+  description: Official pythoncall binding for identity.role.list.
+  status: experimental

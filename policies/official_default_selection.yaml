@@ -25,13 +25,22 @@ defaults:
   image.content.extract: python_image_extract
   memory.entry.retrieve: python_memory_retrieve
   memory.entry.store: python_memory_store
+  memory.record.store: python_memory_record_store
+  memory.vector.search: python_memory_vector_search
   message.notification.send: python_message_send
+  message.priority.classify: python_message_priority_classify
   ops.budget.estimate: python_ops_budget_estimate
+  ops.event.acknowledge: python_ops_event_acknowledge
+  ops.event.monitor: python_ops_event_monitor
   ops.trace.analyze: python_ops_trace_analyze
   ops.trace.monitor: python_ops_trace_monitor
   research.source.retrieve: python_research_source_retrieve
   pdf.document.read: python_pdf_read
   policy.constraint.validate: python_policy_constraint_validate
+  policy.constraint.gate: python_policy_constraint_gate
+  policy.decision.justify: python_policy_decision_justify
+  policy.risk.classify: python_policy_risk_classify
+  policy.risk.score: python_policy_risk_score
   provenance.citation.generate: python_provenance_citation_generate
   provenance.claim.verify: openapi_provenance_claim_verify_openai_chat
   eval.output.score: openapi_eval_output_score_openai_chat
@@ -65,7 +74,7 @@ defaults:
   decision.option.justify: openapi_decision_option_justify_openai_chat
   eval.option.analyze: openapi_eval_option_analyze_openai_chat
   eval.option.score: openapi_eval_option_score_openai_chat
-  model.output.generate: openapi_model_output_generate_openai_chat
+  model.output.generate: python_model_output_generate
   model.response.validate: openapi_model_response_validate_openai_chat
   model.embedding.generate: openapi_model_embedding_generate_openai
   model.output.classify: openapi_model_output_classify_openai_chat
@@ -76,3 +85,46 @@ defaults:
   analysis.theme.cluster: openapi_analysis_theme_cluster_openai_chat
   web.source.normalize: python_web_source_normalize
   text.content.merge: python_text_merge
+
+  # --- identity domain ---
+  identity.assignee.identify: python_identity_assignee_identify
+  identity.decision.justify: python_identity_decision_justify
+  identity.permission.gate: python_identity_permission_gate
+  identity.permission.get: python_identity_permission_get
+  identity.permission.list: python_identity_permission_list
+  identity.permission.verify: python_identity_permission_verify
+  identity.risk.score: python_identity_risk_score
+  identity.role.assign: python_identity_role_assign
+  identity.role.get: python_identity_role_get
+  identity.role.list: python_identity_role_list
+
+  # --- integration domain ---
+  integration.connector.get: python_integration_connector_get
+  integration.connector.list: python_integration_connector_list
+  integration.connector.sync: python_integration_connector_sync
+  integration.event.acknowledge: python_integration_event_acknowledge
+  integration.mapping.transform: python_integration_mapping_transform
+  integration.mapping.validate: python_integration_mapping_validate
+  integration.record.compare: python_integration_record_compare
+  integration.record.create: python_integration_record_create
+  integration.record.delete: python_integration_record_delete
+  integration.record.reconcile: python_integration_record_reconcile
+  integration.record.update: python_integration_record_update
+  integration.record.upsert: python_integration_record_upsert
+
+  # --- task domain ---
+  task.approval.approve: python_task_approval_approve
+  task.approval.reject: python_task_approval_reject
+  task.assignee.assign: python_task_assignee_assign
+  task.case.close: python_task_case_close
+  task.case.create: python_task_case_create
+  task.case.get: python_task_case_get
+  task.case.list: python_task_case_list
+  task.case.search: python_task_case_search
+  task.case.update: python_task_case_update
+  task.event.acknowledge: python_task_event_acknowledge
+  task.incident.create: python_task_incident_create
+  task.milestone.schedule: python_task_milestone_schedule
+  task.priority.classify: python_task_priority_classify
+  task.sla.monitor: python_task_sla_monitor
+  task.state.transition: python_task_state_transition

@@ -1,0 +1,18 @@
+id: python_integration_connector_sync
+capability: integration.connector.sync
+service: integration_baseline
+protocol: pythoncall
+operation: sync_connector
+
+request:
+  connector_id: input.connector_id
+  options: input.options
+
+response:
+  synced: response.synced
+  records_processed: response.records_processed
+  timestamp: response.timestamp
+
+metadata:
+  description: Official pythoncall binding for integration.connector.sync.
+  status: experimental

@@ -1,0 +1,18 @@
+id: python_task_approval_approve
+capability: task.approval.approve
+service: task_baseline
+protocol: pythoncall
+operation: approve_request
+
+request:
+  approval_id: input.approval_id
+  approver: input.approver
+  notes: input.notes
+
+response:
+  approved: response.approved
+  timestamp: response.timestamp
+
+metadata:
+  description: Official pythoncall binding for task.approval.approve.
+  status: experimental

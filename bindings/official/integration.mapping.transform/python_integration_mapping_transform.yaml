@@ -1,0 +1,17 @@
+id: python_integration_mapping_transform
+capability: integration.mapping.transform
+service: integration_baseline
+protocol: pythoncall
+operation: transform_mapping
+
+request:
+  record: input.record
+  mapping: input.mapping
+
+response:
+  transformed: response.transformed
+  unmapped_fields: response.unmapped_fields
+
+metadata:
+  description: Official pythoncall binding for integration.mapping.transform.
+  status: experimental

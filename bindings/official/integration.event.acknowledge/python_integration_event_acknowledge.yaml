@@ -1,0 +1,18 @@
+id: python_integration_event_acknowledge
+capability: integration.event.acknowledge
+service: integration_baseline
+protocol: pythoncall
+operation: acknowledge_event
+
+request:
+  event_id: input.event_id
+  connector_id: input.connector_id
+  notes: input.notes
+
+response:
+  acknowledged: response.acknowledged
+  timestamp: response.timestamp
+
+metadata:
+  description: Official pythoncall binding for integration.event.acknowledge.
+  status: experimental

@@ -1,0 +1,18 @@
+id: python_identity_assignee_identify
+capability: identity.assignee.identify
+service: identity_baseline
+protocol: pythoncall
+operation: identify_assignee
+
+request:
+  task: input.task
+  candidates: input.candidates
+
+response:
+  assignee: response.assignee
+  alternatives: response.alternatives
+  rationale: response.rationale
+
+metadata:
+  description: Official pythoncall binding for identity.assignee.identify.
+  status: experimental

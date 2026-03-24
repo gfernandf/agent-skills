@@ -1,0 +1,18 @@
+id: python_policy_risk_classify
+capability: policy.risk.classify
+service: policy_baseline
+protocol: pythoncall
+operation: classify_risk
+
+request:
+  action: input.action
+  categories: input.categories
+
+response:
+  risk_level: response.risk_level
+  factors: response.factors
+  rationale: response.rationale
+
+metadata:
+  description: Official pythoncall binding for policy.risk.classify.
+  status: experimental

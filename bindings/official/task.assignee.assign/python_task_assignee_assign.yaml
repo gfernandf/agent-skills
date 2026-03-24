@@ -1,0 +1,17 @@
+id: python_task_assignee_assign
+capability: task.assignee.assign
+service: task_baseline
+protocol: pythoncall
+operation: assign_task
+
+request:
+  task_id: input.task_id
+  assignee_id: input.assignee_id
+
+response:
+  assigned: response.assigned
+  timestamp: response.timestamp
+
+metadata:
+  description: Official pythoncall binding for task.assignee.assign.
+  status: experimental

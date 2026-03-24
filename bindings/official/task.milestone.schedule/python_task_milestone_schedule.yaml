@@ -1,0 +1,18 @@
+id: python_task_milestone_schedule
+capability: task.milestone.schedule
+service: task_baseline
+protocol: pythoncall
+operation: schedule_milestone
+
+request:
+  milestone_name: input.milestone_name
+  target_date: input.target_date
+  deliverables: input.deliverables
+
+response:
+  milestone_id: response.milestone_id
+  scheduled: response.scheduled
+
+metadata:
+  description: Official pythoncall binding for task.milestone.schedule.
+  status: experimental

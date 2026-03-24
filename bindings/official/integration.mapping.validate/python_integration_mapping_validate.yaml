@@ -1,0 +1,17 @@
+id: python_integration_mapping_validate
+capability: integration.mapping.validate
+service: integration_baseline
+protocol: pythoncall
+operation: validate_mapping
+
+request:
+  mapping: input.mapping
+  source_schema: input.source_schema
+
+response:
+  valid: response.valid
+  issues: response.issues
+
+metadata:
+  description: Official pythoncall binding for integration.mapping.validate.
+  status: experimental

@@ -1,0 +1,19 @@
+id: python_identity_decision_justify
+capability: identity.decision.justify
+service: identity_baseline
+protocol: pythoncall
+operation: justify_decision
+
+request:
+  decision: input.decision
+  subject: input.subject
+  policies: input.policies
+
+response:
+  justification: response.justification
+  applicable_policies: response.applicable_policies
+  confidence: response.confidence
+
+metadata:
+  description: Official pythoncall binding for identity.decision.justify.
+  status: experimental

@@ -1,0 +1,16 @@
+id: python_identity_role_get
+capability: identity.role.get
+service: identity_baseline
+protocol: pythoncall
+operation: get_role
+
+request:
+  role_id: input.role_id
+
+response:
+  role: response.role
+  found: response.found
+
+metadata:
+  description: Official pythoncall binding for identity.role.get.
+  status: experimental

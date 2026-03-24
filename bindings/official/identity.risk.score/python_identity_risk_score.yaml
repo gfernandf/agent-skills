@@ -1,0 +1,18 @@
+id: python_identity_risk_score
+capability: identity.risk.score
+service: identity_baseline
+protocol: pythoncall
+operation: score_risk
+
+request:
+  principal_id: input.principal_id
+  signals: input.signals
+
+response:
+  risk_score: response.risk_score
+  factors: response.factors
+  safe: response.safe
+
+metadata:
+  description: Official pythoncall binding for identity.risk.score.
+  status: experimental

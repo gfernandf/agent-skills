@@ -1,0 +1,16 @@
+id: python_identity_permission_get
+capability: identity.permission.get
+service: identity_baseline
+protocol: pythoncall
+operation: get_permission
+
+request:
+  permission_id: input.permission_id
+
+response:
+  permission: response.permission
+  found: response.found
+
+metadata:
+  description: Official pythoncall binding for identity.permission.get.
+  status: experimental

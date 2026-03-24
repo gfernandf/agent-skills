@@ -1,0 +1,20 @@
+id: python_integration_record_reconcile
+capability: integration.record.reconcile
+service: integration_baseline
+protocol: pythoncall
+operation: reconcile_records
+
+request:
+  records_a: input.records_a
+  records_b: input.records_b
+  key_field: input.key_field
+
+response:
+  matched: response.matched
+  only_a: response.only_a
+  only_b: response.only_b
+  discrepancies: response.discrepancies
+
+metadata:
+  description: Official pythoncall binding for integration.record.reconcile.
+  status: experimental

@@ -1,16 +1,17 @@
 # Project Status
 
-Date: 2026-03-19
+Date: 2026-03-25
 Scope: agent-skills runtime + agent-skill-registry consistency check
 
 ## Executive Summary
 
-The project is in a stable pre-integration state.
+The project has reached **full capability coverage**.
 
-- Runtime capabilities are functional and contract-validated.
+- All 122 capabilities are functional with runtime bindings and passing tests.
+- The 37 formerly stub-only capabilities (identity.\*, integration.\*, task.\*) now use in-memory baseline services.
+- Registry governance: 0 metadata issues, 0 uncovered domains, 0 stubs.
 - Critical paths are covered by smoke checks in CI.
 - High-risk services are hardened and instrumented.
-- Registry consistency is healthy with no detected mismatches.
 - DAG-based step scheduler enables parallel execution with backward-compatible defaults.
 - CognitiveState v1 extends ExecutionState with structured cognitive blocks (frame, working, output, trace, extensions).
 - Cognitive hints provide semantic type annotations for auto-wire resolution across capabilities.
@@ -22,21 +23,22 @@ The project is in a stable pre-integration state.
 Latest local verification snapshot:
 
 - Functional smoke suite: 8/8 pass
-- Capability contracts: 45/45 pass (135 checks, 0 violations)
-- Runtime coverage: 45/45 capabilities executable (ratio 1.0)
-- Skill executability: 36/36 executable (ratio 1.0)
-- Runtime inventory: 45 capabilities, 45 official defaults, 20 services, 36 skills
+- Capability contracts: 122/122 pass (0 violations)
+- Runtime coverage: 122/122 capabilities executable (ratio 1.0)
+- Skill executability: 35/35 executable (ratio 1.0)
+- Runtime inventory: 122 capabilities, 122 official defaults, 23 services, 35 skills
 - Scheduler functional tests: 5/5
 - Scheduler stress tests: 5/5
 - CognitiveState v1 regression tests: 86/86
 - CognitiveState v1 integration tests: 99/99
 - Cognitive hints tests: 27/27
 - Safety enforcement tests: 44/44
+- Registry governance guardrails: metadata issues 0, uncovered domains 0
 
 Catalog context (canonical source of total definitions):
 
-- Registry catalog snapshot (pinned ref): 101 capabilities, 31 skills
-- Runtime inventory above reflects the currently supported executable subset in this repo
+- Registry catalog: 122 capabilities, 35 skills, 27 domains
+- Runtime inventory matches registry — no drift
 - Canonical metrics reference: `../agent-skill-registry/docs/CANONICAL_METRICS.md`
 
 ## Security and Reliability Status

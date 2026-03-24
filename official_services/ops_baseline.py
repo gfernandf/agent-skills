@@ -138,3 +138,58 @@ def analyze_trace(
         "risk_candidates": [],
         "summary": summary,
     }
+
+
+def acknowledge_event(event_id, handler=None, notes=None):
+    """
+    Acknowledge receipt of an operational event.
+
+    Baseline: always succeeds and returns a timestamp.
+    """
+    from datetime import datetime, timezone
+
+    ts = datetime.now(timezone.utc).isoformat()
+    return {"acknowledged": True, "timestamp": ts}
+
+
+def monitor_events(events, thresholds=None):
+    """
+    Monitor a stream of operational events and return status + alerts.
+
+    Baseline: counts events by type/severity and checks thresholds.
+    """
+    events_list = events if isinstance(events, list) else []
+    thresh = thresholds if isinstance(thresholds, dict) else {}
+
+    type_counts: dict[str, int] = {}
+    severity_counts: dict[str, int] = {}
+    for ev in events_list:
+        if not isinstance(ev, dict):
+            continue
+        t = str(ev.get("type", "unknown"))
+        s = str(ev.get("severity", "info"))
+        type_counts[t] = type_counts.get(t, 0) + 1
+        severity_counts[s] = severity_counts.get(s, 0) + 1
+
+    alerts = []
+    max_error_count = thresh.get("max_error_count")
+    error_count = type_counts.get("error", 0) + severity_counts.get("critical", 0)
+    if isinstance(max_error_count, (int, float)) and error_count > max_error_count:
+        alerts.append(f"error_count_exceeded:{error_count}>{int(max_error_count)}")
+
+    max_event_count = thresh.get("max_event_count")
+    if isinstance(max_event_count, (int, float)) and len(events_list) > max_event_count:
+        alerts.append(f"event_count_exceeded:{len(events_list)}>{int(max_event_count)}")
+
+    if severity_counts.get("critical", 0) > 0:
+        status = "critical"
+    elif alerts:
+        status = "warning"
+    else:
+        status = "ok"
+
+    return {
+        "status": status,
+        "alerts": alerts,
+        "event_summary": {"by_type": type_counts, "by_severity": severity_counts, "total": len(events_list)},
+    }

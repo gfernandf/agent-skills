@@ -1,0 +1,18 @@
+id: python_identity_permission_gate
+capability: identity.permission.gate
+service: identity_baseline
+protocol: pythoncall
+operation: gate_permission
+
+request:
+  principal_id: input.principal_id
+  permission: input.permission
+  context: input.context
+
+response:
+  allowed: response.allowed
+  reason: response.reason
+
+metadata:
+  description: Official pythoncall binding for identity.permission.gate.
+  status: experimental

@@ -1,0 +1,18 @@
+id: python_memory_record_store
+capability: memory.record.store
+service: memory_baseline
+protocol: pythoncall
+operation: store_record
+
+request:
+  namespace: input.namespace
+  record: input.record
+  ttl_seconds: input.ttl_seconds
+
+response:
+  stored: response.stored
+  record_id: response.record_id
+
+metadata:
+  description: Official pythoncall binding for memory.record.store.
+  status: experimental

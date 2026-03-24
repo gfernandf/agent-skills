@@ -1,0 +1,19 @@
+id: python_policy_decision_justify
+capability: policy.decision.justify
+service: policy_baseline
+protocol: pythoncall
+operation: justify_decision
+
+request:
+  decision: input.decision
+  rules: input.rules
+  context: input.context
+
+response:
+  justification: response.justification
+  applicable_rules: response.applicable_rules
+  confidence: response.confidence
+
+metadata:
+  description: Official pythoncall binding for policy.decision.justify.
+  status: experimental

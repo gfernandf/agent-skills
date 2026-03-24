@@ -1,0 +1,7 @@
+id: task_baseline
+kind: pythoncall
+module: official_services.task_baseline
+
+metadata:
+  description: "Baseline local implementations for task-domain capabilities (cases, approvals, incidents, milestones, state machine)."
+  maintained_by: "agent-skills"

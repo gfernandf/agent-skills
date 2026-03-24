@@ -1,0 +1,17 @@
+id: python_task_case_list
+capability: task.case.list
+service: task_baseline
+protocol: pythoncall
+operation: list_cases
+
+request:
+  status_filter: input.status_filter
+  assignee_filter: input.assignee_filter
+
+response:
+  cases: response.cases
+  total: response.total
+
+metadata:
+  description: Official pythoncall binding for task.case.list.
+  status: experimental

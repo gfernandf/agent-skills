@@ -234,6 +234,55 @@ def template_prompt(template, variables, format=None):
     }
 
 
+def generate_output(instruction, context_items, output_schema, detail_level=None, constraints=None):
+    """
+    Generate structured output from an instruction and context items.
+
+    Baseline: builds a deterministic output by extracting content from
+    context_items and assembling fields requested in output_schema.
+    """
+    ctx_texts = []
+    for item in (context_items if isinstance(context_items, list) else []):
+        if isinstance(item, dict):
+            ctx_texts.append(str(item.get("content", item.get("text", ""))))
+        else:
+            ctx_texts.append(str(item))
+
+    combined = " ".join(ctx_texts)
+
+    # Build output based on schema properties
+    schema = output_schema if isinstance(output_schema, dict) else {}
+    props = schema.get("properties", {})
+    result: dict = {}
+
+    for key, spec in props.items():
+        prop_type = spec.get("type", "string") if isinstance(spec, dict) else "string"
+        if prop_type == "array":
+            result[key] = [f"[baseline] {combined[:80]}"] if combined else []
+        elif prop_type == "number":
+            result[key] = 0.5
+        elif prop_type == "boolean":
+            result[key] = True
+        else:
+            result[key] = f"[baseline] {combined[:120]}" if combined else "[baseline] no context"
+
+    if not result:
+        result["generated"] = f"[baseline] {combined[:200]}" if combined else "[baseline] no context"
+
+    warnings: list[str] = []
+    if not combined:
+        warnings.append("No context content provided; output is minimal.")
+
+    return {
+        "output": result,
+        "warnings": warnings,
+        "coverage": {
+            "processed_items": len(ctx_texts),
+            "ignored_items": 0,
+        },
+    }
+
+
 def score_risk(output, context=None, dimensions=None):
     """
     Assess risk level of a model-generated output across safety dimensions.

@@ -1,0 +1,19 @@
+id: python_task_incident_create
+capability: task.incident.create
+service: task_baseline
+protocol: pythoncall
+operation: create_incident
+
+request:
+  title: input.title
+  severity: input.severity
+  affected_system: input.affected_system
+  description: input.description
+
+response:
+  incident_id: response.incident_id
+  created: response.created
+
+metadata:
+  description: Official pythoncall binding for task.incident.create.
+  status: experimental
