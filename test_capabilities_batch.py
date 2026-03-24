@@ -25,6 +25,19 @@ from runtime.binding_models import BindingSpec
 
 # Test data generators - names must match binding input fields
 TEST_DATA = {
+    "analysis.problem.split": {"problem": "Migrate on-premise ERP system to AWS", "strategy": "phases"},
+    "analysis.risk.extract": {
+        "target": {"type": "proposal", "title": "Vendor selection", "body": "We recommend Vendor A based on pricing alone."},
+        "risk_scope": "strategic",
+    },
+    "analysis.theme.cluster": {
+        "items": [
+            {"id": "fb1", "content": "The app crashes when I upload large files."},
+            {"id": "fb2", "content": "I love the new dark mode feature."},
+            {"id": "fb3", "content": "Upload fails for files over 10 MB."},
+        ],
+        "hint_labels": ["stability", "ux"],
+    },
     "agent.task.delegate": {"agent": "summarizer", "task": {"description": "Summarize the Q3 report", "priority": "high"}},
     "agent.plan.generate": {"objective": "Build a web scraper", "context": "Python preferred, target site uses JS rendering"},
     "agent.input.route": {"query": "Summarize this quarterly earnings report", "agents": ["summarizer", "analyst", "translator"]},
