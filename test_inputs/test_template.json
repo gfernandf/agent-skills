@@ -1,0 +1,1 @@
+{"template": "Hello {{name}}, welcome to {{place}}!", "variables": {"name": "Guillermo", "place": "Agent Skills"}}

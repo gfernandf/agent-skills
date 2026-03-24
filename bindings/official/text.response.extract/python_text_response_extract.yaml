@@ -1,0 +1,17 @@
+id: python_text_response_extract
+capability: text.response.extract
+service: text_baseline
+protocol: pythoncall
+operation: answer_question
+
+request:
+  question: input.question
+  context: input.context
+
+response:
+  answer: response.answer
+  confidence: response.confidence
+
+metadata:
+  description: Official baseline binding for text.response.extract.
+  status: stable

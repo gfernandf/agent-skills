@@ -263,3 +263,38 @@ def merge_texts(items, separator=None, include_headers=None):
         "text": separator.join(parts),
         "item_count": count,
     }
+
+
+def generate_text(instruction, context=None, max_length=None):
+    """
+    Generate text from an instruction and optional context.
+    Baseline: echoes the instruction with context prefix (degraded mode).
+    """
+    parts = []
+    if context:
+        parts.append(f"Context — {context[:200]}.")
+    parts.append(instruction)
+    text = " ".join(parts)
+    if max_length and len(text) > max_length:
+        text = text[:max_length]
+    return {"text": text, "_fallback": True}
+
+
+def rewrite_text(text, goal):
+    """
+    Rewrite text applying a transformation directive.
+    Baseline: returns original text annotated with the goal (degraded mode).
+    """
+    return {"text": f"({goal}) {text}", "_fallback": True}
+
+
+def answer_question(question, context):
+    """
+    Answer a question given a context passage.
+    Baseline: returns the first sentence of the context as the answer (degraded mode).
+    """
+    if not context:
+        return {"answer": "", "confidence": 0.0, "_fallback": True}
+    sentences = re.split(r'(?<=[.!?])\s+', context.strip())
+    answer = sentences[0] if sentences else context[:200]
+    return {"answer": answer, "confidence": 0.5, "_fallback": True}

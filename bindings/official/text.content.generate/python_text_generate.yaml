@@ -1,0 +1,16 @@
+id: python_text_generate
+capability: text.content.generate
+service: text_baseline
+protocol: pythoncall
+operation: generate_text
+
+request:
+  instruction: input.instruction
+  context: input.context
+
+response:
+  text: response.text
+
+metadata:
+  description: Official baseline binding for text.content.generate.
+  status: stable

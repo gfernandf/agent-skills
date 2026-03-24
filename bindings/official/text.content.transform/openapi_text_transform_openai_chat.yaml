@@ -1,0 +1,30 @@
+id: openapi_text_transform_openai_chat
+capability: text.content.transform
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a text rewriting assistant. Rewrite the provided text
+        according to the goal directive. Preserve the original meaning
+        while applying the requested transformation. Return only the
+        rewritten text, no preamble or explanation.
+    - role: user
+      content: |
+        Goal: ${input.goal}
+        Text: ${input.text}
+  temperature: 0.5
+
+response:
+  text: response.choices.0.message.content
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_text_transform
+  description: OpenAI binding for text.content.transform using gpt-4o-mini.
+  status: experimental

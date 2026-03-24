@@ -90,11 +90,15 @@ TEST_DATA = {
     "table.row.filter": {"table": [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 30}], "condition": {"age": {"$gt": 26}}},
     "text.content.classify": {"text": "I love this product! It's amazing!", "labels": ["positive", "negative", "neutral"]},
     "text.content.embed": {"text": "This is a test sentence for embedding."},
+    "text.content.generate": {"instruction": "Write a one-sentence description of Python.", "context": "Python is a programming language."},
     "text.entity.extract": {"text": "John Smith works at Google in Mountain View."},
     "text.content.extract": {"text": "<html><body><h1>Title</h1><p>This is a test paragraph with important information.</p></body></html>"},
     "text.keyword.extract": {"text": "Python is a great programming language for machine learning and data science applications."},
     "text.language.detect": {"text": "This is English text."},
+    "text.response.extract": {"question": "What is Python?", "context": "Python is a high-level programming language created by Guido van Rossum. It emphasizes code readability."},
+    "text.content.transform": {"text": "The system is operational and functioning within normal parameters.", "goal": "simplify for a non-technical audience"},
     "text.content.summarize": {"text": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on the development of algorithms that can access data and use it to learn for themselves."},
+    "text.content.merge": {"items": ["Hello", "World", "Merge test"]},
     "text.content.template": {"template": "Hello {{name}}, welcome to {{place}}!", "variables": {"name": "John", "place": "Agent Skills"}},
     "text.content.translate": {"text": "Hello world", "target_language": "es"},
     "video.frame.extract": {"video": b"fake video data"},
@@ -144,18 +148,43 @@ def select_binding_for_capability(
     Priority:
     1) official default binding id from policy
     2) first available binding as fallback (legacy behavior)
-    """
-    default_binding_id = binding_registry.get_official_default_binding_id(capability_id)
-    if default_binding_id:
-        try:
-            return binding_registry.get_binding(default_binding_id)
-        except Exception:
-            pass
 
+    For local testing we prefer bindings whose service module
+    exists as a locally importable Python module.  If the default
+    binding points to an external service (e.g. OpenAPI), we fall
+    through to the next binding that resolves locally.
+    """
     bindings = binding_registry.get_bindings_for_capability(capability_id)
     if not bindings:
         return None
+
+    # Try official default first
+    default_binding_id = binding_registry.get_official_default_binding_id(capability_id)
+    if default_binding_id:
+        try:
+            default = binding_registry.get_binding(default_binding_id)
+            if _binding_is_local(default):
+                return default
+        except Exception:
+            pass
+
+    # Fallback: first binding whose service resolves locally
+    for b in bindings:
+        if _binding_is_local(b):
+            return b
+
+    # Last resort: return whatever we have (will likely fail)
     return bindings[0]
+
+
+def _binding_is_local(binding: BindingSpec) -> bool:
+    """Return True if the binding's service module is importable locally."""
+    module_name = f"official_services.{binding.service_id}"
+    try:
+        __import__(module_name, fromlist=[binding.service_id])
+        return True
+    except Exception:
+        return False
 
 
 def call_capability(capability_id: str, binding: BindingSpec, test_input: Dict[str, Any]) -> Tuple[bool, str, Any]:

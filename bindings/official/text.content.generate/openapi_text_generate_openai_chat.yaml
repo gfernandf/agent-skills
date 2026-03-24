@@ -1,0 +1,29 @@
+id: openapi_text_generate_openai_chat
+capability: text.content.generate
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a text generation assistant. Follow the instruction precisely.
+        If context is provided, use it as background information.
+        Return only the generated text, no preamble.
+    - role: user
+      content: |
+        Instruction: ${input.instruction}
+        Context: ${input.context}
+  temperature: 0.7
+
+response:
+  text: response.choices.0.message.content
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_text_generate
+  description: OpenAI binding for text.content.generate using gpt-4o-mini.
+  status: experimental

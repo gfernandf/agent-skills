@@ -1,0 +1,16 @@
+id: python_text_transform
+capability: text.content.transform
+service: text_baseline
+protocol: pythoncall
+operation: rewrite_text
+
+request:
+  text: input.text
+  goal: input.goal
+
+response:
+  text: response.text
+
+metadata:
+  description: Official baseline binding for text.content.transform.
+  status: stable
