@@ -1,0 +1,29 @@
+services:
+  agent-skills:
+    build: .
+    ports:
+      - "${AGENT_SKILLS_PORT:-8080}:8080"
+    environment:
+      - AGENT_SKILLS_HOST=0.0.0.0
+      - AGENT_SKILLS_PORT=8080
+      - AGENT_SKILLS_API_KEY=${AGENT_SKILLS_API_KEY:-}
+      - AGENT_SKILLS_CORS_ORIGINS=${AGENT_SKILLS_CORS_ORIGINS:-}
+      - AGENT_SKILLS_MAX_WORKERS=${AGENT_SKILLS_MAX_WORKERS:-}
+      - AGENT_SKILLS_ASYNC_WORKERS=${AGENT_SKILLS_ASYNC_WORKERS:-4}
+      - AGENT_SKILLS_MAX_RUNS=${AGENT_SKILLS_MAX_RUNS:-100}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - OTEL_SERVICE_NAME=agent-skills
+    volumes:
+      - ./bindings:/app/bindings
+      - skills-data:/app/artifacts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/v1/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  skills-data:

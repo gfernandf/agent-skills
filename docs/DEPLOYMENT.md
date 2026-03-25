@@ -100,6 +100,80 @@ server {
 
 ### Single instance
 
+---
+
+## 4. CLI `serve` Command
+
+Start the HTTP API server directly:
+
+```bash
+agent-skills serve
+```
+
+| Flag              | Env Variable                | Default     | Description                      |
+|-------------------|-----------------------------|-------------|----------------------------------|
+| `--host`          | `AGENT_SKILLS_HOST`         | `127.0.0.1` | Bind address                     |
+| `--port`          | `AGENT_SKILLS_PORT`         | `8080`      | Bind port                        |
+| `--api-key`       | `AGENT_SKILLS_API_KEY`      | *(none)*    | API key for `x-api-key` auth     |
+| `--cors-origins`  | `AGENT_SKILLS_CORS_ORIGINS` | *(none)*    | Comma-separated allowed origins  |
+
+Example:
+
+```bash
+agent-skills serve --host 0.0.0.0 --port 9090 --api-key my-secret
+```
+
+---
+
+## 5. Docker
+
+### Build
+
+```bash
+docker build -t agent-skills .
+```
+
+### Run
+
+```bash
+docker run -p 8080:8080 \
+  -e AGENT_SKILLS_API_KEY=my-secret \
+  -e OPENAI_API_KEY=sk-... \
+  agent-skills
+```
+
+### docker-compose
+
+Create a `.env` file in the project root:
+
+```dotenv
+AGENT_SKILLS_API_KEY=my-secret
+OPENAI_API_KEY=sk-...
+```
+
+Then:
+
+```bash
+docker compose up -d
+```
+
+The compose file exposes port `${AGENT_SKILLS_PORT:-8080}`, mounts `./bindings` read-write, and creates a `skills-data` named volume for artifacts.  A health check hits `GET /v1/health` every 30 s.
+
+### Environment Variables Reference
+
+| Variable                       | Default    | Purpose                          |
+|--------------------------------|------------|----------------------------------|
+| `AGENT_SKILLS_HOST`            | `0.0.0.0`  | Bind address inside container   |
+| `AGENT_SKILLS_PORT`            | `8080`     | Server port                      |
+| `AGENT_SKILLS_API_KEY`         |            | Auth for protected routes        |
+| `AGENT_SKILLS_CORS_ORIGINS`    |            | Comma-separated origins          |
+| `AGENT_SKILLS_MAX_WORKERS`     | CPU+4      | DAG scheduler thread pool        |
+| `AGENT_SKILLS_ASYNC_WORKERS`   | `4`        | Async execution thread pool      |
+| `AGENT_SKILLS_MAX_RUNS`        | `100`      | Max tracked async runs           |
+| `OPENAI_API_KEY`               |            | For LLM-backed skills            |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` |            | OTel collector endpoint          |
+| `OTEL_SERVICE_NAME`            | `agent-skills` | OTel service name           |
+
 Each agent-skills instance is stateless (aside from the audit JSONL file).
 Scale horizontally by running multiple instances behind a load balancer.
 

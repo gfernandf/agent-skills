@@ -128,6 +128,10 @@ def build_runtime_components(
 
     engine.nested_skill_runner.execution_engine = engine
 
+    # Plugin discovery — load third-party extensions at startup
+    from runtime.plugins import discover_all
+    discovered_plugins = discover_all()
+
     return RuntimeComponents(
         engine=engine,
         skill_loader=skill_loader,
