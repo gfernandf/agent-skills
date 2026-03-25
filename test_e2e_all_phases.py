@@ -396,6 +396,7 @@ class TestF7:
     def test_webhook_dlq(self):
         from runtime.webhook import get_dlq
         dlq = get_dlq()
+        dlq.clear()  # ensure isolation from other tests
         assert dlq.size == 0
         dlq.append({"test": True})
         assert dlq.size == 1

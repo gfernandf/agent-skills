@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from unittest.mock import patch
 
 import pytest
+
+os.environ.setdefault("AGENT_SKILLS_WEBHOOKS_SKIP_URL_VALIDATION", "1")
+os.environ.setdefault("AGENT_SKILLS_WEBHOOKS_ALLOW_PRIVATE", "1")
 
 from runtime.webhook import (
     VALID_EVENT_TYPES,

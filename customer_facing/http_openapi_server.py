@@ -16,6 +16,8 @@ from gateway.core import SkillGateway
 from runtime.observability import elapsed_ms, log_event
 from runtime.openapi_error_contract import build_http_error_payload, map_runtime_error_to_http
 
+logger = logging.getLogger(__name__)
+
 
 def _format_prometheus(snapshot: dict[str, Any]) -> str:
     """Convert a metrics snapshot to Prometheus exposition format."""
