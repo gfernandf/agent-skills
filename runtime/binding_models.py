@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -82,6 +83,7 @@ class InvocationRequest:
     operation_id: str
     payload: dict[str, Any]
     context_metadata: dict[str, Any] = field(default_factory=dict)
+    cancel_event: threading.Event | None = None
 
 
 @dataclass(frozen=True)

@@ -101,9 +101,9 @@ From agent-skills root:
 Expected baseline:
 
 - smoke: 8/8 pass
-- contracts: 45/45 pass
-- coverage: 45/45
-- skills executable: 36/36
+- contracts: 122/122 pass
+- coverage: 122/122
+- skills executable: 35/35
 - scheduler functional: 5/5
 - scheduler stress: 5/5
 - cognitive state regression: 86/86

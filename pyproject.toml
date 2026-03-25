@@ -31,11 +31,28 @@ dependencies = [
 [project.optional-dependencies]
 pdf = ["PyPDF2>=3.0"]
 web = ["beautifulsoup4>=4.12"]
+otel = [
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp>=1.20",
+]
 all = ["PyPDF2>=3.0", "beautifulsoup4>=4.12"]
 dev = ["pytest>=7.0", "PyPDF2>=3.0", "beautifulsoup4>=4.12"]
 
 [project.scripts]
 agent-skills = "cli.main:main"
+
+[project.entry-points."agent_skills.auth"]
+# Pluggable auth backends — third parties register here
+# api_key = "runtime.auth:ApiKeyStore"
+
+[project.entry-points."agent_skills.invoker"]
+# Protocol invokers (openapi, mcp, pythoncall, etc.)
+# Custom protocols register their invoker classes here
+
+[project.entry-points."agent_skills.binding_source"]
+# Binding/service sources: official, community, local
+# community = "my_plugin.bindings:CommunitySource"
 
 [project.urls]
 Homepage = "https://github.com/gfernandf/agent-skills"

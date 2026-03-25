@@ -8,15 +8,23 @@ from runtime.errors import (
     CapabilityExecutionError,
     CapabilityNotFoundError,
     FinalOutputValidationError,
+    GateDeniedError,
+    GateExecutionError,
     InputMappingError,
     InvalidExecutionOptionsError,
     InvalidCapabilitySpecError,
     InvalidSkillSpecError,
+    MaxSkillDepthExceededError,
+    NestedSkillExecutionError,
     OutputMappingError,
     ReferenceResolutionError,
     RuntimeErrorBase,
+    SafetyConfirmationRequiredError,
+    SafetyGateFailedError,
+    SafetyTrustLevelError,
     SkillNotFoundError,
     StepExecutionError,
+    StepTimeoutError,
 )
 from runtime.binding_executor import BindingExecutionError
 
@@ -62,6 +70,46 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
             message=sanitize_error_message(error),
         )
 
+    if isinstance(error, MaxSkillDepthExceededError):
+        return HttpErrorContract(
+            status_code=400,
+            code="max_depth_exceeded",
+            type=type(error).__name__,
+            message="Nested skill execution exceeded the maximum allowed depth.",
+        )
+
+    if isinstance(error, (SafetyTrustLevelError, SafetyGateFailedError, GateDeniedError)):
+        return HttpErrorContract(
+            status_code=403,
+            code="safety_denied",
+            type=type(error).__name__,
+            message=sanitize_error_message(error),
+        )
+
+    if isinstance(error, SafetyConfirmationRequiredError):
+        return HttpErrorContract(
+            status_code=428,
+            code="confirmation_required",
+            type=type(error).__name__,
+            message=sanitize_error_message(error),
+        )
+
+    if isinstance(error, GateExecutionError):
+        return HttpErrorContract(
+            status_code=503,
+            code="gate_execution_failure",
+            type=type(error).__name__,
+            message="A safety gate failed to execute.",
+        )
+
+    if isinstance(error, StepTimeoutError):
+        return HttpErrorContract(
+            status_code=504,
+            code="step_timeout",
+            type=type(error).__name__,
+            message="A step exceeded its configured timeout.",
+        )
+
     if isinstance(error, (FinalOutputValidationError, InvalidSkillSpecError, InvalidCapabilitySpecError)):
         return HttpErrorContract(
             status_code=409,
@@ -78,7 +126,7 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
             message="No eligible binding satisfies the requested conformance profile.",
         )
 
-    if isinstance(error, (CapabilityExecutionError, StepExecutionError)):
+    if isinstance(error, (CapabilityExecutionError, StepExecutionError, NestedSkillExecutionError)):
         root = _root_cause(error)
         if isinstance(root, BindingExecutionError) and root.conformance_unmet:
             return HttpErrorContract(

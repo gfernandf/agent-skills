@@ -14,8 +14,8 @@ from runtime.errors import InvalidExecutionOptionsError
 _VALID_AUDIT_MODES = {"off", "standard", "full"}
 _DEFAULT_AUDIT_FILE = "runtime_skill_audit.jsonl"
 _DEFAULT_AUDIT_MODE = "standard"
-_MAX_STR_LEN = int(os.getenv("AGENT_SKILLS_AUDIT_MAX_STR_LEN", "512"))
-_MAX_COLLECTION_ITEMS = int(os.getenv("AGENT_SKILLS_AUDIT_MAX_ITEMS", "50"))
+_MAX_STR_LEN = int(os.getenv("AGENT_SKILLS_AUDIT_MAX_STR_LEN", "2048"))
+_MAX_COLLECTION_ITEMS = int(os.getenv("AGENT_SKILLS_AUDIT_MAX_ITEMS", "100"))
 _REDACTION_TOKEN = "[REDACTED]"
 _SENSITIVE_KEY_PARTS = {
     "password",

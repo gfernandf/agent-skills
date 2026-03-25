@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from runtime.binding_models import InvocationRequest, InvocationResponse
 from runtime.binding_registry import BindingRegistry
 from runtime.binding_resolver import BindingResolver
+from runtime.circuit_breaker import CircuitBreakerRegistry, CircuitOpenError
+from runtime.metrics import METRICS
 from runtime.errors import RuntimeErrorBase
 from runtime.request_builder import RequestBuilder
 from runtime.response_mapper import ResponseMapper
@@ -56,6 +59,7 @@ class BindingExecutor:
         request_builder: RequestBuilder,
         protocol_router: ProtocolRouter,
         response_mapper: ResponseMapper,
+        circuit_breaker_registry: CircuitBreakerRegistry | None = None,
     ) -> None:
         self.binding_registry = binding_registry
         self.binding_resolver = binding_resolver
@@ -63,6 +67,7 @@ class BindingExecutor:
         self.request_builder = request_builder
         self.protocol_router = protocol_router
         self.response_mapper = response_mapper
+        self.circuit_breaker = circuit_breaker_registry or CircuitBreakerRegistry()
 
     def execute(
         self,
@@ -70,6 +75,7 @@ class BindingExecutor:
         step_input: dict,
         trace_callback=None,
         required_conformance_profile: str | None = None,
+        cancel_event=None,
     ) -> dict | tuple[dict, dict]:
         """
         Execute a capability using the resolved binding.
@@ -79,6 +85,8 @@ class BindingExecutor:
         """
 
         capability_id = capability.id
+        t0 = time.perf_counter()
+        METRICS.inc("binding.execute.total")
 
         resolution_plan = self.build_resolution_plan(
             capability=capability,
@@ -97,6 +105,7 @@ class BindingExecutor:
 
             if not item["eligible"]:
                 skipped_for_conformance += 1
+                METRICS.inc("binding.conformance_skip")
                 attempts.append(
                     {
                         "binding_id": binding_id,
@@ -108,10 +117,27 @@ class BindingExecutor:
                 )
                 continue
 
+            resolved_service_id: str | None = None
             try:
                 binding = self.binding_registry.get_binding(binding_id)
                 service = self.service_resolver.resolve(binding.service_id)
+                resolved_service_id = service.id
                 conformance_profile = self._resolve_conformance_profile(binding.metadata)
+
+                # Circuit breaker: skip binding if its service circuit is open.
+                try:
+                    self.circuit_breaker.before_call(service.id)
+                except CircuitOpenError:
+                    METRICS.inc("binding.circuit_open_skip")
+                    attempts.append(
+                        {
+                            "binding_id": binding_id,
+                            "service_id": service.id,
+                            "status": "circuit_open",
+                            "conformance_profile": conformance_profile,
+                        }
+                    )
+                    continue
 
                 payload = self.request_builder.build(
                     binding=binding,
@@ -129,9 +155,12 @@ class BindingExecutor:
                         "binding_id": binding.id,
                         "service_id": service.id,
                     },
+                    cancel_event=cancel_event,
                 )
 
                 response: InvocationResponse = self.protocol_router.invoke(invocation)
+
+                self.circuit_breaker.record_success(service.id)
 
                 mapped_output = self.response_mapper.map(
                     binding=binding,
@@ -148,6 +177,11 @@ class BindingExecutor:
                     }
                 )
 
+                elapsed = (time.perf_counter() - t0) * 1000
+                METRICS.observe("binding.resolution_ms", elapsed)
+                METRICS.inc("binding.execute.success")
+                if index > 0:
+                    METRICS.inc("binding.execute.fallback_used")
                 return mapped_output, {
                     "binding_id": binding.id,
                     "service_id": service.id,
@@ -157,10 +191,14 @@ class BindingExecutor:
                     "fallback_chain": list(chain),
                     "attempts": attempts,
                     "resolution_plan": resolution_plan,
+                    "resolution_ms": round((time.perf_counter() - t0) * 1000, 3),
                 }
 
             except Exception as e:
                 last_error = e
+                METRICS.inc("binding.execute.fallback")
+                if resolved_service_id:
+                    self.circuit_breaker.record_failure(resolved_service_id)
                 attempts.append(
                     {
                         "binding_id": binding_id,
@@ -172,6 +210,10 @@ class BindingExecutor:
                     }
                 )
                 continue
+
+        elapsed = (time.perf_counter() - t0) * 1000
+        METRICS.observe("binding.resolution_ms", elapsed)
+        METRICS.inc("binding.execute.failed")
 
         if last_error is not None:
             raise BindingExecutionError(

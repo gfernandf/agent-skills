@@ -115,3 +115,11 @@ class SafetyConfirmationRequiredError(RuntimeErrorBase):
 
 class StepTimeoutError(RuntimeErrorBase):
     """Raised when a step exceeds its configured timeout."""
+
+
+class GateDeniedError(RuntimeErrorBase):
+    """Raised when a safety gate explicitly denies execution."""
+
+
+class GateExecutionError(RuntimeErrorBase):
+    """Raised when a safety gate fails to execute (infra/runtime error, not a deny)."""

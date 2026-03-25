@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from runtime.errors import (
@@ -13,6 +14,10 @@ from runtime.models import (
     ExecutionRequest,
     SkillExecutionResult,
 )
+
+
+class LineageTimeoutError(NestedSkillExecutionError):
+    """Raised when the aggregate lineage timeout is exceeded."""
 
 
 class NestedSkillRunner:
@@ -102,5 +107,13 @@ class NestedSkillRunner:
         if context.depth + 1 > options.max_skill_depth:
             raise MaxSkillDepthExceededError(
                 f"Maximum skill depth ({options.max_skill_depth}) exceeded.",
+                skill_id=context.state.skill_id,
+            )
+
+        # Check aggregate lineage timeout
+        if context.deadline is not None and time.monotonic() > context.deadline:
+            raise LineageTimeoutError(
+                f"Lineage timeout exceeded before entering nested skill "
+                f"(depth={context.depth + 1}).",
                 skill_id=context.state.skill_id,
             )

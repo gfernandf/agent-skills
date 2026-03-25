@@ -34,6 +34,67 @@ The registry source of truth (contracts and canonical definitions) lives in the 
 - DAG scheduler (parallel/sequential step execution): `docs/SCHEDULER.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
 
+## Authentication & RBAC
+
+The runtime includes a pluggable authentication and role-based access control layer.
+
+- **Roles**: `reader` → `executor` → `operator` → `admin` (hierarchical)
+- **Auth methods**: API key (`X-API-Key` header) and JWT HS256 (`Authorization: Bearer <token>`)
+- **Opt-in**: Set `AGENT_SKILLS_RBAC=1` to enable; without it the legacy flat API key check applies
+- **Route protection**: HTTP method + path prefix → minimum required role
+
+The JWT verifier is stdlib-only (no external dependencies).
+
+See `docs/AUTH.md` for configuration, role mapping, and plugin extension.
+
+## Webhooks
+
+The runtime supports an event-driven webhook system for observability and integration.
+
+- **Events**: `skill.execution.started`, `skill.execution.completed`, `skill.execution.failed`, `binding.resolved`, `audit.record.created`
+- **CRUD**: `POST /v1/webhooks` (register), `GET /v1/webhooks` (list), `DELETE /v1/webhooks/{id}` (remove)
+- **Security**: Payloads signed with HMAC-SHA256 (`X-Signature-256` header)
+- **Reliability**: Automatic retries with exponential backoff
+
+See `docs/WEBHOOKS.md` for payload format, verification examples, and limits.
+
+## Plugin System
+
+The runtime supports plugin discovery via Python entry points.
+
+Three extension groups:
+
+- `agent_skills.auth` — custom authentication providers
+- `agent_skills.invoker` — custom step invokers
+- `agent_skills.binding_source` — additional binding sources
+
+Plugins are discovered at engine startup. Failures are logged as warnings but do not block initialization.
+
+See `docs/PLUGINS.md` for registration, discovery API, and authoring guides.
+
+## Runtime Metrics
+
+The `/v1/metrics` endpoint exposes operational counters and histograms:
+
+- Execution counts (total, success, failure)
+- Latency histograms per capability
+- Active execution gauge
+
+Reset via `skill.metrics.reset` or `POST /v1/skills/diagnostics/reset`.
+
+## JSON Schema Validation
+
+15 schemas in `docs/schemas/` (JSON Schema 2020-12) cover capabilities, skills, bindings, services, and runtime artifacts.
+
+Validation tool:
+
+```bash
+python tooling/validate_skill_schema.py examples/
+python tooling/validate_skill_schema.py path/to/skill.yaml
+```
+
+See `docs/JSON_SCHEMAS.md` for the full schema inventory, regeneration, and editor integration.
+
 ## Agent Gateway Operation Model
 
 The runtime exposes a gateway-oriented execution model for agents that need to
@@ -303,7 +364,11 @@ All package workflow commands support machine-readable output for UI/backend orc
 - Current project closure snapshot: `docs/PROJECT_STATUS.md`
 - 10-minute onboarding for new contributors: `docs/ONBOARDING_10_MIN.md`
 - Runtime runner architecture and operations: `docs/RUNNER_GUIDE.md`
-- Observability and trace/redaction controls: `docs/OBSERVABILITY.md`
+- Observability, tracing, and OpenTelemetry: `docs/OBSERVABILITY.md`
+- **Step control flow (condition, retry, foreach, while, router, scatter)**: `docs/STEP_CONTROL_FLOW.md`
+- **Streaming SSE execution**: `docs/STREAMING.md`
+- **Async execution and Run ID tracking**: `docs/ASYNC_EXECUTION.md`
+- **Deployment, Docker, and CLI serve**: `docs/DEPLOYMENT.md`
 - Canonical registry metrics source (counts and generation): `../agent-skill-registry/docs/CANONICAL_METRICS.md`
 - Pre-MCP/OpenAPI readiness baseline: `docs/PRE_MCP_OPENAPI_READINESS.md`
 - OpenAPI v1 phase-0 governance and technical foundation: `docs/OPENAPI_PHASE0_FOUNDATION.md`
@@ -319,6 +384,10 @@ All package workflow commands support machine-readable output for UI/backend orc
 - **Skill governance manifesto (trust model + architecture changes)**: `docs/SKILL_GOVERNANCE_MANIFESTO.md`
 - **Agent trace dry-run guide (cycles, baselines, npm scenarios)**: `docs/AGENT_TRACE_DRY_RUN_GUIDE.md`
 - **Gateway release go/no-go checklist (product gates)**: `docs/GATEWAY_RELEASE_GO_NO_GO.md`
+- **Authentication & RBAC (roles, JWT, API keys)**: `docs/AUTH.md`
+- **Webhook event system**: `docs/WEBHOOKS.md`
+- **Plugin system (entry points, extension groups)**: `docs/PLUGINS.md`
+- **JSON Schema inventory and validation**: `docs/JSON_SCHEMAS.md`
 
 ---
 

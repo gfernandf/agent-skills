@@ -3,6 +3,79 @@
 All notable changes to **agent-skills** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+#### Gap resolution — raising project from 5.6 → ≥8/10
+
+- **Webhook event system**: `runtime/webhook.py` — subscription store, HMAC-SHA256
+  signatures, exponential-backoff retry, fire-and-forget delivery on daemon threads.
+  Events: `skill.started`, `skill.completed`, `skill.failed`, `run.completed`, `run.failed`.
+  HTTP endpoints: `POST/GET /v1/webhooks`, `DELETE /v1/webhooks/{id}`.
+  14 tests in `runtime/test_webhook.py`.
+- **RBAC + auth middleware**: `runtime/auth.py` — role hierarchy (reader → executor
+  → operator → admin), route-based authorization, pluggable API-key store & Bearer
+  token verifier. 29 tests in `runtime/test_auth.py`.
+- **Plugin entry points**: `pyproject.toml` entry-point groups (`agent_skills.auth`,
+  `agent_skills.invoker`, `agent_skills.binding_source`). Discovery utility in
+  `runtime/plugins.py`.
+- **JSON Schema exports**: 15 schemas in `docs/schemas/` covering all public-facing
+  dataclasses (ExecutionState, SkillSpec, CapabilitySpec, StepResult, etc.).
+  Generator: `tooling/generate_json_schemas.py`.
+- **OpenAPI spec extended**: 16 endpoints (added webhook CRUD + schemas).
+- **Community artifacts**: ROADMAP.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md,
+  `.github/ISSUE_TEMPLATE/` (bug, feature, RFC).
+- **SDK generation**: `sdk/generate_ts.sh`, `sdk/generate_go.sh`,
+  `sdk/python/agent_skills_client.py`.
+- **Examples**: 5 examples in `examples/` (simple skill, pipeline, router,
+  scatter-gather, Python client usage).
+
+#### Hardening — wiring, validation, documentation
+
+- **RBAC wired into HTTP server**: `_authorize()` in `http_openapi_server.py`
+  now delegates to `AuthMiddleware` when `AGENT_SKILLS_RBAC=1`. Opt-in preserves
+  backward compatibility with legacy flat API key check.
+- **JWT HS256 verifier**: `runtime/auth.py` `JWTVerifier` — stdlib-only (no
+  external deps), validates `sub`/`role`/`exp` claims. 8 additional tests (37 total
+  in `runtime/test_auth.py`).
+- **Metrics endpoint**: `GET /v1/metrics` returns `RuntimeMetrics.snapshot()`.
+- **Plugin discovery in engine_factory**: `discover_all()` called at engine startup;
+  failures logged as warnings, never blocking.
+- **Skill schema validation tool**: `tooling/validate_skill_schema.py` — validates
+  skill YAML against published JSON Schemas. Supports single file or directory scan.
+- **Feature documentation**: `docs/AUTH.md`, `docs/WEBHOOKS.md`, `docs/PLUGINS.md`,
+  `docs/JSON_SCHEMAS.md`.
+- **README updated**: New sections for Auth & RBAC, Webhooks, Plugins, Runtime
+  Metrics, JSON Schema Validation; Documentation Index expanded.
+- **Example YAML fixes**: Added missing `name` field to all 4 example skills.
+- **168 tests passing** (117 engine + 14 webhook + 37 auth).
+
+#### Engine upgrades for production
+
+- **F1 — Router/Switch**: Expression-based step routing (`router` config key)
+  in `runtime/step_control.py`. Resolves capability at runtime via exact-match
+  cases + optional default. Composes with condition, retry, and foreach.
+- **F2 — Scatter-Gather**: Parallel fan-out primitive (`scatter` config key)
+  with three merge strategies: `collect`, `concat_lists`, `first_success`.
+  Uses dedicated thread pool; partial failure support.
+- **F3 — Streaming SSE**: `POST /v1/skills/{id}/execute/stream` endpoint in
+  `customer_facing/http_openapi_server.py`. Server-Sent Events with
+  `step_start`, `step_completed`, `done` event types. Docs: `docs/STREAMING.md`.
+- **F4 — Async Execution + Run ID**: `POST /v1/skills/{id}/execute/async`
+  returns 202 with `run_id`. `GET /v1/runs/{run_id}` for polling,
+  `GET /v1/runs` for listing. `runtime/run_store.py` thread-safe in-memory
+  store with JSONL persistence and eviction. Docs: `docs/ASYNC_EXECUTION.md`.
+- **F5 — Docker + CLI serve**: New `agent-skills serve` CLI subcommand with
+  `--host`, `--port`, `--api-key`, `--cors-origins` flags. `Dockerfile`
+  (Python 3.13-slim), `docker-compose.yml` with health check, `.dockerignore`.
+  Docs: `docs/DEPLOYMENT.md` sections 4-5.
+- **F6 — OpenTelemetry Spans**: Optional OTel integration in
+  `runtime/otel_integration.py` — graceful no-op when SDK is absent.
+  Spans: `skill.execute` (per-skill), `step.execute` (per-step) with
+  `record_exception` on failure. Optional dep group `otel` in `pyproject.toml`.
+  Docs: `docs/OBSERVABILITY.md` OTel section.
+
 ## [0.1.0] — 2026-03-24
 
 ### Added

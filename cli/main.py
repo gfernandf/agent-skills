@@ -366,6 +366,13 @@ def main() -> None:
     )
     add_root_args(openapi_verify_errors_cmd)
 
+    serve_cmd = sub.add_parser("serve", help="Start the HTTP API server")
+    serve_cmd.add_argument("--host", default=None, help="Bind address (default: 127.0.0.1 or AGENT_SKILLS_HOST)")
+    serve_cmd.add_argument("--port", type=int, default=None, help="Bind port (default: 8080 or AGENT_SKILLS_PORT)")
+    serve_cmd.add_argument("--api-key", default=None, help="API key for auth (default: AGENT_SKILLS_API_KEY)")
+    serve_cmd.add_argument("--cors-origins", default=None, help="Comma-separated CORS origins")
+    add_root_args(serve_cmd)
+
     args = parser.parse_args()
 
     # Resolve roots with defaults
@@ -566,6 +573,46 @@ def main() -> None:
     elif args.command == "openapi":
 
         _cmd_openapi(args, runtime_root)
+
+    elif args.command == "serve":
+
+        _cmd_serve(args, registry_root, runtime_root, host_root)
+
+
+def _cmd_serve(args, registry_root, runtime_root, host_root):
+    """Start the HTTP API server."""
+    import os
+    from customer_facing.http_openapi_server import run_server, ServerConfig
+    from customer_facing.neutral_api import NeutralRuntimeAPI
+
+    host = args.host or os.environ.get("AGENT_SKILLS_HOST", "127.0.0.1")
+    port = args.port or int(os.environ.get("AGENT_SKILLS_PORT", "8080"))
+    api_key = args.api_key or os.environ.get("AGENT_SKILLS_API_KEY")
+    cors = ""
+    if args.cors_origins:
+        cors = args.cors_origins
+    elif os.environ.get("AGENT_SKILLS_CORS_ORIGINS"):
+        cors = os.environ["AGENT_SKILLS_CORS_ORIGINS"]
+
+    config = ServerConfig(
+        host=host,
+        port=port,
+        api_key=api_key,
+        cors_allowed_origins=cors,
+    )
+
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+    )
+    api = NeutralRuntimeAPI(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+    )
+
+    run_server(api=api, gateway=gateway, config=config)
 
 
 def _cmd_scaffold(

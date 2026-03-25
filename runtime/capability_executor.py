@@ -3,10 +3,42 @@ from __future__ import annotations
 import time
 from typing import Any, Protocol
 
-from runtime.errors import CapabilityExecutionError, CapabilityNotFoundError
+from runtime.errors import CapabilityExecutionError, CapabilityNotFoundError, InputMappingError
 from runtime.models import CapabilitySpec
 from runtime.observability import elapsed_ms, log_event
 
+
+# Basic type compatibility map: FieldSpec.type → acceptable Python types.
+_TYPE_MAP: dict[str, tuple[type, ...]] = {
+    "string": (str,),
+    "number": (int, float),
+    "integer": (int,),
+    "boolean": (bool,),
+    "object": (dict,),
+    "array": (list,),
+}
+
+
+def _validate_capability_input(capability: CapabilitySpec, step_input: dict[str, Any]) -> None:
+    """Validate step_input against the capability's declared input schema.
+
+    Raises InputMappingError on missing required fields or type mismatches.
+    """
+    for field_name, field_spec in capability.inputs.items():
+        if field_spec.required and field_name not in step_input:
+            raise InputMappingError(
+                f"Missing required input '{field_name}' for capability '{capability.id}'.",
+                capability_id=capability.id,
+            )
+        if field_name in step_input and field_spec.type in _TYPE_MAP:
+            value = step_input[field_name]
+            allowed = _TYPE_MAP[field_spec.type]
+            if value is not None and not isinstance(value, allowed):
+                raise InputMappingError(
+                    f"Input '{field_name}' for capability '{capability.id}' "
+                    f"expected type '{field_spec.type}' but got '{type(value).__name__}'.",
+                    capability_id=capability.id,
+                )
 
 class CapabilityExecutor(Protocol):
     """
@@ -23,6 +55,7 @@ class CapabilityExecutor(Protocol):
         trace_id: str | None = None,
         required_conformance_profile: str | None = None,
         trace_callback=None,
+        cancel_event=None,
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         """
         Execute a capability and return its outputs.
@@ -52,6 +85,7 @@ class DefaultCapabilityExecutor:
         trace_id: str | None = None,
         required_conformance_profile: str | None = None,
         trace_callback=None,
+        cancel_event=None,
     ) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any]]:
         start_time = time.perf_counter()
         log_event(
@@ -61,12 +95,14 @@ class DefaultCapabilityExecutor:
             input_keys=sorted(step_input.keys()),
             required_conformance_profile=required_conformance_profile,
         )
+        _validate_capability_input(capability, step_input)
         try:
             result = self.binding_executor.execute(
                 capability,
                 step_input,
                 trace_callback=trace_callback,
                 required_conformance_profile=required_conformance_profile,
+                cancel_event=cancel_event,
             )
         except CapabilityNotFoundError:
             log_event(

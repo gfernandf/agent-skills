@@ -557,7 +557,8 @@ def test_combined_trust_and_confirmation():
 
 
 def test_gate_exception_treated_as_blocked():
-    print("▸ Gate capability exception is treated as blocked")
+    print("▸ Gate capability exception raises GateExecutionError")
+    from runtime.errors import GateExecutionError
     cap = _make_cap(safety={
         "mandatory_pre_gates": [
             {"capability": "nonexistent.gate", "on_fail": "block"},
@@ -568,8 +569,8 @@ def test_gate_exception_treated_as_blocked():
     try:
         engine.execute(req)
         _test("should have raised", False)
-    except SafetyGateFailedError:
-        _test("gate exception → block", True)
+    except GateExecutionError:
+        _test("gate infra exception → GateExecutionError", True)
 
 
 # ═══════════════════════════════════════════════════════════════

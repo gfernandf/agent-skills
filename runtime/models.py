@@ -269,6 +269,13 @@ class ExecutionOptions:
     trust_level: str = "standard"
     # Safety: capabilities pre-confirmed by the caller (bypasses requires_confirmation).
     confirmed_capabilities: frozenset[str] = field(default_factory=frozenset)
+    # Maximum wall-clock seconds across the entire nested-skill lineage.
+    # None means no aggregate timeout (individual step timeouts still apply).
+    max_lineage_timeout_seconds: float | None = None
+    # Scheduler: max parallel workers. None = use env var or default (8).
+    max_workers: int | None = None
+    # Step: default timeout in seconds. None = use engine default (60s).
+    default_step_timeout_seconds: float | None = None
 
 
 @dataclass(frozen=True)
@@ -300,6 +307,9 @@ class ExecutionContext:
     lineage: tuple[str, ...] = ()
     trace_id: str | None = None
     channel: str | None = None
+    # Monotonic deadline (time.monotonic()) for the entire lineage.
+    # Set once at top level; passed down to nested contexts.
+    deadline: float | None = None
 
 
 @dataclass(frozen=True)

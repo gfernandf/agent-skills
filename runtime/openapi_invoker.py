@@ -28,6 +28,9 @@ _DEFAULT_RETRY_BACKOFF_BASE = 1.0
 _DEFAULT_RETRY_BACKOFF_FACTOR = 2.0
 _MAX_RETRY_AFTER_SECONDS = 60.0
 
+_DEFAULT_MAX_REQUEST_BYTES = int(os.getenv("AGENT_SKILLS_MAX_REQUEST_BYTES", str(10 * 1024 * 1024)))
+_DEFAULT_MAX_RESPONSE_BYTES = int(os.getenv("AGENT_SKILLS_MAX_RESPONSE_BYTES", str(10 * 1024 * 1024)))
+
 
 class OpenAPIInvoker:
     """
@@ -112,10 +115,40 @@ class OpenAPIInvoker:
             except Exception:
                 pass
 
+        max_request_bytes = self._resolve_positive_int(
+            binding.metadata.get("max_request_bytes"),
+            service.metadata.get("max_request_bytes"),
+            _DEFAULT_MAX_REQUEST_BYTES,
+        )
+        max_response_bytes = self._resolve_positive_int(
+            binding.metadata.get("max_response_bytes"),
+            service.metadata.get("max_response_bytes"),
+            _DEFAULT_MAX_RESPONSE_BYTES,
+        )
+
+        # Validate request payload size
+        try:
+            payload_bytes = len(json.dumps(request.payload).encode("utf-8")) if request.payload else 0
+        except (TypeError, ValueError):
+            payload_bytes = 0
+        if payload_bytes > max_request_bytes:
+            raise OpenAPIInvocationError(
+                f"Request payload ({payload_bytes} bytes) exceeds limit "
+                f"({max_request_bytes} bytes) for service '{service.id}'.",
+                capability_id=capability_id,
+            )
+
         last_error: Exception | None = None
         last_response: requests.Response | None = None
+        cancel_event = request.cancel_event
 
         for attempt in range(max_retries + 1):
+            # Cooperative cancellation: abort early if cancelled by engine.
+            if cancel_event is not None and cancel_event.is_set():
+                raise OpenAPIInvocationError(
+                    f"Invocation for service '{service.id}' cancelled.",
+                    capability_id=capability_id,
+                )
             try:
                 response = requests.request(
                     method=method,
@@ -169,6 +202,15 @@ class OpenAPIInvoker:
                             f"body={response.text[:2000]}\n")
             except Exception:
                 pass
+
+        # Validate response size
+        content_length = len(response.content)
+        if content_length > max_response_bytes:
+            raise OpenAPIInvocationError(
+                f"Response body ({content_length} bytes) exceeds limit "
+                f"({max_response_bytes} bytes) from service '{service.id}'.",
+                capability_id=capability_id,
+            )
 
         if not response.ok:
             preview = self._safe_text_preview(response.text)
@@ -472,6 +514,15 @@ class OpenAPIInvoker:
             return default
         if isinstance(chosen, (int, float)) and chosen > 0:
             return float(chosen)
+        return default
+
+    @staticmethod
+    def _resolve_positive_int(binding_val: Any, service_val: Any, default: int) -> int:
+        chosen = binding_val if binding_val is not None else service_val
+        if chosen is None:
+            return default
+        if isinstance(chosen, int) and chosen > 0:
+            return chosen
         return default
 
     @staticmethod

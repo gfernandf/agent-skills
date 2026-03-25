@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -116,7 +116,7 @@ def prepare_promotion_package(
 
     domain, slug = resolved_skill_id.split(".", 1)
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     package_name = f"{resolved_skill_id.replace('.', '_')}-{target_channel}-{timestamp}"
     package_root = out_root / package_name
 
