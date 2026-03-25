@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 import time
 from typing import Any
 
@@ -68,6 +69,15 @@ class BindingExecutor:
         self.protocol_router = protocol_router
         self.response_mapper = response_mapper
         self.circuit_breaker = circuit_breaker_registry or CircuitBreakerRegistry()
+        # Resolution plan cache: (capability_id, conformance_override) → plan dict
+        self._plan_cache: dict[tuple[str, str | None], dict[str, Any]] = {}
+        self._plan_cache_lock = threading.Lock()
+        self._plan_cache_max = 256
+
+    def invalidate_plan_cache(self) -> None:
+        """Clear cached resolution plans (call after binding activation changes)."""
+        with self._plan_cache_lock:
+            self._plan_cache.clear()
 
     def execute(
         self,
@@ -247,6 +257,13 @@ class BindingExecutor:
         required_conformance_profile: str | None = None,
     ) -> dict[str, Any]:
         capability_id = capability.id
+        cache_key = (capability_id, required_conformance_profile)
+
+        with self._plan_cache_lock:
+            cached = self._plan_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         resolved = self.binding_resolver.resolve(capability_id)
 
         required_profile = self._resolve_required_conformance_profile(
@@ -285,13 +302,19 @@ class BindingExecutor:
                 }
             )
 
-        return {
+        plan = {
             "capability_id": capability_id,
             "selection_source": resolved.selection_source,
             "primary_binding_id": resolved.binding_id,
             "required_conformance_profile": required_profile,
             "chain": plan_items,
         }
+
+        with self._plan_cache_lock:
+            if len(self._plan_cache) < self._plan_cache_max:
+                self._plan_cache[cache_key] = plan
+
+        return plan
 
     def _build_fallback_chain(self, *, capability_id: str, primary_binding_id: str) -> list[str]:
         """

@@ -1,0 +1,76 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Uptime",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "agent_skills_uptime_seconds", "legendFormat": "uptime"}
+      ]
+    },
+    {
+      "title": "Binding Executions (total)",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {"expr": "agent_skills_binding_execute_total", "legendFormat": "total"}
+      ]
+    },
+    {
+      "title": "Binding Success Rate",
+      "type": "gauge",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "agent_skills_binding_execute_success_total / agent_skills_binding_execute_total",
+          "legendFormat": "success_rate"
+        }
+      ]
+    },
+    {
+      "title": "Binding Resolution Latency (ms)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {"expr": "agent_skills_binding_resolution_ms_sum / agent_skills_binding_resolution_ms_count", "legendFormat": "avg_ms"}
+      ]
+    },
+    {
+      "title": "Request Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {"expr": "rate(agent_skills_binding_execute_total[5m])", "legendFormat": "req/s"}
+      ]
+    },
+    {
+      "title": "Fallback Usage",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 12},
+      "targets": [
+        {"expr": "agent_skills_binding_execute_fallback_used_total", "legendFormat": "fallbacks"}
+      ]
+    },
+    {
+      "title": "Circuit Breaker Opens",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 12},
+      "targets": [
+        {"expr": "agent_skills_binding_circuit_open_skip_total", "legendFormat": "circuit_open"}
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["agent-skills"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "title": "Agent Skills Runtime",
+  "uid": "agent-skills-runtime",
+  "version": 1
+}

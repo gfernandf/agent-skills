@@ -54,6 +54,8 @@ class OpenAPIInvoker:
         "fd00:ec2::254",    # AWS IPv6 metadata
     })
 
+    _SESSION_POOL_MAX = 32
+
     def __init__(self, *, allow_private_networks: bool = True) -> None:
         """
         Args:
@@ -64,6 +66,37 @@ class OpenAPIInvoker:
         """
         self._allow_private_networks = allow_private_networks
         self._logger = logging.getLogger(__name__)
+        # Connection-pooled sessions keyed by base_url for persistent TCP reuse
+        self._sessions: dict[str, requests.Session] = {}
+        self._sessions_lock = __import__("threading").Lock()
+
+    def _get_session(self, base_url: str) -> requests.Session:
+        """Return a pooled Session for the given base_url, creating one if needed."""
+        session = self._sessions.get(base_url)
+        if session is not None:
+            return session
+        with self._sessions_lock:
+            # Double-check after acquiring lock
+            session = self._sessions.get(base_url)
+            if session is not None:
+                return session
+            # Evict oldest if pool is full
+            if len(self._sessions) >= self._SESSION_POOL_MAX:
+                oldest_key = next(iter(self._sessions))
+                self._sessions.pop(oldest_key).close()
+            session = requests.Session()
+            adapter = requests.adapters.HTTPAdapter(pool_connections=4, pool_maxsize=10)
+            session.mount("https://", adapter)
+            session.mount("http://", adapter)
+            self._sessions[base_url] = session
+            return session
+
+    def close_sessions(self) -> None:
+        """Close all pooled HTTP sessions. Call on server shutdown."""
+        with self._sessions_lock:
+            for session in self._sessions.values():
+                session.close()
+            self._sessions.clear()
 
     def invoke(self, request: InvocationRequest) -> InvocationResponse:
         start_time = time.perf_counter()
@@ -150,7 +183,8 @@ class OpenAPIInvoker:
                     capability_id=capability_id,
                 )
             try:
-                response = requests.request(
+                session = self._get_session(service.base_url)
+                response = session.request(
                     method=method,
                     url=url,
                     json=request.payload,

@@ -37,7 +37,14 @@ otel = [
     "opentelemetry-exporter-otlp>=1.20",
 ]
 all = ["PyPDF2>=3.0", "beautifulsoup4>=4.12"]
-dev = ["pytest>=7.0", "PyPDF2>=3.0", "beautifulsoup4>=4.12"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.1",
+    "pytest-benchmark>=4.0",
+    "PyPDF2>=3.0",
+    "beautifulsoup4>=4.12",
+    "pip-audit>=2.6",
+]
 
 [project.scripts]
 agent-skills = "cli.main:main"
@@ -69,3 +76,33 @@ include = [
     "official_services*",
     "official_mcp_servers*",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["runtime", "."]
+addopts = [
+    "--cov=runtime",
+    "--cov=gateway",
+    "--cov=customer_facing",
+    "--cov=customization",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html:artifacts/htmlcov",
+    "--cov-fail-under=75",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["runtime", "gateway", "customer_facing", "customization"]
+omit = [
+    "*/test_*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.",
+    "raise NotImplementedError",
+    "@overload",
+]
+show_missing = true

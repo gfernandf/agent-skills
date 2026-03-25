@@ -1,0 +1,71 @@
+site_name: Agent Skills
+site_description: Runtime for composable AI agent skills
+repo_url: https://github.com/your-org/agent-skills
+
+theme:
+  name: material
+  palette:
+    primary: indigo
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - search.suggest
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: INSTALLATION.md
+      - "10-Minute Onboarding": ONBOARDING_10_MIN.md
+      - "Tutorial: First Skill": TUTORIAL_FIRST_SKILL.md
+  - Architecture:
+      - Runner Guide: RUNNER_GUIDE.md
+      - Cross-Repo Architecture: CROSS_REPO_ARCHITECTURE.md
+      - Scheduler: SCHEDULER.md
+      - Step Control Flow: STEP_CONTROL_FLOW.md
+      - CognitiveState v1: COGNITIVE_STATE_V1.md
+      - Gateway ADR: AGENT_GATEWAY_ADR.md
+  - Bindings & Services:
+      - Binding Guide: BINDING_GUIDE.md
+      - Binding Selection: BINDING_SELECTION.md
+      - Service Descriptors: SERVICE_DESCRIPTORS.md
+      - OpenAPI Construction: OPENAPI_CONSTRUCTION_GUIDE.md
+  - Security:
+      - Auth: AUTH.md
+      - Security: SECURITY.md
+      - Error & Security Baseline: OPENAPI_ERROR_SECURITY_BASELINE.md
+  - Observability:
+      - Observability: OBSERVABILITY.md
+      - Streaming: STREAMING.md
+      - Webhooks: WEBHOOKS.md
+      - Trace Dry-Run: AGENT_TRACE_DRY_RUN_GUIDE.md
+  - API:
+      - Neutral API: CONSUMER_FACING_NEUTRAL_API.md
+      - Async Execution: ASYNC_EXECUTION.md
+      - JSON Schemas: JSON_SCHEMAS.md
+  - Operations:
+      - Deployment: DEPLOYMENT.md
+      - Reliability: RELIABILITY.md
+      - CI & Testing: CI_AND_TESTING.md
+      - Troubleshooting: TROUBLESHOOTING.md
+  - Governance:
+      - Skill Governance Manifesto: SKILL_GOVERNANCE_MANIFESTO.md
+      - Cross-Repo Pin Policy: CROSS_REPO_PIN_POLICY.md
+      - Project Status: PROJECT_STATUS.md
+  - Reference:
+      - Error Catalog: ERROR_CATALOG.md
+      - Plugins: PLUGINS.md
+      - MCP Integration: MCP_INTEGRATION_SLICES.md
+
+docs_dir: docs
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search

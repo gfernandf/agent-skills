@@ -1,0 +1,24 @@
+id: example.sentiment.analyze
+version: "1.0.0"
+name: Sentiment Analyzer
+description: Analyze the sentiment of a text passage — example skill.
+
+inputs:
+  text:
+    type: string
+    required: true
+
+outputs:
+  sentiment:
+    type: string
+  confidence:
+    type: number
+
+steps:
+  - id: analyze
+    uses: text.sentiment.analyze
+    input_mapping:
+      text: "inputs.text"
+    output_mapping:
+      sentiment: "outputs.sentiment"
+      confidence: "outputs.confidence"

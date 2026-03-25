@@ -17,6 +17,25 @@ from runtime.observability import elapsed_ms, log_event
 from runtime.openapi_error_contract import build_http_error_payload, map_runtime_error_to_http
 
 
+def _format_prometheus(snapshot: dict[str, Any]) -> str:
+    """Convert a metrics snapshot to Prometheus exposition format."""
+    lines: list[str] = []
+    lines.append(f"# HELP agent_skills_uptime_seconds Runtime uptime in seconds")
+    lines.append(f"# TYPE agent_skills_uptime_seconds gauge")
+    lines.append(f"agent_skills_uptime_seconds {snapshot.get('uptime_seconds', 0)}")
+    for name, value in snapshot.get("counters", {}).items():
+        pname = "agent_skills_" + name.replace(".", "_")
+        lines.append(f"# TYPE {pname}_total counter")
+        lines.append(f"{pname}_total {value}")
+    for name, hist in snapshot.get("histograms", {}).items():
+        pname = "agent_skills_" + name.replace(".", "_")
+        lines.append(f"# TYPE {pname} summary")
+        lines.append(f"{pname}_count {hist.get('count', 0)}")
+        lines.append(f"{pname}_sum {hist.get('total', 0)}")
+    lines.append("")
+    return "\n".join(lines)
+
+
 @dataclass(frozen=True)
 class ServerConfig:
     host: str = "127.0.0.1"
@@ -27,6 +46,7 @@ class ServerConfig:
     max_request_body_bytes: int = 2 * 1024 * 1024  # 2 MB — ample for JSON skill payloads
     unauthenticated_paths: tuple[str, ...] = ("/openapi.json", "/v1/health")
     cors_allowed_origins: str = ""  # Comma-separated origins, or "*" for any. Empty = no CORS headers.
+    trusted_proxies: frozenset[str] = frozenset()  # IPs of trusted reverse proxies for X-Forwarded-For
 
 
 class _RequestHandler(BaseHTTPRequestHandler):
@@ -53,7 +73,11 @@ class _RequestHandler(BaseHTTPRequestHandler):
             if not self._enforce_rate_limit(parsed.path):
                 return
             if parsed.path == "/v1/health":
-                self._write_json(200, self._api().health())
+                query = parse_qs(parsed.query or "")
+                if "true" in query.get("deep", []):
+                    self._write_json(200, self._deep_health())
+                else:
+                    self._write_json(200, self._api().health())
                 return
 
             if parsed.path == "/openapi.json":
@@ -109,6 +133,13 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     self._write_json(200, {"uptime_seconds": 0, "counters": {}, "histograms": {}})
                 else:
                     self._write_json(200, metrics.snapshot())
+                return
+
+            # ── Prometheus metrics (text/plain) ───────────────────
+            if parsed.path == "/v1/metrics/prometheus":
+                metrics = self._runtime_metrics
+                body = _format_prometheus(metrics.snapshot() if metrics else {"uptime_seconds": 0, "counters": {}, "histograms": {}})
+                self._write_plain(200, body)
                 return
 
             # ── Webhook endpoints (GET) ────────────────────────────
@@ -495,7 +526,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
         window_seconds = max(1, int(config.rate_limit_window_seconds))
         now = time.time()
 
-        client_id = self.client_address[0] if self.client_address else "unknown"
+        client_id = self._resolve_client_id()
 
         with self._rate_lock:
             # Garbage-collect stale entries to prevent unbounded memory growth.
@@ -546,6 +577,22 @@ class _RequestHandler(BaseHTTPRequestHandler):
             self._rate_state[client_id] = events
 
         return True
+
+    def _resolve_client_id(self) -> str:
+        """Resolve real client IP, respecting trusted proxy chain."""
+        raw_ip = self.client_address[0] if self.client_address else "unknown"
+        trusted = self.config.trusted_proxies
+        if not trusted or raw_ip not in trusted:
+            return raw_ip
+        forwarded = (self.headers.get("x-forwarded-for") or "").strip()
+        if not forwarded:
+            return raw_ip
+        # Rightmost-untrusted: walk from right, return first IP not in trusted set
+        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+        for ip in reversed(parts):
+            if ip not in trusted:
+                return ip
+        return raw_ip
 
     def _extract_trace_id(self, body: Any) -> str | None:
         header_trace = self.headers.get("x-trace-id")
@@ -685,6 +732,38 @@ class _RequestHandler(BaseHTTPRequestHandler):
             error_code=error_code,
         )
 
+    def _write_plain(self, status: int, text: str) -> None:
+        encoded = text.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(encoded)))
+        self._send_cors_headers()
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def _deep_health(self) -> dict[str, Any]:
+        """Extended health check: runtime + subsystem readiness."""
+        checks: dict[str, Any] = {}
+        # Basic health
+        api = self._api()
+        checks["api"] = api.health() if api else {"status": "unavailable"}
+        # Metrics
+        metrics = self._runtime_metrics
+        if metrics:
+            snap = metrics.snapshot()
+            checks["uptime_seconds"] = snap.get("uptime_seconds", 0)
+            checks["total_requests"] = sum(
+                v for k, v in snap.get("counters", {}).items() if "total" in k
+            )
+        # Gateway
+        gw = self._gateway()
+        if gw:
+            try:
+                checks["skills_loaded"] = len(gw.list_skills())
+            except Exception:
+                checks["skills_loaded"] = "error"
+        return {"status": "healthy", "checks": checks}
+
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
         return
 
@@ -724,17 +803,47 @@ def run_server(
     webhook_store = WebhookStore()
     _RequestHandler.webhook_store = webhook_store
 
-    # RBAC auth middleware (opt-in: set AGENT_SKILLS_RBAC=1)
-    if os.environ.get("AGENT_SKILLS_RBAC", "").strip() in ("1", "true", "yes"):
+    # ── Auth mode: enforced (default) | permissive | disabled ──────
+    # Legacy compat: AGENT_SKILLS_RBAC=1 maps to 'enforced'
+    auth_mode = os.environ.get("AGENT_SKILLS_AUTH_MODE", "").strip().lower()
+    if not auth_mode:
+        legacy_flag = os.environ.get("AGENT_SKILLS_RBAC", "").strip().lower()
+        if legacy_flag in ("1", "true", "yes"):
+            auth_mode = "enforced"
+        elif config.api_key:
+            auth_mode = "enforced"
+        else:
+            auth_mode = "permissive"
+    if auth_mode not in ("enforced", "permissive", "disabled"):
+        auth_mode = "enforced"
+
+    if auth_mode == "disabled":
+        logger.warning("Auth disabled (AGENT_SKILLS_AUTH_MODE=disabled) — not recommended for production")
+    else:
         from runtime.auth import AuthMiddleware, ApiKeyStore
         api_key_store = ApiKeyStore()
         if config.api_key:
             api_key_store.register(config.api_key, subject="default", role="admin")
+        allow_anon = (auth_mode == "permissive")
         _RequestHandler.auth_middleware = AuthMiddleware(
             api_key_store=api_key_store,
-            allow_anonymous=not bool(config.api_key),
+            allow_anonymous=allow_anon,
             anonymous_role="reader",
         )
+
+    # Trusted proxies for rate-limiter X-Forwarded-For resolution
+    trusted_raw = os.environ.get("AGENT_SKILLS_TRUSTED_PROXIES", "").strip()
+    if trusted_raw:
+        config = ServerConfig(
+            host=config.host, port=config.port, api_key=config.api_key,
+            rate_limit_requests=config.rate_limit_requests,
+            rate_limit_window_seconds=config.rate_limit_window_seconds,
+            max_request_body_bytes=config.max_request_body_bytes,
+            unauthenticated_paths=config.unauthenticated_paths,
+            cors_allowed_origins=config.cors_allowed_origins,
+            trusted_proxies=frozenset(p.strip() for p in trusted_raw.split(",") if p.strip()),
+        )
+        _RequestHandler.config = config
 
     # Runtime metrics
     from runtime.metrics import METRICS

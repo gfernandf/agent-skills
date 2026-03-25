@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac as _hmac_mod
 import json
 import os
 import tempfile
@@ -17,6 +18,8 @@ _DEFAULT_AUDIT_MODE = "standard"
 _MAX_STR_LEN = int(os.getenv("AGENT_SKILLS_AUDIT_MAX_STR_LEN", "2048"))
 _MAX_COLLECTION_ITEMS = int(os.getenv("AGENT_SKILLS_AUDIT_MAX_ITEMS", "100"))
 _REDACTION_TOKEN = "[REDACTED]"
+_GENESIS_HASH = "genesis"
+_HMAC_KEY_ENV = "AGENT_SKILLS_AUDIT_HMAC_KEY"
 _SENSITIVE_KEY_PARTS = {
     "password",
     "secret",
@@ -68,6 +71,10 @@ class AuditRecorder:
         else:
             self.audit_file = runtime_root / "artifacts" / _DEFAULT_AUDIT_FILE
 
+        self._prev_hash: str = _GENESIS_HASH
+        hmac_key_raw = os.getenv(_HMAC_KEY_ENV, "").strip()
+        self._hmac_key: bytes | None = hmac_key_raw.encode() if hmac_key_raw else None
+
     def resolve_mode(self, requested_mode: str | None) -> str:
         if requested_mode is None:
             return self.default_mode
@@ -109,6 +116,17 @@ class AuditRecorder:
             lineage=lineage,
             error=error,
         )
+
+        # Integrity chain: attach previous record hash
+        record["_prev_hash"] = self._prev_hash
+        # Compute record hash (deterministic serialization, excluding _record_hmac)
+        record_json = json.dumps(record, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        record_hash = hashlib.sha256(record_json.encode()).hexdigest()
+        record["_record_hash"] = record_hash
+        # HMAC signature when key is configured
+        if self._hmac_key:
+            record["_record_hmac"] = _hmac_mod.new(self._hmac_key, record_json.encode(), hashlib.sha256).hexdigest()
+        self._prev_hash = record_hash
 
         self.audit_file.parent.mkdir(parents=True, exist_ok=True)
         line = json.dumps(record, ensure_ascii=True, separators=(",", ":")) + "\n"
@@ -212,6 +230,75 @@ class AuditRecorder:
             "deleted": deleted,
             "kept": len(kept_lines),
             "total": total,
+        }
+
+    def verify_integrity(self, *, hmac_key: bytes | None = None) -> dict[str, Any]:
+        """Verify the hash chain (and optionally HMAC) of the audit log.
+
+        Returns a dict with ``valid``, ``total``, ``first_broken_line``,
+        and ``errors`` list.
+        """
+        if not self.audit_file.exists():
+            return {"valid": True, "total": 0, "first_broken_line": None, "errors": []}
+
+        errors: list[str] = []
+        prev_hash = _GENESIS_HASH
+        total = 0
+        first_broken: int | None = None
+
+        with self.audit_file.open("r", encoding="utf-8") as f:
+            for lineno, raw in enumerate(f, 1):
+                line = raw.rstrip("\n")
+                if not line:
+                    continue
+                total += 1
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    errors.append(f"line {lineno}: invalid JSON")
+                    if first_broken is None:
+                        first_broken = lineno
+                    continue
+
+                if not isinstance(record, dict):
+                    continue
+
+                stored_prev = record.get("_prev_hash")
+                if stored_prev is not None and stored_prev != prev_hash:
+                    errors.append(f"line {lineno}: chain broken (expected prev={prev_hash[:12]}…, got {stored_prev[:12]}…)")
+                    if first_broken is None:
+                        first_broken = lineno
+
+                stored_hash = record.get("_record_hash")
+                # Recompute: remove _record_hash and _record_hmac, serialize, hash
+                verify_record = {k: v for k, v in record.items() if k not in ("_record_hash", "_record_hmac")}
+                computed_json = json.dumps(verify_record, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+                computed_hash = hashlib.sha256(computed_json.encode()).hexdigest()
+
+                if stored_hash is not None and stored_hash != computed_hash:
+                    errors.append(f"line {lineno}: record hash mismatch (tampered?)")
+                    if first_broken is None:
+                        first_broken = lineno
+
+                # HMAC verification (optional)
+                stored_hmac = record.get("_record_hmac")
+                if hmac_key and stored_hmac:
+                    expected_hmac = _hmac_mod.new(hmac_key, computed_json.encode(), hashlib.sha256).hexdigest()
+                    if not _hmac_mod.compare_digest(stored_hmac, expected_hmac):
+                        errors.append(f"line {lineno}: HMAC verification failed")
+                        if first_broken is None:
+                            first_broken = lineno
+
+                if stored_hash:
+                    prev_hash = stored_hash
+                else:
+                    prev_hash = computed_hash
+
+        return {
+            "valid": len(errors) == 0,
+            "total": total,
+            "first_broken_line": first_broken,
+            "errors": errors,
         }
 
     def _build_record(

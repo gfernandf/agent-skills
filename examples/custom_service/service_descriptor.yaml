@@ -1,0 +1,7 @@
+id: sentiment_example
+kind: pythoncall
+module: examples.custom_service.service
+
+metadata:
+  description: "Example sentiment analysis service (keyword-based, no external deps)."
+  maintained_by: user

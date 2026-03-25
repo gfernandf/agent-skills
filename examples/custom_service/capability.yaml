@@ -1,0 +1,21 @@
+id: text.sentiment.analyze
+version: 1.0.0
+description: Analyze the sentiment of a text passage.
+
+inputs:
+  text:
+    type: string
+    required: true
+    description: The text to analyze for sentiment.
+
+outputs:
+  sentiment:
+    type: string
+    description: "Detected sentiment label: positive, negative, or neutral."
+  confidence:
+    type: number
+    description: Confidence score between 0 and 1.
+
+metadata:
+  status: experimental
+  tags: [text, nlp, sentiment]

@@ -1,0 +1,17 @@
+id: python_sentiment_example
+
+capability: text.sentiment.analyze
+service: sentiment_example
+protocol: pythoncall
+operation: analyze_sentiment
+
+request:
+  text: input.text
+
+response:
+  sentiment: response.sentiment
+  confidence: response.confidence
+
+metadata:
+  description: "Example pythoncall binding for text.sentiment.analyze."
+  status: experimental
