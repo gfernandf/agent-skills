@@ -8,12 +8,15 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import ipaddress
 import json
 import logging
+import socket
 import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from urllib.error import URLError
 
@@ -33,6 +36,66 @@ _MAX_RETRIES = 3
 _RETRY_BACKOFF_BASE = 2.0   # seconds: 2, 4, 8
 _DELIVERY_TIMEOUT = 10       # seconds per attempt
 _MAX_SUBSCRIPTIONS = 100
+
+# ── SSRF protection ──────────────────────────────────────────────
+_BLOCKED_METADATA_IPS = frozenset({
+    "169.254.169.254",  # AWS / GCP / Azure instance metadata
+    "100.100.100.200",  # Alibaba Cloud metadata
+    "fd00:ec2::254",    # AWS IPv6 metadata
+})
+
+
+def _validate_webhook_url(url: str) -> None:
+    """Validate webhook URL to prevent SSRF attacks.
+
+    Blocks:
+    - Non-HTTP(S) schemes
+    - Cloud metadata endpoints
+    - Private/loopback/link-local IPs (unless AGENT_SKILLS_WEBHOOKS_ALLOW_PRIVATE=1)
+
+    Set AGENT_SKILLS_WEBHOOKS_SKIP_URL_VALIDATION=1 for testing only.
+    """
+    import os
+
+    if os.environ.get("AGENT_SKILLS_WEBHOOKS_SKIP_URL_VALIDATION", "").strip().lower() in ("1", "true"):
+        return
+
+    parsed = urlparse(url)
+
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(
+            f"Webhook URL scheme '{parsed.scheme}' is not allowed. "
+            "Only http and https are permitted."
+        )
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("Webhook URL has no hostname.")
+
+    try:
+        resolved_ips = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+    except socket.gaierror as e:
+        raise ValueError(f"Cannot resolve webhook hostname '{hostname}'.") from e
+
+    allow_private = os.environ.get("AGENT_SKILLS_WEBHOOKS_ALLOW_PRIVATE", "").strip().lower() in ("1", "true", "yes")
+
+    for _family, _type, _proto, _canonname, sockaddr in resolved_ips:
+        ip_str = sockaddr[0]
+
+        if ip_str in _BLOCKED_METADATA_IPS:
+            raise ValueError(
+                f"Webhook URL resolves to blocked cloud metadata IP {ip_str} "
+                f"(hostname '{hostname}'). This is never allowed."
+            )
+
+        if not allow_private:
+            addr = ipaddress.ip_address(ip_str)
+            if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved:
+                raise ValueError(
+                    f"Webhook URL resolves to private/reserved IP {ip_str} "
+                    f"(hostname '{hostname}'). Set AGENT_SKILLS_WEBHOOKS_ALLOW_PRIVATE=1 "
+                    "to permit internal endpoints."
+                )
 
 
 @dataclass
@@ -57,6 +120,22 @@ class WebhookStore:
         for evt in sub.events:
             if evt != "*" and evt not in VALID_EVENT_TYPES:
                 raise ValueError(f"Unknown event type: {evt}")
+        # SSRF protection: validate URL before accepting subscription
+        _validate_webhook_url(sub.url)
+        # Security: warn if HMAC secret is empty (signatures will be meaningless)
+        if not sub.secret:
+            import os
+            enforce = os.environ.get("AGENT_SKILLS_WEBHOOKS_REQUIRE_SECRET", "").strip().lower()
+            if enforce in ("1", "true", "yes"):
+                raise ValueError(
+                    "Webhook secret is required (AGENT_SKILLS_WEBHOOKS_REQUIRE_SECRET=1). "
+                    "Provide a non-empty 'secret' field for HMAC-SHA256 signature verification."
+                )
+            logger.warning(
+                "webhook.insecure_registration id=%s url=%s reason=empty_secret "
+                "hint=Set AGENT_SKILLS_WEBHOOKS_REQUIRE_SECRET=1 to enforce secrets",
+                sub.id, sub.url,
+            )
         with self._lock:
             if len(self._subscriptions) >= self.max_subscriptions:
                 raise RuntimeError("Max webhook subscriptions reached")

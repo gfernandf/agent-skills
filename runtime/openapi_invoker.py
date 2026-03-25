@@ -142,9 +142,10 @@ class OpenAPIInvoker:
         if os.getenv("AGENT_SKILLS_DEBUG"):
             try:
                 safe_headers = self._redact_headers(headers or {})
+                safe_payload = self._redact_payload(request.payload)
                 with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
                     f.write(f"\n[DEBUG] OpenAI request: headers={json.dumps(safe_headers)} "
-                            f"payload={json.dumps(request.payload)[:2000]}\n")
+                            f"payload={json.dumps(safe_payload)[:2000]}\n")
             except Exception:
                 pass
 
@@ -240,9 +241,10 @@ class OpenAPIInvoker:
 
         if os.getenv("AGENT_SKILLS_DEBUG"):
             try:
+                safe_body = self._redact_response_text(response.text[:2000])
                 with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
                     f.write(f"[DEBUG] OpenAI response: status={response.status_code} "
-                            f"body={response.text[:2000]}\n")
+                            f"body={safe_body}\n")
             except Exception:
                 pass
 
@@ -538,6 +540,33 @@ class OpenAPIInvoker:
             else:
                 redacted[k] = v
         return redacted
+
+    _SENSITIVE_PAYLOAD_KEYS = frozenset({
+        "api_key", "apikey", "secret", "password", "token", "access_token",
+        "refresh_token", "credentials", "private_key",
+    })
+
+    def _redact_payload(self, payload: Any) -> Any:
+        """Return a copy of *payload* with sensitive keys redacted."""
+        if not isinstance(payload, dict):
+            return payload
+        redacted: dict[str, Any] = {}
+        for k, v in payload.items():
+            if k.lower() in self._SENSITIVE_PAYLOAD_KEYS:
+                redacted[k] = "***"
+            elif isinstance(v, dict):
+                redacted[k] = self._redact_payload(v)
+            else:
+                redacted[k] = v
+        return redacted
+
+    def _redact_response_text(self, text: str) -> str:
+        """Remove potential secrets from response body text for debug logging."""
+        import re
+        # Redact JWT-like tokens and long base64 strings that might be keys
+        text = re.sub(r'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}', '***JWT_REDACTED***', text)
+        text = re.sub(r'(sk-|pk-|key-)[A-Za-z0-9]{20,}', '***KEY_REDACTED***', text)
+        return text
 
     # ── Retry helpers ──────────────────────────────────────────────
 

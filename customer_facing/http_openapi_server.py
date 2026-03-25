@@ -106,20 +106,37 @@ class _RequestHandler(BaseHTTPRequestHandler):
 
             if parsed.path == "/v1/skills/list":
                 query = parse_qs(parsed.query or "")
-                self._write_json(
-                    200,
-                    {
-                        "skills": [
-                            s.to_dict()
-                            for s in self._gateway().list_skills(
-                                domain=query.get("domain", [None])[0],
-                                role=query.get("role", [None])[0],
-                                status=query.get("status", [None])[0],
-                                invocation=query.get("invocation", [None])[0],
-                            )
-                        ]
-                    },
+                offset_raw = query.get("offset", [0])[0]
+                try:
+                    offset = max(0, int(offset_raw))
+                except (ValueError, TypeError):
+                    offset = 0
+                limit_raw = query.get("limit", [20])[0]
+                try:
+                    limit = min(100, max(1, int(limit_raw)))
+                except (ValueError, TypeError):
+                    limit = 20
+                all_skills = self._gateway().list_skills(
+                    domain=query.get("domain", [None])[0],
+                    role=query.get("role", [None])[0],
+                    status=query.get("status", [None])[0],
+                    invocation=query.get("invocation", [None])[0],
                 )
+                total = len(all_skills)
+                page = all_skills[offset:offset + limit]
+                has_more = (offset + limit) < total
+                response_body = {
+                    "skills": [s.to_dict() for s in page],
+                    "pagination": {
+                        "offset": offset,
+                        "limit": limit,
+                        "total": total,
+                        "has_more": has_more,
+                    },
+                }
+                if has_more:
+                    response_body["pagination"]["next_offset"] = offset + limit
+                self._write_json(200, response_body)
                 return
 
             if parsed.path == "/v1/skills/diagnostics":
@@ -562,16 +579,28 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     window_seconds=window_seconds,
                     max_requests=max_requests,
                 )
-                self._write_json(
-                    429,
-                    {
-                        "error": {
-                            "code": "rate_limited",
-                            "message": "Too many requests. Retry later.",
-                            "type": "RateLimitError",
-                        }
-                    },
-                )
+                # Send rate limit headers before body
+                retry_after = int(window_seconds - (now - events[0])) if events else window_seconds
+                self.send_response(429)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("X-RateLimit-Limit", str(max_requests))
+                self.send_header("X-RateLimit-Remaining", "0")
+                self.send_header("X-RateLimit-Reset", str(int(now + retry_after)))
+                self.send_header("Retry-After", str(max(1, retry_after)))
+                self._send_cors_headers()
+                self._send_security_headers()
+                body = json.dumps({
+                    "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests. Retry later.",
+                        "type": "RateLimitError",
+                        "hint": f"Rate limit is {max_requests} requests per {window_seconds}s. "
+                                f"Retry after {max(1, retry_after)}s.",
+                    }
+                }).encode("utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
                 return False
 
             events.append(now)
@@ -712,6 +741,8 @@ class _RequestHandler(BaseHTTPRequestHandler):
         self.send_header("X-XSS-Protection", "0")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
+        self.send_header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        self.send_header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
 
     def _write_json(self, status: int, body: dict[str, Any]) -> None:
         encoded = json.dumps(body, ensure_ascii=False).encode("utf-8")
@@ -863,6 +894,13 @@ def run_server(
     _RequestHandler._runtime_metrics = METRICS
 
     server = ThreadingHTTPServer((config.host, config.port), _RequestHandler)
+    # Security: warn about CORS wildcard in production
+    if config.cors_allowed_origins.strip() == "*":
+        logger.warning(
+            "CORS wildcard origin '*' is enabled — this allows any website to make "
+            "cross-origin requests. Not recommended for production. "
+            "Set AGENT_SKILLS_CORS_ORIGINS to specific origins."
+        )
     print(f"customer-facing API listening on http://{config.host}:{config.port}")
     log_event(
         "http.server.started",

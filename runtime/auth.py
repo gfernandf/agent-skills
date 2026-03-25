@@ -129,14 +129,33 @@ class JWTVerifier:
     ``role`` claims to build an Identity.  Falls back to *default_role*
     when the token has no ``role`` claim.
 
+    Security controls:
+    - Validates ``iss`` (issuer) and ``aud`` (audience) claims when configured
+    - Checks ``exp`` claim for token expiration
+    - Supports token revocation via in-memory blacklist
+
     Does NOT depend on any external library — uses stdlib only.
     """
 
-    def __init__(self, secret: str, *, default_role: str = "executor") -> None:
+    def __init__(
+        self,
+        secret: str,
+        *,
+        default_role: str = "executor",
+        required_issuer: str | None = None,
+        required_audience: str | None = None,
+    ) -> None:
         self._secret = secret.encode()
         self._default_role = default_role
+        self._required_issuer = required_issuer
+        self._required_audience = required_audience
 
     def __call__(self, token: str) -> Identity | None:
+        # Check revocation first
+        if _TOKEN_BLACKLIST.is_revoked(token):
+            logger.warning("auth.jwt.revoked_token_used")
+            return None
+
         import base64
         parts = token.split(".")
         if len(parts) != 3:
@@ -158,6 +177,27 @@ class JWTVerifier:
             exp = payload.get("exp")
             if isinstance(exp, (int, float)) and exp < time.time():
                 return None
+            # Validate issuer claim
+            if self._required_issuer is not None:
+                token_iss = payload.get("iss")
+                if token_iss != self._required_issuer:
+                    logger.warning("auth.jwt.invalid_issuer expected=%s got=%s", self._required_issuer, token_iss)
+                    return None
+            # Validate audience claim
+            if self._required_audience is not None:
+                token_aud = payload.get("aud")
+                # aud can be a string or a list
+                if isinstance(token_aud, str):
+                    if token_aud != self._required_audience:
+                        logger.warning("auth.jwt.invalid_audience expected=%s got=%s", self._required_audience, token_aud)
+                        return None
+                elif isinstance(token_aud, list):
+                    if self._required_audience not in token_aud:
+                        logger.warning("auth.jwt.invalid_audience expected=%s got=%s", self._required_audience, token_aud)
+                        return None
+                else:
+                    logger.warning("auth.jwt.missing_audience expected=%s", self._required_audience)
+                    return None
             sub = payload.get("sub", "unknown")
             role = payload.get("role", self._default_role)
             if role not in _ROLE_RANK:
@@ -165,6 +205,60 @@ class JWTVerifier:
             return Identity(subject=str(sub), role=role, metadata={"jwt_claims": payload})
         except Exception:
             return None
+
+
+# ── Token revocation blacklist ────────────────────────────────────
+
+class TokenBlacklist:
+    """In-memory token blacklist with automatic expiry cleanup.
+
+    Stores revoked token hashes (SHA-256) with TTL for automatic cleanup.
+    Uses constant-time comparison via hash lookup.
+    """
+
+    def __init__(self) -> None:
+        self._revoked: dict[str, float] = {}  # token_hash → expiry_timestamp
+        self._lock = __import__("threading").Lock()
+
+    def revoke(self, token: str, *, ttl_seconds: int = 86400) -> None:
+        """Revoke a token. It will be rejected until *ttl_seconds* elapses."""
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        expires_at = time.time() + ttl_seconds
+        with self._lock:
+            self._revoked[token_hash] = expires_at
+            self._cleanup()
+
+    def is_revoked(self, token: str) -> bool:
+        """Check if a token has been revoked."""
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        with self._lock:
+            expiry = self._revoked.get(token_hash)
+            if expiry is None:
+                return False
+            if time.time() > expiry:
+                del self._revoked[token_hash]
+                return False
+            return True
+
+    def _cleanup(self) -> None:
+        """Remove expired entries. Called under lock."""
+        now = time.time()
+        expired = [h for h, exp in self._revoked.items() if now > exp]
+        for h in expired:
+            del self._revoked[h]
+
+    @property
+    def size(self) -> int:
+        with self._lock:
+            return len(self._revoked)
+
+
+_TOKEN_BLACKLIST = TokenBlacklist()
+
+
+def get_token_blacklist() -> TokenBlacklist:
+    """Return the global token blacklist for administrative operations."""
+    return _TOKEN_BLACKLIST
 
 
 # ── Auth middleware ──────────────────────────────────────────────

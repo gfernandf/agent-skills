@@ -133,6 +133,42 @@ jobs:
             artifacts/pip_audit.json
             artifacts/sbom.json
 
+  container-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t agent-skills:ci .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: "agent-skills:ci"
+          format: "table"
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+          output: "artifacts/trivy-report.txt"
+
+      - name: Run Trivy SBOM
+        uses: aquasecurity/trivy-action@0.28.0
+        if: always()
+        with:
+          image-ref: "agent-skills:ci"
+          format: "cyclonedx"
+          output: "artifacts/trivy-sbom.json"
+
+      - name: Upload container security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-security-reports
+          path: |
+            artifacts/trivy-report.txt
+            artifacts/trivy-sbom.json
+
   binding-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 15

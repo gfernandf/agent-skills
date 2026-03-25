@@ -175,7 +175,7 @@ def sanitize_error_message(error: Exception, *, max_len: int = 240) -> str:
 
 def build_http_error_payload(error: Exception, trace_id: str | None) -> dict[str, Any]:
     contract = map_runtime_error_to_http(error)
-    return {
+    payload: dict[str, Any] = {
         "error": {
             "code": contract.code,
             "message": contract.message,
@@ -183,6 +183,78 @@ def build_http_error_payload(error: Exception, trace_id: str | None) -> dict[str
         },
         "trace_id": trace_id,
     }
+    # Add remediation hints for common error codes
+    hint = _REMEDIATION_HINTS.get(contract.code)
+    if hint:
+        payload["error"]["hint"] = hint
+    return payload
+
+
+# ── Remediation hints ────────────────────────────────────────────
+_REMEDIATION_HINTS: dict[str, str] = {
+    "skill_not_found": (
+        "Verify the skill ID with 'agent-skills list'. "
+        "Check that the skill YAML exists in skills/ and the registry is loaded."
+    ),
+    "capability_not_found": (
+        "Verify the capability ID with 'agent-skills explain-capability <id>'. "
+        "Check capabilities/_index.yaml in the registry."
+    ),
+    "binding_not_found": (
+        "Run 'python validate_bindings.py' to check binding status. "
+        "Ensure the capability has at least one binding in bindings/official/."
+    ),
+    "conformance_unmet": (
+        "No binding meets the requested conformance profile. "
+        "Try lowering the profile or adding a binding with the required conformance level."
+    ),
+    "upstream_timeout": (
+        "The upstream service did not respond in time. "
+        "Check the service health, increase timeout_seconds in binding metadata, "
+        "or verify network connectivity."
+    ),
+    "upstream_failure": (
+        "The upstream service returned an error. "
+        "Check service logs, verify API keys are valid, and ensure the service is running."
+    ),
+    "gate_blocked": (
+        "A safety gate blocked this execution. "
+        "Review the gate requirements with 'agent-skills describe <skill-id>' "
+        "and provide the required confirmation if applicable."
+    ),
+    "gate_execution_failure": (
+        "A safety gate failed to execute. "
+        "Check the gate capability binding and service health."
+    ),
+    "step_timeout": (
+        "A step exceeded its timeout. Increase the step timeout in the skill YAML "
+        "or check the underlying service performance."
+    ),
+    "rate_limited": (
+        "Too many requests. Wait and retry. "
+        "Check X-RateLimit-Remaining header for current quota."
+    ),
+    "unauthorized": (
+        "Authentication required. Provide a valid API key via X-API-Key header "
+        "or a Bearer token via Authorization header."
+    ),
+    "forbidden": (
+        "Insufficient permissions. Your role does not have access to this endpoint. "
+        "Contact an administrator to upgrade your role."
+    ),
+    "invalid_configuration": (
+        "The skill or capability definition is invalid. "
+        "Run 'python validate_bindings.py' and check the YAML syntax."
+    ),
+    "runtime_error": (
+        "An unexpected runtime error occurred. "
+        "Check the trace_id in audit logs for details: 'agent-skills trace <trace-id>'."
+    ),
+    "internal_error": (
+        "An internal server error occurred. "
+        "Report this issue with the trace_id for investigation."
+    ),
+}
 
 
 def _root_cause(error: Exception) -> Exception:
