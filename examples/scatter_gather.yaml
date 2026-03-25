@@ -1,0 +1,35 @@
+# ─────────────────────────────────────────────────────────
+# Example: Scatter-Gather — parallel fan-out
+# ─────────────────────────────────────────────────────────
+# Sends the same input to three different analysis
+# capabilities in parallel, then merges results.
+
+id: example.parallel.analyze
+version: "1.0.0"
+name: Parallel Analyzer
+description: Run three analyses in parallel and collect results.
+
+inputs:
+  text:
+    type: string
+    required: true
+
+outputs:
+  analyses:
+    type: object
+    description: Map of capability_id → result
+
+steps:
+  - id: fan_out
+    uses: text.content.summarize          # base capability (used for schema)
+    config:
+      scatter:
+        capabilities:
+          - text.content.summarize
+          - text.sentiment.analyze
+          - text.topic.classify
+        merge: collect                    # collect | concat_lists | first_success
+    input_mapping:
+      text: "inputs.text"
+    output_mapping:
+      analyses: "outputs.analyses"

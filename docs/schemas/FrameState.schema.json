@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/FrameState",
+  "title": "FrameState",
+  "description": "Immutable reasoning context for a run.",
+  "type": "object",
+  "properties": {
+    "goal": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "context": {
+      "type": "object"
+    },
+    "constraints": {
+      "type": "object"
+    },
+    "success_criteria": {
+      "type": "object"
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "priority": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

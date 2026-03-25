@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/StepSpec",
+  "title": "StepSpec",
+  "description": "Declarative execution step inside a skill.",
+  "type": "object",
+  "required": [
+    "id",
+    "uses"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "uses": {
+      "type": "string"
+    },
+    "input_mapping": {
+      "type": "object"
+    },
+    "output_mapping": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "config": {
+      "type": "object"
+    }
+  }
+}

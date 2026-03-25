@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/CapabilitySpec",
+  "title": "CapabilitySpec",
+  "description": "Runtime-normalized capability definition.",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "description",
+    "inputs",
+    "outputs"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "FieldSpec.schema.json"
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "FieldSpec.schema.json"
+      }
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "properties": {
+      "type": "object"
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deprecated": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "replacement": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cognitive_hints": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "safety": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  }
+}

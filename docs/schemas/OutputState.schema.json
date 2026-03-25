@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/OutputState",
+  "title": "OutputState",
+  "description": "Structured result metadata for a run.",
+  "type": "object",
+  "properties": {
+    "result": {},
+    "result_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

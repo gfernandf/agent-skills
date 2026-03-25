@@ -1,0 +1,66 @@
+# ─────────────────────────────────────────────────────────
+# Example: Multi-step pipeline with data flow
+# ─────────────────────────────────────────────────────────
+# This skill:
+# 1. Detects the language of input text
+# 2. Generates a summary
+# 3. Classifies the topic
+#
+# Each step reads from the previous step's output via vars.
+
+id: example.pipeline.analyze
+version: "1.0.0"
+name: Multi-Step Pipeline
+
+id: example.analyze.pipeline
+version: "1.0.0"
+description: Detect language, summarize, and classify a text.
+
+inputs:
+  text:
+    type: string
+    description: The text to analyze
+    required: true
+
+outputs:
+  language:
+    type: string
+  summary:
+    type: string
+  topic:
+    type: string
+
+steps:
+  - id: detect_language
+    uses: text.language.detect
+    input_mapping:
+      text: "inputs.text"
+    output_mapping:
+      language: "vars.detected_language"
+
+  - id: summarize
+    uses: text.content.summarize
+    input_mapping:
+      text: "inputs.text"
+      language: "vars.detected_language"
+    output_mapping:
+      summary: "vars.summary_text"
+
+  - id: classify
+    uses: text.topic.classify
+    input_mapping:
+      text: "vars.summary_text"
+    output_mapping:
+      topic: "vars.topic"
+
+  # Final step: map results to outputs
+  - id: collect_results
+    uses: data.record.transform
+    input_mapping:
+      language: "vars.detected_language"
+      summary: "vars.summary_text"
+      topic: "vars.topic"
+    output_mapping:
+      language: "outputs.language"
+      summary: "outputs.summary"
+      topic: "outputs.topic"

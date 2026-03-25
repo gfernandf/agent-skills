@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/StepResult",
+  "title": "StepResult",
+  "description": "Execution result for a single step.",
+  "type": "object",
+  "required": [
+    "step_id",
+    "uses",
+    "status"
+  ],
+  "properties": {
+    "step_id": {
+      "type": "string"
+    },
+    "uses": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "failed",
+        "degraded",
+        "skipped"
+      ]
+    },
+    "resolved_input": {
+      "type": "object"
+    },
+    "produced_output": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "binding_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "service_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "attempts_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "fallback_used": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "conformance_profile": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "error_message": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "started_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "reads": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "writes": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "latency_ms": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  }
+}

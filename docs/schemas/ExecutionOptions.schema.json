@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/ExecutionOptions",
+  "title": "ExecutionOptions",
+  "description": "Runtime behavior switches for a skill execution.",
+  "type": "object",
+  "properties": {
+    "fail_fast": {
+      "type": "boolean",
+      "default": true
+    },
+    "max_skill_depth": {
+      "type": "integer",
+      "default": 10
+    },
+    "include_raw_step_results": {
+      "type": "boolean",
+      "default": true
+    },
+    "trace_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "required_conformance_profile": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "audit_mode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "trust_level": {
+      "type": "string",
+      "default": "standard",
+      "enum": [
+        "sandbox",
+        "standard",
+        "elevated",
+        "privileged"
+      ]
+    },
+    "max_lineage_timeout_seconds": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "max_workers": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "default_step_timeout_seconds": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  }
+}

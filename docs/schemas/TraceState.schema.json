@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/TraceState",
+  "title": "TraceState",
+  "description": "Execution trace for observability and data lineage.",
+  "type": "object",
+  "properties": {
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "TraceStep.schema.json"
+      }
+    },
+    "metrics": {
+      "$ref": "TraceMetrics.schema.json"
+    }
+  }
+}

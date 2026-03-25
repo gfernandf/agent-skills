@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/TraceMetrics",
+  "title": "TraceMetrics",
+  "description": "Live aggregate execution metrics.",
+  "type": "object",
+  "properties": {
+    "step_count": {
+      "type": "integer"
+    },
+    "llm_calls": {
+      "type": "integer"
+    },
+    "tool_calls": {
+      "type": "integer"
+    },
+    "tokens_in": {
+      "type": "integer"
+    },
+    "tokens_out": {
+      "type": "integer"
+    },
+    "elapsed_ms": {
+      "type": "integer"
+    }
+  }
+}

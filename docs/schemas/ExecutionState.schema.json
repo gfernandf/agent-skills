@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/ExecutionState",
+  "title": "ExecutionState",
+  "description": "Mutable state for a single skill execution.",
+  "type": "object",
+  "required": [
+    "skill_id",
+    "inputs",
+    "status"
+  ],
+  "properties": {
+    "skill_id": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "object"
+    },
+    "vars": {
+      "type": "object"
+    },
+    "outputs": {
+      "type": "object"
+    },
+    "step_results": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "StepResult.schema.json"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "RuntimeEvent.schema.json"
+      }
+    },
+    "started_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed"
+      ]
+    },
+    "trace_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "frame": {
+      "$ref": "FrameState.schema.json"
+    },
+    "working": {
+      "$ref": "WorkingState.schema.json"
+    },
+    "output": {
+      "$ref": "OutputState.schema.json"
+    },
+    "trace": {
+      "$ref": "TraceState.schema.json"
+    },
+    "state_version": {
+      "type": "string"
+    },
+    "iteration": {
+      "type": "integer"
+    },
+    "current_step": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  }
+}

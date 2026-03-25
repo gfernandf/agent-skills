@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/TraceStep",
+  "title": "TraceStep",
+  "description": "One step's trace entry with data lineage.",
+  "type": "object",
+  "required": [
+    "step_id",
+    "capability_id",
+    "status"
+  ],
+  "properties": {
+    "step_id": {
+      "type": "string"
+    },
+    "capability_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "reads": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "writes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "latency_ms": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  }
+}

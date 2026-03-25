@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────
+# Example: Router — dynamic capability dispatch
+# ─────────────────────────────────────────────────────────
+# Routes to different capabilities based on the input
+# content_type. If the type is "code" it runs code analysis;
+# if "text" it runs text summarization; otherwise it falls
+# back to a generic transform.
+
+id: example.content.route
+version: "1.0.0"
+name: Content Router
+description: Route content to the appropriate analyzer based on type.
+
+inputs:
+  content:
+    type: string
+    required: true
+  content_type:
+    type: string
+    required: true
+    description: One of "code", "text", or other
+
+outputs:
+  result:
+    type: object
+
+steps:
+  - id: analyze
+    uses: text.content.summarize          # default, overridden by router
+    config:
+      router:
+        on: "inputs.content_type"
+        cases:
+          code: code.source.analyze
+          text: text.content.summarize
+        default: data.record.transform
+    input_mapping:
+      text: "inputs.content"
+    output_mapping:
+      result: "outputs.result"

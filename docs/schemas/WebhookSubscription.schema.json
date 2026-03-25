@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/WebhookSubscription",
+  "title": "WebhookSubscription",
+  "description": "Webhook subscription for event delivery.",
+  "type": "object",
+  "required": [
+    "id",
+    "url",
+    "events"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "skill.started",
+          "skill.completed",
+          "skill.failed",
+          "run.completed",
+          "run.failed",
+          "*"
+        ]
+      }
+    },
+    "secret": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean"
+    }
+  }
+}
