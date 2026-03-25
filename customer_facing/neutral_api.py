@@ -2,12 +2,27 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from runtime.engine_factory import RuntimeComponents, build_runtime_components
 from runtime.models import ExecutionOptions, ExecutionRequest
+from runtime.openapi_error_contract import map_runtime_error_to_http
+
+
+def _error_response(error: Exception, *, trace_id: str | None = None) -> dict[str, Any]:
+    """Build a protocol-neutral error dict consistent with the HTTP error contract."""
+    contract = map_runtime_error_to_http(error)
+    return {
+        "error": {
+            "code": contract.code,
+            "message": contract.message,
+            "type": contract.type,
+            "status": contract.status_code,
+        },
+        "trace_id": trace_id,
+    }
 
 
 class NeutralRuntimeAPI:
@@ -39,7 +54,7 @@ class NeutralRuntimeAPI:
     def health(self) -> dict[str, Any]:
         return {
             "status": "ok",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "registry_root": str(self.registry_root),
             "runtime_root": str(self.runtime_root),
         }
@@ -99,7 +114,10 @@ class NeutralRuntimeAPI:
         }
 
     def describe_skill(self, skill_id: str) -> dict[str, Any]:
-        skill = self.components.skill_loader.get_skill(skill_id)
+        try:
+            skill = self.components.skill_loader.get_skill(skill_id)
+        except Exception as exc:
+            return _error_response(exc)
         return {
             "id": skill.id,
             "version": skill.version,
@@ -128,6 +146,7 @@ class NeutralRuntimeAPI:
         required_conformance_profile: str | None = None,
         audit_mode: str | None = None,
         execution_channel: str | None = None,
+        trace_callback=None,
     ) -> dict[str, Any]:
         request = ExecutionRequest(
             skill_id=skill_id,
@@ -139,7 +158,12 @@ class NeutralRuntimeAPI:
             trace_id=trace_id,
             channel=execution_channel,
         )
-        result = self.components.engine.execute(request)
+        try:
+            result = self.components.engine.execute(
+                request, trace_callback=trace_callback,
+            )
+        except Exception as exc:
+            return _error_response(exc, trace_id=trace_id)
 
         payload: dict[str, Any] = {
             "skill_id": result.skill_id,
@@ -171,13 +195,16 @@ class NeutralRuntimeAPI:
         trace_id: str | None = None,
         required_conformance_profile: str | None = None,
     ) -> dict[str, Any]:
-        capability = self.components.capability_loader.get_capability(capability_id)
-        result = self.components.capability_executor.execute(
-            capability,
-            inputs or {},
-            trace_id=trace_id,
-            required_conformance_profile=required_conformance_profile,
-        )
+        try:
+            capability = self.components.capability_loader.get_capability(capability_id)
+            result = self.components.capability_executor.execute(
+                capability,
+                inputs or {},
+                trace_id=trace_id,
+                required_conformance_profile=required_conformance_profile,
+            )
+        except Exception as exc:
+            return _error_response(exc, trace_id=trace_id)
 
         if isinstance(result, tuple):
             outputs, meta = result
@@ -197,9 +224,138 @@ class NeutralRuntimeAPI:
         *,
         required_conformance_profile: str | None = None,
     ) -> dict[str, Any]:
-        capability = self.components.capability_loader.get_capability(capability_id)
-        executor = self.components.capability_executor.binding_executor
-        return executor.build_resolution_plan(
-            capability=capability,
-            required_conformance_profile=required_conformance_profile,
+        try:
+            capability = self.components.capability_loader.get_capability(capability_id)
+            executor = self.components.capability_executor.binding_executor
+            return executor.build_resolution_plan(
+                capability=capability,
+                required_conformance_profile=required_conformance_profile,
+            )
+        except Exception as exc:
+            return _error_response(exc)
+
+    def metrics(self) -> dict[str, Any]:
+        """Return current runtime metrics snapshot."""
+        from runtime.metrics import METRICS
+        return METRICS.snapshot()
+
+    def execute_skill_streaming(
+        self,
+        skill_id: str,
+        inputs: dict[str, Any] | None,
+        event_callback,
+        *,
+        trace_id: str | None = None,
+        required_conformance_profile: str | None = None,
+        audit_mode: str | None = None,
+        execution_channel: str | None = None,
+    ) -> dict[str, Any]:
+        """Execute a skill, emitting each engine event via *event_callback*.
+
+        ``event_callback(event_dict)`` is called for every runtime event
+        (step_start, step_completed, etc.).  The final result is returned
+        normally.
+        """
+        request = ExecutionRequest(
+            skill_id=skill_id,
+            inputs=inputs or {},
+            options=ExecutionOptions(
+                required_conformance_profile=required_conformance_profile,
+                audit_mode=audit_mode,
+            ),
+            trace_id=trace_id,
+            channel=execution_channel,
         )
+
+        def _trace_cb(event):
+            try:
+                event_callback({
+                    "type": event.type,
+                    "message": event.message,
+                    "timestamp": event.timestamp.isoformat() + "Z",
+                    "step_id": event.step_id,
+                    "trace_id": event.trace_id,
+                    "data": event.data,
+                })
+            except Exception:
+                pass  # streaming errors must not abort the engine
+
+        try:
+            result = self.components.engine.execute(
+                request, trace_callback=_trace_cb,
+            )
+        except Exception as exc:
+            return _error_response(exc, trace_id=trace_id)
+
+        return {
+            "skill_id": result.skill_id,
+            "status": result.status,
+            "outputs": result.outputs,
+            "trace_id": result.state.trace_id,
+        }
+
+    # ── Async execution (run store) ──────────────────────────────────────
+
+    def execute_skill_async(
+        self,
+        skill_id: str,
+        inputs: dict[str, Any] | None,
+        *,
+        trace_id: str | None = None,
+        required_conformance_profile: str | None = None,
+        audit_mode: str | None = None,
+        execution_channel: str | None = None,
+        run_store=None,
+        async_pool=None,
+    ) -> dict[str, Any]:
+        """Launch skill execution asynchronously.  Returns run metadata immediately."""
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"), trace_id=trace_id)
+
+        from uuid import uuid4
+
+        run_id = str(uuid4())
+        run_store.create_run(
+            run_id=run_id,
+            skill_id=skill_id,
+            trace_id=trace_id,
+        )
+
+        def _background():
+            try:
+                result_payload = self.execute_skill(
+                    skill_id, inputs,
+                    trace_id=trace_id,
+                    required_conformance_profile=required_conformance_profile,
+                    audit_mode=audit_mode,
+                    execution_channel=execution_channel,
+                )
+                run_store.complete_run(run_id, result_payload)
+            except Exception as exc:
+                run_store.fail_run(run_id, str(exc))
+
+        if async_pool is not None:
+            async_pool.submit(_background)
+        else:
+            import threading
+            threading.Thread(target=_background, daemon=True).start()
+
+        return {
+            "run_id": run_id,
+            "skill_id": skill_id,
+            "status": "running",
+            "trace_id": trace_id,
+        }
+
+    def get_run(self, run_id: str, *, run_store=None) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        run = run_store.get_run(run_id)
+        if run is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+        return run
+
+    def list_runs(self, *, run_store=None, limit: int = 100) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        return {"runs": run_store.list_runs(limit=limit)}

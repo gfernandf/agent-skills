@@ -26,6 +26,7 @@ class ServerConfig:
     rate_limit_window_seconds: int = 60
     max_request_body_bytes: int = 2 * 1024 * 1024  # 2 MB — ample for JSON skill payloads
     unauthenticated_paths: tuple[str, ...] = ("/openapi.json", "/v1/health")
+    cors_allowed_origins: str = ""  # Comma-separated origins, or "*" for any. Empty = no CORS headers.
 
 
 class _RequestHandler(BaseHTTPRequestHandler):
@@ -35,6 +36,12 @@ class _RequestHandler(BaseHTTPRequestHandler):
     config: ServerConfig = ServerConfig()
     _rate_lock = threading.Lock()
     _rate_state: dict[str, list[float]] = {}
+    _RATE_STATE_MAX_CLIENTS = 10_000
+    run_store = None  # RunStore instance (set by run_server)
+    _async_pool = None  # ThreadPoolExecutor for async launches
+    webhook_store = None  # WebhookStore instance (set by run_server)
+    auth_middleware = None  # AuthMiddleware instance (set by run_server)
+    _runtime_metrics = None  # RuntimeMetrics instance (set by run_server)
 
     def do_GET(self) -> None:  # noqa: N802
         try:
@@ -95,6 +102,53 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 self._write_json(200, self._gateway().diagnostics())
                 return
 
+            # ── Metrics endpoint ──────────────────────────────────
+            if parsed.path == "/v1/metrics":
+                metrics = self._runtime_metrics
+                if metrics is None:
+                    self._write_json(200, {"uptime_seconds": 0, "counters": {}, "histograms": {}})
+                else:
+                    self._write_json(200, metrics.snapshot())
+                return
+
+            # ── Webhook endpoints (GET) ────────────────────────────
+            if parsed.path == "/v1/webhooks":
+                wh_store = self.webhook_store
+                if wh_store is None:
+                    self._write_json(501, {"error": {"code": "not_implemented", "message": "Webhooks not enabled", "type": "NotImplementedError"}})
+                    return
+                self._write_json(200, {"subscriptions": wh_store.list_subscriptions()})
+                return
+
+            # ── Async run endpoints ──────────────────────────────
+            if parsed.path == "/v1/runs":
+                store = self.run_store
+                if store is None:
+                    self._write_json(501, {"error": {"code": "not_implemented", "message": "Async runs not enabled", "type": "NotImplementedError"}})
+                    return
+                query = parse_qs(parsed.query or "")
+                limit_raw = query.get("limit", [100])[0]
+                try:
+                    limit = int(limit_raw)
+                except Exception:
+                    limit = 100
+                self._write_json(200, self._api().list_runs(run_store=store, limit=limit))
+                return
+
+            runs_prefix = "/v1/runs/"
+            if parsed.path.startswith(runs_prefix):
+                store = self.run_store
+                if store is None:
+                    self._write_json(501, {"error": {"code": "not_implemented", "message": "Async runs not enabled", "type": "NotImplementedError"}})
+                    return
+                run_id = parsed.path[len(runs_prefix):]
+                response = self._api().get_run(run_id, run_store=store)
+                status = 200
+                if isinstance(response, dict) and "error" in response:
+                    status = 404
+                self._write_json(status, response)
+                return
+
             self._write_json(404, {"error": {"code": "not_found", "message": "Route not found", "type": "NotFound"}})
         except Exception as e:  # pragma: no cover
             self._write_runtime_error(e)
@@ -111,6 +165,37 @@ class _RequestHandler(BaseHTTPRequestHandler):
             body = self._read_json_body()
 
             skill_prefix = "/v1/skills/"
+            # ── Webhook endpoints (POST) ────────────────────────
+            if parsed.path == "/v1/webhooks":
+                wh_store = self.webhook_store
+                if wh_store is None:
+                    self._write_json(501, {"error": {"code": "not_implemented", "message": "Webhooks not enabled", "type": "NotImplementedError"}})
+                    return
+                if not isinstance(body, dict):
+                    raise ValueError("Request body must be a JSON object")
+                from uuid import uuid4 as _uuid4
+                from runtime.webhook import WebhookSubscription
+                import time as _time
+                url = body.get("url")
+                if not isinstance(url, str) or not url:
+                    raise ValueError("webhooks require non-empty string field 'url'")
+                events = body.get("events")
+                if not isinstance(events, list) or not events:
+                    raise ValueError("webhooks require non-empty list field 'events'")
+                secret = body.get("secret", "")
+                sub_id = str(_uuid4())
+                sub = WebhookSubscription(
+                    id=sub_id,
+                    url=url,
+                    events=events,
+                    secret=secret if isinstance(secret, str) else "",
+                    active=True,
+                    created_at=str(_time.time()),
+                )
+                wh_store.register(sub)
+                self._write_json(201, {"id": sub_id, "url": url, "events": events})
+                return
+
             if parsed.path == "/v1/skills/discover":
                 intent = body.get("intent") if isinstance(body, dict) else None
                 if not isinstance(intent, str) or not intent:
@@ -170,6 +255,89 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     audit_mode=audit_mode,
                 )
                 self._write_json(200, response.to_dict())
+                return
+
+            if parsed.path.startswith(skill_prefix) and parsed.path.endswith("/execute/stream"):
+                skill_id = parsed.path[len(skill_prefix) : -len("/execute/stream")]
+                inputs = body.get("inputs") if isinstance(body, dict) else {}
+                trace_id = self._extract_trace_id(body)
+                required_profile = None
+                if isinstance(body, dict):
+                    value = body.get("required_conformance_profile")
+                    if isinstance(value, str) and value:
+                        required_profile = value
+                audit_mode = None
+                if isinstance(body, dict):
+                    value = body.get("audit_mode")
+                    if isinstance(value, str) and value:
+                        audit_mode = value
+
+                # Start SSE response
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream")
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("Connection", "keep-alive")
+                self._send_cors_headers()
+                self.end_headers()
+
+                def _sse_emit(event_dict):
+                    try:
+                        event_type = event_dict.get("type", "event")
+                        data = json.dumps(event_dict, ensure_ascii=False, default=str)
+                        chunk = f"event: {event_type}\ndata: {data}\n\n"
+                        self.wfile.write(chunk.encode("utf-8"))
+                        self.wfile.flush()
+                    except Exception:
+                        pass
+
+                result = self._api().execute_skill_streaming(
+                    skill_id=skill_id,
+                    inputs=inputs if isinstance(inputs, dict) else {},
+                    event_callback=_sse_emit,
+                    trace_id=trace_id,
+                    required_conformance_profile=required_profile,
+                    audit_mode=audit_mode,
+                    execution_channel="http-stream",
+                )
+
+                # Final result event
+                try:
+                    final_data = json.dumps(result, ensure_ascii=False, default=str)
+                    self.wfile.write(f"event: done\ndata: {final_data}\n\n".encode("utf-8"))
+                    self.wfile.flush()
+                except Exception:
+                    pass
+                return
+
+            if parsed.path.startswith(skill_prefix) and parsed.path.endswith("/execute/async"):
+                store = self.run_store
+                if store is None:
+                    self._write_json(501, {"error": {"code": "not_implemented", "message": "Async runs not enabled", "type": "NotImplementedError"}})
+                    return
+                skill_id = parsed.path[len(skill_prefix) : -len("/execute/async")]
+                inputs = body.get("inputs") if isinstance(body, dict) else {}
+                trace_id = self._extract_trace_id(body)
+                required_profile = None
+                if isinstance(body, dict):
+                    value = body.get("required_conformance_profile")
+                    if isinstance(value, str) and value:
+                        required_profile = value
+                audit_mode = None
+                if isinstance(body, dict):
+                    value = body.get("audit_mode")
+                    if isinstance(value, str) and value:
+                        audit_mode = value
+                response = self._api().execute_skill_async(
+                    skill_id=skill_id,
+                    inputs=inputs if isinstance(inputs, dict) else {},
+                    trace_id=trace_id,
+                    required_conformance_profile=required_profile,
+                    audit_mode=audit_mode,
+                    execution_channel="http-async",
+                    run_store=store,
+                    async_pool=self._async_pool,
+                )
+                self._write_json(202, response)
                 return
 
             if parsed.path.startswith(skill_prefix) and parsed.path.endswith("/execute"):
@@ -252,6 +420,24 @@ class _RequestHandler(BaseHTTPRequestHandler):
         if path in config.unauthenticated_paths:
             return True
 
+        # ── RBAC-aware auth (when AuthMiddleware is configured) ────
+        middleware = self.auth_middleware
+        if middleware is not None:
+            headers_dict = {k.lower(): v for k, v in self.headers.items()}
+            identity = middleware.authenticate(headers_dict)
+            client_ip = self.client_address[0] if self.client_address else "unknown"
+            if identity is None:
+                log_event("http.auth.rejected", level="warning", reason="unauthenticated", client=client_ip, path=path)
+                self._write_json(401, {"error": {"code": "unauthorized", "message": "Authentication required.", "type": "AuthenticationError"}})
+                return False
+            method = getattr(self, "command", "GET")
+            if not middleware.authorize(identity, method, path):
+                log_event("http.auth.forbidden", level="warning", reason="insufficient_role", client=client_ip, path=path, role=identity.role)
+                self._write_json(403, {"error": {"code": "forbidden", "message": f"Role '{identity.role}' insufficient for this endpoint.", "type": "AuthorizationError"}})
+                return False
+            return True
+
+        # ── Legacy flat API-key check (backward-compatible) ────────
         if config.api_key is None:
             return True
 
@@ -319,6 +505,16 @@ class _RequestHandler(BaseHTTPRequestHandler):
             ]
             for cid in stale_clients:
                 del self._rate_state[cid]
+
+            # Hard cap: evict oldest clients if dict exceeds max size.
+            if len(self._rate_state) > self._RATE_STATE_MAX_CLIENTS:
+                by_recency = sorted(
+                    self._rate_state.items(),
+                    key=lambda kv: kv[1][-1] if kv[1] else 0,
+                )
+                excess = len(self._rate_state) - self._RATE_STATE_MAX_CLIENTS
+                for cid, _ in by_recency[:excess]:
+                    del self._rate_state[cid]
 
             events = self._rate_state.get(client_id, [])
             cutoff = now - window_seconds
@@ -413,11 +609,58 @@ class _RequestHandler(BaseHTTPRequestHandler):
         payload = build_http_error_payload(error, trace_id=trace_id)
         self._write_json(contract.status_code, payload)
 
+    def do_OPTIONS(self) -> None:  # noqa: N802
+        """Handle CORS preflight requests."""
+        self.send_response(204)
+        self._send_cors_headers()
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        try:
+            parsed = urlparse(self.path)
+            self._request_start = time.perf_counter()
+            self._request_path = parsed.path
+            if not self._authorize(parsed.path):
+                return
+            if not self._enforce_rate_limit(parsed.path):
+                return
+
+            webhooks_prefix = "/v1/webhooks/"
+            if parsed.path.startswith(webhooks_prefix):
+                wh_store = self.webhook_store
+                if wh_store is None:
+                    self._write_json(501, {"error": {"code": "not_implemented", "message": "Webhooks not enabled", "type": "NotImplementedError"}})
+                    return
+                sub_id = parsed.path[len(webhooks_prefix):]
+                if wh_store.unregister(sub_id):
+                    self._write_json(200, {"deleted": sub_id})
+                else:
+                    self._write_json(404, {"error": {"code": "not_found", "message": f"Webhook '{sub_id}' not found", "type": "NotFound"}})
+                return
+
+            self._write_json(404, {"error": {"code": "not_found", "message": "Route not found", "type": "NotFound"}})
+        except Exception as e:  # pragma: no cover
+            self._write_runtime_error(e)
+
+    def _send_cors_headers(self) -> None:
+        allowed = self.config.cors_allowed_origins
+        if not allowed:
+            return
+        origin = self.headers.get("Origin", "")
+        allowed_set = {o.strip() for o in allowed.split(",")}
+        if "*" in allowed_set or origin in allowed_set:
+            self.send_header("Access-Control-Allow-Origin", origin or "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Trace-Id")
+            self.send_header("Access-Control-Max-Age", "86400")
+
     def _write_json(self, status: int, body: dict[str, Any]) -> None:
         encoded = json.dumps(body, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(encoded)))
+        self._send_cors_headers()
         self.end_headers()
         self.wfile.write(encoded)
 
@@ -453,17 +696,49 @@ def run_server(
     config: ServerConfig = ServerConfig(),
     openapi_spec_path: Path | None = None,
 ) -> None:
+    from concurrent.futures import ThreadPoolExecutor as _TP
+
     if not logging.getLogger().handlers:
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s %(levelname)s %(name)s %(message)s",
         )
 
+    # Async execution infrastructure
+    from runtime.run_store import RunStore
+    import os
+    async_workers = int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
+    run_store = RunStore(max_runs=int(os.environ.get("AGENT_SKILLS_MAX_RUNS", "100")))
+    async_pool = _TP(max_workers=async_workers)
+
     _RequestHandler.api = api
     _RequestHandler.gateway = gateway
     _RequestHandler.openapi_spec_path = openapi_spec_path
     _RequestHandler.config = config
     _RequestHandler._rate_state = {}
+    _RequestHandler.run_store = run_store
+    _RequestHandler._async_pool = async_pool
+
+    # Webhook infrastructure
+    from runtime.webhook import WebhookStore
+    webhook_store = WebhookStore()
+    _RequestHandler.webhook_store = webhook_store
+
+    # RBAC auth middleware (opt-in: set AGENT_SKILLS_RBAC=1)
+    if os.environ.get("AGENT_SKILLS_RBAC", "").strip() in ("1", "true", "yes"):
+        from runtime.auth import AuthMiddleware, ApiKeyStore
+        api_key_store = ApiKeyStore()
+        if config.api_key:
+            api_key_store.register(config.api_key, subject="default", role="admin")
+        _RequestHandler.auth_middleware = AuthMiddleware(
+            api_key_store=api_key_store,
+            allow_anonymous=not bool(config.api_key),
+            anonymous_role="reader",
+        )
+
+    # Runtime metrics
+    from runtime.metrics import METRICS
+    _RequestHandler._runtime_metrics = METRICS
 
     server = ThreadingHTTPServer((config.host, config.port), _RequestHandler)
     print(f"customer-facing API listening on http://{config.host}:{config.port}")

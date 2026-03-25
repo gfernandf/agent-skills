@@ -163,6 +163,80 @@ Get-Content artifacts/runtime_skill_audit.jsonl
 
 5. Validate user-managed deletion:
 
+---
+
+## OpenTelemetry (Optional)
+
+`agent-skills` ships an optional OTel integration that emits distributed
+tracing spans without requiring a hard dependency on the SDK.
+
+### Installation
+
+```bash
+pip install "agent-skills[otel]"
+# or individually:
+pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp
+```
+
+When the `opentelemetry-api` package is importable the engine automatically
+emits spans.  When it is absent, every helper degrades to a no-op — zero
+overhead, no code guards needed.
+
+### Spans Emitted
+
+| Span Name        | Scope    | Key Attributes                                           |
+|------------------|----------|----------------------------------------------------------|
+| `skill.execute`  | Per-skill | `skill.id`, `skill.trace_id`, `skill.depth`             |
+| `step.execute`   | Per-step  | `step.id`, `step.uses`, `skill.id`                      |
+
+Errors are recorded on the span via `record_exception` + `StatusCode.ERROR`.
+
+### Configuration
+
+Set standard OTel environment variables:
+
+| Variable                       | Example                              |
+|--------------------------------|--------------------------------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317`              |
+| `OTEL_SERVICE_NAME`           | `agent-skills`                       |
+| `OTEL_RESOURCE_ATTRIBUTES`    | `deployment.environment=production`  |
+
+For OTLP/gRPC export with the SDK auto-configuration:
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+export OTEL_SERVICE_NAME=agent-skills
+agent-skills serve
+```
+
+### Programmatic Setup
+
+If you need custom configuration (e.g. batch span processor, custom
+resource), configure OTel before calling the engine:
+
+```python
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+
+provider = TracerProvider()
+provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+trace.set_tracer_provider(provider)
+
+# Now run agent-skills — spans flow automatically
+```
+
+### Module Reference
+
+`runtime.otel_integration` exposes:
+
+- `otel_available() → bool` — check if the SDK is installed
+- `get_tracer()` — returns a tracer or `None`
+- `start_span(name, attributes)` — context manager yielding a span (or `_NoopSpan`)
+- `record_exception(span, exc)` — record + set ERROR status
+- `@traced(name)` — decorator wrapping a function in a span
+
 ```powershell
 python cli/main.py audit-purge --trace-id <trace-id>
 ```
