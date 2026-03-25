@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, List
 
 from runtime.errors import InvalidSkillSpecError
+from runtime.metrics import METRICS
 
 _DEFAULT_MAX_WORKERS = 8
 
@@ -106,6 +107,31 @@ class Scheduler:
                         skill_id=skill_id,
                     )
 
+        # Detect circular dependencies (Kahn's algorithm)
+        in_degree = {sid: len(deps) for sid, deps in dependencies.items()}
+        reverse: dict[str, list[str]] = {sid: [] for sid in step_map}
+        for sid, deps in dependencies.items():
+            for dep in deps:
+                reverse[dep].append(sid)
+        queue = [sid for sid, deg in in_degree.items() if deg == 0]
+        visited = 0
+        while queue:
+            node = queue.pop()
+            visited += 1
+            for dependent in reverse[node]:
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    queue.append(dependent)
+        if visited < len(step_map):
+            cycle_members = sorted(
+                sid for sid, deg in in_degree.items() if deg > 0
+            )
+            raise InvalidSkillSpecError(
+                "Circular dependency detected among steps: "
+                + ", ".join(cycle_members),
+                skill_id=skill_id,
+            )
+
         # --- Execution loop ---
         state_lock = _StateLock()
         # Attach lock to context so engine can use it around state mutations
@@ -134,6 +160,10 @@ class Scheduler:
                     )
                     futures[future] = sid
                     running.add(sid)
+
+                # Track when ready steps are queued but the pool is at capacity
+                if ready and len(running) >= self.max_workers:
+                    METRICS.inc("scheduler.pool_saturated")
 
                 if not futures:
                     unresolved = [
@@ -183,8 +213,23 @@ class Scheduler:
                         try:
                             result = future.result()
                         except Exception as exc:
+                            # Safety and gate errors must propagate immediately
+                            # (they are deliberate execution blocks, not failures).
+                            from runtime.errors import (
+                                SafetyTrustLevelError,
+                                SafetyGateFailedError,
+                                SafetyConfirmationRequiredError,
+                                GateExecutionError,
+                            )
+                            if isinstance(exc, (
+                                SafetyTrustLevelError,
+                                SafetyGateFailedError,
+                                SafetyConfirmationRequiredError,
+                                GateExecutionError,
+                            )):
+                                raise
                             # Step executor raised an unhandled exception
-                            # (e.g. safety errors, timeout). Create a failed
+                            # (e.g. timeout). Create a failed
                             # StepResult so the scheduler can continue or
                             # abort cleanly instead of deadlocking.
                             from runtime.models import StepResult as SR
