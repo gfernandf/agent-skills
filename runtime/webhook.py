@@ -145,3 +145,52 @@ def _deliver_with_retry(sub: WebhookSubscription, payload: bytes) -> None:
             time.sleep(backoff)
 
     logger.warning("webhook delivery failed after %d attempts: %s", _MAX_RETRIES + 1, sub.url)
+    # I4 — Dead-letter queue: record the failed delivery for later inspection
+    _DLQ.append({
+        "subscription_id": sub.id,
+        "url": sub.url,
+        "payload_size": len(payload),
+        "attempts": _MAX_RETRIES + 1,
+        "failed_at": time.time(),
+    })
+
+
+# ── I4 — In-memory Dead Letter Queue ────────────────────────────────────
+
+class _DeadLetterQueue:
+    """Bounded in-memory DLQ for failed webhook deliveries."""
+
+    _MAX_SIZE = 500
+
+    def __init__(self) -> None:
+        self._items: list[dict[str, Any]] = []
+        self._lock = threading.Lock()
+
+    def append(self, item: dict[str, Any]) -> None:
+        with self._lock:
+            self._items.append(item)
+            if len(self._items) > self._MAX_SIZE:
+                self._items = self._items[-self._MAX_SIZE:]
+
+    def list_items(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        with self._lock:
+            return list(reversed(self._items[-limit:]))
+
+    def clear(self) -> int:
+        with self._lock:
+            count = len(self._items)
+            self._items.clear()
+            return count
+
+    @property
+    def size(self) -> int:
+        with self._lock:
+            return len(self._items)
+
+
+_DLQ = _DeadLetterQueue()
+
+
+def get_dlq() -> _DeadLetterQueue:
+    """Return the global DLQ instance for inspection."""
+    return _DLQ

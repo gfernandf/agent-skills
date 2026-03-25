@@ -146,3 +146,45 @@ def rank_skills_with_evidence(
 def _tokenize(text: str) -> set[str]:
     cleaned = "".join(ch.lower() if (ch.isalnum() or ch == " ") else " " for ch in text)
     return {t for t in cleaned.split() if len(t) >= 2}
+
+
+# ── P4 — Inverted Index for O(1) token-based skill lookup ──────────────
+
+class SkillSearchIndex:
+    """Pre-built inverted index that maps tokens → skill IDs.
+
+    With 1000+ skills, linear-scanning all skills per discovery request
+    becomes expensive.  This index allows O(k) lookup where k is the
+    number of intent tokens.
+    """
+
+    def __init__(self) -> None:
+        self._token_to_skills: dict[str, set[str]] = {}
+        self._skills: dict[str, "SkillSummary"] = {}
+
+    def build(self, skills: Iterable["SkillSummary"]) -> None:
+        """Rebuild the full index from a skill collection."""
+        self._token_to_skills.clear()
+        self._skills.clear()
+        for skill in skills:
+            self._skills[skill.skill_id] = skill
+            text = " ".join([
+                skill.skill_id,
+                skill.name,
+                skill.description,
+                " ".join(skill.tags),
+                skill.domain or "",
+            ])
+            for token in _tokenize(text):
+                self._token_to_skills.setdefault(token, set()).add(skill.skill_id)
+
+    def candidates(self, intent_tokens: set[str]) -> list["SkillSummary"]:
+        """Return skills that match at least one intent token."""
+        ids: set[str] = set()
+        for token in intent_tokens:
+            ids.update(self._token_to_skills.get(token, set()))
+        return [self._skills[sid] for sid in ids if sid in self._skills]
+
+    @property
+    def size(self) -> int:
+        return len(self._skills)

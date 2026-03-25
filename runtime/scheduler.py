@@ -13,22 +13,35 @@ _DEFAULT_MAX_WORKERS = 8
 
 class _StateLock:
     """
-    Context-manager wrapper around a threading.Lock used to serialize
-    mutations to ExecutionState (vars, outputs, events, written_targets).
-    Attached to the execution context so the engine can acquire it only
-    around state-mutating calls, leaving the actual capability execution
-    (LLM calls, HTTP, etc.) free to run in parallel.
+    Sharded lock that serializes mutations to ExecutionState by namespace.
+
+    Instead of a single global lock, writes to ``vars``, ``outputs``,
+    ``working``, and ``events`` each use their own lock.  This reduces
+    contention when parallel steps write to different namespaces.
+
+    The context-manager interface (``with state_lock:``) still acquires
+    ALL shards for backward compatibility — used as the default path.
+    Fine-grained callers can use ``lock_for(namespace)`` instead.
     """
 
-    def __init__(self) -> None:
-        self._lock = threading.Lock()
+    _NAMESPACES = ("vars", "outputs", "working", "events")
 
+    def __init__(self) -> None:
+        self._locks = {ns: threading.Lock() for ns in self._NAMESPACES}
+        self._global = threading.Lock()
+
+    # ── Global lock (backward-compatible) ─────────────────────────
     def __enter__(self):
-        self._lock.acquire()
+        self._global.acquire()
         return self
 
     def __exit__(self, *exc):
-        self._lock.release()
+        self._global.release()
+
+    # ── Per-namespace lock ────────────────────────────────────────
+    def lock_for(self, namespace: str) -> threading.Lock:
+        """Return the lock for a specific namespace, falling back to global."""
+        return self._locks.get(namespace, self._global)
 
     @staticmethod
     def noop():

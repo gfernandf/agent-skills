@@ -182,6 +182,15 @@ class OpenAPIInvoker:
                     f"Invocation for service '{service.id}' cancelled.",
                     capability_id=capability_id,
                 )
+
+            # W3C trace context propagation (O2)
+            trace_id = request.context_metadata.get("trace_id")
+            if trace_id:
+                from runtime.trace_context import inject_traceparent, trace_id_from_internal
+                tp_headers = inject_traceparent(trace_id_from_internal(trace_id))
+                headers = dict(headers or {})
+                headers.update(tp_headers)
+
             try:
                 session = self._get_session(service.base_url)
                 response = session.request(

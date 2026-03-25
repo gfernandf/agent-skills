@@ -95,6 +95,21 @@ class DefaultCapabilityExecutor:
             input_keys=sorted(step_input.keys()),
             required_conformance_profile=required_conformance_profile,
         )
+
+        # G2 — Deprecation warning at runtime
+        if getattr(capability, "deprecated", False):
+            replacement = getattr(capability, "replacement", None)
+            msg = f"Capability '{capability.id}' is deprecated."
+            if replacement:
+                msg += f" Use '{replacement}' instead."
+            log_event(
+                "capability.deprecated",
+                level="warning",
+                trace_id=trace_id,
+                capability_id=capability.id,
+                replacement=replacement,
+            )
+
         _validate_capability_input(capability, step_input)
         try:
             result = self.binding_executor.execute(

@@ -100,12 +100,26 @@ def get_current_trace_id() -> str | None:
     return _TRACE_ID_CTX.get()
 
 
+# O3 — Correlation ID context var for span-level log correlation
+_CORRELATION_ID_CTX: ContextVar[str | None] = ContextVar("agent_skills_correlation_id", default=None)
+
+
+def set_correlation_id(correlation_id: str | None) -> Token:
+    return _CORRELATION_ID_CTX.set(correlation_id)
+
+
+def get_correlation_id() -> str | None:
+    return _CORRELATION_ID_CTX.get()
+
+
 def log_event(event: str, level: str = "info", **fields: Any) -> None:
     trace_id = fields.get("trace_id") or get_current_trace_id()
+    correlation_id = fields.get("correlation_id") or get_correlation_id()
     payload = {
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "event": event,
         "trace_id": trace_id,
+        "correlation_id": correlation_id,
     }
     payload.update({k: _sanitize(v) for k, v in fields.items()})
 

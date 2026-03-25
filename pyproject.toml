@@ -44,6 +44,9 @@ dev = [
     "PyPDF2>=3.0",
     "beautifulsoup4>=4.12",
     "pip-audit>=2.6",
+    "hypothesis>=6.80",
+    "mutmut>=2.4",
+    "ruff>=0.4",
 ]
 
 [project.scripts]

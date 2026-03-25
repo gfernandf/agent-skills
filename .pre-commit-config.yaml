@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: binding-contracts
+        name: Binding contract validation
+        entry: python -m pytest test_binding_contracts.py -x -q --no-header
+        language: system
+        pass_filenames: false
+        files: ^bindings/
+
+      - id: json-schema-validation
+        name: JSON schema validation
+        entry: python tooling/validate_json_schemas.py
+        language: system
+        pass_filenames: false
+        files: \.(yaml|yml)$
+
+      - id: atomic-properties
+        name: Capability atomic property consistency
+        entry: python -m pytest test_atomic_properties.py -x -q --no-header
+        language: system
+        pass_filenames: false
+        files: ^(bindings/|capabilities/)
