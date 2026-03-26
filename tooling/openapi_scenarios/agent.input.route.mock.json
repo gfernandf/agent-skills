@@ -3,10 +3,11 @@
   "capability_id": "agent.input.route",
   "binding_id": "openapi_agent_route_mock",
   "input": {
-    "input": "What is machine learning?"
+    "query": "What is machine learning?",
+    "agents": ["summarizer", "analyst"]
   },
   "expected_output": {
-    "route": "W"
+    "route": "summarizer"
   },
   "mock_server": {
     "type": "agent_route",

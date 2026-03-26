@@ -20,7 +20,7 @@ hypothesis = pytest.importorskip("hypothesis", reason="hypothesis not installed"
 from hypothesis import given, settings, HealthCheck
 from hypothesis import strategies as st
 
-from runtime.step_expression import evaluate, evaluate_bool
+from runtime.step_expression import ExpressionError, evaluate, evaluate_bool
 
 
 # ── Strategies ────────────────────────────────────────────────────────────
@@ -121,11 +121,11 @@ class TestStepExpressionFuzz:
     @given(expr=_EXPR_TEXT, state_data=_STATE_DICT)
     @settings(max_examples=500, suppress_health_check=[HealthCheck.too_slow])
     def test_evaluate_no_unhandled_crash(self, expr: str, state_data: dict):
-        """evaluate() must never raise anything other than ValueError/TypeError."""
+        """evaluate() must never raise anything other than ExpressionError/ValueError/TypeError."""
         state = _FakeState(state_data)
         try:
             evaluate(expr, state)
-        except (ValueError, TypeError, KeyError, AttributeError):
+        except (ExpressionError, ValueError, TypeError, KeyError, AttributeError):
             pass  # expected for malformed expressions
 
     @given(expr=_EXPR_TEXT, state_data=_STATE_DICT)
@@ -136,7 +136,7 @@ class TestStepExpressionFuzz:
         try:
             result = evaluate_bool(expr, state)
             assert isinstance(result, bool)
-        except (ValueError, TypeError, KeyError, AttributeError):
+        except (ExpressionError, ValueError, TypeError, KeyError, AttributeError):
             pass
 
     @given(ref=_REF, state_data=_STATE_DICT)
@@ -146,7 +146,7 @@ class TestStepExpressionFuzz:
         state = _FakeState(state_data)
         try:
             evaluate(ref, state)
-        except (ValueError, TypeError, KeyError, AttributeError):
+        except (ExpressionError, ValueError, TypeError, KeyError, AttributeError):
             pass
 
     @given(
@@ -163,7 +163,7 @@ class TestStepExpressionFuzz:
         state = _FakeState({"inputs": {}, "vars": {}, "outputs": {}})
         try:
             evaluate(expr, state)
-        except (ValueError, TypeError, KeyError, AttributeError):
+        except (ExpressionError, ValueError, TypeError, KeyError, AttributeError):
             pass
 
     def test_no_eval_exec_in_source(self):

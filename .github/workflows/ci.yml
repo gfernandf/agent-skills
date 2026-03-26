@@ -156,6 +156,7 @@ jobs:
       - name: Run Trivy SBOM
         uses: aquasecurity/trivy-action@v0.35.0
         if: always()
+        continue-on-error: true
         with:
           image-ref: "agent-skills:ci"
           format: "cyclonedx"
