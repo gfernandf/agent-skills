@@ -132,6 +132,29 @@ curl -X POST http://localhost:9100/v1/skills/text.summarize-plain-input/execute 
   -d '{"inputs": {"text": "Hello world", "max_length": 20}}'
 ```
 
+### Baseline → LLM: same skill, two modes
+
+Every capability ships with a deterministic Python baseline. Set `OPENAI_API_KEY` to upgrade to LLM-powered execution — **zero code changes**.
+
+```bash
+# 1. Baseline mode (no API key, pure Python)
+agent-skills run text.summarize-plain-input \
+  --input '{"text": "Agent Skills decouples capability contracts from execution backends.", "max_length": 30}'
+# → {"summary": "Agent Skills decouples capability contracts from exec..."}
+
+# 2. LLM mode (set key, same command)
+export OPENAI_API_KEY=sk-...
+agent-skills run text.summarize-plain-input \
+  --input '{"text": "Agent Skills decouples capability contracts from execution backends.", "max_length": 30}'
+# → {"summary": "Agent Skills separates capability definitions from their runtime implementations."}
+```
+
+The binding resolver picks the best available backend automatically:
+- **No key** → `PythonCall` baseline (deterministic, offline, fast)
+- **Key set** → `OpenAPI` binding to OpenAI (richer output, higher latency)
+
+This means your CI stays green without API keys, and production gets LLM quality — from the same skill YAML.
+
 See [docs/INSTALLATION.md](docs/INSTALLATION.md) for full setup instructions, optional extras, and environment variable reference.
 
 ## License
