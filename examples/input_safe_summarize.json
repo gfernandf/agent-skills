@@ -1,0 +1,5 @@
+{
+  "text": "John Doe (john.doe@acme.com, +1-650-555-1234) reported a billing issue with invoice #INV-2026-0042. The charge of $1,250 appeared twice on his Visa ending in 4242. His SSN is 123-45-6789. Please investigate and respond to john.doe@acme.com within 48 hours.",
+  "max_length": 80,
+  "block_pii": true
+}
