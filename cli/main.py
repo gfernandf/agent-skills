@@ -131,6 +131,24 @@ def main() -> None:
     )
     add_root_args(list_cmd)
 
+    capabilities_cmd = sub.add_parser(
+        "capabilities", help="List registered capabilities"
+    )
+    capabilities_cmd.add_argument(
+        "--domain",
+        default=None,
+        help="Filter by domain prefix (e.g. 'text', 'data', 'code')",
+    )
+    capabilities_cmd.add_argument(
+        "--search",
+        default=None,
+        help="Filter by substring match on id or description",
+    )
+    capabilities_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output"
+    )
+    add_root_args(capabilities_cmd)
+
     attach_cmd = sub.add_parser(
         "attach", help="Attach a skill to an existing target and execute"
     )
@@ -489,6 +507,14 @@ def main() -> None:
             args.invocation,
             args.json,
             local_skills_root,
+        )
+
+    elif args.command == "capabilities":
+        _cmd_capabilities(
+            registry_root,
+            args.domain,
+            args.search,
+            args.json,
         )
 
     elif args.command == "attach":
@@ -1435,6 +1461,64 @@ def _cmd_list_skills(
         return
 
     print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+def _cmd_capabilities(
+    registry_root: Path,
+    domain: str | None,
+    search: str | None,
+    json_output: bool,
+) -> None:
+    capability_loader = YamlCapabilityLoader(registry_root)
+    all_caps = capability_loader.get_all_capabilities()
+
+    caps = []
+    for cap_id, cap in sorted(all_caps.items()):
+        if domain and not cap_id.startswith(domain + "."):
+            continue
+        if search:
+            term = search.lower()
+            desc = getattr(cap, "description", "") or ""
+            if term not in cap_id.lower() and term not in desc.lower():
+                continue
+        caps.append(cap)
+
+    if json_output:
+        payload = {
+            "count": len(caps),
+            "capabilities": [
+                {
+                    "id": c.id,
+                    "description": getattr(c, "description", ""),
+                    "inputs": list(getattr(c, "inputs", {}).keys()),
+                    "outputs": list(getattr(c, "outputs", {}).keys()),
+                    "status": (getattr(c, "metadata", None) or {}).get("status", "unknown")
+                    if isinstance(getattr(c, "metadata", None), dict)
+                    else "unknown",
+                }
+                for c in caps
+            ],
+        }
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    # Group by domain
+    domains: dict[str, list] = {}
+    for c in caps:
+        d = c.id.split(".")[0] if "." in c.id else "(other)"
+        domains.setdefault(d, []).append(c)
+
+    print(f"Capabilities: {len(caps)} total ({len(domains)} domains)\n")
+    for d in sorted(domains):
+        print(f"  {d}/ ({len(domains[d])})")
+        for c in sorted(domains[d], key=lambda x: x.id):
+            desc = getattr(c, "description", "") or ""
+            short = (desc[:60] + "...") if len(desc) > 60 else desc
+            inputs = list(getattr(c, "inputs", {}).keys())
+            print(f"    {c.id:<45} {short}")
+            if inputs:
+                print(f"      inputs: {', '.join(inputs)}")
+        print()
 
 
 def _cmd_attach(
