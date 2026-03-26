@@ -5,7 +5,7 @@ from typing import Any, Protocol
 
 import yaml
 
-from runtime.errors import InvalidSkillSpecError, SkillNotFoundError
+from runtime.errors import InvalidSkillSpecError, SkillNotFoundError, suggest_similar
 from runtime.models import FieldSpec, SkillSpec, StepSpec
 
 
@@ -76,10 +76,11 @@ class YamlSkillLoader:
 
         path = self._skill_index.get(skill_id)
         if path is None:
-            raise SkillNotFoundError(
-                f"Skill '{skill_id}' not found.",
-                skill_id=skill_id,
-            )
+            msg = f"Skill '{skill_id}' not found."
+            similar = suggest_similar(skill_id, list(self._skill_index.keys()))
+            if similar:
+                msg += f" Did you mean: {', '.join(similar)}?"
+            raise SkillNotFoundError(msg, skill_id=skill_id)
         return path
 
     def _build_skill_index(self) -> dict[str, Path]:

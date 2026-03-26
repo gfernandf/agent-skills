@@ -5,7 +5,7 @@ from typing import Any, Protocol
 
 import yaml
 
-from runtime.errors import CapabilityNotFoundError, InvalidCapabilitySpecError
+from runtime.errors import CapabilityNotFoundError, InvalidCapabilitySpecError, suggest_similar
 from runtime.models import CapabilitySpec, FieldSpec
 
 
@@ -77,10 +77,11 @@ class YamlCapabilityLoader:
 
         path = self._capability_index.get(capability_id)
         if path is None:
-            raise CapabilityNotFoundError(
-                f"Capability '{capability_id}' not found.",
-                capability_id=capability_id,
-            )
+            msg = f"Capability '{capability_id}' not found."
+            similar = suggest_similar(capability_id, list(self._capability_index.keys()))
+            if similar:
+                msg += f" Did you mean: {', '.join(similar)}?"
+            raise CapabilityNotFoundError(msg, capability_id=capability_id)
         return path
 
     def get_all_capabilities(self) -> dict[str, CapabilitySpec]:
