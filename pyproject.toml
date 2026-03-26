@@ -36,6 +36,10 @@ otel = [
     "opentelemetry-sdk>=1.20",
     "opentelemetry-exporter-otlp>=1.20",
 ]
+asgi = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+]
 all = ["PyPDF2>=3.0", "beautifulsoup4>=4.12"]
 dev = [
     "pytest>=7.0",
@@ -100,6 +104,7 @@ omit = [
 ]
 
 [tool.coverage.report]
+fail_under = 80
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
