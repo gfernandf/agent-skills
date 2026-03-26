@@ -21,6 +21,8 @@ from types import SimpleNamespace
 
 import pytest
 
+benchmark = pytest.importorskip("pytest_benchmark").plugin.benchmark
+
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 

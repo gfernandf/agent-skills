@@ -777,7 +777,25 @@ def test_all_capabilities():
                 }
             )
 
-    return results
+    # Report summary (informational — external network calls may flake)
+    total = sum(len(v) for v in results.values())
+    functional = len(results["functional"])
+    print(f"\n{'=' * 60}")
+    print(f"Capabilities tested: {total}")
+    print(f"  Functional:   {functional}")
+    print(f"  Placeholder:  {len(results['placeholder'])}")
+    print(f"  Skipped:      {len(results['skipped'])}")
+    print(f"  Errors:       {len(results['error'])}")
+    if results["error"]:
+        for e in results["error"]:
+            print(f"    ⚠ {e['id']}: {e['reason'][:80]}")
+    print(f"{'=' * 60}")
+    # At least 50% of tested capabilities should be functional
+    tested = functional + len(results["placeholder"]) + len(results["error"])
+    assert tested > 0, "No capabilities were tested"
+    assert functional / tested >= 0.5, (
+        f"Only {functional}/{tested} capabilities functional"
+    )
 
 
 def print_results(results: Dict):
