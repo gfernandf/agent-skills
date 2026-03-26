@@ -41,7 +41,7 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          python -m pytest --tb=short -q 2>&1 | tee artifacts/pytest.log
+          python -m pytest --tb=short -q -o "addopts=--cov=runtime --cov=gateway --cov=customer_facing --cov=customization --cov-report=term-missing:skip-covered --cov-report=html:artifacts/htmlcov" 2>&1 | tee artifacts/pytest.log
         env:
           PYTHONPATH: .
 
@@ -144,7 +144,7 @@ jobs:
         run: docker build -t agent-skills:ci .
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: "agent-skills:ci"
           format: "table"
@@ -153,7 +153,7 @@ jobs:
           output: "artifacts/trivy-report.txt"
 
       - name: Run Trivy SBOM
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.35.0
         if: always()
         with:
           image-ref: "agent-skills:ci"
