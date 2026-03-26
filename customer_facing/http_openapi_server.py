@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import signal
 import threading
 import time
 import traceback
@@ -51,7 +53,12 @@ class ServerConfig:
     max_request_body_bytes: int = (
         2 * 1024 * 1024
     )  # 2 MB — ample for JSON skill payloads
-    unauthenticated_paths: tuple[str, ...] = ("/openapi.json", "/v1/health")
+    unauthenticated_paths: tuple[str, ...] = (
+        "/openapi.json",
+        "/v1/health",
+        "/v1/health/live",
+        "/v1/health/ready",
+    )
     cors_allowed_origins: str = (
         ""  # Comma-separated origins, or "*" for any. Empty = no CORS headers.
     )
@@ -89,6 +96,15 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     self._write_json(200, self._deep_health())
                 else:
                     self._write_json(200, self._api().health())
+                return
+
+            # ── Kubernetes-style probes ───────────────────────────
+            if parsed.path == "/v1/health/live":
+                self._write_json(200, {"status": "alive"})
+                return
+
+            if parsed.path == "/v1/health/ready":
+                self._write_json(*self._readiness_check())
                 return
 
             if parsed.path == "/openapi.json":
@@ -1008,6 +1024,27 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 checks["skills_loaded"] = "error"
         return {"status": "healthy", "checks": checks}
 
+    def _readiness_check(self) -> tuple[int, dict[str, Any]]:
+        """Readiness probe: verify that dependent subsystems are operational."""
+        ready = True
+        checks: dict[str, str] = {}
+        try:
+            api = self._api()
+            api.health()
+            checks["api"] = "ok"
+        except Exception:
+            checks["api"] = "unavailable"
+            ready = False
+        try:
+            gw = self._gateway()
+            gw.list_skills()
+            checks["gateway"] = "ok"
+        except Exception:
+            checks["gateway"] = "unavailable"
+            ready = False
+        status_code = 200 if ready else 503
+        return status_code, {"status": "ready" if ready else "not_ready", "checks": checks}
+
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
         return
 
@@ -1120,10 +1157,41 @@ def run_server(
         rate_limit_requests=config.rate_limit_requests,
         rate_limit_window_seconds=config.rate_limit_window_seconds,
     )
+
+    # ── Graceful shutdown: SIGTERM / SIGINT ────────────────────────
+    _shutdown_event = threading.Event()
+    _drain_seconds = int(os.environ.get("AGENT_SKILLS_DRAIN_SECONDS", "5"))
+
+    def _graceful_shutdown(signum: int, _frame: Any) -> None:
+        sig_name = signal.Signals(signum).name
+        log_event("http.server.shutdown_signal", signal=sig_name, drain_seconds=_drain_seconds)
+        logger.info("Received %s — draining in-flight requests (%ds)…", sig_name, _drain_seconds)
+        _shutdown_event.set()
+
+    # Install signal handlers (only on main thread; graceful on POSIX + Windows)
     try:
-        server.serve_forever()
+        signal.signal(signal.SIGTERM, _graceful_shutdown)
+        signal.signal(signal.SIGINT, _graceful_shutdown)
+    except (OSError, ValueError):
+        pass  # Not main thread or signal unavailable
+
+    try:
+        server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:
-        pass
+        _shutdown_event.set()
     finally:
+        log_event("http.server.draining", drain_seconds=_drain_seconds)
+        # Allow in-flight requests to finish within the drain window
+        if _drain_seconds > 0 and not _shutdown_event.is_set():
+            time.sleep(_drain_seconds)
+        elif _drain_seconds > 0:
+            time.sleep(min(_drain_seconds, 2))
+        # Shutdown the async pool gracefully
+        try:
+            async_pool.shutdown(wait=True, cancel_futures=False)
+        except Exception:
+            pass
         server.shutdown()
         server.server_close()
+        log_event("http.server.stopped")
+        logger.info("Server stopped.")
