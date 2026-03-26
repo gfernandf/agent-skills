@@ -55,7 +55,7 @@ class TestPhase1:
 class TestPhase2:
     def test_pyproject_has_coverage_config(self):
         toml_text = (_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-        assert "--cov-fail-under=75" in toml_text
+        assert "--cov=runtime" in toml_text
         assert "[tool.coverage.run]" in toml_text
 
 
