@@ -7,6 +7,7 @@ Usage:
 Requires no external dependencies — uses basic structural checks
 against the JSON Schema definitions in docs/schemas/.
 """
+
 from __future__ import annotations
 
 import json
@@ -52,9 +53,17 @@ def _check_required(data: dict, schema: dict, path: str = "") -> list[str]:
                     type_ok = True
                 elif t == "string" and isinstance(value, str):
                     type_ok = True
-                elif t == "integer" and isinstance(value, int) and not isinstance(value, bool):
+                elif (
+                    t == "integer"
+                    and isinstance(value, int)
+                    and not isinstance(value, bool)
+                ):
                     type_ok = True
-                elif t == "number" and isinstance(value, (int, float)) and not isinstance(value, bool):
+                elif (
+                    t == "number"
+                    and isinstance(value, (int, float))
+                    and not isinstance(value, bool)
+                ):
                     type_ok = True
                 elif t == "boolean" and isinstance(value, bool):
                     type_ok = True
@@ -63,7 +72,9 @@ def _check_required(data: dict, schema: dict, path: str = "") -> list[str]:
                 elif t == "array" and isinstance(value, list):
                     type_ok = True
             if not type_ok:
-                errors.append(f"{path}.{field}: expected one of {expected}, got {type(value).__name__}")
+                errors.append(
+                    f"{path}.{field}: expected one of {expected}, got {type(value).__name__}"
+                )
         else:
             _TYPE_MAP = {
                 "string": str,
@@ -75,12 +86,16 @@ def _check_required(data: dict, schema: dict, path: str = "") -> list[str]:
             }
             py_type = _TYPE_MAP.get(expected)
             if py_type and not isinstance(value, py_type):
-                errors.append(f"{path}.{field}: expected {expected}, got {type(value).__name__}")
+                errors.append(
+                    f"{path}.{field}: expected {expected}, got {type(value).__name__}"
+                )
 
         # Enum check
         if "enum" in prop_schema and value is not None:
             if value not in prop_schema["enum"]:
-                errors.append(f"{path}.{field}: value '{value}' not in {prop_schema['enum']}")
+                errors.append(
+                    f"{path}.{field}: value '{value}' not in {prop_schema['enum']}"
+                )
 
     return errors
 
@@ -105,9 +120,13 @@ def validate_skill_yaml(filepath: Path) -> list[str]:
         step_schema = _load_schema("StepSpec")
         for i, step in enumerate(steps):
             if isinstance(step, dict):
-                errors.extend(_check_required(step, step_schema, path=f"skill.steps[{i}]"))
+                errors.extend(
+                    _check_required(step, step_schema, path=f"skill.steps[{i}]")
+                )
             else:
-                errors.append(f"skill.steps[{i}]: expected object, got {type(step).__name__}")
+                errors.append(
+                    f"skill.steps[{i}]: expected object, got {type(step).__name__}"
+                )
 
     # Validate inputs/outputs field specs
     field_schema = _load_schema("FieldSpec")
@@ -116,7 +135,11 @@ def validate_skill_yaml(filepath: Path) -> list[str]:
         if isinstance(fields, dict):
             for fname, fspec in fields.items():
                 if isinstance(fspec, dict):
-                    errors.extend(_check_required(fspec, field_schema, path=f"skill.{section}.{fname}"))
+                    errors.extend(
+                        _check_required(
+                            fspec, field_schema, path=f"skill.{section}.{fname}"
+                        )
+                    )
 
     return errors
 
@@ -141,12 +164,16 @@ def main() -> None:
     for f in files:
         errs = validate_skill_yaml(f)
         if errs:
-            print(f"\n✗ {f.relative_to(Path.cwd()) if f.is_relative_to(Path.cwd()) else f}")
+            print(
+                f"\n✗ {f.relative_to(Path.cwd()) if f.is_relative_to(Path.cwd()) else f}"
+            )
             for e in errs:
                 print(f"  - {e}")
             total_errors += len(errs)
         else:
-            print(f"✓ {f.relative_to(Path.cwd()) if f.is_relative_to(Path.cwd()) else f}")
+            print(
+                f"✓ {f.relative_to(Path.cwd()) if f.is_relative_to(Path.cwd()) else f}"
+            )
 
     print(f"\n{'─' * 40}")
     print(f"Files: {len(files)}  Errors: {total_errors}")

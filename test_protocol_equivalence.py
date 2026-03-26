@@ -11,6 +11,7 @@ verify structural equivalence:
 This catches contract drift where one protocol binding silently drops
 or renames a field.
 """
+
 from __future__ import annotations
 
 import re
@@ -32,7 +33,9 @@ def _load_yaml(path: Path) -> Dict[str, Any]:
 
 def _collect_input_refs(template: Any, refs: Set[str]) -> None:
     if isinstance(template, str):
-        for m in re.finditer(r"(?:\$\{)?input\.([A-Za-z_][A-Za-z0-9_]*)(?:\})?", template):
+        for m in re.finditer(
+            r"(?:\$\{)?input\.([A-Za-z_][A-Za-z0-9_]*)(?:\})?", template
+        ):
             refs.add(m.group(1))
     elif isinstance(template, dict):
         for v in template.values():
@@ -60,7 +63,10 @@ _GROUPS = _group_bindings_by_capability()
 
 
 def _capability_ids():
-    return [pytest.param(cap_id, bindings, id=cap_id) for cap_id, bindings in sorted(_GROUPS.items())]
+    return [
+        pytest.param(cap_id, bindings, id=cap_id)
+        for cap_id, bindings in sorted(_GROUPS.items())
+    ]
 
 
 @pytest.mark.parametrize("cap_id,bindings", _capability_ids())

@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import Any
 
 
-def load_discovery_evidence(runtime_root: Path) -> dict[str, dict[str, float | str | None]]:
+def load_discovery_evidence(
+    runtime_root: Path,
+) -> dict[str, dict[str, float | str | None]]:
     """Load lightweight evidence signals from runtime artifacts for ranking."""
     evidence: dict[str, dict[str, float | str | None]] = {}
 
@@ -24,16 +26,24 @@ def load_discovery_evidence(runtime_root: Path) -> dict[str, dict[str, float | s
                     exec_30d = item.get("executions_30d")
                     succ_30d = item.get("successes_30d")
                     p95 = item.get("p95_duration_ms")
-                    slot["executions_30d"] = float(exec_30d) if isinstance(exec_30d, (int, float)) else 0.0
-                    slot["successes_30d"] = float(succ_30d) if isinstance(succ_30d, (int, float)) else 0.0
-                    slot["p95_duration_ms"] = float(p95) if isinstance(p95, (int, float)) else None
+                    slot["executions_30d"] = (
+                        float(exec_30d) if isinstance(exec_30d, (int, float)) else 0.0
+                    )
+                    slot["successes_30d"] = (
+                        float(succ_30d) if isinstance(succ_30d, (int, float)) else 0.0
+                    )
+                    slot["p95_duration_ms"] = (
+                        float(p95) if isinstance(p95, (int, float)) else None
+                    )
         except Exception:
             pass
 
     if quality_path.exists():
         try:
             quality_raw: Any = json.loads(quality_path.read_text(encoding="utf-8"))
-            skills = quality_raw.get("skills") if isinstance(quality_raw, dict) else None
+            skills = (
+                quality_raw.get("skills") if isinstance(quality_raw, dict) else None
+            )
             if isinstance(skills, list):
                 for item in skills:
                     if not isinstance(item, dict):
@@ -44,8 +54,12 @@ def load_discovery_evidence(runtime_root: Path) -> dict[str, dict[str, float | s
                     slot = evidence.setdefault(skill_id, {})
                     overall = item.get("overall_score")
                     lifecycle = item.get("lifecycle_state")
-                    slot["overall_score"] = float(overall) if isinstance(overall, (int, float)) else None
-                    slot["lifecycle_state"] = lifecycle if isinstance(lifecycle, str) else None
+                    slot["overall_score"] = (
+                        float(overall) if isinstance(overall, (int, float)) else None
+                    )
+                    slot["lifecycle_state"] = (
+                        lifecycle if isinstance(lifecycle, str) else None
+                    )
         except Exception:
             pass
 
@@ -68,7 +82,11 @@ class DiscoveryEvidenceCache:
         stamp = self._compute_stamp()
         if self._cached is None or self._stamp != stamp:
             self._misses += 1
-            if self._cached is not None and self._stamp is not None and self._stamp != stamp:
+            if (
+                self._cached is not None
+                and self._stamp is not None
+                and self._stamp != stamp
+            ):
                 self._invalidations += 1
             self._cached = load_discovery_evidence(self.runtime_root)
             self._stamp = stamp
@@ -89,7 +107,9 @@ class DiscoveryEvidenceCache:
             "reloads": self._reloads,
             "invalidations": self._invalidations,
             "current_stamp": self._stamp,
-            "cached_entries": len(self._cached) if isinstance(self._cached, dict) else 0,
+            "cached_entries": len(self._cached)
+            if isinstance(self._cached, dict)
+            else 0,
         }
 
     def reset_metrics(self, *, clear_cache: bool = False) -> None:
@@ -112,8 +132,12 @@ class DiscoveryEvidenceCache:
     def load_metrics_snapshot(self, payload: dict[str, Any]) -> None:
         self._hits = int(payload.get("hits", 0)) if isinstance(payload, dict) else 0
         self._misses = int(payload.get("misses", 0)) if isinstance(payload, dict) else 0
-        self._reloads = int(payload.get("reloads", 0)) if isinstance(payload, dict) else 0
-        self._invalidations = int(payload.get("invalidations", 0)) if isinstance(payload, dict) else 0
+        self._reloads = (
+            int(payload.get("reloads", 0)) if isinstance(payload, dict) else 0
+        )
+        self._invalidations = (
+            int(payload.get("invalidations", 0)) if isinstance(payload, dict) else 0
+        )
 
     def _compute_stamp(self) -> tuple[int | None, int | None]:
         usage = self.runtime_root / "artifacts" / "skill_usage_30d.json"

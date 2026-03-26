@@ -79,8 +79,7 @@ def _resolve_value(
 
     if isinstance(value, list):
         return [
-            _resolve_value(item, state, reference_resolver, step_id)
-            for item in value
+            _resolve_value(item, state, reference_resolver, step_id) for item in value
         ]
 
     return reference_resolver.resolve(value, state)

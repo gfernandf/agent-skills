@@ -28,12 +28,18 @@ from runtime.execution_planner import validate_consumes_chain
 from runtime.input_mapper import build_step_input
 from runtime.models import (
     ExecutionContext,
+    ExecutionOptions,
     ExecutionRequest,
     SkillExecutionResult,
     StepResult,
     TraceStep,
 )
-from runtime.observability import elapsed_ms, log_event, reset_current_trace_id, set_current_trace_id
+from runtime.observability import (
+    elapsed_ms,
+    log_event,
+    reset_current_trace_id,
+    set_current_trace_id,
+)
 from runtime.otel_integration import start_span, record_exception
 from runtime.output_mapper import apply_step_output
 from runtime.scheduler import Scheduler, _NoopLock
@@ -163,7 +169,8 @@ class ExecutionEngine:
         if isinstance(required_trust, str):
             required_rank = _TRUST_LEVEL_RANK.get(required_trust, 1)
             context_rank = _TRUST_LEVEL_RANK.get(
-                context.options.trust_level, 1,
+                context.options.trust_level,
+                1,
             )
             if context_rank < required_rank:
                 raise SafetyTrustLevelError(
@@ -241,7 +248,9 @@ class ExecutionEngine:
                     step_input,
                     trace_id=context.trace_id,
                 )
-                produced = gate_result[0] if isinstance(gate_result, tuple) else gate_result
+                produced = (
+                    gate_result[0] if isinstance(gate_result, tuple) else gate_result
+                )
             except Exception as exc:
                 log_event(
                     "safety_gate.execution_error",
@@ -330,15 +339,28 @@ class ExecutionEngine:
         """
         start_time = time.perf_counter()
         skill = self.skill_loader.get_skill(request.skill_id)
-        trace_id = request.trace_id or (parent_context.trace_id if parent_context else None) or str(uuid4())
+        trace_id = (
+            request.trace_id
+            or (parent_context.trace_id if parent_context else None)
+            or str(uuid4())
+        )
 
-        with start_span("skill.execute", attributes={
-            "skill.id": skill.id,
-            "skill.trace_id": trace_id,
-            "skill.depth": (parent_context.depth + 1) if parent_context else 0,
-        }) as _otel_span:
+        with start_span(
+            "skill.execute",
+            attributes={
+                "skill.id": skill.id,
+                "skill.trace_id": trace_id,
+                "skill.depth": (parent_context.depth + 1) if parent_context else 0,
+            },
+        ) as _otel_span:
             return self._execute_inner(
-                request, skill, trace_id, start_time, parent_context, trace_callback, _otel_span,
+                request,
+                skill,
+                trace_id,
+                start_time,
+                parent_context,
+                trace_callback,
+                _otel_span,
             )
 
     def _execute_inner(
@@ -363,7 +385,9 @@ class ExecutionEngine:
                 state=state,
                 options=request.options,
                 depth=(parent_context.depth + 1) if parent_context else 0,
-                parent_skill_id=parent_context.state.skill_id if parent_context else None,
+                parent_skill_id=parent_context.state.skill_id
+                if parent_context
+                else None,
                 lineage=(
                     (*parent_context.lineage, skill.id)
                     if parent_context
@@ -408,7 +432,9 @@ class ExecutionEngine:
             if isinstance(opts_workers, int) and opts_workers > 0:
                 self.scheduler.max_workers = opts_workers
 
-            results = self.scheduler.schedule(plan, context, step_executor, trace_callback)
+            results = self.scheduler.schedule(
+                plan, context, step_executor, trace_callback
+            )
             for result in results:
                 record_step_result(state, result)
                 if result.status not in ("completed", "degraded", "skipped"):
@@ -452,12 +478,16 @@ class ExecutionEngine:
                 duration_ms=elapsed_ms(start_time),
             )
 
-            self._emit_webhook("skill.completed", {
-                "skill_id": skill.id,
-                "status": state.status,
-                "outputs": list(state.outputs.keys()),
-                "duration_ms": elapsed_ms(start_time),
-            }, trace_id=trace_id)
+            self._emit_webhook(
+                "skill.completed",
+                {
+                    "skill_id": skill.id,
+                    "status": state.status,
+                    "outputs": list(state.outputs.keys()),
+                    "duration_ms": elapsed_ms(start_time),
+                },
+                trace_id=trace_id,
+            )
 
             return SkillExecutionResult(
                 skill_id=skill.id,
@@ -481,11 +511,15 @@ class ExecutionEngine:
                     error_type=type(e).__name__,
                     error_message=str(e),
                 )
-                self._emit_webhook("skill.failed", {
-                    "skill_id": skill.id,
-                    "error_type": type(e).__name__,
-                    "error_message": str(e),
-                }, trace_id=trace_id)
+                self._emit_webhook(
+                    "skill.failed",
+                    {
+                        "skill_id": skill.id,
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                    },
+                    trace_id=trace_id,
+                )
             raise
         finally:
             if state is not None and context is not None:
@@ -520,12 +554,17 @@ class ExecutionEngine:
         context: ExecutionContext,
         trace_callback=None,
     ) -> StepResult:
-        with start_span("step.execute", attributes={
-            "step.id": step.id,
-            "step.uses": step.uses,
-            "skill.id": skill_id,
-        }) as _step_span:
-            return self._execute_step_inner(step, skill_id, context, trace_callback, _step_span)
+        with start_span(
+            "step.execute",
+            attributes={
+                "step.id": step.id,
+                "step.uses": step.uses,
+                "skill.id": skill_id,
+            },
+        ) as _step_span:
+            return self._execute_step_inner(
+                step, skill_id, context, trace_callback, _step_span
+            )
 
     def _execute_step_inner(
         self,
@@ -627,7 +666,10 @@ class ExecutionEngine:
 
                 # --- Safety enforcement (pre-execution) ---
                 degrade_reason = self._enforce_safety(
-                    capability, step, context, step_input,
+                    capability,
+                    step,
+                    context,
+                    step_input,
                 )
                 if degrade_reason is not None:
                     with state_lock:
@@ -690,7 +732,9 @@ class ExecutionEngine:
                         return _invoke_once(cap_override=cap)
 
                     produced, meta = execute_scatter(
-                        scatter_cfg, _scatter_invoke, retry,
+                        scatter_cfg,
+                        _scatter_invoke,
+                        retry,
                     )
                 elif foreach is not None:
                     produced, meta = execute_foreach(
@@ -708,7 +752,10 @@ class ExecutionEngine:
                             for tgt in (auto_wire_w or step.output_mapping).values():
                                 state.written_targets.discard(tgt)
                             apply_step_output(
-                                step, p, state, mapping_override=auto_wire_w,
+                                step,
+                                p,
+                                state,
+                                mapping_override=auto_wire_w,
                             )
 
                     produced, meta = execute_while(
@@ -721,7 +768,8 @@ class ExecutionEngine:
                     _while_applied = True
                 else:
                     produced, meta = invoke_with_retry(
-                        lambda: _invoke_once(), retry,
+                        lambda: _invoke_once(),
+                        retry,
                     )
 
                 # Merge router meta into step meta
@@ -793,16 +841,18 @@ class ExecutionEngine:
             writes = tuple(step.output_mapping.values())
 
             with state_lock:
-                state.trace.steps.append(TraceStep(
-                    step_id=step.id,
-                    capability_id=step.uses,
-                    status="completed",
-                    started_at=step_started_at,
-                    ended_at=step_finished_at,
-                    reads=reads,
-                    writes=writes,
-                    latency_ms=step_latency_ms,
-                ))
+                state.trace.steps.append(
+                    TraceStep(
+                        step_id=step.id,
+                        capability_id=step.uses,
+                        status="completed",
+                        started_at=step_started_at,
+                        ended_at=step_finished_at,
+                        reads=reads,
+                        writes=writes,
+                        latency_ms=step_latency_ms,
+                    )
+                )
                 state.trace.metrics.step_count += 1
                 state.trace.metrics.elapsed_ms += step_latency_ms
                 if isinstance(meta, dict):
@@ -833,7 +883,12 @@ class ExecutionEngine:
                 latency_ms=step_latency_ms,
             )
 
-        except (SafetyTrustLevelError, SafetyGateFailedError, SafetyConfirmationRequiredError, GateExecutionError):
+        except (
+            SafetyTrustLevelError,
+            SafetyGateFailedError,
+            SafetyConfirmationRequiredError,
+            GateExecutionError,
+        ):
             raise
         except Exception as e:
             record_exception(_step_span, e)
@@ -862,16 +917,18 @@ class ExecutionEngine:
                     trace_callback(state.events[-1])
 
                 # CognitiveState v1: trace failed step
-                state.trace.steps.append(TraceStep(
-                    step_id=step.id,
-                    capability_id=step.uses,
-                    status="failed",
-                    started_at=step_started_at,
-                    ended_at=fail_finished_at,
-                    reads=tuple(self._collect_reads(step.input_mapping)),
-                    writes=(),
-                    latency_ms=fail_latency_ms,
-                ))
+                state.trace.steps.append(
+                    TraceStep(
+                        step_id=step.id,
+                        capability_id=step.uses,
+                        status="failed",
+                        started_at=step_started_at,
+                        ended_at=fail_finished_at,
+                        reads=tuple(self._collect_reads(step.input_mapping)),
+                        writes=(),
+                        latency_ms=fail_latency_ms,
+                    )
+                )
                 state.trace.metrics.step_count += 1
                 state.trace.metrics.elapsed_ms += fail_latency_ms
                 state.current_step = None
@@ -898,13 +955,16 @@ class ExecutionEngine:
             return _build_auto_wire_mapping(capability, ct())
         return None
 
-    def _emit_webhook(self, event_type: str, data: dict[str, Any], *, trace_id: str | None = None) -> None:
+    def _emit_webhook(
+        self, event_type: str, data: dict[str, Any], *, trace_id: str | None = None
+    ) -> None:
         """Fire-and-forget webhook delivery if a store is configured."""
         store = self.webhook_store
         if store is None:
             return
         try:
             from runtime.webhook import deliver_event
+
             deliver_event(store, event_type, data, trace_id=trace_id)
         except Exception:
             pass  # never fail the execution because of webhook delivery
@@ -912,7 +972,9 @@ class ExecutionEngine:
     @staticmethod
     def _resolve_step_timeout(step, context) -> float:
         """Resolve timeout for a step: step config > options > default."""
-        step_val = step.config.get("timeout_seconds") if hasattr(step, "config") else None
+        step_val = (
+            step.config.get("timeout_seconds") if hasattr(step, "config") else None
+        )
         if isinstance(step_val, (int, float)) and step_val > 0:
             return float(step_val)
         opts_val = getattr(context.options, "default_step_timeout_seconds", None)
@@ -944,9 +1006,17 @@ def _utc_now() -> datetime:
 
 
 # Known runtime namespaces for reference extraction (data lineage).
-_REF_NAMESPACES = frozenset({
-    "inputs", "vars", "outputs", "frame", "working", "output", "extensions",
-})
+_REF_NAMESPACES = frozenset(
+    {
+        "inputs",
+        "vars",
+        "outputs",
+        "frame",
+        "working",
+        "output",
+        "extensions",
+    }
+)
 
 
 def _extract_refs(value: Any, refs: list[str]) -> None:

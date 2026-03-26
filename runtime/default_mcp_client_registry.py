@@ -55,6 +55,7 @@ class DefaultMCPClientRegistry:
             client = self._clients.get(server)
             if client is None:
                 from runtime.mcp_subprocess_client import SubprocessMCPClient
+
                 client = SubprocessMCPClient(command=command)
                 self._clients[server] = client
             return client

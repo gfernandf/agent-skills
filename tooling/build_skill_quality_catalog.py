@@ -82,7 +82,9 @@ def _score_rating(rating_avg: float | None, rating_count: int) -> float:
     if rating_avg is None:
         smoothed = prior
     else:
-        smoothed = ((rating_avg * rating_count) + (prior * prior_weight)) / (rating_count + prior_weight)
+        smoothed = ((rating_avg * rating_count) + (prior * prior_weight)) / (
+            rating_count + prior_weight
+        )
 
     return _clamp(((smoothed - 1.0) / 4.0) * 100.0)
 
@@ -147,7 +149,9 @@ def _resolve_binding_profile(binding: Any) -> str:
     return "standard"
 
 
-def _compute_skill_conformance_metrics(skill: dict[str, Any], binding_registry: BindingRegistry) -> dict[str, Any]:
+def _compute_skill_conformance_metrics(
+    skill: dict[str, Any], binding_registry: BindingRegistry
+) -> dict[str, Any]:
     uses_capabilities = skill.get("uses_capabilities", [])
     if not isinstance(uses_capabilities, list):
         uses_capabilities = []
@@ -158,7 +162,9 @@ def _compute_skill_conformance_metrics(skill: dict[str, Any], binding_registry: 
         if not isinstance(capability_id, str) or not capability_id:
             continue
 
-        default_binding_id = binding_registry.get_official_default_binding_id(capability_id)
+        default_binding_id = binding_registry.get_official_default_binding_id(
+            capability_id
+        )
         if not isinstance(default_binding_id, str) or not default_binding_id:
             continue
 
@@ -181,7 +187,9 @@ def _compute_skill_conformance_metrics(skill: dict[str, Any], binding_registry: 
         "standard": profiles.count("standard"),
         "experimental": profiles.count("experimental"),
     }
-    score = sum(_conformance_profile_score(profile) for profile in profiles) / len(profiles)
+    score = sum(_conformance_profile_score(profile) for profile in profiles) / len(
+        profiles
+    )
 
     lowest = "strict"
     if counts["experimental"] > 0:
@@ -239,7 +247,11 @@ def _compute_readiness_score(
         flags.append("missing_tags")
 
     status = metadata.get("status") if isinstance(metadata, dict) else None
-    if isinstance(status, str) and status.lower() in {"stable", "validated", "production"}:
+    if isinstance(status, str) and status.lower() in {
+        "stable",
+        "validated",
+        "production",
+    }:
         score += 5.0
 
     if lab.get("contract_passed") is True:
@@ -275,7 +287,9 @@ def _compute_readiness_score(
     return _clamp(score - conformance_penalty), flags
 
 
-def _compute_field_metrics(usage: dict[str, Any], feedback: dict[str, Any]) -> dict[str, Any]:
+def _compute_field_metrics(
+    usage: dict[str, Any], feedback: dict[str, Any]
+) -> dict[str, Any]:
     executions = int(usage.get("executions_30d", 0) or 0)
     successes = int(usage.get("successes_30d", 0) or 0)
     timeouts = int(usage.get("timeouts_30d", 0) or 0)
@@ -287,7 +301,9 @@ def _compute_field_metrics(usage: dict[str, Any], feedback: dict[str, Any]) -> d
     reports = int(feedback.get("reports_30d", 0) or 0)
     severe_reports = int(feedback.get("severe_reports_30d", 0) or 0)
 
-    rating_avg = float(rating_avg_raw) if isinstance(rating_avg_raw, (int, float)) else None
+    rating_avg = (
+        float(rating_avg_raw) if isinstance(rating_avg_raw, (int, float)) else None
+    )
 
     success_rate = (successes / executions) if executions > 0 else None
     timeout_rate = (timeouts / executions) if executions > 0 else None
@@ -296,7 +312,9 @@ def _compute_field_metrics(usage: dict[str, Any], feedback: dict[str, Any]) -> d
     if timeout_rate is not None:
         reliability_score = _clamp(reliability_score - (timeout_rate * 20.0))
 
-    latency_score = _score_latency(float(p95) if isinstance(p95, (int, float)) else None)
+    latency_score = _score_latency(
+        float(p95) if isinstance(p95, (int, float)) else None
+    )
     rating_score = _score_rating(rating_avg, rating_count)
 
     reports_penalty = min(40.0, (float(reports) * 2.0) + (float(severe_reports) * 8.0))
@@ -315,9 +333,13 @@ def _compute_field_metrics(usage: dict[str, Any], feedback: dict[str, Any]) -> d
     return {
         "executions_30d": executions,
         "successes_30d": successes,
-        "success_rate_30d": round(success_rate, 4) if success_rate is not None else None,
+        "success_rate_30d": round(success_rate, 4)
+        if success_rate is not None
+        else None,
         "timeouts_30d": timeouts,
-        "timeout_rate_30d": round(timeout_rate, 4) if timeout_rate is not None else None,
+        "timeout_rate_30d": round(timeout_rate, 4)
+        if timeout_rate is not None
+        else None,
         "p50_duration_ms": p50 if isinstance(p50, (int, float)) else None,
         "p95_duration_ms": p95 if isinstance(p95, (int, float)) else None,
         "rating_avg": round(rating_avg, 3) if rating_avg is not None else None,
@@ -328,7 +350,9 @@ def _compute_field_metrics(usage: dict[str, Any], feedback: dict[str, Any]) -> d
     }
 
 
-def _compute_overall_score(readiness_score: float, field_score: float, executions_30d: int) -> float:
+def _compute_overall_score(
+    readiness_score: float, field_score: float, executions_30d: int
+) -> float:
     if executions_30d < 20:
         return round(readiness_score, 2)
     if executions_30d < 50:
@@ -431,7 +455,9 @@ def build_skill_quality_catalog(
         lab = lab_map.get(skill_id, {})
         usage = usage_map.get(skill_id, {})
         feedback = feedback_map.get(skill_id, {})
-        conformance_metrics = _compute_skill_conformance_metrics(skill, binding_registry)
+        conformance_metrics = _compute_skill_conformance_metrics(
+            skill, binding_registry
+        )
 
         readiness_score, readiness_flags = _compute_readiness_score(
             skill,
@@ -459,7 +485,9 @@ def build_skill_quality_catalog(
             "field_score": field_metrics["field_score"],
             "overall_score": overall_score,
             "lifecycle_state": lifecycle_state,
-            "evidence_source": _resolve_evidence_source(field_metrics["executions_30d"]),
+            "evidence_source": _resolve_evidence_source(
+                field_metrics["executions_30d"]
+            ),
             "metrics": field_metrics,
             "conformance": conformance_metrics,
             "flags": sorted(set(readiness_flags)),
@@ -479,12 +507,26 @@ def build_skill_quality_catalog(
         "total_skills": len(entries),
         "by_state": {
             state: sum(1 for e in entries if e.get("lifecycle_state") == state)
-            for state in ["draft", "validated", "lab-verified", "trusted", "recommended"]
+            for state in [
+                "draft",
+                "validated",
+                "lab-verified",
+                "trusted",
+                "recommended",
+            ]
         },
         "avg_scores": {
-            "readiness": round(sum(e["readiness_score"] for e in entries) / len(entries), 2) if entries else 0.0,
-            "field": round(sum(e["field_score"] for e in entries) / len(entries), 2) if entries else 0.0,
-            "overall": round(sum(e["overall_score"] for e in entries) / len(entries), 2) if entries else 0.0,
+            "readiness": round(
+                sum(e["readiness_score"] for e in entries) / len(entries), 2
+            )
+            if entries
+            else 0.0,
+            "field": round(sum(e["field_score"] for e in entries) / len(entries), 2)
+            if entries
+            else 0.0,
+            "overall": round(sum(e["overall_score"] for e in entries) / len(entries), 2)
+            if entries
+            else 0.0,
         },
     }
 

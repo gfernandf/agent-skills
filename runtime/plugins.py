@@ -17,6 +17,7 @@ Usage:
     from runtime.plugins import discover_plugins
     auth_plugins = discover_plugins("agent_skills.auth")
 """
+
 from __future__ import annotations
 
 import logging

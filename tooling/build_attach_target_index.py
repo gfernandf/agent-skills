@@ -99,13 +99,19 @@ def build_index(runtime_root: Path, output_path: Path | None = None) -> Path:
 
     out = output_path or (runtime_root / "artifacts" / "attach_targets" / "index.json")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    out.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     return out
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build attach target index from runtime artifacts.")
-    parser.add_argument("--runtime-root", type=Path, default=Path(__file__).resolve().parent.parent)
+    parser = argparse.ArgumentParser(
+        description="Build attach target index from runtime artifacts."
+    )
+    parser.add_argument(
+        "--runtime-root", type=Path, default=Path(__file__).resolve().parent.parent
+    )
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
 

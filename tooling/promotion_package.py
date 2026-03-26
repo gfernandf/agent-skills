@@ -51,7 +51,9 @@ def _load_capability_ids(registry_root: Path) -> set[str]:
     return ids
 
 
-def _resolve_skill_file(local_skills_root: Path, skill_id: str | None, skill_file: Path | None) -> Path:
+def _resolve_skill_file(
+    local_skills_root: Path, skill_id: str | None, skill_file: Path | None
+) -> Path:
     if skill_file is not None:
         if not skill_file.exists():
             raise FileNotFoundError(f"skill file not found: {skill_file}")
@@ -100,9 +102,7 @@ def prepare_promotion_package(
     skill_file: Path | None = None,
 ) -> PreparationResult:
     if target_channel not in ALLOWED_CHANNELS:
-        raise ValueError(
-            f"target_channel must be one of {sorted(ALLOWED_CHANNELS)}."
-        )
+        raise ValueError(f"target_channel must be one of {sorted(ALLOWED_CHANNELS)}.")
 
     source_skill_file = _resolve_skill_file(local_skills_root, skill_id, skill_file)
     skill_doc = _read_skill_doc(source_skill_file)
@@ -120,7 +120,9 @@ def prepare_promotion_package(
     package_name = f"{resolved_skill_id.replace('.', '_')}-{target_channel}-{timestamp}"
     package_root = out_root / package_name
 
-    payload_skill_dir = package_root / "payload" / "skills" / target_channel / domain / slug
+    payload_skill_dir = (
+        package_root / "payload" / "skills" / target_channel / domain / slug
+    )
     payload_skill_dir.mkdir(parents=True, exist_ok=True)
     payload_skill_path = payload_skill_dir / "skill.yaml"
     shutil.copy2(source_skill_file, payload_skill_path)
@@ -287,9 +289,21 @@ def validate_promotion_package(
             )
 
     # Ensure payload path matches channel/domain/slug
-    if isinstance(skill_doc.get("id"), str) and "." in skill_doc["id"] and isinstance(target_channel, str):
+    if (
+        isinstance(skill_doc.get("id"), str)
+        and "." in skill_doc["id"]
+        and isinstance(target_channel, str)
+    ):
         domain, slug = skill_doc["id"].split(".", 1)
-        expected = package_root / "payload" / "skills" / target_channel / domain / slug / "skill.yaml"
+        expected = (
+            package_root
+            / "payload"
+            / "skills"
+            / target_channel
+            / domain
+            / slug
+            / "skill.yaml"
+        )
         if skill_file.resolve() != expected.resolve():
             errors.append(
                 f"Payload path mismatch. Expected {expected}, found {skill_file}"
@@ -297,13 +311,17 @@ def validate_promotion_package(
 
     # Capability reference check
     capability_ids = _load_capability_ids(registry_root)
-    for step in skill_doc.get("steps", []) if isinstance(skill_doc.get("steps"), list) else []:
+    for step in (
+        skill_doc.get("steps", []) if isinstance(skill_doc.get("steps"), list) else []
+    ):
         if not isinstance(step, dict):
             continue
         uses = step.get("uses")
         if isinstance(uses, str) and uses and not uses.startswith("skill:"):
             if capability_ids and uses not in capability_ids:
-                errors.append(f"Unknown capability reference in step '{step.get('id', '?')}': {uses}")
+                errors.append(
+                    f"Unknown capability reference in step '{step.get('id', '?')}': {uses}"
+                )
 
     # Metadata quality checks for community/official
     metadata = skill_doc.get("metadata")
@@ -365,7 +383,9 @@ def validate_promotion_package(
                         )
 
                 if _is_todo(answers.get("sunset_plan")):
-                    warnings.append("admission_answers.sunset_plan is TODO (required if superseding existing skill)")
+                    warnings.append(
+                        "admission_answers.sunset_plan is TODO (required if superseding existing skill)"
+                    )
 
     return ValidationResult(
         ok=len(errors) == 0,

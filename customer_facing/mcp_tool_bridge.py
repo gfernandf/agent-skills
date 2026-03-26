@@ -157,7 +157,9 @@ class MCPToolBridge:
             },
         ]
 
-    def call_tool(self, name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
+    def call_tool(
+        self, name: str, arguments: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         args = arguments or {}
 
         if name == "runtime.health":
@@ -171,10 +173,18 @@ class MCPToolBridge:
                 "skills": [
                     s.to_dict()
                     for s in self.gateway.list_skills(
-                        domain=args.get("domain") if isinstance(args.get("domain"), str) else None,
-                        role=args.get("role") if isinstance(args.get("role"), str) else None,
-                        status=args.get("status") if isinstance(args.get("status"), str) else None,
-                        invocation=args.get("invocation") if isinstance(args.get("invocation"), str) else None,
+                        domain=args.get("domain")
+                        if isinstance(args.get("domain"), str)
+                        else None,
+                        role=args.get("role")
+                        if isinstance(args.get("role"), str)
+                        else None,
+                        status=args.get("status")
+                        if isinstance(args.get("status"), str)
+                        else None,
+                        invocation=args.get("invocation")
+                        if isinstance(args.get("invocation"), str)
+                        else None,
                     )
                 ]
             }
@@ -182,16 +192,24 @@ class MCPToolBridge:
         if name == "skill.discover":
             intent = args.get("intent")
             if not isinstance(intent, str) or not intent:
-                raise ValueError("skill.discover requires non-empty string argument 'intent'")
-            limit = int(args.get("limit", 10)) if isinstance(args.get("limit"), int) else 10
+                raise ValueError(
+                    "skill.discover requires non-empty string argument 'intent'"
+                )
+            limit = (
+                int(args.get("limit", 10)) if isinstance(args.get("limit"), int) else 10
+            )
             return {
                 "intent": intent,
                 "results": [
                     r.to_dict()
                     for r in self.gateway.discover(
                         intent=intent,
-                        domain=args.get("domain") if isinstance(args.get("domain"), str) else None,
-                        role_filter=args.get("role") if isinstance(args.get("role"), str) else None,
+                        domain=args.get("domain")
+                        if isinstance(args.get("domain"), str)
+                        else None,
+                        role_filter=args.get("role")
+                        if isinstance(args.get("role"), str)
+                        else None,
                         limit=limit,
                     )
                 ],
@@ -209,16 +227,24 @@ class MCPToolBridge:
             target_type = args.get("target_type")
             target_ref = args.get("target_ref")
             if not isinstance(target_type, str) or not target_type:
-                raise ValueError("skill.attach requires non-empty string argument 'target_type'")
+                raise ValueError(
+                    "skill.attach requires non-empty string argument 'target_type'"
+                )
             if not isinstance(target_ref, str) or not target_ref:
-                raise ValueError("skill.attach requires non-empty string argument 'target_ref'")
+                raise ValueError(
+                    "skill.attach requires non-empty string argument 'target_ref'"
+                )
 
             result = self.gateway.attach(
                 skill_id=str(args.get("skill_id", "")),
                 target_type=target_type,
                 target_ref=target_ref,
-                inputs=args.get("inputs") if isinstance(args.get("inputs"), dict) else {},
-                trace_id=args.get("trace_id") if isinstance(args.get("trace_id"), str) else None,
+                inputs=args.get("inputs")
+                if isinstance(args.get("inputs"), dict)
+                else {},
+                trace_id=args.get("trace_id")
+                if isinstance(args.get("trace_id"), str)
+                else None,
                 include_trace=bool(args.get("include_trace", False)),
                 required_conformance_profile=(
                     args.get("required_conformance_profile")
@@ -236,8 +262,12 @@ class MCPToolBridge:
         if name == "skill.execute":
             return self.api.execute_skill(
                 skill_id=str(args.get("skill_id", "")),
-                inputs=args.get("inputs") if isinstance(args.get("inputs"), dict) else {},
-                trace_id=args.get("trace_id") if isinstance(args.get("trace_id"), str) else None,
+                inputs=args.get("inputs")
+                if isinstance(args.get("inputs"), dict)
+                else {},
+                trace_id=args.get("trace_id")
+                if isinstance(args.get("trace_id"), str)
+                else None,
                 include_trace=bool(args.get("include_trace", False)),
                 required_conformance_profile=(
                     args.get("required_conformance_profile")
@@ -255,8 +285,12 @@ class MCPToolBridge:
         if name == "capability.execute":
             return self.api.execute_capability(
                 capability_id=str(args.get("capability_id", "")),
-                inputs=args.get("inputs") if isinstance(args.get("inputs"), dict) else {},
-                trace_id=args.get("trace_id") if isinstance(args.get("trace_id"), str) else None,
+                inputs=args.get("inputs")
+                if isinstance(args.get("inputs"), dict)
+                else {},
+                trace_id=args.get("trace_id")
+                if isinstance(args.get("trace_id"), str)
+                else None,
                 required_conformance_profile=(
                     args.get("required_conformance_profile")
                     if isinstance(args.get("required_conformance_profile"), str)
@@ -276,8 +310,12 @@ class MCPToolBridge:
 
         if name == "skill.governance.list":
             return self.api.list_skill_governance(
-                min_state=args.get("min_state") if isinstance(args.get("min_state"), str) else None,
-                limit=int(args.get("limit", 20)) if isinstance(args.get("limit"), int) else 20,
+                min_state=args.get("min_state")
+                if isinstance(args.get("min_state"), str)
+                else None,
+                limit=int(args.get("limit", 20))
+                if isinstance(args.get("limit"), int)
+                else 20,
             )
 
         raise ValueError(f"Unsupported MCP tool '{name}'")

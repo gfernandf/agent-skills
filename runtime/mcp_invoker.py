@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 from runtime.binding_models import InvocationRequest, InvocationResponse
 from runtime.errors import RuntimeErrorBase
@@ -17,8 +17,9 @@ class MCPClient(Protocol):
     A concrete integration layer can adapt any MCP SDK/client to this interface.
     """
 
-    def call_tool(self, server: str, tool_name: str, arguments: dict[str, Any]) -> Any:
-        ...
+    def call_tool(
+        self, server: str, tool_name: str, arguments: dict[str, Any]
+    ) -> Any: ...
 
 
 class MCPClientRegistry(Protocol):
@@ -28,8 +29,7 @@ class MCPClientRegistry(Protocol):
     This keeps the invoker independent from any specific MCP transport/runtime.
     """
 
-    def get_client(self, server: str) -> MCPClient:
-        ...
+    def get_client(self, server: str) -> MCPClient: ...
 
 
 class MCPInvoker:

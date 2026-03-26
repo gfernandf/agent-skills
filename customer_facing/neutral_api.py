@@ -97,7 +97,8 @@ class NeutralRuntimeAPI:
         filtered = [
             s
             for s in skills
-            if isinstance(s, dict) and rank.get(str(s.get("lifecycle_state")), -1) >= min_rank
+            if isinstance(s, dict)
+            and rank.get(str(s.get("lifecycle_state")), -1) >= min_rank
         ]
 
         try:
@@ -160,7 +161,8 @@ class NeutralRuntimeAPI:
         )
         try:
             result = self.components.engine.execute(
-                request, trace_callback=trace_callback,
+                request,
+                trace_callback=trace_callback,
             )
         except Exception as exc:
             return _error_response(exc, trace_id=trace_id)
@@ -237,6 +239,7 @@ class NeutralRuntimeAPI:
     def metrics(self) -> dict[str, Any]:
         """Return current runtime metrics snapshot."""
         from runtime.metrics import METRICS
+
         return METRICS.snapshot()
 
     def execute_skill_streaming(
@@ -269,20 +272,23 @@ class NeutralRuntimeAPI:
 
         def _trace_cb(event):
             try:
-                event_callback({
-                    "type": event.type,
-                    "message": event.message,
-                    "timestamp": event.timestamp.isoformat() + "Z",
-                    "step_id": event.step_id,
-                    "trace_id": event.trace_id,
-                    "data": event.data,
-                })
+                event_callback(
+                    {
+                        "type": event.type,
+                        "message": event.message,
+                        "timestamp": event.timestamp.isoformat() + "Z",
+                        "step_id": event.step_id,
+                        "trace_id": event.trace_id,
+                        "data": event.data,
+                    }
+                )
             except Exception:
                 pass  # streaming errors must not abort the engine
 
         try:
             result = self.components.engine.execute(
-                request, trace_callback=_trace_cb,
+                request,
+                trace_callback=_trace_cb,
             )
         except Exception as exc:
             return _error_response(exc, trace_id=trace_id)
@@ -310,7 +316,9 @@ class NeutralRuntimeAPI:
     ) -> dict[str, Any]:
         """Launch skill execution asynchronously.  Returns run metadata immediately."""
         if run_store is None:
-            return _error_response(RuntimeError("RunStore not configured"), trace_id=trace_id)
+            return _error_response(
+                RuntimeError("RunStore not configured"), trace_id=trace_id
+            )
 
         from uuid import uuid4
 
@@ -324,7 +332,8 @@ class NeutralRuntimeAPI:
         def _background():
             try:
                 result_payload = self.execute_skill(
-                    skill_id, inputs,
+                    skill_id,
+                    inputs,
                     trace_id=trace_id,
                     required_conformance_profile=required_conformance_profile,
                     audit_mode=audit_mode,
@@ -338,6 +347,7 @@ class NeutralRuntimeAPI:
             async_pool.submit(_background)
         else:
             import threading
+
             threading.Thread(target=_background, daemon=True).start()
 
         return {

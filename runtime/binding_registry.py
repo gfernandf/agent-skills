@@ -190,7 +190,9 @@ class BindingRegistry:
             )
 
         self._bindings_by_id[binding.id] = binding
-        self._bindings_by_capability.setdefault(binding.capability_id, []).append(binding)
+        self._bindings_by_capability.setdefault(binding.capability_id, []).append(
+            binding
+        )
 
     def _load_service_file(self, path: Path, source: str) -> ServiceDescriptor:
         raw = self._read_yaml(path)
@@ -235,11 +237,21 @@ class BindingRegistry:
                 f"Service '{service_id}' in '{source_file}' has unsupported kind '{kind}'."
             )
 
-        spec_ref = self._optional_string(raw.get("spec_ref"), "spec_ref", service_id, source_file)
-        auth_ref = self._optional_string(raw.get("auth_ref"), "auth_ref", service_id, source_file)
-        base_url = self._optional_string(raw.get("base_url"), "base_url", service_id, source_file)
-        server = self._optional_string(raw.get("server"), "server", service_id, source_file)
-        module = self._optional_string(raw.get("module"), "module", service_id, source_file)
+        spec_ref = self._optional_string(
+            raw.get("spec_ref"), "spec_ref", service_id, source_file
+        )
+        auth_ref = self._optional_string(
+            raw.get("auth_ref"), "auth_ref", service_id, source_file
+        )
+        base_url = self._optional_string(
+            raw.get("base_url"), "base_url", service_id, source_file
+        )
+        server = self._optional_string(
+            raw.get("server"), "server", service_id, source_file
+        )
+        module = self._optional_string(
+            raw.get("module"), "module", service_id, source_file
+        )
 
         metadata = raw.get("metadata", {})
         if metadata is None:

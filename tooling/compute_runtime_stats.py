@@ -13,7 +13,9 @@ from runtime.capability_loader import YamlCapabilityLoader
 from runtime.skill_loader import YamlSkillLoader
 
 
-def compute_runtime_stats(registry_root: Path, runtime_root: Path, host_root: Path | None = None) -> dict:
+def compute_runtime_stats(
+    registry_root: Path, runtime_root: Path, host_root: Path | None = None
+) -> dict:
     """
     Compute global runtime ecosystem statistics.
 
@@ -24,8 +26,8 @@ def compute_runtime_stats(registry_root: Path, runtime_root: Path, host_root: Pa
     - skills
     """
 
-    capability_loader = YamlCapabilityLoader(registry_root)
-    skill_loader = YamlSkillLoader(registry_root)
+    YamlCapabilityLoader(registry_root)
+    YamlSkillLoader(registry_root)
     binding_registry = BindingRegistry(runtime_root, host_root)
 
     capabilities_root = registry_root / "capabilities"
@@ -55,7 +57,9 @@ def compute_runtime_stats(registry_root: Path, runtime_root: Path, host_root: Pa
 
     bindings_by_source: dict[str, int] = {}
     for binding in bindings:
-        bindings_by_source[binding.source] = bindings_by_source.get(binding.source, 0) + 1
+        bindings_by_source[binding.source] = (
+            bindings_by_source.get(binding.source, 0) + 1
+        )
 
     return {
         "capabilities": capability_count,
@@ -69,11 +73,17 @@ def compute_runtime_stats(registry_root: Path, runtime_root: Path, host_root: Pa
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="compute_runtime_stats")
-    parser.add_argument("--registry-root", type=Path, default=None, help="Path to the registry root")
-    parser.add_argument("--runtime-root", type=Path, default=None, help="Path to the runtime root")
-    parser.add_argument("--host-root", type=Path, default=None, help="Path to the host root")
+    parser.add_argument(
+        "--registry-root", type=Path, default=None, help="Path to the registry root"
+    )
+    parser.add_argument(
+        "--runtime-root", type=Path, default=None, help="Path to the runtime root"
+    )
+    parser.add_argument(
+        "--host-root", type=Path, default=None, help="Path to the host root"
+    )
     args = parser.parse_args()
-    
+
     registry_root = args.registry_root or Path.cwd().parent / "agent-skill-registry"
     runtime_root = args.runtime_root or Path.cwd()
     host_root = args.host_root or runtime_root

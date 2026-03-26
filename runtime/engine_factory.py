@@ -130,7 +130,8 @@ def build_runtime_components(
 
     # Plugin discovery — load third-party extensions at startup
     from runtime.plugins import discover_all
-    discovered_plugins = discover_all()
+
+    discover_all()
 
     return RuntimeComponents(
         engine=engine,

@@ -3,6 +3,7 @@ Agent baseline service module.
 Provides baseline implementations for agent-related capabilities.
 """
 
+
 def delegate_agent(task, agent, timeout_seconds=None):
     """
     Delegate a task to an agent.
@@ -15,10 +16,13 @@ def delegate_agent(task, agent, timeout_seconds=None):
     Returns:
         dict: {"accepted": bool, "delegation_id": str|None}
     """
-    import hashlib, json
+    import hashlib
+    import json
+
     task_str = json.dumps(task, sort_keys=True) if isinstance(task, dict) else str(task)
     delegation_id = hashlib.sha256(f"{agent}:{task_str}".encode()).hexdigest()[:12]
     return {"accepted": True, "delegation_id": f"del-{delegation_id}"}
+
 
 def generate_plan(goal, context=None, max_steps=None):
     """
@@ -37,9 +41,24 @@ def generate_plan(goal, context=None, max_steps=None):
     max_steps = min(max_steps, 10)
 
     steps = [
-        {"id": "step-1", "action": "analyse", "description": f"Analyse requirements for: {goal}", "depends_on": []},
-        {"id": "step-2", "action": "execute", "description": "Execute core actions based on analysis", "depends_on": ["step-1"]},
-        {"id": "step-3", "action": "verify", "description": "Verify outputs meet the objective", "depends_on": ["step-2"]},
+        {
+            "id": "step-1",
+            "action": "analyse",
+            "description": f"Analyse requirements for: {goal}",
+            "depends_on": [],
+        },
+        {
+            "id": "step-2",
+            "action": "execute",
+            "description": "Execute core actions based on analysis",
+            "depends_on": ["step-1"],
+        },
+        {
+            "id": "step-3",
+            "action": "verify",
+            "description": "Verify outputs meet the objective",
+            "depends_on": ["step-2"],
+        },
     ][:max_steps]
 
     plan = {
@@ -49,6 +68,7 @@ def generate_plan(goal, context=None, max_steps=None):
         "risks": ["Incomplete requirements may lead to partial solution"],
     }
     return {"plan": plan, "step_count": len(steps)}
+
 
 def route_agent(query, agents=None, routing_strategy=None):
     """
@@ -96,12 +116,14 @@ def generate_options(goal, context=None, constraints=None, max_options=None):
         ("alternative", "Non-obvious lateral approach"),
     ]
     for i, (slug, desc) in enumerate(templates[:max_options], 1):
-        options.append({
-            "id": f"opt-{slug}",
-            "label": f"Option {i}: {slug.title()}",
-            "description": f"{desc} for '{prefix}'.",
-            "key_attributes": {"risk": slug, "speed": "medium", "cost": "medium"},
-        })
+        options.append(
+            {
+                "id": f"opt-{slug}",
+                "label": f"Option {i}: {slug.title()}",
+                "description": f"{desc} for '{prefix}'.",
+                "key_attributes": {"risk": slug, "speed": "medium", "cost": "medium"},
+            }
+        )
 
     return {
         "options": options,

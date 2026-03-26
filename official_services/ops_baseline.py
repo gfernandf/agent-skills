@@ -26,7 +26,9 @@ def estimate_budget(plan, limits=None):
         max_duration_ms = limits.get("max_duration_ms")
         if isinstance(max_cost, (int, float)) and estimated_cost > float(max_cost):
             within_budget = False
-        if isinstance(max_duration_ms, (int, float)) and estimated_duration_ms > float(max_duration_ms):
+        if isinstance(max_duration_ms, (int, float)) and estimated_duration_ms > float(
+            max_duration_ms
+        ):
             within_budget = False
 
     return {
@@ -50,11 +52,15 @@ def monitor_trace(trace, thresholds=None):
         max_duration_ms = thresholds.get("max_duration_ms")
         max_errors = thresholds.get("max_errors")
 
-        if isinstance(duration_ms, (int, float)) and isinstance(max_duration_ms, (int, float)):
+        if isinstance(duration_ms, (int, float)) and isinstance(
+            max_duration_ms, (int, float)
+        ):
             if duration_ms > max_duration_ms:
                 alerts.append("duration_threshold_exceeded")
 
-        if isinstance(error_count, (int, float)) and isinstance(max_errors, (int, float)):
+        if isinstance(error_count, (int, float)) and isinstance(
+            max_errors, (int, float)
+        ):
             if error_count > max_errors:
                 alerts.append("error_threshold_exceeded")
 
@@ -84,8 +90,16 @@ def analyze_trace(
     prior_state = trace_state if isinstance(trace_state, dict) else {}
 
     accumulated_events = prior_state.get("events", []) + events_list
-    step_ids = [e.get("step_id") for e in accumulated_events if isinstance(e, dict) and e.get("step_id")]
-    error_events = [e for e in accumulated_events if isinstance(e, dict) and e.get("type") == "error"]
+    step_ids = [
+        e.get("step_id")
+        for e in accumulated_events
+        if isinstance(e, dict) and e.get("step_id")
+    ]
+    error_events = [
+        e
+        for e in accumulated_events
+        if isinstance(e, dict) and e.get("type") == "error"
+    ]
 
     updated_state = {
         "goal": goal,
@@ -110,7 +124,9 @@ def analyze_trace(
 
     assumptions = None
     if not requested_views or "assumptions" in requested_views:
-        assumptions = [{"source": "baseline", "assumption": f"goal_is_feasible: {bool(goal)}"}]
+        assumptions = [
+            {"source": "baseline", "assumption": f"goal_is_feasible: {bool(goal)}"}
+        ]
 
     alternative_paths = None
     if not requested_views or "alternative_paths" in requested_views:
@@ -191,5 +207,9 @@ def monitor_events(events, thresholds=None):
     return {
         "status": status,
         "alerts": alerts,
-        "event_summary": {"by_type": type_counts, "by_severity": severity_counts, "total": len(events_list)},
+        "event_summary": {
+            "by_type": type_counts,
+            "by_severity": severity_counts,
+            "total": len(events_list),
+        },
     }

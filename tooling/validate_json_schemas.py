@@ -12,6 +12,7 @@ Exit codes:
     0 — all schemas valid
     1 — validation errors found
 """
+
 from __future__ import annotations
 
 import json
@@ -38,12 +39,21 @@ def _validate_schema_structure(path: Path) -> list[str]:
         return errors
 
     # Basic JSON Schema structure checks
-    if "type" not in schema and "properties" not in schema and "$ref" not in schema and "oneOf" not in schema and "anyOf" not in schema:
-        errors.append(f"{path.name}: missing 'type', 'properties', '$ref', or 'oneOf'/'anyOf' at root")
+    if (
+        "type" not in schema
+        and "properties" not in schema
+        and "$ref" not in schema
+        and "oneOf" not in schema
+        and "anyOf" not in schema
+    ):
+        errors.append(
+            f"{path.name}: missing 'type', 'properties', '$ref', or 'oneOf'/'anyOf' at root"
+        )
 
     # If jsonschema is installed, use it for full meta-validation
     try:
         import jsonschema
+
         jsonschema.Draft7Validator.check_schema(schema)
     except ImportError:
         pass  # jsonschema not installed — structural check only
@@ -71,6 +81,7 @@ def main() -> int:
     if EXAMPLES_DIR.exists():
         try:
             import jsonschema
+
             for example_path in sorted(EXAMPLES_DIR.glob("*.json")):
                 # Convention: example name matches schema name
                 # e.g. SkillSpec.example.json → SkillSpec.schema.json
@@ -85,7 +96,9 @@ def main() -> int:
                 try:
                     jsonschema.validate(example, schema)
                 except jsonschema.ValidationError as e:
-                    all_errors.append(f"{example_path.name}: failed validation — {e.message}")
+                    all_errors.append(
+                        f"{example_path.name}: failed validation — {e.message}"
+                    )
         except ImportError:
             pass
 

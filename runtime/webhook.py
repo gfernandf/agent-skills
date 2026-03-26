@@ -4,6 +4,7 @@ Webhook delivery system for agent-skills.
 Provides event subscription management and reliable delivery with
 retry and HMAC signature verification.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -23,26 +24,30 @@ from urllib.error import URLError
 logger = logging.getLogger(__name__)
 
 # ── Event types ──────────────────────────────────────────────────
-VALID_EVENT_TYPES = frozenset({
-    "skill.started",
-    "skill.completed",
-    "skill.failed",
-    "run.completed",
-    "run.failed",
-})
+VALID_EVENT_TYPES = frozenset(
+    {
+        "skill.started",
+        "skill.completed",
+        "skill.failed",
+        "run.completed",
+        "run.failed",
+    }
+)
 
 # ── Configuration ────────────────────────────────────────────────
 _MAX_RETRIES = 3
-_RETRY_BACKOFF_BASE = 2.0   # seconds: 2, 4, 8
-_DELIVERY_TIMEOUT = 10       # seconds per attempt
+_RETRY_BACKOFF_BASE = 2.0  # seconds: 2, 4, 8
+_DELIVERY_TIMEOUT = 10  # seconds per attempt
 _MAX_SUBSCRIPTIONS = 100
 
 # ── SSRF protection ──────────────────────────────────────────────
-_BLOCKED_METADATA_IPS = frozenset({
-    "169.254.169.254",  # AWS / GCP / Azure instance metadata
-    "100.100.100.200",  # Alibaba Cloud metadata
-    "fd00:ec2::254",    # AWS IPv6 metadata
-})
+_BLOCKED_METADATA_IPS = frozenset(
+    {
+        "169.254.169.254",  # AWS / GCP / Azure instance metadata
+        "100.100.100.200",  # Alibaba Cloud metadata
+        "fd00:ec2::254",  # AWS IPv6 metadata
+    }
+)
 
 
 def _validate_webhook_url(url: str) -> None:
@@ -57,7 +62,9 @@ def _validate_webhook_url(url: str) -> None:
     """
     import os
 
-    if os.environ.get("AGENT_SKILLS_WEBHOOKS_SKIP_URL_VALIDATION", "").strip().lower() in ("1", "true"):
+    if os.environ.get(
+        "AGENT_SKILLS_WEBHOOKS_SKIP_URL_VALIDATION", ""
+    ).strip().lower() in ("1", "true"):
         return
 
     parsed = urlparse(url)
@@ -77,7 +84,9 @@ def _validate_webhook_url(url: str) -> None:
     except socket.gaierror as e:
         raise ValueError(f"Cannot resolve webhook hostname '{hostname}'.") from e
 
-    allow_private = os.environ.get("AGENT_SKILLS_WEBHOOKS_ALLOW_PRIVATE", "").strip().lower() in ("1", "true", "yes")
+    allow_private = os.environ.get(
+        "AGENT_SKILLS_WEBHOOKS_ALLOW_PRIVATE", ""
+    ).strip().lower() in ("1", "true", "yes")
 
     for _family, _type, _proto, _canonname, sockaddr in resolved_ips:
         ip_str = sockaddr[0]
@@ -90,7 +99,12 @@ def _validate_webhook_url(url: str) -> None:
 
         if not allow_private:
             addr = ipaddress.ip_address(ip_str)
-            if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved:
+            if (
+                addr.is_private
+                or addr.is_loopback
+                or addr.is_link_local
+                or addr.is_reserved
+            ):
                 raise ValueError(
                     f"Webhook URL resolves to private/reserved IP {ip_str} "
                     f"(hostname '{hostname}'). Set AGENT_SKILLS_WEBHOOKS_ALLOW_PRIVATE=1 "
@@ -103,7 +117,7 @@ class WebhookSubscription:
     id: str
     url: str
     events: list[str]
-    secret: str = ""          # HMAC-SHA256 shared secret
+    secret: str = ""  # HMAC-SHA256 shared secret
     active: bool = True
     created_at: str = ""
 
@@ -125,7 +139,12 @@ class WebhookStore:
         # Security: warn if HMAC secret is empty (signatures will be meaningless)
         if not sub.secret:
             import os
-            enforce = os.environ.get("AGENT_SKILLS_WEBHOOKS_REQUIRE_SECRET", "").strip().lower()
+
+            enforce = (
+                os.environ.get("AGENT_SKILLS_WEBHOOKS_REQUIRE_SECRET", "")
+                .strip()
+                .lower()
+            )
             if enforce in ("1", "true", "yes"):
                 raise ValueError(
                     "Webhook secret is required (AGENT_SKILLS_WEBHOOKS_REQUIRE_SECRET=1). "
@@ -134,7 +153,8 @@ class WebhookStore:
             logger.warning(
                 "webhook.insecure_registration id=%s url=%s reason=empty_secret "
                 "hint=Set AGENT_SKILLS_WEBHOOKS_REQUIRE_SECRET=1 to enforce secrets",
-                sub.id, sub.url,
+                sub.id,
+                sub.url,
             )
         with self._lock:
             if len(self._subscriptions) >= self.max_subscriptions:
@@ -155,7 +175,8 @@ class WebhookStore:
     def get_subscribers(self, event_type: str) -> list[WebhookSubscription]:
         with self._lock:
             return [
-                s for s in self._subscriptions.values()
+                s
+                for s in self._subscriptions.values()
                 if s.active and (event_type in s.events or "*" in s.events)
             ]
 
@@ -223,18 +244,23 @@ def _deliver_with_retry(sub: WebhookSubscription, payload: bytes) -> None:
             backoff = _RETRY_BACKOFF_BASE ** (attempt + 1)
             time.sleep(backoff)
 
-    logger.warning("webhook delivery failed after %d attempts: %s", _MAX_RETRIES + 1, sub.url)
+    logger.warning(
+        "webhook delivery failed after %d attempts: %s", _MAX_RETRIES + 1, sub.url
+    )
     # I4 — Dead-letter queue: record the failed delivery for later inspection
-    _DLQ.append({
-        "subscription_id": sub.id,
-        "url": sub.url,
-        "payload_size": len(payload),
-        "attempts": _MAX_RETRIES + 1,
-        "failed_at": time.time(),
-    })
+    _DLQ.append(
+        {
+            "subscription_id": sub.id,
+            "url": sub.url,
+            "payload_size": len(payload),
+            "attempts": _MAX_RETRIES + 1,
+            "failed_at": time.time(),
+        }
+    )
 
 
 # ── I4 — In-memory Dead Letter Queue ────────────────────────────────────
+
 
 class _DeadLetterQueue:
     """Bounded in-memory DLQ for failed webhook deliveries."""
@@ -249,7 +275,7 @@ class _DeadLetterQueue:
         with self._lock:
             self._items.append(item)
             if len(self._items) > self._MAX_SIZE:
-                self._items = self._items[-self._MAX_SIZE:]
+                self._items = self._items[-self._MAX_SIZE :]
 
     def list_items(self, *, limit: int = 50) -> list[dict[str, Any]]:
         with self._lock:

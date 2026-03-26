@@ -12,6 +12,7 @@ Exit codes:
     1 — vulnerabilities found
     2 — tool not installed / runtime error
 """
+
 from __future__ import annotations
 
 import json
@@ -36,7 +37,10 @@ def _run_pip_audit() -> dict:
             timeout=120,
         )
     except FileNotFoundError:
-        print("ERROR: pip-audit is not installed. Run: pip install pip-audit", file=sys.stderr)
+        print(
+            "ERROR: pip-audit is not installed. Run: pip install pip-audit",
+            file=sys.stderr,
+        )
         sys.exit(2)
     except subprocess.TimeoutExpired:
         print("ERROR: pip-audit timed out after 120s", file=sys.stderr)
@@ -77,7 +81,9 @@ def _generate_sbom() -> bool:
         print(f"  SBOM generation failed: {result.stderr[:200]}", file=sys.stderr)
         return False
     except FileNotFoundError:
-        print("  cyclonedx-bom not installed — skipping SBOM generation", file=sys.stderr)
+        print(
+            "  cyclonedx-bom not installed — skipping SBOM generation", file=sys.stderr
+        )
         return False
     except subprocess.TimeoutExpired:
         print("  SBOM generation timed out", file=sys.stderr)
@@ -87,7 +93,9 @@ def _generate_sbom() -> bool:
 def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Security audit for agent-skills dependencies")
+    parser = argparse.ArgumentParser(
+        description="Security audit for agent-skills dependencies"
+    )
     parser.add_argument("--sbom", action="store_true", help="Generate CycloneDX SBOM")
     parser.add_argument(
         "--fail-on",
@@ -110,19 +118,25 @@ def main() -> None:
     vulns_found = []
     for dep in data.get("dependencies", []):
         for vuln in dep.get("vulns", []):
-            severity = (vuln.get("fix_versions") and "high") or "medium"  # pip-audit doesn't always give severity
-            vulns_found.append({
-                "package": dep.get("name"),
-                "version": dep.get("version"),
-                "vuln_id": vuln.get("id"),
-                "description": vuln.get("description", "")[:120],
-                "severity": severity,
-            })
+            severity = (
+                vuln.get("fix_versions") and "high"
+            ) or "medium"  # pip-audit doesn't always give severity
+            vulns_found.append(
+                {
+                    "package": dep.get("name"),
+                    "version": dep.get("version"),
+                    "vuln_id": vuln.get("id"),
+                    "description": vuln.get("description", "")[:120],
+                    "severity": severity,
+                }
+            )
 
     if vulns_found:
         print(f"\n  Found {len(vulns_found)} vulnerability(ies):")
         for v in vulns_found:
-            print(f"    [{v['severity'].upper()}] {v['package']}=={v['version']} — {v['vuln_id']}")
+            print(
+                f"    [{v['severity'].upper()}] {v['package']}=={v['version']} — {v['vuln_id']}"
+            )
     else:
         print("  No vulnerabilities found.")
 
@@ -134,7 +148,9 @@ def main() -> None:
     threshold = _SEVERITY_RANK.get(args.fail_on, 3)
     for v in vulns_found:
         if _SEVERITY_RANK.get(v["severity"], 0) >= threshold:
-            print(f"\nFAILED: vulnerability at or above '{args.fail_on}' severity found.")
+            print(
+                f"\nFAILED: vulnerability at or above '{args.fail_on}' severity found."
+            )
             sys.exit(1)
 
     print("\nPASSED: no vulnerabilities at or above threshold.")

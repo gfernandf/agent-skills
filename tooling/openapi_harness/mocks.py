@@ -297,10 +297,14 @@ class FsReadHandler(BaseHTTPRequestHandler):
             return
 
         if mode == "binary":
-            self._write_json(200, {"content": "", "bytes": "U3R1Yi1iaW5hcnktY29udGVudA=="})
+            self._write_json(
+                200, {"content": "", "bytes": "U3R1Yi1iaW5hcnktY29udGVudA=="}
+            )
             return
 
-        self._write_json(200, {"content": f"Mock file content from {path}", "bytes": ""})
+        self._write_json(
+            200, {"content": f"Mock file content from {path}", "bytes": ""}
+        )
 
     def _read_json(self) -> dict[str, Any] | None:
         content_length = int(self.headers.get("Content-Length", "0"))
@@ -368,7 +372,12 @@ class AgentRouteHandler(BaseHTTPRequestHandler):
 
 class ModelResearchHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
-        if self.path not in {"/model/output/generate", "/model/response/validate", "/generate", "/validate"}:
+        if self.path not in {
+            "/model/output/generate",
+            "/model/response/validate",
+            "/generate",
+            "/validate",
+        }:
             self.send_response(404)
             self.end_headers()
             return
@@ -389,7 +398,11 @@ class ModelResearchHandler(BaseHTTPRequestHandler):
                     "output": output_obj,
                     "warnings": [],
                     "coverage": {
-                        "processed_items": len(payload.get("context_items", []) if isinstance(payload.get("context_items"), list) else []),
+                        "processed_items": len(
+                            payload.get("context_items", [])
+                            if isinstance(payload.get("context_items"), list)
+                            else []
+                        ),
                         "ignored_items": 0,
                     },
                 },

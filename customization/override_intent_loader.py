@@ -50,16 +50,12 @@ class OverrideIntentLoader:
             return []
 
         if not isinstance(raw, dict):
-            raise OverrideIntentLoadError(
-                f"File '{path}' must contain a mapping."
-            )
+            raise OverrideIntentLoadError(f"File '{path}' must contain a mapping.")
 
         overrides = raw.get("overrides", [])
 
         if not isinstance(overrides, list):
-            raise OverrideIntentLoadError(
-                f"'overrides' in '{path}' must be a list."
-            )
+            raise OverrideIntentLoadError(f"'overrides' in '{path}' must be a list.")
 
         intents: list[OverrideIntent] = []
 
@@ -97,12 +93,16 @@ class OverrideIntentLoader:
             index=index,
         )
 
-        if binding_id is not None and (not isinstance(binding_id, str) or not binding_id):
+        if binding_id is not None and (
+            not isinstance(binding_id, str) or not binding_id
+        ):
             raise OverrideIntentLoadError(
                 f"Override at index {index} in '{source_file}' has an invalid 'binding' value."
             )
 
-        if service_id is not None and (not isinstance(service_id, str) or not service_id):
+        if service_id is not None and (
+            not isinstance(service_id, str) or not service_id
+        ):
             raise OverrideIntentLoadError(
                 f"Override at index {index} in '{source_file}' has an invalid 'service' value."
             )

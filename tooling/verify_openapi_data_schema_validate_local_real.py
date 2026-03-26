@@ -28,7 +28,9 @@ def _wait_for_health(url: str, timeout_seconds: float = 8.0) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Verify local real OpenAPI pilot for data.schema.validate")
+    parser = argparse.ArgumentParser(
+        description="Verify local real OpenAPI pilot for data.schema.validate"
+    )
     parser.add_argument(
         "--service-running",
         action="store_true",
@@ -41,7 +43,12 @@ def main() -> int:
         if not args.service_running:
             service_cmd = [
                 sys.executable,
-                str(ROOT / "tooling" / "openapi_providers" / "data_schema_validate_service.py"),
+                str(
+                    ROOT
+                    / "tooling"
+                    / "openapi_providers"
+                    / "data_schema_validate_service.py"
+                ),
                 "--host",
                 "127.0.0.1",
                 "--port",
@@ -57,7 +64,12 @@ def main() -> int:
             sys.executable,
             str(ROOT / "tooling" / "verify_openapi_bindings.py"),
             "--scenario",
-            str(ROOT / "tooling" / "openapi_scenarios_real" / "data.schema.validate.local.json"),
+            str(
+                ROOT
+                / "tooling"
+                / "openapi_scenarios_real"
+                / "data.schema.validate.local.json"
+            ),
         ]
         completed = subprocess.run(verify_cmd, check=False)
         return completed.returncode

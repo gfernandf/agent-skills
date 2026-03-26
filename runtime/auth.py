@@ -13,6 +13,7 @@ Authentication is handled by pluggable backends. The built-in backends are:
 
 Token verifiers can be registered for JWT (HS256/RS256) or custom schemes.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -41,19 +42,19 @@ def has_role(actual: str, required: str) -> bool:
 # prefix-based: longest match wins
 _ROUTE_ROLES: list[tuple[str, str, str]] = [
     # (method, path_prefix, min_role)
-    ("GET",    "/v1/health",               "reader"),
-    ("GET",    "/openapi.json",            "reader"),
-    ("GET",    "/v1/skills/list",          "reader"),
-    ("GET",    "/v1/skills/diagnostics",   "reader"),
-    ("GET",    "/v1/skills/governance",    "reader"),
-    ("GET",    "/v1/skills/",              "reader"),     # describe
-    ("POST",   "/v1/skills/discover",      "reader"),
-    ("POST",   "/v1/skills/",              "executor"),   # execute, stream, async, attach
-    ("POST",   "/v1/capabilities/",        "executor"),
-    ("GET",    "/v1/runs",                 "operator"),
-    ("POST",   "/v1/webhooks",             "operator"),
-    ("GET",    "/v1/webhooks",             "operator"),
-    ("DELETE", "/v1/webhooks/",            "operator"),
+    ("GET", "/v1/health", "reader"),
+    ("GET", "/openapi.json", "reader"),
+    ("GET", "/v1/skills/list", "reader"),
+    ("GET", "/v1/skills/diagnostics", "reader"),
+    ("GET", "/v1/skills/governance", "reader"),
+    ("GET", "/v1/skills/", "reader"),  # describe
+    ("POST", "/v1/skills/discover", "reader"),
+    ("POST", "/v1/skills/", "executor"),  # execute, stream, async, attach
+    ("POST", "/v1/capabilities/", "executor"),
+    ("GET", "/v1/runs", "operator"),
+    ("POST", "/v1/webhooks", "operator"),
+    ("GET", "/v1/webhooks", "operator"),
+    ("DELETE", "/v1/webhooks/", "operator"),
 ]
 
 
@@ -71,10 +72,12 @@ def required_role_for(method: str, path: str) -> str:
 
 # ── Identity context ─────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class Identity:
     """Authenticated caller identity."""
-    subject: str          # user id or key id
+
+    subject: str  # user id or key id
     role: str = "reader"
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -87,9 +90,10 @@ ANONYMOUS = Identity(subject="anonymous", role="reader")
 
 # ── API-key store ────────────────────────────────────────────────
 
+
 @dataclass
 class ApiKeyEntry:
-    key_hash: str       # SHA-256 hex of the actual key
+    key_hash: str  # SHA-256 hex of the actual key
     subject: str
     role: str = "admin"
 
@@ -157,6 +161,7 @@ class JWTVerifier:
             return None
 
         import base64
+
         parts = token.split(".")
         if len(parts) != 3:
             return None
@@ -164,7 +169,9 @@ class JWTVerifier:
             header_b64, payload_b64, sig_b64 = parts
             # Verify signature (HS256)
             signing_input = f"{header_b64}.{payload_b64}".encode()
-            expected_sig = hmac.new(self._secret, signing_input, hashlib.sha256).digest()
+            expected_sig = hmac.new(
+                self._secret, signing_input, hashlib.sha256
+            ).digest()
             # URL-safe base64 decode the signature
             sig_padded = sig_b64 + "=" * (-len(sig_b64) % 4)
             actual_sig = base64.urlsafe_b64decode(sig_padded)
@@ -181,7 +188,11 @@ class JWTVerifier:
             if self._required_issuer is not None:
                 token_iss = payload.get("iss")
                 if token_iss != self._required_issuer:
-                    logger.warning("auth.jwt.invalid_issuer expected=%s got=%s", self._required_issuer, token_iss)
+                    logger.warning(
+                        "auth.jwt.invalid_issuer expected=%s got=%s",
+                        self._required_issuer,
+                        token_iss,
+                    )
                     return None
             # Validate audience claim
             if self._required_audience is not None:
@@ -189,25 +200,38 @@ class JWTVerifier:
                 # aud can be a string or a list
                 if isinstance(token_aud, str):
                     if token_aud != self._required_audience:
-                        logger.warning("auth.jwt.invalid_audience expected=%s got=%s", self._required_audience, token_aud)
+                        logger.warning(
+                            "auth.jwt.invalid_audience expected=%s got=%s",
+                            self._required_audience,
+                            token_aud,
+                        )
                         return None
                 elif isinstance(token_aud, list):
                     if self._required_audience not in token_aud:
-                        logger.warning("auth.jwt.invalid_audience expected=%s got=%s", self._required_audience, token_aud)
+                        logger.warning(
+                            "auth.jwt.invalid_audience expected=%s got=%s",
+                            self._required_audience,
+                            token_aud,
+                        )
                         return None
                 else:
-                    logger.warning("auth.jwt.missing_audience expected=%s", self._required_audience)
+                    logger.warning(
+                        "auth.jwt.missing_audience expected=%s", self._required_audience
+                    )
                     return None
             sub = payload.get("sub", "unknown")
             role = payload.get("role", self._default_role)
             if role not in _ROLE_RANK:
                 role = self._default_role
-            return Identity(subject=str(sub), role=role, metadata={"jwt_claims": payload})
+            return Identity(
+                subject=str(sub), role=role, metadata={"jwt_claims": payload}
+            )
         except Exception:
             return None
 
 
 # ── Token revocation blacklist ────────────────────────────────────
+
 
 class TokenBlacklist:
     """In-memory token blacklist with automatic expiry cleanup.
@@ -263,6 +287,7 @@ def get_token_blacklist() -> TokenBlacklist:
 
 # ── Auth middleware ──────────────────────────────────────────────
 
+
 @dataclass
 class AuthMiddleware:
     """
@@ -273,6 +298,7 @@ class AuthMiddleware:
         if not middleware.authorize(identity, method, path):
             → 403
     """
+
     api_key_store: ApiKeyStore = field(default_factory=ApiKeyStore)
     token_verifier: TokenVerifier = _noop_verifier
     allow_anonymous: bool = False

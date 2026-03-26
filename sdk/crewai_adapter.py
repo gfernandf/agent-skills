@@ -15,6 +15,7 @@ Usage::
 
 Requires: ``crewai`` (``pip install crewai``)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -22,7 +23,9 @@ from typing import Any
 import requests
 
 
-def _call_capability(base_url: str, capability_id: str, payload: dict, api_key: str | None = None) -> dict:
+def _call_capability(
+    base_url: str, capability_id: str, payload: dict, api_key: str | None = None
+) -> dict:
     url = f"{base_url.rstrip('/')}/v1/capabilities/{capability_id}/execute"
     headers: dict[str, str] = {"Content-Type": "application/json"}
     if api_key:
@@ -54,7 +57,9 @@ def build_crewai_tools(
     tools = []
     for cap_id in capabilities:
         try:
-            info = requests.get(f"{base_url.rstrip('/')}/v1/capabilities/{cap_id}", timeout=10)
+            info = requests.get(
+                f"{base_url.rstrip('/')}/v1/capabilities/{cap_id}", timeout=10
+            )
             info.raise_for_status()
             meta = info.json()
             description = meta.get("description", cap_id)

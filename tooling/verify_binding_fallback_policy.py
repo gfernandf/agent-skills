@@ -26,7 +26,12 @@ def _write_local_override_files(host_root: Path) -> None:
     agent_dir.mkdir(parents=True, exist_ok=True)
 
     (agent_dir / "active_bindings.json").write_text(
-        json.dumps({"text.content.summarize": _PRIMARY_BINDING_ID}, indent=2, ensure_ascii=False) + "\n",
+        json.dumps(
+            {"text.content.summarize": _PRIMARY_BINDING_ID},
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n",
         encoding="utf-8",
     )
 
@@ -105,7 +110,9 @@ def main() -> int:
 
     chain = meta.get("fallback_chain")
     if not isinstance(chain, list) or _PRIMARY_BINDING_ID not in chain:
-        raise RuntimeError(f"Expected fallback chain to include '{_PRIMARY_BINDING_ID}', got {chain!r}.")
+        raise RuntimeError(
+            f"Expected fallback chain to include '{_PRIMARY_BINDING_ID}', got {chain!r}."
+        )
 
     if _EXPECTED_FALLBACK_BINDING_ID not in chain:
         raise RuntimeError(

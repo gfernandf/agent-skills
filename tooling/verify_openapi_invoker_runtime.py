@@ -113,28 +113,51 @@ def main() -> int:
         # 1) Basic JSON success and metadata
         response = invoker.invoke(_make_request(operation="ok"))
         checks += 1
-        _assert(response.raw_response == {"valid": True, "errors": []}, "Unexpected JSON success payload")
-        _assert(response.metadata.get("http_status") == 200, "Expected HTTP 200 metadata")
-        _assert(response.metadata.get("method") == "POST", "Expected default POST method")
+        _assert(
+            response.raw_response == {"valid": True, "errors": []},
+            "Unexpected JSON success payload",
+        )
+        _assert(
+            response.metadata.get("http_status") == 200, "Expected HTTP 200 metadata"
+        )
+        _assert(
+            response.metadata.get("method") == "POST", "Expected default POST method"
+        )
 
         # 2) Method override GET
-        response = invoker.invoke(_make_request(operation="ok-get", binding_metadata={"method": "GET"}))
+        response = invoker.invoke(
+            _make_request(operation="ok-get", binding_metadata={"method": "GET"})
+        )
         checks += 1
-        _assert(response.raw_response == {"pong": True}, "GET method override did not return expected payload")
+        _assert(
+            response.raw_response == {"pong": True},
+            "GET method override did not return expected payload",
+        )
         _assert(response.metadata.get("method") == "GET", "Expected GET metadata")
 
         # 3) Response mode text
-        response = invoker.invoke(_make_request(operation="text", binding_metadata={"response_mode": "text"}))
+        response = invoker.invoke(
+            _make_request(operation="text", binding_metadata={"response_mode": "text"})
+        )
         checks += 1
-        _assert(response.raw_response == {"text": "plain-text-response"}, "Text response_mode mapping failed")
+        _assert(
+            response.raw_response == {"text": "plain-text-response"},
+            "Text response_mode mapping failed",
+        )
 
         # 4) Timeout classification
         try:
-            invoker.invoke(_make_request(operation="sleep", binding_metadata={"timeout_seconds": 0.05}))
+            invoker.invoke(
+                _make_request(
+                    operation="sleep", binding_metadata={"timeout_seconds": 0.05}
+                )
+            )
             raise AssertionError("Expected timeout error was not raised")
         except OpenAPIInvocationError as e:
             checks += 1
-            _assert("timed out" in str(e).lower(), "Timeout error classification mismatch")
+            _assert(
+                "timed out" in str(e).lower(), "Timeout error classification mismatch"
+            )
 
         # 5) Non-JSON default mode should fail
         try:
@@ -150,7 +173,9 @@ def main() -> int:
             raise AssertionError("Expected HTTP status failure was not raised")
         except OpenAPIInvocationError as e:
             checks += 1
-            _assert("http 500" in str(e).lower(), "Expected HTTP status detail in error")
+            _assert(
+                "http 500" in str(e).lower(), "Expected HTTP status detail in error"
+            )
 
         print(f"OpenAPI invoker runtime verification passed ({checks} checks)")
         return 0

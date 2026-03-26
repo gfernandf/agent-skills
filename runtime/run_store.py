@@ -9,6 +9,7 @@ deployments (PostgreSQL, Redis, etc.).
 This is NOT a replacement for the audit system — it tracks async run
 lifecycle for the HTTP client.
 """
+
 from __future__ import annotations
 
 import json
@@ -19,6 +20,7 @@ from typing import Any, Protocol, runtime_checkable
 
 
 # ── Pluggable backend protocol ────────────────────────────────────
+
 
 @runtime_checkable
 class RunStoreBackend(Protocol):

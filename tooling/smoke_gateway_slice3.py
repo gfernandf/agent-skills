@@ -41,7 +41,9 @@ def _run_json(cmd: list[str], *, expect_code: int = 0) -> dict[str, Any]:
     try:
         return json.loads(text)
     except json.JSONDecodeError as e:
-        raise RuntimeError(f"Invalid JSON stdout for command: {' '.join(cmd)}\n{text}") from e
+        raise RuntimeError(
+            f"Invalid JSON stdout for command: {' '.join(cmd)}\n{text}"
+        ) from e
 
 
 def _read_trace_id_from_audit(runtime_root: Path) -> str:
@@ -67,7 +69,9 @@ def _read_trace_id_from_audit(runtime_root: Path) -> str:
     raise RuntimeError("No trace_id entries found in runtime audit file")
 
 
-def _http_json(url: str, *, method: str = "GET", body: dict[str, Any] | None = None) -> tuple[int, dict[str, Any]]:
+def _http_json(
+    url: str, *, method: str = "GET", body: dict[str, Any] | None = None
+) -> tuple[int, dict[str, Any]]:
     data = None
     headers = {"Content-Type": "application/json"}
     if body is not None:
@@ -87,7 +91,9 @@ def _http_json(url: str, *, method: str = "GET", body: dict[str, Any] | None = N
         return e.code, payload
 
 
-def _start_http_server(runtime_root: Path, registry_root: Path, host_root: Path, port: int) -> subprocess.Popen[str]:
+def _start_http_server(
+    runtime_root: Path, registry_root: Path, host_root: Path, port: int
+) -> subprocess.Popen[str]:
     cmd = [
         sys.executable,
         str(runtime_root / "tooling" / "run_customer_http_api.py"),
@@ -131,7 +137,12 @@ def _stop_proc(proc: subprocess.Popen[str]) -> None:
             proc.kill()
 
 
-def _mcp_call(runtime_root: Path, registry_root: Path, host_root: Path, requests: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def _mcp_call(
+    runtime_root: Path,
+    registry_root: Path,
+    host_root: Path,
+    requests: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
     cmd = [
         sys.executable,
         str(runtime_root / "tooling" / "run_customer_mcp_bridge.py"),
@@ -144,7 +155,9 @@ def _mcp_call(runtime_root: Path, registry_root: Path, host_root: Path, requests
     ]
     lines = "\n".join(json.dumps(r, ensure_ascii=False) for r in requests) + "\n"
     try:
-        cp = subprocess.run(cmd, input=lines, capture_output=True, text=True, timeout=90)
+        cp = subprocess.run(
+            cmd, input=lines, capture_output=True, text=True, timeout=90
+        )
     except subprocess.TimeoutExpired as e:
         raise RuntimeError(
             "MCP bridge timed out while processing smoke requests. "
@@ -171,15 +184,21 @@ def _mcp_call(runtime_root: Path, registry_root: Path, host_root: Path, requests
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Slice 3 smoke tests for gateway layer")
-    parser.add_argument("--runtime-root", type=Path, default=Path(__file__).resolve().parent.parent)
+    parser = argparse.ArgumentParser(
+        description="Slice 3 smoke tests for gateway layer"
+    )
+    parser.add_argument(
+        "--runtime-root", type=Path, default=Path(__file__).resolve().parent.parent
+    )
     parser.add_argument("--registry-root", type=Path, default=None)
     parser.add_argument("--host-root", type=Path, default=None)
     parser.add_argument("--http-port", type=int, default=8093)
     args = parser.parse_args()
 
     runtime_root = args.runtime_root.resolve()
-    registry_root = (args.registry_root or (runtime_root.parent / "agent-skill-registry")).resolve()
+    registry_root = (
+        args.registry_root or (runtime_root.parent / "agent-skill-registry")
+    ).resolve()
     host_root = (args.host_root or runtime_root).resolve()
 
     python = sys.executable
@@ -219,7 +238,9 @@ def main() -> int:
             str(host_root),
         ]
     )
-    assert cli_list.get("count", 0) >= 1, "CLI list expected at least one attachable web utility"
+    assert cli_list.get("count", 0) >= 1, (
+        "CLI list expected at least one attachable web utility"
+    )
 
     print("[smoke] cli gateway diagnostics")
     cli_diag = _run_json(
@@ -238,12 +259,24 @@ def main() -> int:
     )
     cache_diag = cli_diag.get("gateway", {}).get("cache", {})
     process_diag = cli_diag.get("gateway", {}).get("process", {})
-    assert isinstance(process_diag.get("pid"), int), "CLI diagnostics missing process pid"
-    assert isinstance(process_diag.get("started_at_utc"), str), "CLI diagnostics missing process started_at_utc"
-    assert isinstance(process_diag.get("uptime_seconds"), (int, float)), "CLI diagnostics missing process uptime"
-    assert isinstance(process_diag.get("operation_counts"), dict), "CLI diagnostics missing operation counts"
-    assert isinstance(cache_diag.get("discovery_evidence"), dict), "CLI diagnostics missing discovery cache stats"
-    assert isinstance(cache_diag.get("attach_targets"), dict), "CLI diagnostics missing attach cache stats"
+    assert isinstance(process_diag.get("pid"), int), (
+        "CLI diagnostics missing process pid"
+    )
+    assert isinstance(process_diag.get("started_at_utc"), str), (
+        "CLI diagnostics missing process started_at_utc"
+    )
+    assert isinstance(process_diag.get("uptime_seconds"), (int, float)), (
+        "CLI diagnostics missing process uptime"
+    )
+    assert isinstance(process_diag.get("operation_counts"), dict), (
+        "CLI diagnostics missing operation counts"
+    )
+    assert isinstance(cache_diag.get("discovery_evidence"), dict), (
+        "CLI diagnostics missing discovery cache stats"
+    )
+    assert isinstance(cache_diag.get("attach_targets"), dict), (
+        "CLI diagnostics missing attach cache stats"
+    )
 
     print("[smoke] cli gateway reset metrics")
     cli_reset = _run_json(
@@ -263,7 +296,9 @@ def main() -> int:
     )
     cli_reset_info = cli_reset.get("gateway", {}).get("reset", {})
     assert cli_reset_info.get("ok") is True, "CLI reset should return ok=true"
-    assert cli_reset_info.get("clear_cache") is True, "CLI reset should echo clear_cache=true"
+    assert cli_reset_info.get("clear_cache") is True, (
+        "CLI reset should echo clear_cache=true"
+    )
 
     print("[smoke] cli diagnostics persistence")
     cli_diag_after_reset_1 = _run_json(
@@ -294,14 +329,28 @@ def main() -> int:
             str(host_root),
         ]
     )
-    counts_1 = cli_diag_after_reset_1.get("gateway", {}).get("process", {}).get("operation_counts", {})
-    counts_2 = cli_diag_after_reset_2.get("gateway", {}).get("process", {}).get("operation_counts", {})
-    assert int(counts_2.get("diagnostics", 0)) >= int(counts_1.get("diagnostics", 0)) + 1, (
+    counts_1 = (
+        cli_diag_after_reset_1.get("gateway", {})
+        .get("process", {})
+        .get("operation_counts", {})
+    )
+    counts_2 = (
+        cli_diag_after_reset_2.get("gateway", {})
+        .get("process", {})
+        .get("operation_counts", {})
+    )
+    assert (
+        int(counts_2.get("diagnostics", 0)) >= int(counts_1.get("diagnostics", 0)) + 1
+    ), (
         "CLI diagnostics counter should persist and increment across separate invocations"
     )
     persistence = cli_diag_after_reset_2.get("gateway", {}).get("persistence", {})
-    assert persistence.get("enabled") is True, "CLI diagnostics should report persistence enabled"
-    assert isinstance(persistence.get("state_path"), str), "CLI diagnostics should include persistence state path"
+    assert persistence.get("enabled") is True, (
+        "CLI diagnostics should report persistence enabled"
+    )
+    assert isinstance(persistence.get("state_path"), str), (
+        "CLI diagnostics should include persistence state path"
+    )
 
     print("[smoke] cli discover")
     cli_discover = _run_json(
@@ -323,11 +372,19 @@ def main() -> int:
             str(host_root),
         ]
     )
-    assert len(cli_discover.get("results", [])) >= 1, "CLI discover expected at least one result"
+    assert len(cli_discover.get("results", [])) >= 1, (
+        "CLI discover expected at least one result"
+    )
     first_cli_result = cli_discover["results"][0]
-    assert isinstance(first_cli_result.get("reason_codes"), list), "CLI discover reason_codes missing"
-    assert isinstance(first_cli_result.get("score_breakdown"), dict), "CLI discover score_breakdown missing"
-    assert isinstance(first_cli_result.get("evidence"), dict), "CLI discover evidence missing"
+    assert isinstance(first_cli_result.get("reason_codes"), list), (
+        "CLI discover reason_codes missing"
+    )
+    assert isinstance(first_cli_result.get("score_breakdown"), dict), (
+        "CLI discover score_breakdown missing"
+    )
+    assert isinstance(first_cli_result.get("evidence"), dict), (
+        "CLI discover evidence missing"
+    )
 
     print("[smoke] cli attach invalid")
     cli_attach_invalid = _run_json(
@@ -350,7 +407,9 @@ def main() -> int:
         ],
         expect_code=2,
     )
-    assert cli_attach_invalid.get("ok") is False, "CLI attach invalid should return ok=false"
+    assert cli_attach_invalid.get("ok") is False, (
+        "CLI attach invalid should return ok=false"
+    )
 
     print("[smoke] cli attach valid")
     input_path = runtime_root / "artifacts" / "slice3_attach_input.json"
@@ -379,15 +438,21 @@ def main() -> int:
             str(host_root),
         ]
     )
-    assert cli_attach_valid.get("skill_id") == "web.page-summary", "CLI attach valid skill_id mismatch"
-    assert isinstance(cli_attach_valid.get("attach_context"), dict), "CLI attach explainability context missing"
+    assert cli_attach_valid.get("skill_id") == "web.page-summary", (
+        "CLI attach valid skill_id mismatch"
+    )
+    assert isinstance(cli_attach_valid.get("attach_context"), dict), (
+        "CLI attach explainability context missing"
+    )
 
     print("[smoke] http server")
     proc = _start_http_server(runtime_root, registry_root, host_root, args.http_port)
     base = f"http://127.0.0.1:{args.http_port}"
     try:
         print("[smoke] http list")
-        code, http_list = _http_json(f"{base}/v1/skills/list?domain=web&invocation=attach")
+        code, http_list = _http_json(
+            f"{base}/v1/skills/list?domain=web&invocation=attach"
+        )
         assert code == 200 and len(http_list.get("skills", [])) >= 1, "HTTP list failed"
 
         print("[smoke] http discover")
@@ -396,26 +461,50 @@ def main() -> int:
             method="POST",
             body={"intent": "summarize web page", "domain": "web", "limit": 3},
         )
-        assert code == 200 and len(http_discover.get("results", [])) >= 1, "HTTP discover failed"
+        assert code == 200 and len(http_discover.get("results", [])) >= 1, (
+            "HTTP discover failed"
+        )
         first_http_result = http_discover["results"][0]
-        assert isinstance(first_http_result.get("reason_codes"), list), "HTTP discover reason_codes missing"
-        assert isinstance(first_http_result.get("score_breakdown"), dict), "HTTP discover score_breakdown missing"
-        assert isinstance(first_http_result.get("evidence"), dict), "HTTP discover evidence missing"
+        assert isinstance(first_http_result.get("reason_codes"), list), (
+            "HTTP discover reason_codes missing"
+        )
+        assert isinstance(first_http_result.get("score_breakdown"), dict), (
+            "HTTP discover score_breakdown missing"
+        )
+        assert isinstance(first_http_result.get("evidence"), dict), (
+            "HTTP discover evidence missing"
+        )
 
         print("[smoke] http diagnostics")
         code, http_diag = _http_json(f"{base}/v1/skills/diagnostics")
         assert code == 200, "HTTP diagnostics failed"
         http_process = http_diag.get("gateway", {}).get("process", {})
-        assert isinstance(http_process.get("pid"), int), "HTTP diagnostics missing process pid"
-        assert isinstance(http_process.get("started_at_utc"), str), "HTTP diagnostics missing process started_at_utc"
-        assert isinstance(http_process.get("uptime_seconds"), (int, float)), "HTTP diagnostics missing process uptime"
-        assert isinstance(http_process.get("operation_counts"), dict), "HTTP diagnostics missing operation counts"
+        assert isinstance(http_process.get("pid"), int), (
+            "HTTP diagnostics missing process pid"
+        )
+        assert isinstance(http_process.get("started_at_utc"), str), (
+            "HTTP diagnostics missing process started_at_utc"
+        )
+        assert isinstance(http_process.get("uptime_seconds"), (int, float)), (
+            "HTTP diagnostics missing process uptime"
+        )
+        assert isinstance(http_process.get("operation_counts"), dict), (
+            "HTTP diagnostics missing operation counts"
+        )
         http_cache = http_diag.get("gateway", {}).get("cache", {})
-        assert isinstance(http_cache.get("discovery_evidence"), dict), "HTTP diagnostics discovery cache missing"
-        assert isinstance(http_cache.get("attach_targets"), dict), "HTTP diagnostics attach cache missing"
+        assert isinstance(http_cache.get("discovery_evidence"), dict), (
+            "HTTP diagnostics discovery cache missing"
+        )
+        assert isinstance(http_cache.get("attach_targets"), dict), (
+            "HTTP diagnostics attach cache missing"
+        )
         http_persistence = http_diag.get("gateway", {}).get("persistence", {})
-        assert http_persistence.get("enabled") is True, "HTTP diagnostics should report persistence enabled"
-        assert isinstance(http_persistence.get("state_path"), str), "HTTP diagnostics should include persistence state path"
+        assert http_persistence.get("enabled") is True, (
+            "HTTP diagnostics should report persistence enabled"
+        )
+        assert isinstance(http_persistence.get("state_path"), str), (
+            "HTTP diagnostics should include persistence state path"
+        )
 
         print("[smoke] http attach invalid")
         code, http_attach_invalid = _http_json(
@@ -424,7 +513,9 @@ def main() -> int:
             body={"target_type": "output", "target_ref": target_ref, "inputs": {}},
         )
         assert code == 400, "HTTP attach invalid should return 400"
-        assert http_attach_invalid.get("error", {}).get("code") == "invalid_request", "HTTP attach invalid code mismatch"
+        assert http_attach_invalid.get("error", {}).get("code") == "invalid_request", (
+            "HTTP attach invalid code mismatch"
+        )
     finally:
         _stop_proc(proc)
 
@@ -448,7 +539,11 @@ def main() -> int:
                 "method": "tools/call",
                 "params": {
                     "name": "skill.discover",
-                    "arguments": {"intent": "summarize web page", "domain": "web", "limit": 2},
+                    "arguments": {
+                        "intent": "summarize web page",
+                        "domain": "web",
+                        "limit": 2,
+                    },
                 },
             },
             {
@@ -507,34 +602,66 @@ def main() -> int:
     mcp_discover = mcp.get("3", {}).get("result", {})
     assert len(mcp_discover.get("results", [])) >= 1, "MCP skill.discover failed"
     first_mcp_result = mcp_discover["results"][0]
-    assert isinstance(first_mcp_result.get("reason_codes"), list), "MCP discover reason_codes missing"
-    assert isinstance(first_mcp_result.get("score_breakdown"), dict), "MCP discover score_breakdown missing"
-    assert isinstance(first_mcp_result.get("evidence"), dict), "MCP discover evidence missing"
+    assert isinstance(first_mcp_result.get("reason_codes"), list), (
+        "MCP discover reason_codes missing"
+    )
+    assert isinstance(first_mcp_result.get("score_breakdown"), dict), (
+        "MCP discover score_breakdown missing"
+    )
+    assert isinstance(first_mcp_result.get("evidence"), dict), (
+        "MCP discover evidence missing"
+    )
 
     mcp_attach_invalid = mcp.get("4", {}).get("error", {})
-    assert mcp_attach_invalid.get("code") == "invalid_request", "MCP skill.attach invalid should be invalid_request"
+    assert mcp_attach_invalid.get("code") == "invalid_request", (
+        "MCP skill.attach invalid should be invalid_request"
+    )
 
     mcp_diag = mcp.get("5", {}).get("result", {})
     mcp_process = mcp_diag.get("gateway", {}).get("process", {})
-    assert isinstance(mcp_process.get("pid"), int), "MCP diagnostics missing process pid"
-    assert isinstance(mcp_process.get("started_at_utc"), str), "MCP diagnostics missing process started_at_utc"
-    assert isinstance(mcp_process.get("uptime_seconds"), (int, float)), "MCP diagnostics missing process uptime"
-    assert isinstance(mcp_process.get("operation_counts"), dict), "MCP diagnostics missing operation counts"
+    assert isinstance(mcp_process.get("pid"), int), (
+        "MCP diagnostics missing process pid"
+    )
+    assert isinstance(mcp_process.get("started_at_utc"), str), (
+        "MCP diagnostics missing process started_at_utc"
+    )
+    assert isinstance(mcp_process.get("uptime_seconds"), (int, float)), (
+        "MCP diagnostics missing process uptime"
+    )
+    assert isinstance(mcp_process.get("operation_counts"), dict), (
+        "MCP diagnostics missing operation counts"
+    )
     mcp_cache = mcp_diag.get("gateway", {}).get("cache", {})
-    assert isinstance(mcp_cache.get("discovery_evidence"), dict), "MCP diagnostics discovery cache missing"
-    assert isinstance(mcp_cache.get("attach_targets"), dict), "MCP diagnostics attach cache missing"
+    assert isinstance(mcp_cache.get("discovery_evidence"), dict), (
+        "MCP diagnostics discovery cache missing"
+    )
+    assert isinstance(mcp_cache.get("attach_targets"), dict), (
+        "MCP diagnostics attach cache missing"
+    )
     mcp_persistence = mcp_diag.get("gateway", {}).get("persistence", {})
-    assert mcp_persistence.get("enabled") is True, "MCP diagnostics should report persistence enabled"
-    assert isinstance(mcp_persistence.get("state_path"), str), "MCP diagnostics should include persistence state path"
+    assert mcp_persistence.get("enabled") is True, (
+        "MCP diagnostics should report persistence enabled"
+    )
+    assert isinstance(mcp_persistence.get("state_path"), str), (
+        "MCP diagnostics should include persistence state path"
+    )
 
     mcp_reset = mcp.get("6", {}).get("result", {})
     reset_info = mcp_reset.get("gateway", {}).get("reset", {})
     assert reset_info.get("ok") is True, "MCP metrics reset should return ok=true"
-    assert reset_info.get("clear_cache") is True, "MCP metrics reset should echo clear_cache=true"
+    assert reset_info.get("clear_cache") is True, (
+        "MCP metrics reset should echo clear_cache=true"
+    )
 
     mcp_diag_after_reset = mcp.get("7", {}).get("result", {})
-    op_counts_after_reset = mcp_diag_after_reset.get("gateway", {}).get("process", {}).get("operation_counts", {})
-    assert op_counts_after_reset.get("reset_metrics") == 1, "MCP reset counter should be 1 after reset"
+    op_counts_after_reset = (
+        mcp_diag_after_reset.get("gateway", {})
+        .get("process", {})
+        .get("operation_counts", {})
+    )
+    assert op_counts_after_reset.get("reset_metrics") == 1, (
+        "MCP reset counter should be 1 after reset"
+    )
 
     print("[smoke] slice3 PASSED")
     return 0

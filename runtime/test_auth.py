@@ -1,4 +1,5 @@
 """Tests for runtime.auth RBAC module."""
+
 from __future__ import annotations
 
 import base64
@@ -7,7 +8,6 @@ import hmac
 import json
 import time
 
-import pytest
 
 from runtime.auth import (
     ANONYMOUS,
@@ -54,7 +54,10 @@ class TestRouteRoles:
         assert required_role_for("POST", "/v1/skills/my-skill/execute") == "executor"
 
     def test_stream_is_executor(self):
-        assert required_role_for("POST", "/v1/skills/my-skill/execute/stream") == "executor"
+        assert (
+            required_role_for("POST", "/v1/skills/my-skill/execute/stream")
+            == "executor"
+        )
 
     def test_discover_is_reader(self):
         assert required_role_for("POST", "/v1/skills/discover") == "reader"
@@ -166,7 +169,11 @@ class TestAuthMiddleware:
 
 def _make_jwt(payload: dict, secret: str) -> str:
     """Build a minimal HS256 JWT for testing."""
-    header = base64.urlsafe_b64encode(json.dumps({"alg": "HS256", "typ": "JWT"}).encode()).rstrip(b"=").decode()
+    header = (
+        base64.urlsafe_b64encode(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
+        .rstrip(b"=")
+        .decode()
+    )
     body = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
     signing_input = f"{header}.{body}".encode()
     sig = hmac.new(secret.encode(), signing_input, hashlib.sha256).digest()

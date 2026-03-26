@@ -11,6 +11,7 @@ Recognised env vars (standard OTel):
 
 If the SDK is absent or the endpoint is not set, this is a silent no-op.
 """
+
 from __future__ import annotations
 
 import logging
@@ -36,7 +37,9 @@ def configure() -> bool:
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
         from opentelemetry.sdk.resources import Resource
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
     except ImportError:
         _logger.debug("OTel SDK packages not installed — skipping auto-config")
         return False
@@ -45,7 +48,9 @@ def configure() -> bool:
     resource = Resource.create({"service.name": service_name})
 
     provider = TracerProvider(resource=resource)
-    exporter = OTLPSpanExporter(endpoint=endpoint, insecure=endpoint.startswith("http://"))
+    exporter = OTLPSpanExporter(
+        endpoint=endpoint, insecure=endpoint.startswith("http://")
+    )
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
 

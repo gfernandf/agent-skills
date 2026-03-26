@@ -13,7 +13,7 @@ def resolve_corpus_sources(items):
     from official_services.web_baseline import _repair_mojibake
 
     resolved = []
-    for raw_item in (items or []):
+    for raw_item in items or []:
         item = dict(raw_item)
         if item.get("content"):
             item["content"] = _repair_mojibake(item["content"])
@@ -49,6 +49,7 @@ def resolve_corpus_sources(items):
             try:
                 from official_services.web_baseline import fetch_webpage
                 from official_services.text_baseline import extract_text
+
                 fetch_result = fetch_webpage(location)
                 status = fetch_result.get("status", 0)
                 raw_content = fetch_result.get("content", "")
@@ -56,11 +57,17 @@ def resolve_corpus_sources(items):
                     # Fallback to snippet from metadata if fetch failed
                     snippet = (item.get("metadata") or {}).get("snippet", "")
                     item["content"] = _repair_mojibake(snippet)
-                    item["resolution_error"] = f"Fetch failed (HTTP {status}): {raw_content[:200]}"
+                    item["resolution_error"] = (
+                        f"Fetch failed (HTTP {status}): {raw_content[:200]}"
+                    )
                 else:
                     # Strip HTML to plain text for LLM consumption
                     cleaned = extract_text(raw_content)
-                    text = cleaned.get("text", raw_content) if isinstance(cleaned, dict) else raw_content
+                    text = (
+                        cleaned.get("text", raw_content)
+                        if isinstance(cleaned, dict)
+                        else raw_content
+                    )
                     # Truncate to 15KB to avoid token limits downstream
                     if len(text) > 15000:
                         text = text[:15000] + "\n[... truncated]"
@@ -88,23 +95,25 @@ def resolve_corpus_sources(items):
 
     return {"items": resolved}
 
-_MAX_PDF_BYTES = 50 * 1024 * 1024   # 50 MB
+
+_MAX_PDF_BYTES = 50 * 1024 * 1024  # 50 MB
 _MAX_PDF_PAGES = 500
 
 
 def chunk_document(text, chunk_size):
     """
     Chunk a document into smaller pieces.
-    
+
     Args:
         text (str): The document text.
         chunk_size (int): The size of each chunk.
-    
+
     Returns:
         dict: {"chunks": list}
     """
-    chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+    chunks = [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
     return {"chunks": chunks}
+
 
 def read_pdf(path):
     """
@@ -125,7 +134,9 @@ def read_pdf(path):
             status=status,
             file_path=path,
             pages=(metadata.get("pages") if isinstance(metadata, dict) else None),
-            pages_read=(metadata.get("pages_read") if isinstance(metadata, dict) else None),
+            pages_read=(
+                metadata.get("pages_read") if isinstance(metadata, dict) else None
+            ),
             duration_ms=elapsed_ms(start_time),
             error_type=error_type,
         )
@@ -134,19 +145,34 @@ def read_pdf(path):
     log_event("service.pdf.document.read.start", file_path=path)
 
     if not isinstance(path, str) or not path.strip():
-        return _finish({"text": "Invalid input: 'path' must be a non-empty string.", "metadata": {}}, "rejected", "ValidationError")
+        return _finish(
+            {
+                "text": "Invalid input: 'path' must be a non-empty string.",
+                "metadata": {},
+            },
+            "rejected",
+            "ValidationError",
+        )
 
     # Normalise and validate path (no directory traversal)
     norm = os.path.realpath(path)
     if not os.path.isfile(norm):
-        return _finish({"text": f"File not found: {path}", "metadata": {}}, "rejected", "FileNotFound")
+        return _finish(
+            {"text": f"File not found: {path}", "metadata": {}},
+            "rejected",
+            "FileNotFound",
+        )
 
     file_size = os.path.getsize(norm)
     if file_size > _MAX_PDF_BYTES:
-        return _finish({
-            "text": f"File exceeds maximum allowed size ({_MAX_PDF_BYTES // (1024*1024)} MB).",
-            "metadata": {}
-        }, "rejected", "PayloadTooLarge")
+        return _finish(
+            {
+                "text": f"File exceeds maximum allowed size ({_MAX_PDF_BYTES // (1024 * 1024)} MB).",
+                "metadata": {},
+            },
+            "rejected",
+            "PayloadTooLarge",
+        )
 
     try:
         from PyPDF2 import PdfReader
@@ -164,14 +190,20 @@ def read_pdf(path):
 
         metadata = {"pages": page_count, "pages_read": pages_to_read}
         if reader.metadata:
-            metadata.update({
-                "title": reader.metadata.title,
-                "author": reader.metadata.author,
-                "subject": reader.metadata.subject,
-                "creator": reader.metadata.creator,
-                "producer": reader.metadata.producer,
-            })
+            metadata.update(
+                {
+                    "title": reader.metadata.title,
+                    "author": reader.metadata.author,
+                    "subject": reader.metadata.subject,
+                    "creator": reader.metadata.creator,
+                    "producer": reader.metadata.producer,
+                }
+            )
 
         return _finish({"text": text, "metadata": metadata}, "completed")
     except Exception as e:
-        return _finish({"text": f"Error reading PDF: {type(e).__name__}: {e}", "metadata": {}}, "failed", type(e).__name__)
+        return _finish(
+            {"text": f"Error reading PDF: {type(e).__name__}: {e}", "metadata": {}},
+            "failed",
+            type(e).__name__,
+        )

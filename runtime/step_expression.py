@@ -35,24 +35,24 @@ from typing import Any
 # ── Tokeniser ────────────────────────────────────────────────────────────────
 
 _TOKEN_SPEC = [
-    ("NUMBER",    r"\d+(?:\.\d+)?"),
-    ("STRING",    r"'[^']*'|\"[^\"]*\""),
-    ("BOOL",      r"\b(?:true|false)\b"),
-    ("NULL",      r"\b(?:null|none)\b"),
-    ("NOT_IN",    r"\bnot\s+in\b"),
-    ("OP",        r"==|!=|>=|<=|>|<"),
-    ("AND",       r"\band\b"),
-    ("OR",        r"\bor\b"),
-    ("NOT",       r"\bnot\b"),
-    ("IN",        r"\bin\b"),
-    ("IDENT",     r"[a-zA-Z_][a-zA-Z0-9_]*"),
-    ("DOT",       r"\."),
-    ("LPAREN",    r"\("),
-    ("RPAREN",    r"\)"),
-    ("LBRACKET",  r"\["),
-    ("RBRACKET",  r"\]"),
-    ("COMMA",     r","),
-    ("SKIP",      r"\s+"),
+    ("NUMBER", r"\d+(?:\.\d+)?"),
+    ("STRING", r"'[^']*'|\"[^\"]*\""),
+    ("BOOL", r"\b(?:true|false)\b"),
+    ("NULL", r"\b(?:null|none)\b"),
+    ("NOT_IN", r"\bnot\s+in\b"),
+    ("OP", r"==|!=|>=|<=|>|<"),
+    ("AND", r"\band\b"),
+    ("OR", r"\bor\b"),
+    ("NOT", r"\bnot\b"),
+    ("IN", r"\bin\b"),
+    ("IDENT", r"[a-zA-Z_][a-zA-Z0-9_]*"),
+    ("DOT", r"\."),
+    ("LPAREN", r"\("),
+    ("RPAREN", r"\)"),
+    ("LBRACKET", r"\["),
+    ("RBRACKET", r"\]"),
+    ("COMMA", r","),
+    ("SKIP", r"\s+"),
 ]
 
 _TOKEN_RE = re.compile("|".join(f"(?P<{name}>{pat})" for name, pat in _TOKEN_SPEC))
@@ -80,6 +80,7 @@ def _tokenise(source: str) -> list[_Token]:
 
 
 # ── Parser ───────────────────────────────────────────────────────────────────
+
 
 class ExpressionError(Exception):
     """Raised on parse or type errors in a step expression."""
@@ -209,6 +210,7 @@ class _Parser:
 
 # ── Evaluator ────────────────────────────────────────────────────────────────
 
+
 def _resolve_ref(parts: tuple[str, ...], state) -> Any:
     """Resolve a dotted reference against ExecutionState.
 
@@ -312,6 +314,7 @@ def _eval_node(node, state) -> Any:
 
 
 # ── Public API ───────────────────────────────────────────────────────────────
+
 
 def evaluate(expression: str, state) -> Any:
     """Evaluate a step expression against the current execution state.

@@ -33,7 +33,9 @@ class ProtocolRouter:
 
     def invoke(self, request: InvocationRequest) -> InvocationResponse:
         if not isinstance(request.protocol, str) or not request.protocol:
-            raise ProtocolRoutingError("Invocation request protocol must be a non-empty string.")
+            raise ProtocolRoutingError(
+                "Invocation request protocol must be a non-empty string."
+            )
 
         try:
             if request.protocol == "openapi":

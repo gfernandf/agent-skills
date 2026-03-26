@@ -5,6 +5,7 @@ protocol: pythoncall
 operation: validate_response
 request:
   output: input.output
+  validation_policy: input.validation_policy
 response:
   valid: response.valid
   issues: response.issues

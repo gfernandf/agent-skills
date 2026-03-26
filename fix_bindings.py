@@ -53,31 +53,35 @@ def fix_binding_inputs():
             missing_inputs = referenced_inputs - capability_inputs
             if missing_inputs:
                 # Try to fix automatically
-                fixed_template = _fix_template_inputs(request_template, capability_inputs, missing_inputs)
+                fixed_template = _fix_template_inputs(
+                    request_template, capability_inputs, missing_inputs
+                )
                 if fixed_template != request_template:
                     # Apply the fix
                     _apply_binding_fix(binding, fixed_template, runtime_root)
-                    fixes_applied.append({
-                        'binding_id': binding.id,
-                        'capability_id': binding.capability_id,
-                        'original_missing': sorted(missing_inputs),
-                        'fixed': True
-                    })
+                    fixes_applied.append(
+                        {
+                            "binding_id": binding.id,
+                            "capability_id": binding.capability_id,
+                            "original_missing": sorted(missing_inputs),
+                            "fixed": True,
+                        }
+                    )
                 else:
-                    fixes_applied.append({
-                        'binding_id': binding.id,
-                        'capability_id': binding.capability_id,
-                        'original_missing': sorted(missing_inputs),
-                        'fixed': False,
-                        'reason': 'Could not determine correct mapping'
-                    })
+                    fixes_applied.append(
+                        {
+                            "binding_id": binding.id,
+                            "capability_id": binding.capability_id,
+                            "original_missing": sorted(missing_inputs),
+                            "fixed": False,
+                            "reason": "Could not determine correct mapping",
+                        }
+                    )
 
         except Exception as e:
-            fixes_applied.append({
-                'binding_id': binding.id,
-                'error': str(e),
-                'fixed': False
-            })
+            fixes_applied.append(
+                {"binding_id": binding.id, "error": str(e), "fixed": False}
+            )
 
     return fixes_applied
 
@@ -86,7 +90,7 @@ def _collect_template_inputs(template: dict, inputs: Set[str]):
     """Recursively collect all input.* references from a template."""
     for key, value in template.items():
         if isinstance(value, str) and value.startswith("input."):
-            input_name = value[len("input."):]
+            input_name = value[len("input.") :]
             inputs.add(input_name)
         elif isinstance(value, dict):
             _collect_template_inputs(value, inputs)
@@ -96,7 +100,9 @@ def _collect_template_inputs(template: dict, inputs: Set[str]):
                     _collect_template_inputs(item, inputs)
 
 
-def _fix_template_inputs(template: dict, available_inputs: Set[str], missing_inputs: Set[str]) -> dict:
+def _fix_template_inputs(
+    template: dict, available_inputs: Set[str], missing_inputs: Set[str]
+) -> dict:
     """Attempt to fix input references in a template."""
     # Create a mapping from missing inputs to available ones
     input_mapping = _guess_input_mapping(missing_inputs, available_inputs)
@@ -108,37 +114,37 @@ def _fix_template_inputs(template: dict, available_inputs: Set[str], missing_inp
     return _apply_input_mapping(template, input_mapping)
 
 
-def _guess_input_mapping(missing_inputs: Set[str], available_inputs: Set[str]) -> Dict[str, str]:
+def _guess_input_mapping(
+    missing_inputs: Set[str], available_inputs: Set[str]
+) -> Dict[str, str]:
     """Guess the correct mapping from missing inputs to available ones."""
     mapping = {}
 
     # Common patterns observed from the validation results
     patterns = [
         # Single input mappings
-        (['goal'], ['objective']),
-        (['audio_data'], ['audio']),
-        (['json_string'], ['text']),
-        (['email_id'], ['mailbox']),
-        (['image_data'], ['image']),
-        (['pdf_data'], ['path']),
-        (['url'], ['content']),
-        (['categories'], ['labels']),
-
+        (["goal"], ["objective"]),
+        (["audio_data"], ["audio"]),
+        (["json_string"], ["text"]),
+        (["email_id"], ["mailbox"]),
+        (["image_data"], ["image"]),
+        (["pdf_data"], ["path"]),
+        (["url"], ["content"]),
+        (["categories"], ["labels"]),
         # Multiple input mappings to single input
-        (['agents', 'query'], ['input']),  # agent.input.route
-        (['frame_rate', 'video_data'], ['video']),  # video.frame.extract
-        (['code_after', 'code_before'], ['code_a', 'code_b']),
-        (['filter_criteria', 'table_data'], ['condition', 'table']),
-        (['channel'], ['message', 'recipient']),
-
+        (["agents", "query"], ["input"]),  # agent.input.route
+        (["frame_rate", "video_data"], ["video"]),  # video.frame.extract
+        (["code_after", "code_before"], ["code_a", "code_b"]),
+        (["filter_criteria", "table_data"], ["condition", "table"]),
+        (["channel"], ["message", "recipient"]),
         # Special cases for partial mappings
-        (['image_data'], ['image', 'labels']),  # python_image_classify
-        (['categories'], ['labels', 'text']),   # python_text_classify
+        (["image_data"], ["image", "labels"]),  # python_image_classify
+        (["categories"], ["labels", "text"]),  # python_text_classify
     ]
 
     for missing, available in patterns:
         missing_set = set(missing)
-        available_set = set(available)
+        set(available)
 
         if missing_set == missing_inputs:
             # Found a pattern match - create mapping
@@ -160,7 +166,7 @@ def _apply_input_mapping(template: dict, mapping: Dict[str, str]) -> dict:
 
     for key, value in template.items():
         if isinstance(value, str) and value.startswith("input."):
-            input_name = value[len("input."):]
+            input_name = value[len("input.") :]
             if input_name in mapping:
                 result[key] = f"input.{mapping[input_name]}"
             else:
@@ -187,14 +193,14 @@ def _apply_binding_fix(binding, fixed_template: dict, registry_root: Path):
         return
 
     # Read the current binding file
-    with binding_path.open('r', encoding='utf-8') as f:
+    with binding_path.open("r", encoding="utf-8") as f:
         binding_data = yaml.safe_load(f)
 
     # Update the request template
-    binding_data['request'] = fixed_template
+    binding_data["request"] = fixed_template
 
     # Write back the fixed binding
-    with binding_path.open('w', encoding='utf-8') as f:
+    with binding_path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(binding_data, f, default_flow_style=False, sort_keys=False)
 
     print(f"Fixed binding: {binding.id}")
@@ -204,14 +210,16 @@ def _find_binding_file(binding_id: str, runtime_root: Path) -> Path | None:
     """Find the file path for a binding."""
     # Bindings are in bindings/official/<capability>/<binding>.yaml
     # Extract capability from binding_id (remove 'python_' prefix)
-    if not binding_id.startswith('python_'):
+    if not binding_id.startswith("python_"):
         return None
 
-    capability_part = binding_id[len('python_'):]
+    capability_part = binding_id[len("python_") :]
     # Convert binding name to capability name (replace '_' with '.')
-    capability_id = capability_part.replace('_', '.')
+    capability_id = capability_part.replace("_", ".")
 
-    binding_file = runtime_root / "bindings" / "official" / capability_id / f"{binding_id}.yaml"
+    binding_file = (
+        runtime_root / "bindings" / "official" / capability_id / f"{binding_id}.yaml"
+    )
     if binding_file.exists():
         return binding_file
 
@@ -221,8 +229,8 @@ def _find_binding_file(binding_id: str, runtime_root: Path) -> Path | None:
 def main():
     fixes = fix_binding_inputs()
 
-    successful_fixes = [f for f in fixes if f.get('fixed', False)]
-    failed_fixes = [f for f in fixes if not f.get('fixed', False)]
+    successful_fixes = [f for f in fixes if f.get("fixed", False)]
+    failed_fixes = [f for f in fixes if not f.get("fixed", False)]
 
     print(f"\n[OK] Successfully fixed {len(successful_fixes)} bindings")
     print(f"[FAIL] Could not fix {len(failed_fixes)} bindings")
@@ -235,10 +243,12 @@ def main():
     if failed_fixes:
         print("\nFailed to fix:")
         for fix in failed_fixes:
-            if 'error' in fix:
+            if "error" in fix:
                 print(f"  - {fix['binding_id']}: Error - {fix['error']}")
             else:
-                print(f"  - {fix['binding_id']}: {', '.join(fix['original_missing'])} - {fix.get('reason', 'Unknown')}")
+                print(
+                    f"  - {fix['binding_id']}: {', '.join(fix['original_missing'])} - {fix.get('reason', 'Unknown')}"
+                )
 
     return 0 if not failed_fixes else 1
 

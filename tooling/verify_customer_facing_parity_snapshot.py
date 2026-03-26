@@ -29,7 +29,9 @@ def _http_get_json(url: str, headers: dict[str, str] | None = None) -> dict[str,
         return json.loads(resp.read().decode("utf-8"))
 
 
-def _http_post_json(url: str, payload: dict[str, Any], headers: dict[str, str] | None = None) -> dict[str, Any]:
+def _http_post_json(
+    url: str, payload: dict[str, Any], headers: dict[str, str] | None = None
+) -> dict[str, Any]:
     req_headers = {"Content-Type": "application/json"}
     if headers:
         req_headers.update(headers)
@@ -91,7 +93,9 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
         "http://127.0.0.1:8086/v1/skills/agent.plan-from-objective/describe",
         headers=headers,
     )
-    mcp_desc = bridge.call_tool("skill.describe", {"skill_id": "agent.plan-from-objective"})
+    mcp_desc = bridge.call_tool(
+        "skill.describe", {"skill_id": "agent.plan-from-objective"}
+    )
 
     skill_inputs = {"objective": "Build a policy-compliant execution plan."}
     http_skill_exec = _http_post_json(
@@ -101,7 +105,11 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
     )
     mcp_skill_exec = bridge.call_tool(
         "skill.execute",
-        {"skill_id": "agent.plan-from-objective", "inputs": skill_inputs, "include_trace": False},
+        {
+            "skill_id": "agent.plan-from-objective",
+            "inputs": skill_inputs,
+            "include_trace": False,
+        },
     )
 
     capability_inputs = {
@@ -141,7 +149,11 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
         },
     }
 
-    snapshot["all_equal"] = all(section.get("equal") for section in snapshot.values() if isinstance(section, dict) and "equal" in section)
+    snapshot["all_equal"] = all(
+        section.get("equal")
+        for section in snapshot.values()
+        if isinstance(section, dict) and "equal" in section
+    )
     return snapshot
 
 
@@ -173,20 +185,28 @@ def main() -> int:
         actual = _compute_snapshot(api_key)
 
         if not actual.get("all_equal"):
-            raise RuntimeError("HTTP and MCP outputs diverge for at least one operation.")
+            raise RuntimeError(
+                "HTTP and MCP outputs diverge for at least one operation."
+            )
 
         if SNAPSHOT_PATH.exists():
             expected = json.loads(SNAPSHOT_PATH.read_text(encoding="utf-8"))
             if actual != expected:
                 diff_path = SNAPSHOT_PATH.with_suffix(".actual.json")
-                diff_path.write_text(json.dumps(actual, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+                diff_path.write_text(
+                    json.dumps(actual, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
                 raise RuntimeError(
                     "Parity snapshot mismatch. "
                     f"Expected snapshot in {SNAPSHOT_PATH.name}; actual written to {diff_path.name}."
                 )
         else:
             SNAPSHOT_PATH.parent.mkdir(parents=True, exist_ok=True)
-            SNAPSHOT_PATH.write_text(json.dumps(actual, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            SNAPSHOT_PATH.write_text(
+                json.dumps(actual, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
 
         print("Customer-facing parity snapshot verification passed.")
         return 0

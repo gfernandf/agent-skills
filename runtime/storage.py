@@ -9,13 +9,13 @@ Third parties can substitute cloud-backed implementations (S3, GCS, Redis)
 by passing a custom backend to components that need persistence (audit,
 run_store, diagnostics).
 """
+
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from pathlib import Path
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -60,7 +60,9 @@ class LocalFileStorage:
 
     def _resolve(self, key: str) -> Path:
         # Prevent path traversal
-        cleaned = Path(key).name if "/" not in key and "\\" not in key else key.lstrip("/\\")
+        cleaned = (
+            Path(key).name if "/" not in key and "\\" not in key else key.lstrip("/\\")
+        )
         target = (self._root / cleaned).resolve()
         if not str(target).startswith(str(self._root.resolve())):
             raise ValueError(f"Path traversal detected: {key}")

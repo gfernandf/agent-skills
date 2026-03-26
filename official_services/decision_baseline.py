@@ -6,8 +6,14 @@ Provides baseline implementations for decision-domain capabilities.
 from __future__ import annotations
 
 
-def justify_option(scored_options, analyzed_options, goal,
-                   tradeoffs=None, constraints=None, risk_tolerance=None):
+def justify_option(
+    scored_options,
+    analyzed_options,
+    goal,
+    tradeoffs=None,
+    constraints=None,
+    risk_tolerance=None,
+):
     """
     Select a recommendation from scored+analyzed options and justify it.
 
@@ -31,13 +37,15 @@ def justify_option(scored_options, analyzed_options, goal,
     if best is None and all_options:
         best = all_options[0]
 
-    rec_label = best.get("label", best.get("option_id", "option-1")) if best else "no-option"
+    rec_label = (
+        best.get("label", best.get("option_id", "option-1")) if best else "no-option"
+    )
 
     alternatives = []
     for opt in all_options:
         oid = opt.get("option_id", opt.get("id", "?"))
         label = opt.get("label", oid)
-        selected = (opt is best)
+        selected = opt is best
         alternatives.append({"id": oid, "label": label, "selected": selected})
 
     confidence = round(min(best_score / 100.0, 1.0), 2) if best_score > 0 else 0.4
@@ -53,9 +61,14 @@ def justify_option(scored_options, analyzed_options, goal,
         "alternatives_considered": alternatives,
         "confidence_score": confidence,
         "confidence_level": level,
-        "uncertainties": ["Baseline analysis — real uncertainties require deeper evaluation."],
+        "uncertainties": [
+            "Baseline analysis — real uncertainties require deeper evaluation."
+        ],
         "failure_modes": ["Key assumptions may not hold under changing conditions."],
-        "next_steps": ["Validate recommendation with domain experts.", "Run a pilot if feasible."],
+        "next_steps": [
+            "Validate recommendation with domain experts.",
+            "Run a pilot if feasible.",
+        ],
         "human_readable": (
             f"Based on the evaluation, the recommended option is '{rec_label}'. "
             f"This selection reflects a {level} confidence level ({confidence}). "

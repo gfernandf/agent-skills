@@ -5,13 +5,14 @@ Provides baseline implementations for data-related capabilities.
 
 import json
 
+
 def parse_json(json_string):
     """
     Parse a JSON string into a Python object.
-    
+
     Args:
         json_string (str): The JSON string to parse.
-    
+
     Returns:
         dict: {"parsed_data": dict}
     """
@@ -21,14 +22,15 @@ def parse_json(json_string):
     except json.JSONDecodeError as e:
         return {"data": {"error": str(e)}}
 
+
 def validate_schema(data, schema):
     """
     Validate data against a JSON schema.
-    
+
     Args:
         data (dict): The data to validate.
         schema (dict): The JSON schema.
-    
+
     Returns:
         dict: {"valid": bool, "errors": list}
     """
@@ -125,8 +127,11 @@ def transform_records(records, mapping):
 
         # Apply computed fields (simple {{field}} template)
         import re
+
         for key, template in computed.items():
-            value = re.sub(r"\{\{(\w+)\}\}", lambda m: str(row.get(m.group(1), "")), template)
+            value = re.sub(
+                r"\{\{(\w+)\}\}", lambda m: str(row.get(m.group(1), "")), template
+            )
             row[key] = value
             fields_added += 1
 

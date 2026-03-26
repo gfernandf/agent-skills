@@ -1,29 +1,38 @@
 #!/usr/bin/env python3
 """Smoke test for customer-facing HTTP API."""
-import urllib.request, urllib.error, json
+
+import urllib.request
+import urllib.error
+import json
 
 BASE = "http://127.0.0.1:8080"
 KEY = "test-key-2026"
 results = []
+
 
 def get(path, auth=True):
     headers = {"x-api-key": KEY} if auth else {}
     req = urllib.request.Request(f"{BASE}{path}", headers=headers)
     return urllib.request.urlopen(req, timeout=10)
 
+
 def post(path, body):
     data = json.dumps(body).encode()
     req = urllib.request.Request(
-        f"{BASE}{path}", data=data,
+        f"{BASE}{path}",
+        data=data,
         headers={"x-api-key": KEY, "Content-Type": "application/json"},
     )
     return urllib.request.urlopen(req, timeout=30)
+
 
 # 1. Health (no auth)
 try:
     r = get("/v1/health", auth=False)
     d = json.loads(r.read())
-    results.append(("GET /v1/health", r.status, "OK" if d.get("status") == "ok" else "UNEXPECTED"))
+    results.append(
+        ("GET /v1/health", r.status, "OK" if d.get("status") == "ok" else "UNEXPECTED")
+    )
 except Exception as e:
     results.append(("GET /v1/health", "ERR", str(e)[:80]))
 
@@ -33,7 +42,9 @@ try:
     d = json.loads(r.read())
     paths = list(d.get("paths", {}).keys())
     ver = d.get("openapi", "?")
-    results.append(("GET /openapi.json", r.status, f"{len(paths)} paths, openapi {ver}"))
+    results.append(
+        ("GET /openapi.json", r.status, f"{len(paths)} paths, openapi {ver}")
+    )
 except Exception as e:
     results.append(("GET /openapi.json", "ERR", str(e)[:80]))
 
@@ -51,7 +62,9 @@ except Exception as e:
 try:
     r = get("/v1/skills/task.frame/describe")
     d = json.loads(r.read())
-    results.append(("GET /v1/skills/task.frame/describe", r.status, f"name={d.get('name','?')}"))
+    results.append(
+        ("GET /v1/skills/task.frame/describe", r.status, f"name={d.get('name', '?')}")
+    )
 except Exception as e:
     results.append(("GET /v1/skills/task.frame/describe", "ERR", str(e)[:80]))
 
@@ -67,9 +80,16 @@ except Exception as e:
 
 # 6. Capability execute (pythoncall baseline)
 try:
-    r = post("/v1/capabilities/text.content.classify/execute", {
-        "inputs": {"text": "The server is running perfectly", "labels": ["positive", "negative"], "context": ""}
-    })
+    r = post(
+        "/v1/capabilities/text.content.classify/execute",
+        {
+            "inputs": {
+                "text": "The server is running perfectly",
+                "labels": ["positive", "negative"],
+                "context": "",
+            }
+        },
+    )
     d = json.loads(r.read())
     outputs = d.get("outputs", d)
     label = outputs.get("label", "?")

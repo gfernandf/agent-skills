@@ -4,7 +4,6 @@ Provides baseline implementations for code-related capabilities.
 """
 
 import io
-import sys
 import signal
 import time
 from contextlib import redirect_stdout, redirect_stderr
@@ -12,22 +11,48 @@ from contextlib import redirect_stdout, redirect_stderr
 from runtime.observability import elapsed_ms, log_event
 
 # Execution limits
-_MAX_CODE_BYTES = 16_384          # 16 KB max code input
-_MAX_OUTPUT_BYTES = 65_536        # 64 KB max combined output
+_MAX_CODE_BYTES = 16_384  # 16 KB max code input
+_MAX_OUTPUT_BYTES = 65_536  # 64 KB max combined output
 _EXEC_TIMEOUT_SECONDS = 5
 
 # Restricted builtins for sandboxed exec
 _SAFE_BUILTINS = {
     k: __builtins__[k] if isinstance(__builtins__, dict) else getattr(__builtins__, k)
     for k in (
-        "print", "len", "range", "enumerate", "zip", "map", "filter",
-        "sorted", "reversed", "list", "dict", "set", "tuple", "int",
-        "float", "str", "bool", "abs", "min", "max", "sum", "round",
-        "type", "isinstance", "repr", "format", "chr", "ord",
-        "True", "False", "None",
+        "print",
+        "len",
+        "range",
+        "enumerate",
+        "zip",
+        "map",
+        "filter",
+        "sorted",
+        "reversed",
+        "list",
+        "dict",
+        "set",
+        "tuple",
+        "int",
+        "float",
+        "str",
+        "bool",
+        "abs",
+        "min",
+        "max",
+        "sum",
+        "round",
+        "type",
+        "isinstance",
+        "repr",
+        "format",
+        "chr",
+        "ord",
+        "True",
+        "False",
+        "None",
     )
     if (isinstance(__builtins__, dict) and k in __builtins__)
-       or (not isinstance(__builtins__, dict) and hasattr(__builtins__, k))
+    or (not isinstance(__builtins__, dict) and hasattr(__builtins__, k))
 }
 
 
@@ -38,16 +63,17 @@ def _error(msg):
 def extract_diff(code_before, code_after):
     """
     Extract the diff between two code snippets.
-    
+
     Args:
         code_before (str): The original code.
         code_after (str): The modified code.
-    
+
     Returns:
         dict: {"diff": str}
     """
     # Baseline implementation: simple diff
     return {"diff": f"Diff: {code_before} -> {code_after}"}
+
 
 def execute_code(code, language):
     """
@@ -61,7 +87,9 @@ def execute_code(code, language):
         dict: {"result": object, "stdout": str, "stderr": str}
     """
     start_time = time.perf_counter()
-    code_bytes = len(code.encode("utf-8", errors="ignore")) if isinstance(code, str) else None
+    code_bytes = (
+        len(code.encode("utf-8", errors="ignore")) if isinstance(code, str) else None
+    )
 
     def _finish(payload, status, error_type=None):
         log_event(
@@ -82,13 +110,29 @@ def execute_code(code, language):
     )
 
     if not isinstance(code, str) or not code.strip():
-        return _finish(_error("Invalid input: 'code' must be a non-empty string."), "rejected", "ValidationError")
+        return _finish(
+            _error("Invalid input: 'code' must be a non-empty string."),
+            "rejected",
+            "ValidationError",
+        )
     if not isinstance(language, str) or not language.strip():
-        return _finish(_error("Invalid input: 'language' must be a non-empty string."), "rejected", "ValidationError")
+        return _finish(
+            _error("Invalid input: 'language' must be a non-empty string."),
+            "rejected",
+            "ValidationError",
+        )
     if len(code.encode()) > _MAX_CODE_BYTES:
-        return _finish(_error(f"Code exceeds maximum allowed size ({_MAX_CODE_BYTES} bytes)."), "rejected", "PayloadTooLarge")
+        return _finish(
+            _error(f"Code exceeds maximum allowed size ({_MAX_CODE_BYTES} bytes)."),
+            "rejected",
+            "PayloadTooLarge",
+        )
     if language.lower() != "python":
-        return _finish(_error(f"Unsupported language: {language}. Only 'python' is supported."), "rejected", "UnsupportedLanguage")
+        return _finish(
+            _error(f"Unsupported language: {language}. Only 'python' is supported."),
+            "rejected",
+            "UnsupportedLanguage",
+        )
 
     stdout_capture = io.StringIO()
     stderr_capture = io.StringIO()
@@ -125,16 +169,19 @@ def execute_code(code, language):
         stdout_val = stdout_val[:_MAX_OUTPUT_BYTES]
         stderr_val = (stderr_val + " [output truncated]")[:512]
 
-    return _finish({"result": result, "stdout": stdout_val, "stderr": stderr_val}, "completed")
+    return _finish(
+        {"result": result, "stdout": stdout_val, "stderr": stderr_val}, "completed"
+    )
+
 
 def format_code(code, language):
     """
     Format code according to language conventions.
-    
+
     Args:
         code (str): The code to format.
         language (str): The programming language.
-    
+
     Returns:
         dict: {"formatted_code": str}
     """
@@ -156,8 +203,12 @@ def analyze_code(code, language):
     if not isinstance(code, str) or not code.strip():
         return {
             "metrics": {
-                "total_lines": 0, "code_lines": 0, "blank_lines": 0,
-                "comment_lines": 0, "function_count": 0, "class_count": 0,
+                "total_lines": 0,
+                "code_lines": 0,
+                "blank_lines": 0,
+                "comment_lines": 0,
+                "function_count": 0,
+                "class_count": 0,
                 "complexity_estimate": 0,
             },
             "warnings": [],
@@ -182,18 +233,24 @@ def analyze_code(code, language):
         # Complexity: count branching keywords
         branch_keywords = {"if ", "elif ", "for ", "while ", "except ", "with "}
         complexity = 1 + sum(
-            1 for l in lines
-            for kw in branch_keywords
-            if l.strip().startswith(kw)
+            1 for l in lines for kw in branch_keywords if l.strip().startswith(kw)
         )
     elif lang in ("javascript", "typescript", "java", "c", "cpp", "csharp", "go"):
         function_count = sum(1 for l in lines if "function " in l or "=> " in l)
         class_count = sum(1 for l in lines if l.strip().startswith("class "))
-        branch_keywords = {"if ", "if(", "else if", "for ", "for(", "while ", "while(", "switch ", "catch "}
+        branch_keywords = {
+            "if ",
+            "if(",
+            "else if",
+            "for ",
+            "for(",
+            "while ",
+            "while(",
+            "switch ",
+            "catch ",
+        }
         complexity = 1 + sum(
-            1 for l in lines
-            for kw in branch_keywords
-            if kw in l.strip()
+            1 for l in lines for kw in branch_keywords if kw in l.strip()
         )
     else:
         function_count = 0
@@ -202,9 +259,21 @@ def analyze_code(code, language):
 
     warnings = []
     if total_lines > 500:
-        warnings.append({"line": total_lines, "severity": "warning", "message": "File exceeds 500 lines — consider splitting."})
+        warnings.append(
+            {
+                "line": total_lines,
+                "severity": "warning",
+                "message": "File exceeds 500 lines — consider splitting.",
+            }
+        )
     if complexity > 15:
-        warnings.append({"line": 1, "severity": "warning", "message": f"High cyclomatic complexity estimate ({complexity})."})
+        warnings.append(
+            {
+                "line": 1,
+                "severity": "warning",
+                "message": f"High cyclomatic complexity estimate ({complexity}).",
+            }
+        )
 
     summary = (
         f"{lang or 'unknown'} code: {code_lines} code lines, "

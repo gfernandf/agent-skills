@@ -10,38 +10,36 @@ Usage:
 import os
 import re
 import sys
-import json
-import shutil
 from pathlib import Path
 from collections import defaultdict
 
 # ─── Rename mapping ──────────────────────────────────────────────
 
 RENAME_MAP = {
-    "agent.delegate":   "agent.task.delegate",
-    "agent.route":      "agent.input.route",
-    "analysis.split":   "analysis.problem.split",
+    "agent.delegate": "agent.task.delegate",
+    "agent.route": "agent.input.route",
+    "analysis.split": "analysis.problem.split",
     "audio.transcribe": "audio.speech.transcribe",
-    "code.execute":     "code.snippet.execute",
-    "code.format":      "code.source.format",
-    "doc.chunk":        "doc.content.chunk",
-    "email.read":       "email.inbox.read",
-    "email.send":       "email.message.send",
-    "fs.read":          "fs.file.read",
-    "image.classify":   "image.content.classify",
-    "memory.retrieve":  "memory.entry.retrieve",
-    "memory.store":     "memory.entry.store",
-    "message.send":     "message.notification.send",
-    "pdf.read":         "pdf.document.read",
-    "table.filter":     "table.row.filter",
-    "text.classify":    "text.content.classify",
-    "text.embed":       "text.content.embed",
-    "text.extract":     "text.content.extract",
-    "text.merge":       "text.content.merge",
-    "text.summarize":   "text.content.summarize",
-    "text.template":    "text.content.template",
-    "text.translate":   "text.content.translate",
-    "web.fetch":        "web.page.fetch",
+    "code.execute": "code.snippet.execute",
+    "code.format": "code.source.format",
+    "doc.chunk": "doc.content.chunk",
+    "email.read": "email.inbox.read",
+    "email.send": "email.message.send",
+    "fs.read": "fs.file.read",
+    "image.classify": "image.content.classify",
+    "memory.retrieve": "memory.entry.retrieve",
+    "memory.store": "memory.entry.store",
+    "message.send": "message.notification.send",
+    "pdf.read": "pdf.document.read",
+    "table.filter": "table.row.filter",
+    "text.classify": "text.content.classify",
+    "text.embed": "text.content.embed",
+    "text.extract": "text.content.extract",
+    "text.merge": "text.content.merge",
+    "text.summarize": "text.content.summarize",
+    "text.template": "text.content.template",
+    "text.translate": "text.content.translate",
+    "web.fetch": "web.page.fetch",
 }
 
 # ─── Paths ────────────────────────────────────────────────────────
@@ -54,6 +52,7 @@ TEXT_EXTENSIONS = {".yaml", ".yml", ".json", ".py", ".md", ".txt"}
 
 
 # ─── Pattern construction ─────────────────────────────────────────
+
 
 def build_pattern():
     """Build a regex matching any old capability ID as a whole token.
@@ -72,6 +71,7 @@ def build_pattern():
 
 
 # ─── Phase 1: Text content replacements ──────────────────────────
+
 
 def collect_text_files():
     """Collect all text files from both repos, excluding skip dirs and catalog."""
@@ -117,11 +117,13 @@ def replace_text_in_files(pattern, dry_run=True):
         for m in matches:
             id_counts[m.group(1)] += 1
 
-        changes.append({
-            "path": fpath,
-            "replacements": len(matches),
-            "detail": dict(id_counts),
-        })
+        changes.append(
+            {
+                "path": fpath,
+                "replacements": len(matches),
+                "detail": dict(id_counts),
+            }
+        )
 
         if not dry_run:
             fpath.write_text(new_content, encoding="utf-8")
@@ -130,6 +132,7 @@ def replace_text_in_files(pattern, dry_run=True):
 
 
 # ─── Phase 2: Rename capability YAML files ───────────────────────
+
 
 def rename_capability_yamls(dry_run=True):
     """Rename capabilities/{old_id}.yaml → capabilities/{new_id}.yaml in registry."""
@@ -154,6 +157,7 @@ def rename_capability_yamls(dry_run=True):
 
 # ─── Phase 3: Rename binding directories ─────────────────────────
 
+
 def rename_binding_dirs(dry_run=True):
     """Rename bindings/official/{old_id}/ → bindings/official/{new_id}/ in agent-skills."""
     renames = []
@@ -176,6 +180,7 @@ def rename_binding_dirs(dry_run=True):
 
 
 # ─── Phase 4: Rename OpenAPI scenario files ──────────────────────
+
 
 def rename_scenario_files(dry_run=True):
     """Rename tooling/openapi_scenarios/{old_id}.mock.json files."""
@@ -200,6 +205,7 @@ def rename_scenario_files(dry_run=True):
 
 
 # ─── Phase 5: Verification ───────────────────────────────────────
+
 
 def verify_no_old_ids():
     """Verify that no old capability IDs remain in any text file."""
@@ -252,12 +258,15 @@ def verify_no_old_ids():
         if (bind_dir / old_id).is_dir():
             remaining.append((bind_dir / old_id, {"DIR_NOT_RENAMED"}))
         if (scenario_dir / f"{old_id}.mock.json").exists():
-            remaining.append((scenario_dir / f"{old_id}.mock.json", {"FILE_NOT_RENAMED"}))
+            remaining.append(
+                (scenario_dir / f"{old_id}.mock.json", {"FILE_NOT_RENAMED"})
+            )
 
     return remaining
 
 
 # ─── Main ─────────────────────────────────────────────────────────
+
 
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "--dry-run"
@@ -313,22 +322,30 @@ def main():
             except ValueError:
                 prefix = ""
         detail_str = ", ".join(f"{k}×{v}" for k, v in sorted(ch["detail"].items()))
-        print(f"  {prefix} {rel_path}  ({ch['replacements']} replacements: {detail_str})")
+        print(
+            f"  {prefix} {rel_path}  ({ch['replacements']} replacements: {detail_str})"
+        )
 
     # Phase 2: Capability YAML file renames
-    print(f"\n─── Phase 2: Capability YAML renames ({'' if dry_run else 'applied'}) ───\n")
+    print(
+        f"\n─── Phase 2: Capability YAML renames ({'' if dry_run else 'applied'}) ───\n"
+    )
     cap_renames = rename_capability_yamls(dry_run)
     for old_p, new_p in cap_renames:
         print(f"  {old_p.name}  →  {new_p.name}")
 
     # Phase 3: Binding directory renames
-    print(f"\n─── Phase 3: Binding directory renames ({'' if dry_run else 'applied'}) ───\n")
+    print(
+        f"\n─── Phase 3: Binding directory renames ({'' if dry_run else 'applied'}) ───\n"
+    )
     bind_renames = rename_binding_dirs(dry_run)
     for old_p, new_p in bind_renames:
         print(f"  {old_p.name}/  →  {new_p.name}/")
 
     # Phase 4: Scenario file renames
-    print(f"\n─── Phase 4: Scenario file renames ({'' if dry_run else 'applied'}) ───\n")
+    print(
+        f"\n─── Phase 4: Scenario file renames ({'' if dry_run else 'applied'}) ───\n"
+    )
     scenario_renames = rename_scenario_files(dry_run)
     for old_p, new_p in scenario_renames:
         print(f"  {old_p.name}  →  {new_p.name}")
@@ -338,7 +355,7 @@ def main():
     # Summary
     total_replacements = sum(ch["replacements"] for ch in text_changes)
     print(f"\n{'=' * 70}")
-    print(f"  SUMMARY")
+    print("  SUMMARY")
     print(f"    Text files modified:        {len(text_changes)}")
     print(f"    Total text replacements:    {total_replacements}")
     print(f"    Capability YAMLs renamed:   {len(cap_renames)}")
@@ -347,7 +364,9 @@ def main():
     print(f"{'=' * 70}")
 
     if dry_run:
-        print("\n  To apply these changes, run:  python rename_capabilities.py --execute")
+        print(
+            "\n  To apply these changes, run:  python rename_capabilities.py --execute"
+        )
     else:
         print("\n  All changes applied. Run --verify to confirm no old IDs remain.")
 

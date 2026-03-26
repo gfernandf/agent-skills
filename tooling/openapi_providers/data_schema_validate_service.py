@@ -100,7 +100,9 @@ class _Handler(BaseHTTPRequestHandler):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run local OpenAPI provider for data.schema.validate")
+    parser = argparse.ArgumentParser(
+        description="Run local OpenAPI provider for data.schema.validate"
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8780)
     args = parser.parse_args()

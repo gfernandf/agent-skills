@@ -87,13 +87,21 @@ def main() -> None:
 
     # Load intents
     try:
-        entries: list[dict] = json.loads(args.intents_file.read_text(encoding="utf-8-sig"))
+        entries: list[dict] = json.loads(
+            args.intents_file.read_text(encoding="utf-8-sig")
+        )
     except Exception as exc:
-        print(f"[batch_scaffold] ERROR reading {args.intents_file}: {exc}", file=sys.stderr)
+        print(
+            f"[batch_scaffold] ERROR reading {args.intents_file}: {exc}",
+            file=sys.stderr,
+        )
         raise SystemExit(1) from exc
 
     if not isinstance(entries, list):
-        print("[batch_scaffold] ERROR: intents file must be a JSON array.", file=sys.stderr)
+        print(
+            "[batch_scaffold] ERROR: intents file must be a JSON array.",
+            file=sys.stderr,
+        )
         raise SystemExit(1)
 
     registry_root = args.registry_root or _find_registry_root()
@@ -110,14 +118,16 @@ def main() -> None:
     for i, entry in enumerate(entries):
         intent = entry.get("intent", "")
         if not intent:
-            print(f"[{i+1}/{len(entries)}] SKIP — missing 'intent' field")
+            print(f"[{i + 1}/{len(entries)}] SKIP — missing 'intent' field")
             skipped += 1
             continue
 
         channel = entry.get("channel", args.channel)
         forced_id = entry.get("id")
 
-        print(f"[{i+1}/{len(entries)}] {intent[:70]}{'...' if len(intent) > 70 else ''}")
+        print(
+            f"[{i + 1}/{len(entries)}] {intent[:70]}{'...' if len(intent) > 70 else ''}"
+        )
 
         try:
             result = generate_skill_from_prompt(
@@ -129,17 +139,23 @@ def main() -> None:
         except Exception as exc:
             print(f"         ERROR: {exc}")
             errors_total += 1
-            results.append({
-                "intent": intent,
-                "status": "error",
-                "error": str(exc),
-            })
+            results.append(
+                {
+                    "intent": intent,
+                    "status": "error",
+                    "error": str(exc),
+                }
+            )
             continue
 
         skill_id = forced_id or result["suggested_id"]
         validation_errors = result["validation_errors"]
-        status_label = "OK" if not validation_errors else f"WARN ({len(validation_errors)} issues)"
-        print(f"         id={skill_id}  caps={', '.join(result['capabilities_used']) or '—'}  {status_label}")
+        status_label = (
+            "OK" if not validation_errors else f"WARN ({len(validation_errors)} issues)"
+        )
+        print(
+            f"         id={skill_id}  caps={', '.join(result['capabilities_used']) or '—'}  {status_label}"
+        )
 
         if validation_errors:
             for err in validation_errors:
@@ -173,21 +189,38 @@ def main() -> None:
             print(f"         -> {target_file}")
             written += 1
 
-        results.append({
-            "intent": intent,
-            "skill_id": skill_id,
-            "capabilities_used": result["capabilities_used"],
-            "validation_errors": validation_errors,
-            "channel": channel,
-            "status": "dry_run" if args.dry_run else ("warn" if validation_errors else "ok"),
-        })
+        results.append(
+            {
+                "intent": intent,
+                "skill_id": skill_id,
+                "capabilities_used": result["capabilities_used"],
+                "validation_errors": validation_errors,
+                "channel": channel,
+                "status": "dry_run"
+                if args.dry_run
+                else ("warn" if validation_errors else "ok"),
+            }
+        )
 
     print()
-    print(f"[batch_scaffold] Done: {written} written, {skipped} skipped, {errors_total} errors")
+    print(
+        f"[batch_scaffold] Done: {written} written, {skipped} skipped, {errors_total} errors"
+    )
 
     if args.report:
         args.report.write_text(
-            json.dumps({"summary": {"written": written, "skipped": skipped, "errors": errors_total}, "results": results}, indent=2, ensure_ascii=False),
+            json.dumps(
+                {
+                    "summary": {
+                        "written": written,
+                        "skipped": skipped,
+                        "errors": errors_total,
+                    },
+                    "results": results,
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
             encoding="utf-8",
         )
         print(f"[batch_scaffold] Report written to {args.report}")

@@ -294,7 +294,9 @@ class YamlSkillLoader:
             return {}
         return dict(raw_metadata)
 
-    def _extract_path_metadata(self, path: Path) -> tuple[str | None, str | None, str | None]:
+    def _extract_path_metadata(
+        self, path: Path
+    ) -> tuple[str | None, str | None, str | None]:
         try:
             rel = path.relative_to(self.repo_root)
         except ValueError:
@@ -307,7 +309,9 @@ class YamlSkillLoader:
 
         return None, None, None
 
-    def _require_non_empty_string(self, raw: dict[str, Any], key: str, relpath: str) -> str:
+    def _require_non_empty_string(
+        self, raw: dict[str, Any], key: str, relpath: str
+    ) -> str:
         value = raw.get(key)
         if not isinstance(value, str) or not value:
             raise InvalidSkillSpecError(

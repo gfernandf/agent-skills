@@ -41,9 +41,7 @@ class ServiceDescriptorLoader:
             ) from e
 
         if not isinstance(raw, dict):
-            raise ServiceDescriptorLoadError(
-                f"File '{path}' must contain a mapping."
-            )
+            raise ServiceDescriptorLoadError(f"File '{path}' must contain a mapping.")
 
         services = raw.get("services", {})
 
@@ -73,9 +71,7 @@ class ServiceDescriptorLoader:
         source_file: str,
     ) -> ServiceDescriptor:
         if not isinstance(service_id, str) or not service_id:
-            raise ServiceDescriptorLoadError(
-                f"Invalid service id in '{source_file}'."
-            )
+            raise ServiceDescriptorLoadError(f"Invalid service id in '{source_file}'.")
 
         if not isinstance(raw, dict):
             raise ServiceDescriptorLoadError(

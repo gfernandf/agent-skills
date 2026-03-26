@@ -9,6 +9,7 @@ Usage:
     result = client.call_tool("my_server", "my_tool", {"arg": "val"})
     client.close()
 """
+
 from __future__ import annotations
 
 import json

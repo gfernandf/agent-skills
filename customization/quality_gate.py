@@ -40,17 +40,11 @@ class QualityGate:
                 f"service '{service.id}' kind '{service.kind}'."
             )
 
-        issues.extend(
-            self._validate_service_shape(service)
-        )
+        issues.extend(self._validate_service_shape(service))
 
-        issues.extend(
-            self._validate_required_outputs(binding, capability)
-        )
+        issues.extend(self._validate_required_outputs(binding, capability))
 
-        issues.extend(
-            self._validate_conformance_profile(binding)
-        )
+        issues.extend(self._validate_conformance_profile(binding))
 
         return issues
 
@@ -150,7 +144,11 @@ class QualityGate:
         issues: list[str] = []
         allowed = {"strict", "standard", "experimental"}
 
-        profile = binding.metadata.get("conformance_profile") if isinstance(binding.metadata, dict) else None
+        profile = (
+            binding.metadata.get("conformance_profile")
+            if isinstance(binding.metadata, dict)
+            else None
+        )
         if profile is None:
             return issues
 

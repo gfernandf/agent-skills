@@ -67,7 +67,9 @@ def apply_step_output(
 
     for produced_field, target_ref in (mapping_override or step.output_mapping).items():
         try:
-            produced_value = _resolve_produced_path(step_output, produced_field, state=state)
+            produced_value = _resolve_produced_path(
+                step_output, produced_field, state=state
+            )
         except OutputMappingError:
             raise
         except Exception as e:
@@ -194,9 +196,13 @@ def _write_target(
 
     # ── Legacy flat namespaces ───────────────────────
     if namespace == "vars":
-        _apply_to_flat(state.vars, rest, value, target_ref, state, step_id, merge_strategy)
+        _apply_to_flat(
+            state.vars, rest, value, target_ref, state, step_id, merge_strategy
+        )
     elif namespace == "outputs":
-        _apply_to_flat(state.outputs, rest, value, target_ref, state, step_id, merge_strategy)
+        _apply_to_flat(
+            state.outputs, rest, value, target_ref, state, step_id, merge_strategy
+        )
 
     # ── Cognitive namespaces (nested path) ───────────
     elif namespace in ("working", "output", "extensions"):
@@ -227,12 +233,14 @@ def _apply_to_flat(
         if not isinstance(existing, list):
             raise OutputMappingError(
                 f"append requires existing target '{target_ref}' to be a list, got {type(existing).__name__}.",
-                skill_id=state.skill_id, step_id=step_id,
+                skill_id=state.skill_id,
+                step_id=step_id,
             )
         if not isinstance(value, list):
             raise OutputMappingError(
                 f"append requires produced value for '{target_ref}' to be a list, got {type(value).__name__}.",
-                skill_id=state.skill_id, step_id=step_id,
+                skill_id=state.skill_id,
+                step_id=step_id,
             )
         existing.extend(value)
         container[field] = existing
@@ -242,7 +250,8 @@ def _apply_to_flat(
         if not isinstance(existing, dict) or not isinstance(value, dict):
             raise OutputMappingError(
                 f"deep_merge requires both target and value for '{target_ref}' to be dicts.",
-                skill_id=state.skill_id, step_id=step_id,
+                skill_id=state.skill_id,
+                step_id=step_id,
             )
         _deep_merge(existing, value)
         container[field] = existing
@@ -272,7 +281,10 @@ def _apply_to_nested(
     # Walk to the parent of the final segment, creating intermediate dicts as needed.
     for segment in segments[:-1]:
         # dataclass attribute
-        if hasattr(type(current), "__dataclass_fields__") and segment in type(current).__dataclass_fields__:
+        if (
+            hasattr(type(current), "__dataclass_fields__")
+            and segment in type(current).__dataclass_fields__
+        ):
             current = getattr(current, segment)
             continue
 
@@ -294,7 +306,10 @@ def _apply_to_nested(
     final = segments[-1]
 
     # Target is a dataclass attr whose value is a dict (e.g. working.artifacts)
-    if hasattr(type(current), "__dataclass_fields__") and final in type(current).__dataclass_fields__:
+    if (
+        hasattr(type(current), "__dataclass_fields__")
+        and final in type(current).__dataclass_fields__
+    ):
         container = getattr(current, final)
         # If the attr is itself a dict, merge strategies apply to the whole dict
         if isinstance(container, dict) and isinstance(value, dict):
@@ -303,7 +318,8 @@ def _apply_to_nested(
             elif merge_strategy == "append":
                 raise OutputMappingError(
                     f"append not applicable: target '{target_ref}' is a dict, not a list.",
-                    skill_id=state.skill_id, step_id=step_id,
+                    skill_id=state.skill_id,
+                    step_id=step_id,
                 )
             else:
                 # overwrite / replace — set each key
@@ -312,7 +328,8 @@ def _apply_to_nested(
             if not isinstance(value, list):
                 raise OutputMappingError(
                     f"append requires produced value for '{target_ref}' to be a list.",
-                    skill_id=state.skill_id, step_id=step_id,
+                    skill_id=state.skill_id,
+                    step_id=step_id,
                 )
             container.extend(value)
         else:
@@ -326,12 +343,14 @@ def _apply_to_nested(
             if not isinstance(existing, list):
                 raise OutputMappingError(
                     f"append requires existing target '{target_ref}' to be a list.",
-                    skill_id=state.skill_id, step_id=step_id,
+                    skill_id=state.skill_id,
+                    step_id=step_id,
                 )
             if not isinstance(value, list):
                 raise OutputMappingError(
                     f"append requires produced value for '{target_ref}' to be a list.",
-                    skill_id=state.skill_id, step_id=step_id,
+                    skill_id=state.skill_id,
+                    step_id=step_id,
                 )
             existing.extend(value)
             current[final] = existing
@@ -341,7 +360,8 @@ def _apply_to_nested(
             if not isinstance(existing, dict) or not isinstance(value, dict):
                 raise OutputMappingError(
                     f"deep_merge requires both target and value for '{target_ref}' to be dicts.",
-                    skill_id=state.skill_id, step_id=step_id,
+                    skill_id=state.skill_id,
+                    step_id=step_id,
                 )
             _deep_merge(existing, value)
             current[final] = existing

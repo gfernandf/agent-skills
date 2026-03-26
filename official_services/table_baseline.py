@@ -3,14 +3,15 @@ Table baseline service module.
 Provides baseline implementations for table-related capabilities.
 """
 
+
 def filter_table(table_data, filter_criteria):
     """
     Filter table data based on criteria.
-    
+
     Args:
         table_data (list): The table data as a list of rows.
         filter_criteria (dict): The filter criteria.
-    
+
     Returns:
         dict: {"filtered_table": list}
     """
@@ -39,7 +40,10 @@ def sort_table(table_data, sort_by):
     for spec in reversed(sort_by):
         field = spec.get("field", "")
         descending = spec.get("order", "asc").lower() == "desc"
-        result.sort(key=lambda row, f=field: (row.get(f) is None, row.get(f, "")), reverse=descending)
+        result.sort(
+            key=lambda row, f=field: (row.get(f) is None, row.get(f, "")),
+            reverse=descending,
+        )
 
     return {"table": result}
 
@@ -83,7 +87,9 @@ def aggregate_table(table_data, aggregations, group_by=None):
             elif func == "sum":
                 entry[result_key] = sum(numeric) if numeric else 0
             elif func == "avg":
-                entry[result_key] = round(sum(numeric) / len(numeric), 2) if numeric else 0
+                entry[result_key] = (
+                    round(sum(numeric) / len(numeric), 2) if numeric else 0
+                )
             elif func == "min":
                 entry[result_key] = min(numeric) if numeric else None
             elif func == "max":

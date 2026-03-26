@@ -11,6 +11,7 @@ For each capability that declares a ``properties`` block, verify:
 Run:
     pytest test_atomic_properties.py -v
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -44,7 +45,6 @@ def _capabilities_with_properties():
 
 @pytest.mark.parametrize("cap_id,data", list(_capabilities_with_properties()))
 class TestAtomicProperties:
-
     def test_deterministic_implies_idempotent(self, cap_id: str, data: dict):
         props = data["properties"]
         if props.get("deterministic") is True:

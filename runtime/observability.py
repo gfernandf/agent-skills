@@ -27,7 +27,9 @@ _SENSITIVE_KEY_PARTS = {
     "credential",
     "session",
 }
-_TRACE_ID_CTX: ContextVar[str | None] = ContextVar("agent_skills_trace_id", default=None)
+_TRACE_ID_CTX: ContextVar[str | None] = ContextVar(
+    "agent_skills_trace_id", default=None
+)
 
 
 def _configure_logger() -> logging.Logger:
@@ -101,7 +103,9 @@ def get_current_trace_id() -> str | None:
 
 
 # O3 — Correlation ID context var for span-level log correlation
-_CORRELATION_ID_CTX: ContextVar[str | None] = ContextVar("agent_skills_correlation_id", default=None)
+_CORRELATION_ID_CTX: ContextVar[str | None] = ContextVar(
+    "agent_skills_correlation_id", default=None
+)
 
 
 def set_correlation_id(correlation_id: str | None) -> Token:

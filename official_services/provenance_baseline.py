@@ -49,10 +49,12 @@ def verify_claim(claim, sources):
                 source_tokens = {t.lower() for t in text.split() if t.strip()}
                 overlap = claim_tokens.intersection(source_tokens)
                 if overlap:
-                    evidence.append({
-                        "source_index": idx,
-                        "matched_tokens": sorted(overlap),
-                    })
+                    evidence.append(
+                        {
+                            "source_index": idx,
+                            "matched_tokens": sorted(overlap),
+                        }
+                    )
 
     verified = len(evidence) > 0
     rationale = "token_overlap_found" if verified else "no_supporting_overlap"

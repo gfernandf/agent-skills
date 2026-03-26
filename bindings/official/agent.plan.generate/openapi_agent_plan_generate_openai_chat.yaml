@@ -33,6 +33,7 @@ request:
 
 response:
   plan: response.choices.0.message.content_json.plan
+  step_count: response.choices.0.message.content_json.step_count
 
 metadata:
   method: POST

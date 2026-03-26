@@ -11,24 +11,18 @@ These tests lock the current behavior of:
 
 Run: python -m runtime.test_cognitive_state_regression
 """
+
 from __future__ import annotations
 
-import time
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any
 
 from runtime.errors import (
-    FinalOutputValidationError,
     InputMappingError,
     InvalidSkillSpecError,
     OutputMappingError,
     ReferenceResolutionError,
-    StepExecutionError,
 )
 from runtime.execution_planner import ExecutionPlanner
 from runtime.execution_state import (
-    add_event,
     create_execution_state,
     emit_event,
     get_step_result,
@@ -40,12 +34,8 @@ from runtime.execution_state import (
 )
 from runtime.input_mapper import build_step_input
 from runtime.models import (
-    ExecutionContext,
-    ExecutionOptions,
-    ExecutionRequest,
     ExecutionState,
     FieldSpec,
-    RuntimeEvent,
     SkillExecutionResult,
     SkillSpec,
     StepResult,
@@ -58,6 +48,7 @@ from runtime.reference_resolver import ReferenceResolver
 # ════════════════════════════════════════════════════════════════
 # Helpers
 # ════════════════════════════════════════════════════════════════
+
 
 def _make_step(
     step_id: str = "s1",
@@ -88,12 +79,15 @@ def _make_skill(
         description="A test skill",
         inputs=inputs or {"text": FieldSpec(type="string", required=True)},
         outputs=outputs or {"summary": FieldSpec(type="string", required=True)},
-        steps=tuple(steps or [
-            _make_step(
-                input_mapping={"text": "inputs.text"},
-                output_mapping={"summary": "outputs.summary"},
-            )
-        ]),
+        steps=tuple(
+            steps
+            or [
+                _make_step(
+                    input_mapping={"text": "inputs.text"},
+                    output_mapping={"summary": "outputs.summary"},
+                )
+            ]
+        ),
         metadata={},
     )
 
@@ -146,6 +140,7 @@ def _assert_raises(exc_type, fn, msg: str) -> None:
 # 1. create_execution_state
 # ════════════════════════════════════════════════════════════════
 
+
 def test_create_execution_state():
     print("▸ create_execution_state")
 
@@ -174,6 +169,7 @@ def test_create_execution_state():
 # 2. State mutation helpers
 # ════════════════════════════════════════════════════════════════
 
+
 def test_state_helpers():
     print("▸ state mutation helpers")
 
@@ -193,7 +189,13 @@ def test_state_helpers():
     _assert(evt.data == {"k": "v"}, "event data correct")
 
     # record_step_result
-    sr = StepResult(step_id="s1", uses="cap.a", status="completed", resolved_input={}, produced_output={"x": 1})
+    sr = StepResult(
+        step_id="s1",
+        uses="cap.a",
+        status="completed",
+        resolved_input={},
+        produced_output={"x": 1},
+    )
     record_step_result(state, sr)
     _assert(get_step_result(state, "s1") is sr, "step result recorded")
     _assert(get_step_result(state, "s999") is None, "missing step result returns None")
@@ -213,6 +215,7 @@ def test_state_helpers():
 # 3. ReferenceResolver
 # ════════════════════════════════════════════════════════════════
 
+
 def test_reference_resolver():
     print("▸ ReferenceResolver")
 
@@ -228,12 +231,18 @@ def test_reference_resolver():
     _assert(resolver.resolve(True, state) is True, "bool literal passes through")
     _assert(resolver.resolve(None, state) is None, "None passes through")
     _assert(resolver.resolve("plain", state) == "plain", "no-dot string passes through")
-    _assert(resolver.resolve("a sentence with dots.", state) == "a sentence with dots.", "non-namespace dotted string passes through")
+    _assert(
+        resolver.resolve("a sentence with dots.", state) == "a sentence with dots.",
+        "non-namespace dotted string passes through",
+    )
 
     # inputs namespace
     _assert(resolver.resolve("inputs.text", state) == "hello", "inputs.text resolved")
     _assert(resolver.resolve("inputs.count", state) == 3, "inputs.count resolved")
-    _assert(resolver.resolve("inputs.missing", state) is None, "inputs.missing returns None (optional)")
+    _assert(
+        resolver.resolve("inputs.missing", state) is None,
+        "inputs.missing returns None (optional)",
+    )
 
     # vars namespace
     _assert(resolver.resolve("vars.chunk", state) == "piece", "vars.chunk resolved")
@@ -244,7 +253,9 @@ def test_reference_resolver():
     )
 
     # outputs namespace
-    _assert(resolver.resolve("outputs.result", state) == "done", "outputs.result resolved")
+    _assert(
+        resolver.resolve("outputs.result", state) == "done", "outputs.result resolved"
+    )
     _assert_raises(
         ReferenceResolutionError,
         lambda: resolver.resolve("outputs.nope", state),
@@ -252,19 +263,28 @@ def test_reference_resolver():
     )
 
     # Unknown namespace treated as literal
-    _assert(resolver.resolve("unknown.field", state) == "unknown.field", "unknown namespace is literal")
-    _assert(resolver.resolve("frame.goal", state) is None, "frame.goal resolves to None (no goal set)")
+    _assert(
+        resolver.resolve("unknown.field", state) == "unknown.field",
+        "unknown namespace is literal",
+    )
+    _assert(
+        resolver.resolve("frame.goal", state) is None,
+        "frame.goal resolves to None (no goal set)",
+    )
 
 
 # ════════════════════════════════════════════════════════════════
 # 4. build_step_input (InputMapper)
 # ════════════════════════════════════════════════════════════════
 
+
 def test_build_step_input():
     print("▸ build_step_input")
 
     resolver = ReferenceResolver()
-    state = _make_state(inputs={"text": "hello", "lang": "es"}, vars_={"chunk": "piece"})
+    state = _make_state(
+        inputs={"text": "hello", "lang": "es"}, vars_={"chunk": "piece"}
+    )
 
     # Simple mapping
     step = _make_step(input_mapping={"text": "inputs.text", "language": "inputs.lang"})
@@ -279,7 +299,9 @@ def test_build_step_input():
     # Nested dict
     step = _make_step(input_mapping={"config": {"text": "inputs.text", "mode": "fast"}})
     result = build_step_input(step, state, resolver)
-    _assert(result == {"config": {"text": "hello", "mode": "fast"}}, "nested dict resolved")
+    _assert(
+        result == {"config": {"text": "hello", "mode": "fast"}}, "nested dict resolved"
+    )
 
     # List values
     step = _make_step(input_mapping={"items": ["inputs.text", "inputs.lang"]})
@@ -303,6 +325,7 @@ def test_build_step_input():
 # ════════════════════════════════════════════════════════════════
 # 5. apply_step_output (OutputMapper)
 # ════════════════════════════════════════════════════════════════
+
 
 def test_apply_step_output():
     print("▸ apply_step_output")
@@ -374,12 +397,15 @@ def test_apply_step_output():
     state = _make_state(vars_={"existing": "from_vars"})
     step = _make_step(output_mapping={"vars.existing": "outputs.copied"})
     apply_step_output(step, {}, state)
-    _assert(state.outputs["copied"] == "from_vars", "vars.* produced path reads from state")
+    _assert(
+        state.outputs["copied"] == "from_vars", "vars.* produced path reads from state"
+    )
 
 
 # ════════════════════════════════════════════════════════════════
 # 6. ExecutionPlanner
 # ════════════════════════════════════════════════════════════════
+
 
 def test_execution_planner():
     print("▸ ExecutionPlanner")
@@ -393,8 +419,14 @@ def test_execution_planner():
 
     # No steps
     empty_skill = SkillSpec(
-        id="empty", version="1.0.0", name="Empty", description="",
-        inputs={}, outputs={}, steps=(), metadata={},
+        id="empty",
+        version="1.0.0",
+        name="Empty",
+        description="",
+        inputs={},
+        outputs={},
+        steps=(),
+        metadata={},
     )
     _assert_raises(
         InvalidSkillSpecError,
@@ -405,52 +437,74 @@ def test_execution_planner():
     # Duplicate step ids
     _assert_raises(
         InvalidSkillSpecError,
-        lambda: planner.build_plan(_make_skill(steps=[
-            _make_step(step_id="same", output_mapping={"a": "vars.a"}),
-            _make_step(step_id="same", output_mapping={"b": "vars.b"}),
-        ])),
+        lambda: planner.build_plan(
+            _make_skill(
+                steps=[
+                    _make_step(step_id="same", output_mapping={"a": "vars.a"}),
+                    _make_step(step_id="same", output_mapping={"b": "vars.b"}),
+                ]
+            )
+        ),
         "duplicate step ids raises error",
     )
 
     # Valid namespaces: vars and outputs
-    skill = _make_skill(steps=[
-        _make_step(step_id="s1", output_mapping={"a": "vars.x"}),
-        _make_step(step_id="s2", output_mapping={"b": "outputs.summary"}),
-    ])
+    skill = _make_skill(
+        steps=[
+            _make_step(step_id="s1", output_mapping={"a": "vars.x"}),
+            _make_step(step_id="s2", output_mapping={"b": "outputs.summary"}),
+        ]
+    )
     plan = planner.build_plan(skill)
     _assert(len(plan) == 2, "vars and outputs namespaces accepted")
 
     # Invalid namespace
     _assert_raises(
         InvalidSkillSpecError,
-        lambda: planner.build_plan(_make_skill(steps=[
-            _make_step(output_mapping={"a": "unknown.x"}),
-        ])),
+        lambda: planner.build_plan(
+            _make_skill(
+                steps=[
+                    _make_step(output_mapping={"a": "unknown.x"}),
+                ]
+            )
+        ),
         "unknown namespace rejected",
     )
 
     _assert_raises(
         InvalidSkillSpecError,
-        lambda: planner.build_plan(_make_skill(steps=[
-            _make_step(output_mapping={"a": "frame.goal"}),
-        ])),
+        lambda: planner.build_plan(
+            _make_skill(
+                steps=[
+                    _make_step(output_mapping={"a": "frame.goal"}),
+                ]
+            )
+        ),
         "frame namespace rejected (read-only)",
     )
 
     _assert_raises(
         InvalidSkillSpecError,
-        lambda: planner.build_plan(_make_skill(steps=[
-            _make_step(output_mapping={"a": "inputs.text"}),
-        ])),
+        lambda: planner.build_plan(
+            _make_skill(
+                steps=[
+                    _make_step(output_mapping={"a": "inputs.text"}),
+                ]
+            )
+        ),
         "inputs namespace rejected (read-only)",
     )
 
     # No dot in target
     _assert_raises(
         InvalidSkillSpecError,
-        lambda: planner.build_plan(_make_skill(steps=[
-            _make_step(output_mapping={"a": "nodot"}),
-        ])),
+        lambda: planner.build_plan(
+            _make_skill(
+                steps=[
+                    _make_step(output_mapping={"a": "nodot"}),
+                ]
+            )
+        ),
         "target without dot rejected",
     )
 
@@ -458,6 +512,7 @@ def test_execution_planner():
 # ════════════════════════════════════════════════════════════════
 # 7. Integrated execution (mini end-to-end)
 # ════════════════════════════════════════════════════════════════
+
 
 def test_integrated_execution():
     """
@@ -501,7 +556,10 @@ def test_integrated_execution():
 
     # 4. Execute step 1
     step1_input = build_step_input(plan[0], state, resolver)
-    _assert(step1_input == {"text": "long document content"}, "step1 input resolved from inputs")
+    _assert(
+        step1_input == {"text": "long document content"},
+        "step1 input resolved from inputs",
+    )
 
     # Simulate capability producing output
     step1_output = {"chunk": "extracted chunk"}
@@ -512,7 +570,9 @@ def test_integrated_execution():
 
     # 5. Execute step 2
     step2_input = build_step_input(plan[1], state, resolver)
-    _assert(step2_input == {"text": "extracted chunk"}, "step2 input resolved from vars")
+    _assert(
+        step2_input == {"text": "extracted chunk"}, "step2 input resolved from vars"
+    )
 
     step2_output = {"summary": "This is a summary"}
     apply_step_output(plan[1], step2_output, state)
@@ -540,6 +600,7 @@ def test_integrated_execution():
 # ════════════════════════════════════════════════════════════════
 # 8. Multi-step composition with vars chaining
 # ════════════════════════════════════════════════════════════════
+
 
 def test_multi_step_composition():
     """Test a 3-step pipeline with chained vars."""
@@ -576,16 +637,24 @@ def test_multi_step_composition():
     for step, sim_output in zip(steps, simulated_outputs):
         step_input = build_step_input(step, state, resolver)
         apply_step_output(step, sim_output, state)
-        record_step_result(state, StepResult(
-            step_id=step.id, uses=step.uses, status="completed",
-            resolved_input=step_input, produced_output=sim_output,
-        ))
+        record_step_result(
+            state,
+            StepResult(
+                step_id=step.id,
+                uses=step.uses,
+                status="completed",
+                resolved_input=step_input,
+                produced_output=sim_output,
+            ),
+        )
 
     mark_finished(state, "completed")
 
     _assert(state.vars["chunks"] == ["c1", "c2", "c3"], "chunks in vars")
     _assert(state.vars["analysis"]["score"] == 0.9, "analysis in vars")
-    _assert(state.outputs["report"] == "Final report based on analysis", "report in outputs")
+    _assert(
+        state.outputs["report"] == "Final report based on analysis", "report in outputs"
+    )
     _assert(len(state.step_results) == 3, "all 3 step results recorded")
     _assert(state.status == "completed", "final status completed")
 
@@ -593,6 +662,7 @@ def test_multi_step_composition():
 # ════════════════════════════════════════════════════════════════
 # 9. Edge cases
 # ════════════════════════════════════════════════════════════════
+
 
 def test_edge_cases():
     print("▸ edge cases")
@@ -609,18 +679,25 @@ def test_edge_cases():
     state = _make_state()
     step = _make_step(output_mapping={})
     apply_step_output(step, {"anything": "ignored"}, state)
-    _assert(state.vars == {} and state.outputs == {}, "empty output mapping writes nothing")
+    _assert(
+        state.vars == {} and state.outputs == {}, "empty output mapping writes nothing"
+    )
 
     # Complex nested input
     state = _make_state(inputs={"text": "hello"})
-    step = _make_step(input_mapping={
-        "config": {
-            "items": ["inputs.text", "literal"],
-            "nested": {"deep": "inputs.text"},
+    step = _make_step(
+        input_mapping={
+            "config": {
+                "items": ["inputs.text", "literal"],
+                "nested": {"deep": "inputs.text"},
+            }
         }
-    })
+    )
     result = build_step_input(step, state, resolver)
-    _assert(result["config"]["items"] == ["hello", "literal"], "nested list in dict resolved")
+    _assert(
+        result["config"]["items"] == ["hello", "literal"],
+        "nested list in dict resolved",
+    )
     _assert(result["config"]["nested"]["deep"] == "hello", "deep nested resolved")
 
     # Produced output with list index
@@ -631,13 +708,16 @@ def test_edge_cases():
 
     # resolve_mapping helper
     state = _make_state(inputs={"a": 1, "b": 2})
-    resolved = resolver.resolve_mapping({"x": "inputs.a", "y": "inputs.b", "z": "literal"}, state)
+    resolved = resolver.resolve_mapping(
+        {"x": "inputs.a", "y": "inputs.b", "z": "literal"}, state
+    )
     _assert(resolved == {"x": 1, "y": 2, "z": "literal"}, "resolve_mapping works")
 
 
 # ════════════════════════════════════════════════════════════════
 # Runner
 # ════════════════════════════════════════════════════════════════
+
 
 def run_all():
     print("=" * 60)
@@ -669,5 +749,6 @@ def run_all():
 
 if __name__ == "__main__":
     import sys
+
     success = run_all()
     sys.exit(0 if success else 1)

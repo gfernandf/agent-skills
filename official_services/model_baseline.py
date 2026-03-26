@@ -39,7 +39,9 @@ def validate_response(output, validation_policy=None, evidence_context=None):
         "valid": valid,
         "issues": issues,
         "confidence_adjustment": 0.0,
-        "rationale": "Baseline structural validation." if valid else f"Found {len(issues)} issue(s).",
+        "rationale": "Baseline structural validation."
+        if valid
+        else f"Found {len(issues)} issue(s).",
     }
 
 
@@ -80,7 +82,11 @@ def classify_output(output, categories, context=None):
     the best-matching category using simple keyword/pattern matching.
     """
     if not isinstance(categories, list) or not categories:
-        return {"category": "unknown", "confidence": 0.0, "rationale": "No categories provided."}
+        return {
+            "category": "unknown",
+            "confidence": 0.0,
+            "rationale": "No categories provided.",
+        }
 
     text = _flatten_to_text(output)
     lower = text.lower()
@@ -129,9 +135,16 @@ def score_output(output, instruction, reference=None, dimensions=None):
     non-empty ratio) to produce rough scores.  Not a substitute for
     LLM-based evaluation.
     """
-    dims = dimensions if isinstance(dimensions, list) and dimensions else [
-        "relevance", "fluency", "completeness", "faithfulness",
-    ]
+    dims = (
+        dimensions
+        if isinstance(dimensions, list) and dimensions
+        else [
+            "relevance",
+            "fluency",
+            "completeness",
+            "faithfulness",
+        ]
+    )
 
     text = _flatten_to_text(output)
     instr_text = str(instruction) if instruction else ""
@@ -148,7 +161,7 @@ def score_output(output, instruction, reference=None, dimensions=None):
             dim_scores[dim_str] = min(overlap / max(len(instr_words), 1), 1.0)
         elif dim_str == "fluency":
             # Rough proxy: average sentence length is reasonable
-            sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+            sentences = [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
             avg_len = sum(len(s.split()) for s in sentences) / max(len(sentences), 1)
             dim_scores[dim_str] = min(avg_len / 20.0, 1.0) if avg_len > 2 else 0.3
         elif dim_str == "completeness":
@@ -226,7 +239,7 @@ def template_prompt(template, variables, format=None):
         unresolved.append(key)
         return match.group(0)
 
-    prompt = re.sub(r'\$\{(\w+(?:\.\w+)*)}', _replace, template_str)
+    prompt = re.sub(r"\$\{(\w+(?:\.\w+)*)}", _replace, template_str)
 
     return {
         "prompt": prompt,
@@ -234,7 +247,9 @@ def template_prompt(template, variables, format=None):
     }
 
 
-def generate_output(instruction, context_items, output_schema, detail_level=None, constraints=None):
+def generate_output(
+    instruction, context_items, output_schema, detail_level=None, constraints=None
+):
     """
     Generate structured output from an instruction and context items.
 
@@ -242,7 +257,7 @@ def generate_output(instruction, context_items, output_schema, detail_level=None
     context_items and assembling fields requested in output_schema.
     """
     ctx_texts = []
-    for item in (context_items if isinstance(context_items, list) else []):
+    for item in context_items if isinstance(context_items, list) else []:
         if isinstance(item, dict):
             ctx_texts.append(str(item.get("content", item.get("text", ""))))
         else:
@@ -264,10 +279,14 @@ def generate_output(instruction, context_items, output_schema, detail_level=None
         elif prop_type == "boolean":
             result[key] = True
         else:
-            result[key] = f"[baseline] {combined[:120]}" if combined else "[baseline] no context"
+            result[key] = (
+                f"[baseline] {combined[:120]}" if combined else "[baseline] no context"
+            )
 
     if not result:
-        result["generated"] = f"[baseline] {combined[:200]}" if combined else "[baseline] no context"
+        result["generated"] = (
+            f"[baseline] {combined[:200]}" if combined else "[baseline] no context"
+        )
 
     warnings: list[str] = []
     if not combined:
@@ -290,9 +309,16 @@ def score_risk(output, context=None, dimensions=None):
     Baseline: keyword and pattern-based risk scoring.  Checks for known
     harmful patterns, potential PII leakage, and prompt injection markers.
     """
-    dims = dimensions if isinstance(dimensions, list) and dimensions else [
-        "toxicity", "bias", "hallucination", "prompt_injection",
-    ]
+    dims = (
+        dimensions
+        if isinstance(dimensions, list) and dimensions
+        else [
+            "toxicity",
+            "bias",
+            "hallucination",
+            "prompt_injection",
+        ]
+    )
 
     text = _flatten_to_text(output)
     lower = text.lower()
@@ -307,8 +333,8 @@ def score_risk(output, context=None, dimensions=None):
 
         if dim_str == "toxicity":
             toxic_patterns = [
-                r'\b(kill|murder|attack|destroy|hate|die)\b',
-                r'\b(stupid|idiot|dumb|moron)\b',
+                r"\b(kill|murder|attack|destroy|hate|die)\b",
+                r"\b(stupid|idiot|dumb|moron)\b",
             ]
             for pat in toxic_patterns:
                 hits = len(re.findall(pat, lower))
@@ -317,8 +343,8 @@ def score_risk(output, context=None, dimensions=None):
 
         elif dim_str == "bias":
             bias_patterns = [
-                r'\b(always|never|every|all)\s+(men|women|people|group)',
-                r'\b(obviously|clearly|everyone knows)\b',
+                r"\b(always|never|every|all)\s+(men|women|people|group)",
+                r"\b(obviously|clearly|everyone knows)\b",
             ]
             for pat in bias_patterns:
                 hits = len(re.findall(pat, lower))
@@ -328,7 +354,23 @@ def score_risk(output, context=None, dimensions=None):
         elif dim_str == "hallucination":
             # Heuristic: if context is provided, check for claims not in context
             if context_text:
-                out_words = set(lower.split()) - {"the", "a", "an", "is", "are", "was", "were", "in", "on", "at", "to", "for", "of", "and", "or"}
+                out_words = set(lower.split()) - {
+                    "the",
+                    "a",
+                    "an",
+                    "is",
+                    "are",
+                    "was",
+                    "were",
+                    "in",
+                    "on",
+                    "at",
+                    "to",
+                    "for",
+                    "of",
+                    "and",
+                    "or",
+                }
                 ctx_words = set(context_text.split())
                 novel = out_words - ctx_words
                 ratio = len(novel) / max(len(out_words), 1)
@@ -338,22 +380,26 @@ def score_risk(output, context=None, dimensions=None):
 
         elif dim_str == "prompt_injection":
             injection_patterns = [
-                r'ignore\s+(previous|above|all)\s+(instructions?|prompts?)',
-                r'you\s+are\s+now\s+',
-                r'system\s*:\s*',
-                r'<\|?(?:system|im_start)\|?>',
+                r"ignore\s+(previous|above|all)\s+(instructions?|prompts?)",
+                r"you\s+are\s+now\s+",
+                r"system\s*:\s*",
+                r"<\|?(?:system|im_start)\|?>",
             ]
             for pat in injection_patterns:
                 if re.search(pat, lower):
                     score = max(score, 0.8)
-                    flags.append({"dimension": dim_str, "detail": f"Pattern matched: {pat}"})
+                    flags.append(
+                        {"dimension": dim_str, "detail": f"Pattern matched: {pat}"}
+                    )
 
         else:
             score = 0.1
 
         dim_scores[dim_str] = round(score, 3)
         if score >= 0.5 and dim_str != "prompt_injection":
-            flags.append({"dimension": dim_str, "detail": f"Score {score:.2f} above threshold."})
+            flags.append(
+                {"dimension": dim_str, "detail": f"Score {score:.2f} above threshold."}
+            )
 
     dim_scores = {k: round(v, 3) for k, v in dim_scores.items()}
     risk_score = round(max(dim_scores.values()) if dim_scores else 0.0, 3)
@@ -370,35 +416,43 @@ def score_risk(output, context=None, dimensions=None):
 
 
 _PII_PATTERNS = [
-    (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', "email"),
-    (r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', "phone_us"),
-    (r'\b\d{3}-\d{2}-\d{4}\b', "ssn"),
-    (r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b', "credit_card"),
+    (r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "email"),
+    (r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b", "phone_us"),
+    (r"\b\d{3}-\d{2}-\d{4}\b", "ssn"),
+    (r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b", "credit_card"),
 ]
 
 _HARMFUL_PATTERNS = [
-    r'(?i)\b(?:password|passwd|secret_?key|api_?key)\s*[:=]\s*\S+',
+    r"(?i)\b(?:password|passwd|secret_?key|api_?key)\s*[:=]\s*\S+",
 ]
 
 _LEAKAGE_PATTERNS = [
-    r'(?i)(?:system prompt|you are a|your instructions are)',
-    r'(?i)<\|?(?:system|im_start)\|?>',
+    r"(?i)(?:system prompt|you are a|your instructions are)",
+    r"(?i)<\|?(?:system|im_start)\|?>",
 ]
 
 
-def _deep_sanitize(obj, *, removals, remove_pii, remove_harmful, remove_prompt_leakage, path=""):
+def _deep_sanitize(
+    obj, *, removals, remove_pii, remove_harmful, remove_prompt_leakage, path=""
+):
     """Recursively sanitize strings inside any nested structure."""
     if isinstance(obj, str):
         return _sanitize_string(
-            obj, removals=removals, path=path,
-            remove_pii=remove_pii, remove_harmful=remove_harmful,
+            obj,
+            removals=removals,
+            path=path,
+            remove_pii=remove_pii,
+            remove_harmful=remove_harmful,
             remove_prompt_leakage=remove_prompt_leakage,
         )
     if isinstance(obj, dict):
         return {
             k: _deep_sanitize(
-                v, removals=removals, path=f"{path}.{k}" if path else k,
-                remove_pii=remove_pii, remove_harmful=remove_harmful,
+                v,
+                removals=removals,
+                path=f"{path}.{k}" if path else k,
+                remove_pii=remove_pii,
+                remove_harmful=remove_harmful,
                 remove_prompt_leakage=remove_prompt_leakage,
             )
             for k, v in obj.items()
@@ -406,8 +460,11 @@ def _deep_sanitize(obj, *, removals, remove_pii, remove_harmful, remove_prompt_l
     if isinstance(obj, list):
         return [
             _deep_sanitize(
-                item, removals=removals, path=f"{path}[{i}]",
-                remove_pii=remove_pii, remove_harmful=remove_harmful,
+                item,
+                removals=removals,
+                path=f"{path}[{i}]",
+                remove_pii=remove_pii,
+                remove_harmful=remove_harmful,
                 remove_prompt_leakage=remove_prompt_leakage,
             )
             for i, item in enumerate(obj)
@@ -415,7 +472,9 @@ def _deep_sanitize(obj, *, removals, remove_pii, remove_harmful, remove_prompt_l
     return obj
 
 
-def _sanitize_string(text, *, removals, path, remove_pii, remove_harmful, remove_prompt_leakage):
+def _sanitize_string(
+    text, *, removals, path, remove_pii, remove_harmful, remove_prompt_leakage
+):
     """Apply regex-based sanitization to a single string."""
     result = text
 
@@ -430,13 +489,17 @@ def _sanitize_string(text, *, removals, path, remove_pii, remove_harmful, remove
         for pattern in _HARMFUL_PATTERNS:
             if re.search(pattern, result):
                 result = re.sub(pattern, "[REMOVED]", result)
-                removals.append({"field": path, "pattern": "harmful_content", "action": "removed"})
+                removals.append(
+                    {"field": path, "pattern": "harmful_content", "action": "removed"}
+                )
 
     if remove_prompt_leakage:
         for pattern in _LEAKAGE_PATTERNS:
             if re.search(pattern, result):
                 result = re.sub(pattern, "[FILTERED]", result)
-                removals.append({"field": path, "pattern": "prompt_leakage", "action": "filtered"})
+                removals.append(
+                    {"field": path, "pattern": "prompt_leakage", "action": "filtered"}
+                )
 
     return result
 

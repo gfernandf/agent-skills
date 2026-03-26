@@ -16,6 +16,7 @@ Usage::
 
 Requires: ``semantic-kernel`` (``pip install semantic-kernel``)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -97,7 +98,10 @@ def build_sk_functions(
         def _sk_fn(inputs: str = "{}") -> str:
             """Execute the agent-skills capability via HTTP."""
             import json
-            payload = {"inputs": json.loads(inputs) if isinstance(inputs, str) else inputs}
+
+            payload = {
+                "inputs": json.loads(inputs) if isinstance(inputs, str) else inputs
+            }
             result = _call_capability(_base, _cid, payload, _key)
             return json.dumps(result, ensure_ascii=False)
 

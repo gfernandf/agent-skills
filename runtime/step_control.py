@@ -81,6 +81,7 @@ from runtime.step_expression import ExpressionError, evaluate, evaluate_bool
 
 # ── Parsed config structures ─────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class RetryPolicy:
     max_attempts: int
@@ -202,6 +203,7 @@ class ScatterConfig:
 
 
 # ── Control flow helpers ─────────────────────────────────────────────────────
+
 
 class StepSkipped(Exception):
     """Raised to signal the step should be skipped (condition was false)."""
@@ -398,7 +400,9 @@ def execute_scatter(
 
     cap_ids = scatter.capabilities
 
-    def _run(cap_id: str) -> tuple[str, dict[str, Any], dict[str, Any] | None, Exception | None]:
+    def _run(
+        cap_id: str,
+    ) -> tuple[str, dict[str, Any], dict[str, Any] | None, Exception | None]:
         try:
             produced, meta = invoke_with_retry(lambda: invoke_fn(cap_id), retry)
             return cap_id, produced, meta, None

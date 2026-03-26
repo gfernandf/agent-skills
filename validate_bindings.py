@@ -51,19 +51,18 @@ def validate_binding_inputs():
             # Check for missing inputs
             missing_inputs = referenced_inputs - capability_inputs
             if missing_inputs:
-                issues_found.append({
-                    'binding_id': binding_id,
-                    'capability_id': binding.capability_id,
-                    'missing_inputs': sorted(missing_inputs),
-                    'capability_inputs': sorted(capability_inputs),
-                    'referenced_inputs': sorted(referenced_inputs)
-                })
+                issues_found.append(
+                    {
+                        "binding_id": binding_id,
+                        "capability_id": binding.capability_id,
+                        "missing_inputs": sorted(missing_inputs),
+                        "capability_inputs": sorted(capability_inputs),
+                        "referenced_inputs": sorted(referenced_inputs),
+                    }
+                )
 
         except Exception as e:
-            issues_found.append({
-                'binding_id': binding_id,
-                'error': str(e)
-            })
+            issues_found.append({"binding_id": binding_id, "error": str(e)})
 
     return issues_found
 
@@ -72,7 +71,7 @@ def _collect_template_inputs(template: dict, inputs: set):
     """Recursively collect all input.* references from a template."""
     for key, value in template.items():
         if isinstance(value, str) and value.startswith("input."):
-            input_name = value[len("input."):]
+            input_name = value[len("input.") :]
             inputs.add(input_name)
         elif isinstance(value, dict):
             _collect_template_inputs(value, inputs)
@@ -93,7 +92,7 @@ def main():
     print()
 
     for issue in issues:
-        if 'error' in issue:
+        if "error" in issue:
             print(f"Binding: {issue['binding_id']}")
             print(f"  Error: {issue['error']}")
         else:

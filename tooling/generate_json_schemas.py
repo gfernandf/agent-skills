@@ -3,10 +3,10 @@
 Usage:
     python tooling/generate_json_schemas.py
 """
+
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -158,7 +158,10 @@ SCHEMAS: dict[str, dict[str, Any]] = {
         "properties": {
             "step_id": {"type": "string"},
             "uses": {"type": "string"},
-            "status": {"type": "string", "enum": ["completed", "failed", "degraded", "skipped"]},
+            "status": {
+                "type": "string",
+                "enum": ["completed", "failed", "degraded", "skipped"],
+            },
             "resolved_input": {"type": "object"},
             "produced_output": {"type": ["object", "null"]},
             "binding_id": {"type": ["string", "null"]},
@@ -196,7 +199,15 @@ SCHEMAS: dict[str, dict[str, Any]] = {
         "title": "SkillSpec",
         "description": "Runtime-normalized skill definition.",
         "type": "object",
-        "required": ["id", "version", "name", "description", "inputs", "outputs", "steps"],
+        "required": [
+            "id",
+            "version",
+            "name",
+            "description",
+            "inputs",
+            "outputs",
+            "steps",
+        ],
         "properties": {
             "id": {"type": "string"},
             "version": {"type": "string"},
@@ -230,7 +241,10 @@ SCHEMAS: dict[str, dict[str, Any]] = {
             "id": {"type": "string"},
             "uses": {"type": "string"},
             "input_mapping": {"type": "object"},
-            "output_mapping": {"type": "object", "additionalProperties": {"type": "string"}},
+            "output_mapping": {
+                "type": "object",
+                "additionalProperties": {"type": "string"},
+            },
             "config": {"type": "object"},
         },
     },
@@ -290,7 +304,11 @@ SCHEMAS: dict[str, dict[str, Any]] = {
             "trace_enabled": {"type": "boolean", "default": True},
             "required_conformance_profile": {"type": ["string", "null"]},
             "audit_mode": {"type": ["string", "null"]},
-            "trust_level": {"type": "string", "default": "standard", "enum": ["sandbox", "standard", "elevated", "privileged"]},
+            "trust_level": {
+                "type": "string",
+                "default": "standard",
+                "enum": ["sandbox", "standard", "elevated", "privileged"],
+            },
             "max_lineage_timeout_seconds": {"type": ["number", "null"]},
             "max_workers": {"type": ["integer", "null"]},
             "default_step_timeout_seconds": {"type": ["number", "null"]},
@@ -310,7 +328,14 @@ SCHEMAS: dict[str, dict[str, Any]] = {
                 "type": "array",
                 "items": {
                     "type": "string",
-                    "enum": ["skill.started", "skill.completed", "skill.failed", "run.completed", "run.failed", "*"],
+                    "enum": [
+                        "skill.started",
+                        "skill.completed",
+                        "skill.failed",
+                        "run.completed",
+                        "run.failed",
+                        "*",
+                    ],
                 },
             },
             "secret": {"type": "string"},
@@ -324,7 +349,9 @@ def main() -> None:
     _SCHEMA_DIR.mkdir(parents=True, exist_ok=True)
     for name, schema in SCHEMAS.items():
         path = _SCHEMA_DIR / f"{name}.schema.json"
-        path.write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        path.write_text(
+            json.dumps(schema, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
     print(f"Generated {len(SCHEMAS)} schemas in {_SCHEMA_DIR}")
 
 

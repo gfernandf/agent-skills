@@ -74,13 +74,15 @@ def rank_skills_with_evidence(
         elif (skill.status or "") == "experimental":
             _add_component("status_experimental", 0.05, "status=experimental")
 
-        text = " ".join([
-            skill.skill_id,
-            skill.name,
-            skill.description,
-            " ".join(skill.tags),
-            skill.domain or "",
-        ]).lower()
+        text = " ".join(
+            [
+                skill.skill_id,
+                skill.name,
+                skill.description,
+                " ".join(skill.tags),
+                skill.domain or "",
+            ]
+        ).lower()
 
         overlap = len({t for t in tokens if t in text})
         if overlap > 0:
@@ -100,7 +102,11 @@ def rank_skills_with_evidence(
             _add_component("usage_30d", usage_bonus, f"usage_30d={int(exec_30d)}")
 
         successes_30d = ev.get("successes_30d")
-        if isinstance(exec_30d, (int, float)) and isinstance(successes_30d, (int, float)) and exec_30d > 0:
+        if (
+            isinstance(exec_30d, (int, float))
+            and isinstance(successes_30d, (int, float))
+            and exec_30d > 0
+        ):
             success_rate = float(successes_30d) / float(exec_30d)
             if success_rate >= 0.9:
                 _add_component("success_rate_high", 0.08, "success_rate_high")
@@ -118,7 +124,11 @@ def rank_skills_with_evidence(
         overall = ev.get("overall_score")
         if isinstance(overall, (int, float)):
             overall_bonus = min(0.10, max(0.0, float(overall) / 1000.0))
-            _add_component("overall_score", overall_bonus, f"overall_score={round(float(overall), 1)}")
+            _add_component(
+                "overall_score",
+                overall_bonus,
+                f"overall_score={round(float(overall), 1)}",
+            )
 
         ranked.append(
             DiscoverResult(
@@ -150,6 +160,7 @@ def _tokenize(text: str) -> set[str]:
 
 # ── P4 — Inverted Index for O(1) token-based skill lookup ──────────────
 
+
 class SkillSearchIndex:
     """Pre-built inverted index that maps tokens → skill IDs.
 
@@ -168,13 +179,15 @@ class SkillSearchIndex:
         self._skills.clear()
         for skill in skills:
             self._skills[skill.skill_id] = skill
-            text = " ".join([
-                skill.skill_id,
-                skill.name,
-                skill.description,
-                " ".join(skill.tags),
-                skill.domain or "",
-            ])
+            text = " ".join(
+                [
+                    skill.skill_id,
+                    skill.name,
+                    skill.description,
+                    " ".join(skill.tags),
+                    skill.domain or "",
+                ]
+            )
             for token in _tokenize(text):
                 self._token_to_skills.setdefault(token, set()).add(skill.skill_id)
 

@@ -5,6 +5,7 @@ When the ``opentelemetry-api`` package is installed the module exposes real
 spans; otherwise every public helper degrades gracefully to no-ops so the
 rest of the runtime never needs to guard imports.
 """
+
 from __future__ import annotations
 
 import functools
@@ -30,6 +31,7 @@ _TRACER_NAME = "agent-skills"
 # ---------------------------------------------------------------------------
 # Public helpers
 # ---------------------------------------------------------------------------
+
 
 def otel_available() -> bool:
     """Return ``True`` when the OTel SDK is importable."""
@@ -89,7 +91,9 @@ def traced(name: str | None = None, **static_attrs: Any):
             if not _HAS_OTEL:
                 return fn(*args, **kwargs)
             tracer = _otel_trace.get_tracer(_TRACER_NAME)
-            with tracer.start_as_current_span(span_name, attributes=static_attrs) as span:
+            with tracer.start_as_current_span(
+                span_name, attributes=static_attrs
+            ) as span:
                 try:
                     result = fn(*args, **kwargs)
                     return result
@@ -105,6 +109,7 @@ def traced(name: str | None = None, **static_attrs: Any):
 # ---------------------------------------------------------------------------
 # No-op helpers (zero-cost when the SDK is not installed)
 # ---------------------------------------------------------------------------
+
 
 class _NoopSpan:
     """Minimal duck-typed span so callers can always call set_attribute."""

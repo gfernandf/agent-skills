@@ -17,7 +17,9 @@ from gateway.core import SkillGateway
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run MCP tool bridge over stdio.")
-    parser.add_argument("--runtime-root", type=Path, default=Path(__file__).resolve().parent.parent)
+    parser.add_argument(
+        "--runtime-root", type=Path, default=Path(__file__).resolve().parent.parent
+    )
     parser.add_argument("--registry-root", type=Path, default=None)
     parser.add_argument("--host-root", type=Path, default=None)
     args = parser.parse_args()

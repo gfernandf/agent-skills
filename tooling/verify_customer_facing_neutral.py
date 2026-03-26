@@ -28,7 +28,9 @@ def _http_get_json(url: str) -> dict:
 
 def _http_post_json(url: str, payload: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    req = urllib.request.Request(
+        url, data=data, headers={"Content-Type": "application/json"}, method="POST"
+    )
     with urllib.request.urlopen(req, timeout=10) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
@@ -56,7 +58,9 @@ def main() -> int:
         if health.get("status") != "ok":
             raise RuntimeError("health endpoint did not return status=ok")
 
-        desc = _http_get_json("http://127.0.0.1:8083/v1/skills/agent.plan-from-objective/describe")
+        desc = _http_get_json(
+            "http://127.0.0.1:8083/v1/skills/agent.plan-from-objective/describe"
+        )
         if desc.get("id") != "agent.plan-from-objective":
             raise RuntimeError("describe endpoint returned unexpected skill id")
 

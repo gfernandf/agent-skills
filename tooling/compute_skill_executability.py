@@ -13,7 +13,9 @@ from runtime.capability_loader import YamlCapabilityLoader
 from runtime.skill_loader import YamlSkillLoader
 
 
-def compute_skill_executability(registry_root: Path, runtime_root: Path, host_root: Path | None = None) -> dict:
+def compute_skill_executability(
+    registry_root: Path, runtime_root: Path, host_root: Path | None = None
+) -> dict:
     """
     Determine which skills are executable given the current binding registry.
 
@@ -57,10 +59,12 @@ def compute_skill_executability(registry_root: Path, runtime_root: Path, host_ro
                 missing_capabilities.append(capability_id)
 
         if missing_capabilities:
-            non_executable.append({
-                "skill": skill.id,
-                "missing_capabilities": sorted(set(missing_capabilities)),
-            })
+            non_executable.append(
+                {
+                    "skill": skill.id,
+                    "missing_capabilities": sorted(set(missing_capabilities)),
+                }
+            )
         else:
             executable.append(skill.id)
 
@@ -83,11 +87,17 @@ def _load_yaml(path: Path):
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="compute_skill_executability")
-    parser.add_argument("--registry-root", type=Path, default=None, help="Path to the registry root")
-    parser.add_argument("--runtime-root", type=Path, default=None, help="Path to the runtime root")
-    parser.add_argument("--host-root", type=Path, default=None, help="Path to the host root")
+    parser.add_argument(
+        "--registry-root", type=Path, default=None, help="Path to the registry root"
+    )
+    parser.add_argument(
+        "--runtime-root", type=Path, default=None, help="Path to the runtime root"
+    )
+    parser.add_argument(
+        "--host-root", type=Path, default=None, help="Path to the host root"
+    )
     args = parser.parse_args()
-    
+
     registry_root = args.registry_root or Path.cwd().parent / "agent-skill-registry"
     runtime_root = args.runtime_root or Path.cwd()
     host_root = args.host_root or runtime_root

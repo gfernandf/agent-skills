@@ -91,9 +91,9 @@ def run_skill_test(engine, spec):
     input_file = spec["input_file"]
     expected = spec["expected_outputs"]
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  SKILL: {skill_id}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     with open(input_file, encoding="utf-8") as f:
         inputs = json.load(f)
@@ -104,14 +104,22 @@ def run_skill_test(engine, spec):
     try:
         result = engine.execute(req)
     except Exception as exc:
-        print(f"  STATUS       : EXCEPTION")
+        print("  STATUS       : EXCEPTION")
         print(f"  ERROR        : {exc}")
         return False
 
     print(f"  STATUS       : {result.status}")
-    steps_done = len(result.state.step_results) if hasattr(result, 'state') and result.state else 0
+    steps_done = (
+        len(result.state.step_results)
+        if hasattr(result, "state") and result.state
+        else 0
+    )
     print(f"  STEPS        : {steps_done}")
-    duration = getattr(result.state, 'duration_ms', 0) if hasattr(result, 'state') and result.state else 0
+    duration = (
+        getattr(result.state, "duration_ms", 0)
+        if hasattr(result, "state") and result.state
+        else 0
+    )
     print(f"  DURATION_MS  : {round(duration)}")
 
     if result.status != "completed":
@@ -162,14 +170,14 @@ def main():
         except Exception:
             failed += 1
             errors.append(spec["skill_id"])
-            print(f"  EXCEPTION:")
+            print("  EXCEPTION:")
             traceback.print_exc()
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  SUMMARY: {passed} passed, {failed} failed out of {passed + failed}")
     if errors:
         print(f"  FAILED : {errors}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     sys.exit(0 if failed == 0 else 1)
 

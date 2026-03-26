@@ -41,9 +41,11 @@ def _lock_file(f) -> None:
     """Acquire an exclusive advisory lock (cross-platform)."""
     if os.name == "nt":
         import msvcrt
+
         msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
     else:
         import fcntl
+
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
 
 
@@ -51,19 +53,27 @@ def _unlock_file(f) -> None:
     """Release the advisory lock."""
     if os.name == "nt":
         import msvcrt
+
         try:
             msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
         except OSError:
             pass
     else:
         import fcntl
+
         fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 
 class AuditRecorder:
     def __init__(self, runtime_root: Path) -> None:
-        env_default = os.getenv("AGENT_SKILLS_AUDIT_DEFAULT_MODE", _DEFAULT_AUDIT_MODE).strip().lower()
-        self.default_mode = env_default if env_default in _VALID_AUDIT_MODES else _DEFAULT_AUDIT_MODE
+        env_default = (
+            os.getenv("AGENT_SKILLS_AUDIT_DEFAULT_MODE", _DEFAULT_AUDIT_MODE)
+            .strip()
+            .lower()
+        )
+        self.default_mode = (
+            env_default if env_default in _VALID_AUDIT_MODES else _DEFAULT_AUDIT_MODE
+        )
         configured_path = os.getenv("AGENT_SKILLS_AUDIT_PATH", "").strip()
 
         if configured_path:
@@ -82,10 +92,7 @@ class AuditRecorder:
         candidate = str(requested_mode).strip().lower()
         if candidate not in _VALID_AUDIT_MODES:
             raise InvalidExecutionOptionsError(
-                (
-                    "Invalid audit_mode. Supported values are: "
-                    "off, standard, full."
-                )
+                ("Invalid audit_mode. Supported values are: off, standard, full.")
             )
         return candidate
 
@@ -120,12 +127,16 @@ class AuditRecorder:
         # Integrity chain: attach previous record hash
         record["_prev_hash"] = self._prev_hash
         # Compute record hash (deterministic serialization, excluding _record_hmac)
-        record_json = json.dumps(record, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        record_json = json.dumps(
+            record, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+        )
         record_hash = hashlib.sha256(record_json.encode()).hexdigest()
         record["_record_hash"] = record_hash
         # HMAC signature when key is configured
         if self._hmac_key:
-            record["_record_hmac"] = _hmac_mod.new(self._hmac_key, record_json.encode(), hashlib.sha256).hexdigest()
+            record["_record_hmac"] = _hmac_mod.new(
+                self._hmac_key, record_json.encode(), hashlib.sha256
+            ).hexdigest()
         self._prev_hash = record_hash
 
         self.audit_file.parent.mkdir(parents=True, exist_ok=True)
@@ -154,7 +165,12 @@ class AuditRecorder:
                 "warning": "audit file not found",
             }
 
-        if not purge_all and trace_id is None and skill_id is None and older_than_days is None:
+        if (
+            not purge_all
+            and trace_id is None
+            and skill_id is None
+            and older_than_days is None
+        ):
             raise InvalidExecutionOptionsError(
                 "Provide at least one purge filter (--trace-id, --skill-id, --older-than-days) or use --all."
             )
@@ -208,7 +224,9 @@ class AuditRecorder:
                 # Atomic replace: write to temp file then rename over original.
                 parent = self.audit_file.parent
                 fd, tmp_path = tempfile.mkstemp(
-                    dir=str(parent), prefix=".audit_purge_", suffix=".tmp",
+                    dir=str(parent),
+                    prefix=".audit_purge_",
+                    suffix=".tmp",
                 )
                 try:
                     with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as tmp:
@@ -265,14 +283,25 @@ class AuditRecorder:
 
                 stored_prev = record.get("_prev_hash")
                 if stored_prev is not None and stored_prev != prev_hash:
-                    errors.append(f"line {lineno}: chain broken (expected prev={prev_hash[:12]}…, got {stored_prev[:12]}…)")
+                    errors.append(
+                        f"line {lineno}: chain broken (expected prev={prev_hash[:12]}…, got {stored_prev[:12]}…)"
+                    )
                     if first_broken is None:
                         first_broken = lineno
 
                 stored_hash = record.get("_record_hash")
                 # Recompute: remove _record_hash and _record_hmac, serialize, hash
-                verify_record = {k: v for k, v in record.items() if k not in ("_record_hash", "_record_hmac")}
-                computed_json = json.dumps(verify_record, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+                verify_record = {
+                    k: v
+                    for k, v in record.items()
+                    if k not in ("_record_hash", "_record_hmac")
+                }
+                computed_json = json.dumps(
+                    verify_record,
+                    sort_keys=True,
+                    ensure_ascii=True,
+                    separators=(",", ":"),
+                )
                 computed_hash = hashlib.sha256(computed_json.encode()).hexdigest()
 
                 if stored_hash is not None and stored_hash != computed_hash:
@@ -283,7 +312,9 @@ class AuditRecorder:
                 # HMAC verification (optional)
                 stored_hmac = record.get("_record_hmac")
                 if hmac_key and stored_hmac:
-                    expected_hmac = _hmac_mod.new(hmac_key, computed_json.encode(), hashlib.sha256).hexdigest()
+                    expected_hmac = _hmac_mod.new(
+                        hmac_key, computed_json.encode(), hashlib.sha256
+                    ).hexdigest()
                     if not _hmac_mod.compare_digest(stored_hmac, expected_hmac):
                         errors.append(f"line {lineno}: HMAC verification failed")
                         if first_broken is None:
@@ -329,7 +360,9 @@ class AuditRecorder:
                 "required_conformance_profile": result.required_conformance_profile,
                 "resolved_input_hash": self._stable_hash(result.resolved_input),
                 "produced_output_hash": self._stable_hash(result.produced_output),
-                "error_message": self._truncate_str(result.error_message) if result.error_message else None,
+                "error_message": self._truncate_str(result.error_message)
+                if result.error_message
+                else None,
             }
 
             if mode == "full":
@@ -408,9 +441,20 @@ class AuditRecorder:
 
     def _stable_json(self, value: Any) -> str:
         try:
-            return json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"), default=self._json_default)
+            return json.dumps(
+                value,
+                sort_keys=True,
+                ensure_ascii=True,
+                separators=(",", ":"),
+                default=self._json_default,
+            )
         except Exception:
-            return json.dumps(self._json_default(value), sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+            return json.dumps(
+                self._json_default(value),
+                sort_keys=True,
+                ensure_ascii=True,
+                separators=(",", ":"),
+            )
 
     def _json_default(self, value: Any) -> Any:
         if isinstance(value, datetime):
@@ -422,7 +466,9 @@ class AuditRecorder:
                 return repr(value)
         return repr(value)
 
-    def _duration_ms(self, started_at: datetime | None, finished_at: datetime | None) -> float | None:
+    def _duration_ms(
+        self, started_at: datetime | None, finished_at: datetime | None
+    ) -> float | None:
         if started_at is None or finished_at is None:
             return None
         return round((finished_at - started_at).total_seconds() * 1000.0, 3)
@@ -475,7 +521,9 @@ class AuditRecorder:
 
         if isinstance(value, (list, tuple, set)):
             seq = list(value)
-            sanitized = [self._sanitize(v, key_path) for v in seq[:_MAX_COLLECTION_ITEMS]]
+            sanitized = [
+                self._sanitize(v, key_path) for v in seq[:_MAX_COLLECTION_ITEMS]
+            ]
             if len(seq) > _MAX_COLLECTION_ITEMS:
                 sanitized.append(f"...[truncated:{len(seq) - _MAX_COLLECTION_ITEMS}]")
             return sanitized

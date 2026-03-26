@@ -8,6 +8,7 @@ request:
   agents: input.agents
 response:
   route: response.route
+  confidence: response.confidence
 metadata:
   description: Official binding for agent.input.route using the agent_baseline service.
   status: stable

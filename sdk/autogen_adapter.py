@@ -15,6 +15,7 @@ Usage::
 
 Compatible with AutoGen 0.2+ (function-based tool registration).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -92,10 +93,12 @@ def build_autogen_tools(
         _tool_fn.__name__ = cap_id.replace(".", "_")
         _tool_fn.__doc__ = description
 
-        tools.append({
-            "name": cap_id.replace(".", "_"),
-            "description": description,
-            "function": _tool_fn,
-        })
+        tools.append(
+            {
+                "name": cap_id.replace(".", "_"),
+                "description": description,
+                "function": _tool_fn,
+            }
+        )
 
     return tools

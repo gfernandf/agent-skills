@@ -4,6 +4,7 @@ Example: Using the agent-skills Python client.
 Demonstrates synchronous, asynchronous, and streaming execution.
 Requires a running server: agent-skills serve
 """
+
 from sdk.python.agent_skills_client import AgentSkillsClient
 
 

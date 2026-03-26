@@ -26,7 +26,7 @@ def split_problem(problem, strategy, context=None, max_components=None):
             "id": f"c{i}",
             "label": f"Component {i} ({strategy})",
             "description": f"Dimension {i} of '{prefix}' decomposed by {strategy}.",
-            "dependencies": [f"c{i-1}"] if i > 1 else [],
+            "dependencies": [f"c{i - 1}"] if i > 1 else [],
             "analysis_order": i,
         }
         components.append(comp)
@@ -83,7 +83,11 @@ def extract_risks(target, context=None, risk_scope=None):
     ]
 
     mitigation_ideas = [
-        {"risk_id": "r1", "suggestion": "Validate key inputs before proceeding.", "effort_hint": "low"},
+        {
+            "risk_id": "r1",
+            "suggestion": "Validate key inputs before proceeding.",
+            "effort_hint": "low",
+        },
     ]
 
     return {
@@ -109,16 +113,22 @@ def cluster_themes(items, hint_labels=None, max_clusters=None, context=None):
     max_clusters = min(max_clusters, 15)
 
     if not items:
-        return {"clusters": [], "unclustered": [], "cluster_quality": {
-            "coherence_score": 0.0, "coverage_ratio": 0.0, "overlap_warnings": [],
-        }}
+        return {
+            "clusters": [],
+            "unclustered": [],
+            "cluster_quality": {
+                "coherence_score": 0.0,
+                "coverage_ratio": 0.0,
+                "overlap_warnings": [],
+            },
+        }
 
     # Determine theme labels
     if hint_labels and len(hint_labels) > 0:
         labels = list(hint_labels[:max_clusters])
     else:
         n = min(len(items), max_clusters, 5)
-        labels = [f"theme_{i+1}" for i in range(n)]
+        labels = [f"theme_{i + 1}" for i in range(n)]
 
     # Build cluster buckets
     buckets = {label: [] for label in labels}
@@ -141,13 +151,15 @@ def cluster_themes(items, hint_labels=None, max_clusters=None, context=None):
                 snippets.append(content[:200])
 
         summary = "; ".join(snippets) if snippets else "No content available."
-        clusters.append({
-            "theme": label,
-            "description": f"Cluster for theme '{label}' containing {len(bucket_items)} items.",
-            "item_ids": item_ids,
-            "summary": summary,
-            "signal_strength": round(len(bucket_items) / len(items), 2),
-        })
+        clusters.append(
+            {
+                "theme": label,
+                "description": f"Cluster for theme '{label}' containing {len(bucket_items)} items.",
+                "item_ids": item_ids,
+                "summary": summary,
+                "signal_strength": round(len(bucket_items) / len(items), 2),
+            }
+        )
 
     assigned_ids = set()
     for c in clusters:

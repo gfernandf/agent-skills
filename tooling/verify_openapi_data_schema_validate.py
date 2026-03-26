@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> int:
-    scenario_path = ROOT / "tooling" / "openapi_scenarios" / "data.schema.validate.mock.json"
+    scenario_path = (
+        ROOT / "tooling" / "openapi_scenarios" / "data.schema.validate.mock.json"
+    )
     cmd = [
         sys.executable,
         str(ROOT / "tooling" / "verify_openapi_bindings.py"),

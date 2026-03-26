@@ -3,6 +3,7 @@
 Uses hypothesis to generate arbitrary inputs and ensure the parser
 never raises unhandled exceptions (no eval/exec leaks, no infinite loops).
 """
+
 from __future__ import annotations
 
 import sys
@@ -15,24 +16,21 @@ _root = Path(__file__).resolve().parent
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-try:
-    from hypothesis import given, settings, assume, HealthCheck
-    from hypothesis import strategies as st
-
-    HAS_HYPOTHESIS = True
-except ImportError:
-    HAS_HYPOTHESIS = False
+hypothesis = pytest.importorskip("hypothesis", reason="hypothesis not installed")
+from hypothesis import given, settings, HealthCheck
+from hypothesis import strategies as st
 
 from runtime.step_expression import evaluate, evaluate_bool
 
 
 # ── Strategies ────────────────────────────────────────────────────────────
 
-_SAFE_CHARS = st.sampled_from(
+_SAFE_ALPHABET = st.sampled_from(
     list("abcdefghijklmnopqrstuvwxyz0123456789_.=!<> '\"()[],-+")
-    + ["not", "and", "or", "in", "true", "false", "null", "none"]
 )
-_EXPR_TEXT = st.text(_SAFE_CHARS, min_size=0, max_size=120)
+_KEYWORDS = st.sampled_from(["not", "and", "or", "in", "true", "false", "null", "none"])
+_EXPR_TOKEN = st.one_of(_SAFE_ALPHABET, _KEYWORDS)
+_EXPR_TEXT = st.lists(_EXPR_TOKEN, min_size=0, max_size=60).map("".join)
 
 _REF_NAMESPACES = ["vars", "inputs", "outputs", "working", "frame", "output"]
 _REF = st.builds(
@@ -49,14 +47,23 @@ _SIMPLE_VALUES = st.one_of(
     st.none(),
 )
 
-_STATE_DICT = st.fixed_dictionaries({
-    "inputs": st.dictionaries(st.from_regex(r"[a-z]{1,8}", fullmatch=True), _SIMPLE_VALUES, max_size=5),
-    "vars": st.dictionaries(st.from_regex(r"[a-z]{1,8}", fullmatch=True), _SIMPLE_VALUES, max_size=5),
-    "outputs": st.dictionaries(st.from_regex(r"[a-z]{1,8}", fullmatch=True), _SIMPLE_VALUES, max_size=3),
-})
+_STATE_DICT = st.fixed_dictionaries(
+    {
+        "inputs": st.dictionaries(
+            st.from_regex(r"[a-z]{1,8}", fullmatch=True), _SIMPLE_VALUES, max_size=5
+        ),
+        "vars": st.dictionaries(
+            st.from_regex(r"[a-z]{1,8}", fullmatch=True), _SIMPLE_VALUES, max_size=5
+        ),
+        "outputs": st.dictionaries(
+            st.from_regex(r"[a-z]{1,8}", fullmatch=True), _SIMPLE_VALUES, max_size=3
+        ),
+    }
+)
 
 
 # ── State mock ────────────────────────────────────────────────────────────
+
 
 class _FakeState:
     """Minimal stand-in for ExecutionState with namespace access."""
@@ -65,28 +72,52 @@ class _FakeState:
         self.inputs = data.get("inputs", {})
         self.vars = data.get("vars", {})
         self.outputs = data.get("outputs", {})
-        self.working = type("W", (), {
-            "artifacts": {}, "entities": [], "options": [],
-            "criteria": [], "evidence": [], "risks": [],
-            "hypotheses": [], "uncertainties": [],
-            "intermediate_decisions": [], "messages": [],
-        })()
-        self.frame = type("F", (), {
-            "goal": None, "context": {}, "constraints": {},
-            "success_criteria": {}, "assumptions": (), "priority": None,
-        })()
-        self.output = type("O", (), {
-            "result": None, "result_type": None, "summary": None, "status_reason": None,
-        })()
+        self.working = type(
+            "W",
+            (),
+            {
+                "artifacts": {},
+                "entities": [],
+                "options": [],
+                "criteria": [],
+                "evidence": [],
+                "risks": [],
+                "hypotheses": [],
+                "uncertainties": [],
+                "intermediate_decisions": [],
+                "messages": [],
+            },
+        )()
+        self.frame = type(
+            "F",
+            (),
+            {
+                "goal": None,
+                "context": {},
+                "constraints": {},
+                "success_criteria": {},
+                "assumptions": (),
+                "priority": None,
+            },
+        )()
+        self.output = type(
+            "O",
+            (),
+            {
+                "result": None,
+                "result_type": None,
+                "summary": None,
+                "status_reason": None,
+            },
+        )()
         self.extensions = {}
         self.step_results = {}
 
 
 # ── Fuzz: evaluate() never crashes ────────────────────────────────────────
 
-@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
-class TestStepExpressionFuzz:
 
+class TestStepExpressionFuzz:
     @given(expr=_EXPR_TEXT, state_data=_STATE_DICT)
     @settings(max_examples=500, suppress_health_check=[HealthCheck.too_slow])
     def test_evaluate_no_unhandled_crash(self, expr: str, state_data: dict):
@@ -114,7 +145,7 @@ class TestStepExpressionFuzz:
         """Reference expressions must resolve or raise cleanly."""
         state = _FakeState(state_data)
         try:
-            result = evaluate(ref, state)
+            evaluate(ref, state)
         except (ValueError, TypeError, KeyError, AttributeError):
             pass
 
@@ -142,5 +173,7 @@ class TestStepExpressionFuzz:
 
         source = inspect.getsource(mod)
         # Allow 'compile' only in comments or strings describing the grammar.
-        assert "eval(" not in source.replace("evaluate(", "").replace("evaluate_bool(", "")
+        assert "eval(" not in source.replace("evaluate(", "").replace(
+            "evaluate_bool(", ""
+        )
         assert "exec(" not in source

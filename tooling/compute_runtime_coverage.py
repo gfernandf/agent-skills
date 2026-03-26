@@ -12,7 +12,9 @@ from runtime.binding_registry import BindingRegistry
 from runtime.capability_loader import YamlCapabilityLoader
 
 
-def compute_runtime_coverage(registry_root: Path, runtime_root: Path, host_root: Path | None = None) -> dict:
+def compute_runtime_coverage(
+    registry_root: Path, runtime_root: Path, host_root: Path | None = None
+) -> dict:
     """
     Compute how many capabilities are executable given the current binding registry.
 
@@ -20,7 +22,7 @@ def compute_runtime_coverage(registry_root: Path, runtime_root: Path, host_root:
     - at least one binding exists for it
     """
 
-    capability_loader = YamlCapabilityLoader(registry_root)
+    YamlCapabilityLoader(registry_root)
     binding_registry = BindingRegistry(runtime_root, host_root)
 
     capabilities_root = registry_root / "capabilities"
@@ -59,11 +61,17 @@ def compute_runtime_coverage(registry_root: Path, runtime_root: Path, host_root:
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="compute_runtime_coverage")
-    parser.add_argument("--registry-root", type=Path, default=None, help="Path to the registry root")
-    parser.add_argument("--runtime-root", type=Path, default=None, help="Path to the runtime root")
-    parser.add_argument("--host-root", type=Path, default=None, help="Path to the host root")
+    parser.add_argument(
+        "--registry-root", type=Path, default=None, help="Path to the registry root"
+    )
+    parser.add_argument(
+        "--runtime-root", type=Path, default=None, help="Path to the runtime root"
+    )
+    parser.add_argument(
+        "--host-root", type=Path, default=None, help="Path to the host root"
+    )
     args = parser.parse_args()
-    
+
     registry_root = args.registry_root or Path.cwd().parent / "agent-skill-registry"
     runtime_root = args.runtime_root or Path.cwd()
     host_root = args.host_root or runtime_root

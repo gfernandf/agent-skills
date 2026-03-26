@@ -77,9 +77,15 @@ def _select_target_ref(runtime_root: Path, target_ref: str | None) -> str:
         )
 
     payload: Any = json.loads(index_path.read_text(encoding="utf-8"))
-    output_ids = payload.get("targets", {}).get("output", []) if isinstance(payload, dict) else []
+    output_ids = (
+        payload.get("targets", {}).get("output", [])
+        if isinstance(payload, dict)
+        else []
+    )
     if not isinstance(output_ids, list) or not output_ids:
-        raise RuntimeError("No output targets available in artifacts/attach_targets/index.json")
+        raise RuntimeError(
+            "No output targets available in artifacts/attach_targets/index.json"
+        )
 
     chosen = output_ids[-1]
     if not isinstance(chosen, str) or not chosen:
@@ -87,7 +93,9 @@ def _select_target_ref(runtime_root: Path, target_ref: str | None) -> str:
     return chosen
 
 
-def _build_trace_events(primary_execution: dict[str, Any], prompt: str, main_skill_id: str) -> list[dict[str, Any]]:
+def _build_trace_events(
+    primary_execution: dict[str, Any], prompt: str, main_skill_id: str
+) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     trace_id = primary_execution.get("trace_id")
     status = primary_execution.get("status")
@@ -112,9 +120,17 @@ def _build_trace_events(primary_execution: dict[str, Any], prompt: str, main_ski
         for idx, item in enumerate(raw_events):
             if not isinstance(item, dict):
                 continue
-            evt_type = item.get("type") if isinstance(item.get("type"), str) else "unknown"
-            ts = item.get("timestamp") if isinstance(item.get("timestamp"), str) else None
-            step_id = item.get("step_id") if isinstance(item.get("step_id"), str) else None
+            evt_type = (
+                item.get("type") if isinstance(item.get("type"), str) else "unknown"
+            )
+            ts = (
+                item.get("timestamp")
+                if isinstance(item.get("timestamp"), str)
+                else None
+            )
+            step_id = (
+                item.get("step_id") if isinstance(item.get("step_id"), str) else None
+            )
             events.append(
                 {
                     "type": f"primary.{evt_type}",
@@ -137,7 +153,9 @@ def _build_trace_events(primary_execution: dict[str, Any], prompt: str, main_ski
 def _pick_main_skill(discover_results: list[dict[str, Any]]) -> str:
     preferred = ["web.search-summary", "web.fetch-summary", "web.page-summary"]
     ranked_ids = [
-        item.get("id") for item in discover_results if isinstance(item, dict) and isinstance(item.get("id"), str)
+        item.get("id")
+        for item in discover_results
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
     ]
     for skill_id in preferred:
         if skill_id in ranked_ids:
@@ -157,7 +175,10 @@ def _build_main_inputs(main_skill_id: str, prompt: str) -> dict[str, Any]:
             "limit": 5,
         }
     if main_skill_id == "web.fetch-summary":
-        return {"url": "https://www.reuters.com/markets/commodities/", "max_length": 800}
+        return {
+            "url": "https://www.reuters.com/markets/commodities/",
+            "max_length": 800,
+        }
     if main_skill_id == "agent.plan-and-route":
         return {"objective": prompt}
     if main_skill_id == "agent.plan-from-objective":
@@ -166,13 +187,25 @@ def _build_main_inputs(main_skill_id: str, prompt: str) -> dict[str, Any]:
 
 
 def _build_business_result(main_exec: dict[str, Any]) -> dict[str, Any]:
-    outputs = main_exec.get("outputs") if isinstance(main_exec.get("outputs"), dict) else {}
-    raw_summary = outputs.get("summary") if isinstance(outputs.get("summary"), str) else ""
+    outputs = (
+        main_exec.get("outputs") if isinstance(main_exec.get("outputs"), dict) else {}
+    )
+    raw_summary = (
+        outputs.get("summary") if isinstance(outputs.get("summary"), str) else ""
+    )
     results = outputs.get("results") if isinstance(outputs.get("results"), list) else []
 
     text_corpus = f"{raw_summary} {' '.join(str(item) for item in results)}".lower()
-    bullish_hits = sum(1 for token in ("up", "rise", "higher", "bull", "rebound", "tight supply") if token in text_corpus)
-    bearish_hits = sum(1 for token in ("down", "fall", "lower", "bear", "surplus", "weak demand") if token in text_corpus)
+    bullish_hits = sum(
+        1
+        for token in ("up", "rise", "higher", "bull", "rebound", "tight supply")
+        if token in text_corpus
+    )
+    bearish_hits = sum(
+        1
+        for token in ("down", "fall", "lower", "bear", "surplus", "weak demand")
+        if token in text_corpus
+    )
 
     if bullish_hits > bearish_hits:
         thesis = "Sesgo alcista (probable suba)"
@@ -209,7 +242,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Demo MCP autonomous flow: primary problem solving + agent.trace sidecar."
     )
-    parser.add_argument("--runtime-root", type=Path, default=Path(__file__).resolve().parent.parent)
+    parser.add_argument(
+        "--runtime-root", type=Path, default=Path(__file__).resolve().parent.parent
+    )
     parser.add_argument("--registry-root", type=Path, default=None)
     parser.add_argument("--host-root", type=Path, default=None)
     parser.add_argument("--prompt", type=str, default=DEFAULT_PROMPT)
@@ -217,13 +252,19 @@ def main() -> int:
     args = parser.parse_args()
 
     runtime_root = args.runtime_root.resolve()
-    registry_root = (args.registry_root or (runtime_root.parent / "agent-skill-registry")).resolve()
-    host_root = (args.host_root or (runtime_root / "artifacts" / "trace-instance")).resolve()
+    registry_root = (
+        args.registry_root or (runtime_root.parent / "agent-skill-registry")
+    ).resolve()
+    host_root = (
+        args.host_root or (runtime_root / "artifacts" / "trace-instance")
+    ).resolve()
 
     env = dict(os.environ)
     modules_path = host_root / "modules"
     existing_pythonpath = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = f"{modules_path}{';' if existing_pythonpath else ''}{existing_pythonpath}"
+    env["PYTHONPATH"] = (
+        f"{modules_path}{';' if existing_pythonpath else ''}{existing_pythonpath}"
+    )
 
     target_ref = _select_target_ref(runtime_root, args.target_ref)
 
@@ -267,14 +308,18 @@ def main() -> int:
     main_candidates = first.get("2", {}).get("result", {}).get("results", [])
     trace_candidates = first.get("3", {}).get("result", {}).get("results", [])
 
-    main_skill_id = _pick_main_skill(main_candidates if isinstance(main_candidates, list) else [])
+    main_skill_id = _pick_main_skill(
+        main_candidates if isinstance(main_candidates, list) else []
+    )
     trace_skill_id = "agent.trace"
     trace_found = any(
         isinstance(item, dict) and item.get("id") == trace_skill_id
         for item in (trace_candidates if isinstance(trace_candidates, list) else [])
     )
     if not trace_found:
-        raise RuntimeError("agent.trace was not returned by trace discovery in this run")
+        raise RuntimeError(
+            "agent.trace was not returned by trace discovery in this run"
+        )
 
     second = _mcp_call(
         runtime_root=runtime_root,
@@ -333,7 +378,12 @@ def main() -> int:
                             "trace_session_id": "session-mcp-dual-job",
                             "state_mode": "incremental",
                             "mode": "standard",
-                            "output_views": ["decision_graph", "assumptions", "alternative_paths", "summary"],
+                            "output_views": [
+                                "decision_graph",
+                                "assumptions",
+                                "alternative_paths",
+                                "summary",
+                            ],
                             "thresholds": {"max_risk_flags": 2, "min_confidence": 0.4},
                         },
                     },
@@ -347,8 +397,12 @@ def main() -> int:
     if not isinstance(trace_attach, dict):
         raise RuntimeError("Trace attach did not return a valid payload")
 
-    trace_exec = trace_attach.get("execution", {}) if isinstance(trace_attach, dict) else {}
-    trace_outputs = trace_exec.get("outputs", {}) if isinstance(trace_exec, dict) else {}
+    trace_exec = (
+        trace_attach.get("execution", {}) if isinstance(trace_attach, dict) else {}
+    )
+    trace_outputs = (
+        trace_exec.get("outputs", {}) if isinstance(trace_exec, dict) else {}
+    )
 
     summary = {
         "autonomous_prompt": args.prompt,

@@ -18,27 +18,12 @@ from customization.override_intent_loader import OverrideIntentLoader
 from customization.quality_gate import QualityGate
 from customization.service_descriptor_loader import ServiceDescriptorLoader
 
-from runtime.active_binding_map import ActiveBindingMap
-from runtime.binding_executor import BindingExecutor
 from runtime.binding_registry import BindingRegistry
 from runtime.audit import AuditRecorder
-from runtime.binding_resolver import BindingResolver
-from runtime.capability_executor import DefaultCapabilityExecutor
 from runtime.capability_loader import YamlCapabilityLoader
 from runtime.execution_engine import ExecutionEngine
-from runtime.execution_planner import ExecutionPlanner
-from runtime.nested_skill_runner import NestedSkillRunner
-from runtime.protocol_router import ProtocolRouter
-from runtime.reference_resolver import ReferenceResolver
-from runtime.request_builder import RequestBuilder
-from runtime.response_mapper import ResponseMapper
-from runtime.service_resolver import ServiceResolver
 from runtime.skill_loader import YamlSkillLoader
 
-from runtime.openapi_invoker import OpenAPIInvoker
-from runtime.openrpc_invoker import OpenRPCInvoker
-from runtime.mcp_invoker import MCPInvoker
-from runtime.pythoncall_invoker import PythonCallInvoker
 from runtime.engine_factory import build_runtime_components
 from runtime.models import ExecutionOptions, ExecutionRequest
 from gateway.core import SkillGateway
@@ -55,9 +40,24 @@ def main() -> None:
 
     # Common arguments for roots
     def add_root_args(cmd_parser):
-        cmd_parser.add_argument("--registry-root", type=Path, default=None, help="Path to the registry root directory")
-        cmd_parser.add_argument("--runtime-root", type=Path, default=None, help="Path to the runtime root directory")
-        cmd_parser.add_argument("--host-root", type=Path, default=None, help="Path to the host root directory")
+        cmd_parser.add_argument(
+            "--registry-root",
+            type=Path,
+            default=None,
+            help="Path to the registry root directory",
+        )
+        cmd_parser.add_argument(
+            "--runtime-root",
+            type=Path,
+            default=None,
+            help="Path to the runtime root directory",
+        )
+        cmd_parser.add_argument(
+            "--host-root",
+            type=Path,
+            default=None,
+            help="Path to the host root directory",
+        )
         cmd_parser.add_argument(
             "--local-skills-root",
             type=Path,
@@ -73,7 +73,9 @@ def main() -> None:
     run_cmd.add_argument("skill_id")
     run_cmd.add_argument("--input", default=None)
     run_cmd.add_argument("--input-file", default=None)
-    run_cmd.add_argument("--trace-id", default=None, help="Optional trace id for correlation")
+    run_cmd.add_argument(
+        "--trace-id", default=None, help="Optional trace id for correlation"
+    )
     run_cmd.add_argument(
         "--required-conformance-profile",
         choices=["strict", "standard", "experimental"],
@@ -101,8 +103,12 @@ def main() -> None:
         choices=["procedure", "utility", "sidecar"],
         help="Optional role filter",
     )
-    discover_cmd.add_argument("--limit", type=int, default=10, help="Max results to return")
-    discover_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    discover_cmd.add_argument(
+        "--limit", type=int, default=10, help="Max results to return"
+    )
+    discover_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output"
+    )
     add_root_args(discover_cmd)
 
     list_cmd = sub.add_parser("list", help="List skills with optional filters")
@@ -120,10 +126,14 @@ def main() -> None:
         choices=["direct", "attach", "both"],
         help="Filter by classification invocation",
     )
-    list_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    list_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output"
+    )
     add_root_args(list_cmd)
 
-    attach_cmd = sub.add_parser("attach", help="Attach a skill to an existing target and execute")
+    attach_cmd = sub.add_parser(
+        "attach", help="Attach a skill to an existing target and execute"
+    )
     attach_cmd.add_argument("skill_id", help="Skill id to attach")
     attach_cmd.add_argument(
         "--target-type",
@@ -131,11 +141,21 @@ def main() -> None:
         choices=["task", "run", "output", "transcript", "artifact"],
         help="Attach target type",
     )
-    attach_cmd.add_argument("--target-ref", required=True, help="Opaque reference to target instance")
-    attach_cmd.add_argument("--input", default=None, help="Inline JSON object for skill inputs")
-    attach_cmd.add_argument("--input-file", default=None, help="Path to JSON file with skill inputs")
-    attach_cmd.add_argument("--trace-id", default=None, help="Optional trace id for correlation")
-    attach_cmd.add_argument("--include-trace", action="store_true", help="Include execution event trace")
+    attach_cmd.add_argument(
+        "--target-ref", required=True, help="Opaque reference to target instance"
+    )
+    attach_cmd.add_argument(
+        "--input", default=None, help="Inline JSON object for skill inputs"
+    )
+    attach_cmd.add_argument(
+        "--input-file", default=None, help="Path to JSON file with skill inputs"
+    )
+    attach_cmd.add_argument(
+        "--trace-id", default=None, help="Optional trace id for correlation"
+    )
+    attach_cmd.add_argument(
+        "--include-trace", action="store_true", help="Include execution event trace"
+    )
     attach_cmd.add_argument(
         "--required-conformance-profile",
         choices=["strict", "standard", "experimental"],
@@ -148,20 +168,30 @@ def main() -> None:
         default=None,
         help="Audit record mode for this run. Defaults to runtime configuration.",
     )
-    attach_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    attach_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output"
+    )
     add_root_args(attach_cmd)
 
-    gateway_diag_cmd = sub.add_parser("gateway-diagnostics", help="Show gateway cache diagnostics")
-    gateway_diag_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    gateway_diag_cmd = sub.add_parser(
+        "gateway-diagnostics", help="Show gateway cache diagnostics"
+    )
+    gateway_diag_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output"
+    )
     add_root_args(gateway_diag_cmd)
 
-    gateway_reset_cmd = sub.add_parser("gateway-reset-metrics", help="Reset gateway diagnostics metrics")
+    gateway_reset_cmd = sub.add_parser(
+        "gateway-reset-metrics", help="Reset gateway diagnostics metrics"
+    )
     gateway_reset_cmd.add_argument(
         "--clear-cache",
         action="store_true",
         help="Also clear in-memory gateway caches when resetting metrics.",
     )
-    gateway_reset_cmd.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
+    gateway_reset_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output"
+    )
     add_root_args(gateway_reset_cmd)
 
     activate_cmd = sub.add_parser("activate", help="Apply override activation")
@@ -172,7 +202,9 @@ def main() -> None:
     trace_cmd.add_argument("skill_id")
     trace_cmd.add_argument("--input", default=None)
     trace_cmd.add_argument("--input-file", default=None)
-    trace_cmd.add_argument("--trace-id", default=None, help="Optional trace id for correlation")
+    trace_cmd.add_argument(
+        "--trace-id", default=None, help="Optional trace id for correlation"
+    )
     trace_cmd.add_argument(
         "--required-conformance-profile",
         choices=["strict", "standard", "experimental"],
@@ -187,14 +219,21 @@ def main() -> None:
     )
     add_root_args(trace_cmd)
 
-    audit_purge_cmd = sub.add_parser("audit-purge", help="Purge persisted skill execution audit records")
+    audit_purge_cmd = sub.add_parser(
+        "audit-purge", help="Purge persisted skill execution audit records"
+    )
     audit_purge_cmd.add_argument("--trace-id", default=None)
     audit_purge_cmd.add_argument("--skill-id", default=None)
     audit_purge_cmd.add_argument("--older-than-days", type=int, default=None)
-    audit_purge_cmd.add_argument("--all", action="store_true", help="Delete all persisted audit records")
+    audit_purge_cmd.add_argument(
+        "--all", action="store_true", help="Delete all persisted audit records"
+    )
     add_root_args(audit_purge_cmd)
 
-    explain_cap_cmd = sub.add_parser("explain-capability", help="Explain effective binding resolution and conformance chain")
+    explain_cap_cmd = sub.add_parser(
+        "explain-capability",
+        help="Explain effective binding resolution and conformance chain",
+    )
     explain_cap_cmd.add_argument("capability_id")
     explain_cap_cmd.add_argument(
         "--required-conformance-profile",
@@ -204,8 +243,15 @@ def main() -> None:
     )
     add_root_args(explain_cap_cmd)
 
-    gov_cmd = sub.add_parser("skill-governance", help="List skill governance entries from operational quality catalog")
-    gov_cmd.add_argument("--min-state", default=None, choices=["draft", "validated", "lab-verified", "trusted", "recommended"])
+    gov_cmd = sub.add_parser(
+        "skill-governance",
+        help="List skill governance entries from operational quality catalog",
+    )
+    gov_cmd.add_argument(
+        "--min-state",
+        default=None,
+        choices=["draft", "validated", "lab-verified", "trusted", "recommended"],
+    )
     gov_cmd.add_argument("--limit", type=int, default=20)
     add_root_args(gov_cmd)
 
@@ -248,8 +294,12 @@ def main() -> None:
         "package-prepare",
         help="Prepare a registry promotion package from a local skill",
     )
-    package_prepare_target = package_prepare_cmd.add_mutually_exclusive_group(required=True)
-    package_prepare_target.add_argument("--skill-id", default=None, help="Skill ID to package (domain.slug).")
+    package_prepare_target = package_prepare_cmd.add_mutually_exclusive_group(
+        required=True
+    )
+    package_prepare_target.add_argument(
+        "--skill-id", default=None, help="Skill ID to package (domain.slug)."
+    )
     package_prepare_target.add_argument(
         "--skill-file",
         type=Path,
@@ -341,7 +391,9 @@ def main() -> None:
     )
     add_root_args(package_pr_cmd)
 
-    openapi_cmd = sub.add_parser("openapi", help="Run OpenAPI verification and diagnostics")
+    openapi_cmd = sub.add_parser(
+        "openapi", help="Run OpenAPI verification and diagnostics"
+    )
     openapi_sub = openapi_cmd.add_subparsers(dest="openapi_command", required=True)
 
     openapi_verify_bindings_cmd = openapi_sub.add_parser(
@@ -367,10 +419,25 @@ def main() -> None:
     add_root_args(openapi_verify_errors_cmd)
 
     serve_cmd = sub.add_parser("serve", help="Start the HTTP API server")
-    serve_cmd.add_argument("--host", default=None, help="Bind address (default: 127.0.0.1 or AGENT_SKILLS_HOST)")
-    serve_cmd.add_argument("--port", type=int, default=None, help="Bind port (default: 8080 or AGENT_SKILLS_PORT)")
-    serve_cmd.add_argument("--api-key", default=None, help="API key for auth (default: AGENT_SKILLS_API_KEY)")
-    serve_cmd.add_argument("--cors-origins", default=None, help="Comma-separated CORS origins")
+    serve_cmd.add_argument(
+        "--host",
+        default=None,
+        help="Bind address (default: 127.0.0.1 or AGENT_SKILLS_HOST)",
+    )
+    serve_cmd.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Bind port (default: 8080 or AGENT_SKILLS_PORT)",
+    )
+    serve_cmd.add_argument(
+        "--api-key",
+        default=None,
+        help="API key for auth (default: AGENT_SKILLS_API_KEY)",
+    )
+    serve_cmd.add_argument(
+        "--cors-origins", default=None, help="Comma-separated CORS origins"
+    )
     add_root_args(serve_cmd)
 
     args = parser.parse_args()
@@ -382,7 +449,6 @@ def main() -> None:
     local_skills_root = getattr(args, "local_skills_root", None)
 
     if args.command == "run":
-
         _cmd_run(
             registry_root,
             runtime_root,
@@ -397,11 +463,9 @@ def main() -> None:
         )
 
     elif args.command == "describe":
-
         _cmd_describe(registry_root, args.skill_id)
 
     elif args.command == "discover":
-
         _cmd_discover(
             registry_root,
             runtime_root,
@@ -415,7 +479,6 @@ def main() -> None:
         )
 
     elif args.command == "list":
-
         _cmd_list_skills(
             registry_root,
             runtime_root,
@@ -429,7 +492,6 @@ def main() -> None:
         )
 
     elif args.command == "attach":
-
         _cmd_attach(
             registry_root,
             runtime_root,
@@ -448,7 +510,6 @@ def main() -> None:
         )
 
     elif args.command == "gateway-diagnostics":
-
         _cmd_gateway_diagnostics(
             registry_root,
             runtime_root,
@@ -458,7 +519,6 @@ def main() -> None:
         )
 
     elif args.command == "gateway-reset-metrics":
-
         _cmd_gateway_reset_metrics(
             registry_root,
             runtime_root,
@@ -469,11 +529,9 @@ def main() -> None:
         )
 
     elif args.command == "activate":
-
         _cmd_activate(runtime_root, host_root, args.capability)
 
     elif args.command == "trace":
-
         _cmd_trace(
             registry_root,
             runtime_root,
@@ -488,7 +546,6 @@ def main() -> None:
         )
 
     elif args.command == "explain-capability":
-
         _cmd_explain_capability(
             registry_root,
             runtime_root,
@@ -498,7 +555,6 @@ def main() -> None:
         )
 
     elif args.command == "skill-governance":
-
         _cmd_skill_governance(
             registry_root,
             runtime_root,
@@ -508,11 +564,9 @@ def main() -> None:
         )
 
     elif args.command == "doctor":
-
         _cmd_doctor(registry_root, runtime_root, host_root)
 
     elif args.command == "audit-purge":
-
         _cmd_audit_purge(
             runtime_root,
             args.trace_id,
@@ -522,7 +576,6 @@ def main() -> None:
         )
 
     elif args.command == "scaffold":
-
         _cmd_scaffold(
             registry_root,
             runtime_root,
@@ -536,7 +589,6 @@ def main() -> None:
         )
 
     elif args.command == "package-prepare":
-
         _cmd_package_prepare(
             registry_root,
             runtime_root,
@@ -549,7 +601,6 @@ def main() -> None:
         )
 
     elif args.command == "package-validate":
-
         _cmd_package_validate(
             registry_root,
             args.package_path,
@@ -558,7 +609,6 @@ def main() -> None:
         )
 
     elif args.command == "package-pr":
-
         _cmd_package_pr(
             registry_root,
             args.registry_repo_root,
@@ -571,11 +621,9 @@ def main() -> None:
         )
 
     elif args.command == "openapi":
-
         _cmd_openapi(args, runtime_root)
 
     elif args.command == "serve":
-
         _cmd_serve(args, registry_root, runtime_root, host_root)
 
 
@@ -630,9 +678,13 @@ def _cmd_scaffold(
 
     from official_services.scaffold_service import generate_skill_from_prompt
 
-    print(f"[scaffold] Generating skill for: {intent[:80]}{'...' if len(intent) > 80 else ''}")
+    print(
+        f"[scaffold] Generating skill for: {intent[:80]}{'...' if len(intent) > 80 else ''}"
+    )
     has_key = bool(os.environ.get("OPENAI_API_KEY"))
-    print(f"[scaffold] Mode: {'LLM (OpenAI)' if has_key else 'template (no OPENAI_API_KEY found)'}")
+    print(
+        f"[scaffold] Mode: {'LLM (OpenAI)' if has_key else 'template (no OPENAI_API_KEY found)'}"
+    )
 
     result = generate_skill_from_prompt(
         intent_description=intent,
@@ -648,11 +700,15 @@ def _cmd_scaffold(
     capabilities_used: list = result["capabilities_used"]
     validation_errors: list = result["validation_errors"]
     planning_source: str | None = result.get("planning_source")
-    planning_capability_id: str = result.get("planning_capability_id", "agent.plan.generate")
+    planning_capability_id: str = result.get(
+        "planning_capability_id", "agent.plan.generate"
+    )
     scaffolder_mode: str = result.get("scaffolder_mode", "binding-first")
 
     print(f"[scaffold] Suggested id   : {suggested_id}")
-    print(f"[scaffold] Capabilities   : {', '.join(capabilities_used) or '(none detected)'}")
+    print(
+        f"[scaffold] Capabilities   : {', '.join(capabilities_used) or '(none detected)'}"
+    )
     print(f"[scaffold] Planner mode   : {scaffolder_mode}")
     print(
         "[scaffold] Planner source : "
@@ -695,7 +751,7 @@ def _cmd_scaffold(
     print("[scaffold] Next steps:")
     print(f"           1. Review and edit {target_file}")
     print(f"           2. Run: skills run {suggested_id} --input '{{}}' to test")
-    print( "           3. Promote to experimental/ or community/ via PR when ready")
+    print("           3. Promote to experimental/ or community/ via PR when ready")
 
 
 def _cmd_package_prepare(
@@ -713,10 +769,13 @@ def _cmd_package_prepare(
         package_out_root = out_root
     else:
         default_promotion_root = runtime_root / "artifacts" / "promotion_packages"
-        legacy_officialization_root = runtime_root / "artifacts" / "officialization_packages"
+        legacy_officialization_root = (
+            runtime_root / "artifacts" / "officialization_packages"
+        )
         package_out_root = (
             legacy_officialization_root
-            if legacy_officialization_root.exists() and not default_promotion_root.exists()
+            if legacy_officialization_root.exists()
+            and not default_promotion_root.exists()
             else default_promotion_root
         )
     package_out_root.mkdir(parents=True, exist_ok=True)
@@ -758,7 +817,9 @@ def _cmd_package_prepare(
     print(f"[package-prepare] Package root   : {result.package_root}")
     print(f"[package-prepare] Payload skill  : {result.payload_skill_path}")
     print("[package-prepare] Next step:")
-    print(f"  python skills.py package-validate \"{result.package_root}\" --print-pr-command")
+    print(
+        f'  python skills.py package-validate "{result.package_root}" --print-pr-command'
+    )
 
 
 def _cmd_package_validate(
@@ -783,7 +844,9 @@ def _cmd_package_validate(
 
     if json_output:
         if print_pr_command and not result.errors:
-            payload["suggested_pr_flow"] = _build_pr_flow_payload(registry_root, package_path)
+            payload["suggested_pr_flow"] = _build_pr_flow_payload(
+                registry_root, package_path
+            )
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         if result.errors:
             raise SystemExit(2)
@@ -809,7 +872,9 @@ def _cmd_package_validate(
         _print_pr_commands(registry_root, package_path)
 
 
-def _build_pr_flow_payload(registry_root: Path, package_path: Path) -> dict[str, object] | None:
+def _build_pr_flow_payload(
+    registry_root: Path, package_path: Path
+) -> dict[str, object] | None:
     manifest_path = package_path / "package_manifest.json"
     if not manifest_path.exists():
         return None
@@ -823,7 +888,15 @@ def _build_pr_flow_payload(registry_root: Path, package_path: Path) -> dict[str,
     else:
         domain, slug = "unknown", "skill"
 
-    payload_skill = package_path / "payload" / "skills" / target_channel / domain / slug / "skill.yaml"
+    payload_skill = (
+        package_path
+        / "payload"
+        / "skills"
+        / target_channel
+        / domain
+        / slug
+        / "skill.yaml"
+    )
     evidence_answers = package_path / "evidence" / "admission_answers.yaml"
     pr_template = package_path / "pr_body_template.md"
     branch_name = f"promote/{target_channel}/{skill_id}".replace(".", "-")
@@ -849,8 +922,8 @@ def _build_pr_flow_payload(registry_root: Path, package_path: Path) -> dict[str,
             f'git commit -m "Promote {skill_id} to {target_channel}"',
             "git push -u origin HEAD",
             (
-                "gh pr create --title \"Promote "
-                f"{skill_id} to {target_channel}\" --body-file \"{pr_template}\""
+                'gh pr create --title "Promote '
+                f'{skill_id} to {target_channel}" --body-file "{pr_template}"'
             ),
         ],
     }
@@ -861,10 +934,10 @@ def _print_pr_commands(registry_root: Path, package_path: Path) -> None:
     if flow is None:
         return
 
-    branch_name = flow.get("branch")
-    target_rel = flow.get("target_rel")
-    payload_skill = flow.get("payload_skill")
-    pr_template = flow.get("pr_template")
+    flow.get("branch")
+    flow.get("target_rel")
+    flow.get("payload_skill")
+    flow.get("pr_template")
     evidence_answers = flow.get("evidence_answers")
     commands = flow.get("commands", [])
 
@@ -907,7 +980,9 @@ def _cmd_package_pr(
             if original_branch:
                 cp_checkout = _run(["git", "checkout", original_branch])
                 if cp_checkout.returncode == 0:
-                    cleanup_notes.append(f"checked out original branch '{original_branch}'")
+                    cleanup_notes.append(
+                        f"checked out original branch '{original_branch}'"
+                    )
                 else:
                     cleanup_notes.append(
                         "failed to return to original branch before cleanup"
@@ -968,7 +1043,15 @@ def _cmd_package_pr(
     if not repo_root.exists():
         _finish_with_error(f"registry repo root does not exist: {repo_root}")
 
-    payload_skill = package_path / "payload" / "skills" / target_channel / domain / slug / "skill.yaml"
+    payload_skill = (
+        package_path
+        / "payload"
+        / "skills"
+        / target_channel
+        / domain
+        / slug
+        / "skill.yaml"
+    )
     if not payload_skill.exists():
         _finish_with_error(f"missing payload skill: {payload_skill}")
 
@@ -993,7 +1076,9 @@ def _cmd_package_pr(
     }
 
     def _run(cmd: list[str]) -> subprocess.CompletedProcess:
-        return subprocess.run(cmd, cwd=repo_root, check=False, text=True, capture_output=True)
+        return subprocess.run(
+            cmd, cwd=repo_root, check=False, text=True, capture_output=True
+        )
 
     def _require_ok(cp: subprocess.CompletedProcess, label: str) -> None:
         if cp.returncode != 0:
@@ -1062,9 +1147,7 @@ def _cmd_package_pr(
 
     cp = _run(["git", "rev-parse", "--verify", branch_name])
     if cp.returncode == 0:
-        _finish_with_error(
-            f"target branch '{branch_name}' already exists locally"
-        )
+        _finish_with_error(f"target branch '{branch_name}' already exists locally")
 
     # Create branch explicitly from base.
     cp = _run(["git", "checkout", "-b", branch_name, base])
@@ -1080,8 +1163,14 @@ def _cmd_package_pr(
         ([sys.executable, "tools/validate_registry.py"], "validate_registry"),
         ([sys.executable, "tools/generate_catalog.py"], "generate_catalog"),
         ([sys.executable, "tools/governance_guardrails.py"], "governance_guardrails"),
-        ([sys.executable, "tools/capability_governance_guardrails.py"], "capability_governance_guardrails"),
-        ([sys.executable, "tools/enforce_capability_sunset.py"], "enforce_capability_sunset"),
+        (
+            [sys.executable, "tools/capability_governance_guardrails.py"],
+            "capability_governance_guardrails",
+        ),
+        (
+            [sys.executable, "tools/enforce_capability_sunset.py"],
+            "enforce_capability_sunset",
+        ),
     ]:
         cp = _run(cmd)
         _require_ok(cp, label)
@@ -1218,16 +1307,13 @@ def _cmd_run(
         raise ValueError("Use either --input or --input-file")
 
     if input_file:
-
         with open(input_file, "r", encoding="utf-8") as f:
             inputs = json.load(f)
 
     elif input_json:
-
         inputs = json.loads(input_json)
 
     else:
-
         inputs = {}
 
     engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
@@ -1487,16 +1573,13 @@ def _cmd_trace(
         raise ValueError("Use either --input or --input-file")
 
     if input_file:
-
         with open(input_file, "r", encoding="utf-8") as f:
             inputs = json.load(f)
 
     elif input_json:
-
         inputs = json.loads(input_json)
 
     else:
-
         inputs = {}
 
     engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
@@ -1550,13 +1633,11 @@ def _cmd_activate(runtime_root: Path, host_root: Path, capability: str | None) -
     )
 
     if capability:
-
         binding_id = activation.activate_capability(capability)
 
         print(f"{capability} -> {binding_id}")
 
     else:
-
         active = activation.activate_all()
 
         print(json.dumps(active, indent=2, ensure_ascii=False))
@@ -1614,7 +1695,9 @@ def _cmd_doctor(registry_root: Path, runtime_root: Path, host_root: Path) -> Non
                     raw = yaml.safe_load(skill_file.read_text(encoding="utf-8"))
                     skill_id = raw.get("id")
                     if skill_id:
-                        skills[skill_id] = skill_loader._normalize_skill(raw, skill_file)
+                        skills[skill_id] = skill_loader._normalize_skill(
+                            raw, skill_file
+                        )
                 except Exception:
                     pass  # Skip invalid
         ok(f"skills loaded: {len(skills)}")
@@ -1637,7 +1720,9 @@ def _cmd_doctor(registry_root: Path, runtime_root: Path, host_root: Path) -> Non
                         raw = yaml.safe_load(cap_file.read_text(encoding="utf-8"))
                         cap_id = raw.get("id")
                         if cap_id:
-                            capabilities[cap_id] = capability_loader._normalize_capability(raw, cap_file)
+                            capabilities[cap_id] = (
+                                capability_loader._normalize_capability(raw, cap_file)
+                            )
                     except Exception:
                         pass
             ok(f"capabilities loaded: {len(capabilities)}")
@@ -1673,11 +1758,14 @@ def _cmd_doctor(registry_root: Path, runtime_root: Path, host_root: Path) -> Non
                 if not binding_registry.get_bindings_for_capability(cap_id):
                     missing.append(cap_id)
             if missing:
-                warn(f"skill '{skill.id}' not executable (missing bindings for: {', '.join(missing)})")
+                warn(
+                    f"skill '{skill.id}' not executable (missing bindings for: {', '.join(missing)})"
+                )
 
     # Python service checks
     if binding_registry:
         import importlib
+
         for service_id, service in binding_registry._services_by_id.items():
             if service.kind == "pythoncall":
                 try:

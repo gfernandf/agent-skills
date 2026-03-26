@@ -15,7 +15,13 @@ ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_ROOT = ROOT.parent / "agent-skill-registry"
 
 
-def _request_json(url: str, *, method: str = "GET", payload: dict | None = None, headers: dict | None = None) -> tuple[int, dict]:
+def _request_json(
+    url: str,
+    *,
+    method: str = "GET",
+    payload: dict | None = None,
+    headers: dict | None = None,
+) -> tuple[int, dict]:
     body = None
     request_headers = {"Content-Type": "application/json"}
     if headers:

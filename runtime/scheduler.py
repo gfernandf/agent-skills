@@ -51,8 +51,10 @@ class _StateLock:
 
 class _NoopLock:
     """No-op context manager — used when no parallelism is active."""
+
     def __enter__(self):
         return self
+
     def __exit__(self, *exc):
         pass
 
@@ -136,12 +138,9 @@ class Scheduler:
                 if in_degree[dependent] == 0:
                     queue.append(dependent)
         if visited < len(step_map):
-            cycle_members = sorted(
-                sid for sid, deg in in_degree.items() if deg > 0
-            )
+            cycle_members = sorted(sid for sid, deg in in_degree.items() if deg > 0)
             raise InvalidSkillSpecError(
-                "Circular dependency detected among steps: "
-                + ", ".join(cycle_members),
+                "Circular dependency detected among steps: " + ", ".join(cycle_members),
                 skill_id=skill_id,
             )
 
@@ -158,7 +157,8 @@ class Scheduler:
             futures: dict = {}
             while len(completed) + len(failed) < len(plan):
                 ready = [
-                    sid for sid, deps in dependencies.items()
+                    sid
+                    for sid, deps in dependencies.items()
                     if sid not in completed
                     and sid not in failed
                     and sid not in running
@@ -168,8 +168,11 @@ class Scheduler:
                 for sid in ready:
                     step = step_map[sid]
                     future = executor.submit(
-                        step_executor, step, context.state.skill_id,
-                        context, trace_callback,
+                        step_executor,
+                        step,
+                        context.state.skill_id,
+                        context,
+                        trace_callback,
                     )
                     futures[future] = sid
                     running.add(sid)
@@ -180,14 +183,16 @@ class Scheduler:
 
                 if not futures:
                     unresolved = [
-                        sid for sid in step_order
+                        sid
+                        for sid in step_order
                         if sid not in completed and sid not in failed
                     ]
                     if not unresolved:
                         break
                     # Check which unresolved steps are blocked by failures
                     blocked = [
-                        sid for sid in unresolved
+                        sid
+                        for sid in unresolved
                         if dependencies[sid].intersection(failed)
                     ]
                     if blocked:
@@ -198,6 +203,7 @@ class Scheduler:
                             )
                         # fail_fast=False: mark blocked steps as skipped
                         from runtime.models import StepResult as SR
+
                         for sid in blocked:
                             skip = SR(
                                 step_id=sid,
@@ -214,8 +220,7 @@ class Scheduler:
                         continue
                     raise RuntimeError(
                         "Execution deadlock detected. Check circular or "
-                        "unsatisfied dependencies: "
-                        + ", ".join(sorted(unresolved))
+                        "unsatisfied dependencies: " + ", ".join(sorted(unresolved))
                     )
 
                 next(as_completed(futures))
@@ -234,18 +239,23 @@ class Scheduler:
                                 SafetyConfirmationRequiredError,
                                 GateExecutionError,
                             )
-                            if isinstance(exc, (
-                                SafetyTrustLevelError,
-                                SafetyGateFailedError,
-                                SafetyConfirmationRequiredError,
-                                GateExecutionError,
-                            )):
+
+                            if isinstance(
+                                exc,
+                                (
+                                    SafetyTrustLevelError,
+                                    SafetyGateFailedError,
+                                    SafetyConfirmationRequiredError,
+                                    GateExecutionError,
+                                ),
+                            ):
                                 raise
                             # Step executor raised an unhandled exception
                             # (e.g. timeout). Create a failed
                             # StepResult so the scheduler can continue or
                             # abort cleanly instead of deadlocking.
                             from runtime.models import StepResult as SR
+
                             result = SR(
                                 step_id=sid,
                                 uses=step_map[sid].uses,

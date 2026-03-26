@@ -1,16 +1,53 @@
 """Simple keyword-based sentiment analysis — no external deps."""
+
 from __future__ import annotations
 
-_POSITIVE = frozenset({
-    "love", "great", "excellent", "amazing", "wonderful", "fantastic",
-    "good", "happy", "best", "awesome", "enjoy", "perfect", "beautiful",
-    "like", "nice", "brilliant", "outstanding", "superb", "delightful",
-})
-_NEGATIVE = frozenset({
-    "hate", "terrible", "awful", "bad", "worst", "horrible", "ugly",
-    "poor", "disgusting", "boring", "disappointing", "wrong", "sad",
-    "fail", "broken", "useless", "annoying", "dreadful", "miserable",
-})
+_POSITIVE = frozenset(
+    {
+        "love",
+        "great",
+        "excellent",
+        "amazing",
+        "wonderful",
+        "fantastic",
+        "good",
+        "happy",
+        "best",
+        "awesome",
+        "enjoy",
+        "perfect",
+        "beautiful",
+        "like",
+        "nice",
+        "brilliant",
+        "outstanding",
+        "superb",
+        "delightful",
+    }
+)
+_NEGATIVE = frozenset(
+    {
+        "hate",
+        "terrible",
+        "awful",
+        "bad",
+        "worst",
+        "horrible",
+        "ugly",
+        "poor",
+        "disgusting",
+        "boring",
+        "disappointing",
+        "wrong",
+        "sad",
+        "fail",
+        "broken",
+        "useless",
+        "annoying",
+        "dreadful",
+        "miserable",
+    }
+)
 
 
 def analyze_sentiment(text: str) -> dict:

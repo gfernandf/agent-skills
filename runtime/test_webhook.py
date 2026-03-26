@@ -1,10 +1,10 @@
 """Tests for runtime.webhook module."""
+
 from __future__ import annotations
 
 import json
 import os
 import threading
-import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from unittest.mock import patch
 
@@ -14,7 +14,6 @@ os.environ.setdefault("AGENT_SKILLS_WEBHOOKS_SKIP_URL_VALIDATION", "1")
 os.environ.setdefault("AGENT_SKILLS_WEBHOOKS_ALLOW_PRIVATE", "1")
 
 from runtime.webhook import (
-    VALID_EVENT_TYPES,
     WebhookStore,
     WebhookSubscription,
     _sign_payload,
@@ -24,10 +23,13 @@ from runtime.webhook import (
 
 # ── WebhookStore tests ──────────────────────────────────────────
 
+
 class TestWebhookStore:
     def test_register_and_list(self):
         store = WebhookStore()
-        sub = WebhookSubscription(id="s1", url="http://example.com/hook", events=["skill.completed"])
+        sub = WebhookSubscription(
+            id="s1", url="http://example.com/hook", events=["skill.completed"]
+        )
         store.register(sub)
         subs = store.list_subscriptions()
         assert len(subs) == 1
@@ -35,7 +37,9 @@ class TestWebhookStore:
 
     def test_register_invalid_event_type(self):
         store = WebhookStore()
-        sub = WebhookSubscription(id="s1", url="http://example.com/hook", events=["bogus.event"])
+        sub = WebhookSubscription(
+            id="s1", url="http://example.com/hook", events=["bogus.event"]
+        )
         with pytest.raises(ValueError, match="Unknown event type"):
             store.register(sub)
 
@@ -47,7 +51,9 @@ class TestWebhookStore:
 
     def test_unregister(self):
         store = WebhookStore()
-        sub = WebhookSubscription(id="s1", url="http://example.com/hook", events=["skill.completed"])
+        sub = WebhookSubscription(
+            id="s1", url="http://example.com/hook", events=["skill.completed"]
+        )
         store.register(sub)
         assert store.unregister("s1") is True
         assert store.list_subscriptions() == []
@@ -58,8 +64,12 @@ class TestWebhookStore:
 
     def test_get_subscribers_filters_by_event(self):
         store = WebhookStore()
-        store.register(WebhookSubscription(id="s1", url="http://a.com", events=["skill.completed"]))
-        store.register(WebhookSubscription(id="s2", url="http://b.com", events=["skill.failed"]))
+        store.register(
+            WebhookSubscription(id="s1", url="http://a.com", events=["skill.completed"])
+        )
+        store.register(
+            WebhookSubscription(id="s2", url="http://b.com", events=["skill.failed"])
+        )
         store.register(WebhookSubscription(id="s3", url="http://c.com", events=["*"]))
 
         completed = store.get_subscribers("skill.completed")
@@ -70,19 +80,30 @@ class TestWebhookStore:
 
     def test_inactive_subscriber_excluded(self):
         store = WebhookStore()
-        sub = WebhookSubscription(id="s1", url="http://a.com", events=["skill.completed"], active=False)
+        sub = WebhookSubscription(
+            id="s1", url="http://a.com", events=["skill.completed"], active=False
+        )
         store.register(sub)
         assert store.get_subscribers("skill.completed") == []
 
     def test_max_subscriptions_enforced(self):
         store = WebhookStore(max_subscriptions=2)
-        store.register(WebhookSubscription(id="s1", url="http://a.com", events=["skill.completed"]))
-        store.register(WebhookSubscription(id="s2", url="http://b.com", events=["skill.completed"]))
+        store.register(
+            WebhookSubscription(id="s1", url="http://a.com", events=["skill.completed"])
+        )
+        store.register(
+            WebhookSubscription(id="s2", url="http://b.com", events=["skill.completed"])
+        )
         with pytest.raises(RuntimeError, match="Max webhook subscriptions"):
-            store.register(WebhookSubscription(id="s3", url="http://c.com", events=["skill.completed"]))
+            store.register(
+                WebhookSubscription(
+                    id="s3", url="http://c.com", events=["skill.completed"]
+                )
+            )
 
 
 # ── Signature tests ─────────────────────────────────────────────
+
 
 class TestSignature:
     def test_sign_payload_deterministic(self):
@@ -100,6 +121,7 @@ class TestSignature:
 
 
 # ── Delivery tests ──────────────────────────────────────────────
+
 
 class TestDelivery:
     def test_deliver_event_no_subscribers(self):
@@ -128,11 +150,13 @@ class TestDelivery:
         t.start()
 
         store = WebhookStore()
-        store.register(WebhookSubscription(
-            id="s1",
-            url=f"http://127.0.0.1:{port}/hook",
-            events=["skill.completed"],
-        ))
+        store.register(
+            WebhookSubscription(
+                id="s1",
+                url=f"http://127.0.0.1:{port}/hook",
+                events=["skill.completed"],
+            )
+        )
 
         deliver_event(store, "skill.completed", {"skill_id": "demo"}, trace_id="t-123")
 
@@ -163,12 +187,14 @@ class TestDelivery:
         t.start()
 
         store = WebhookStore()
-        store.register(WebhookSubscription(
-            id="s1",
-            url=f"http://127.0.0.1:{port}/hook",
-            events=["skill.completed"],
-            secret="my-secret",
-        ))
+        store.register(
+            WebhookSubscription(
+                id="s1",
+                url=f"http://127.0.0.1:{port}/hook",
+                events=["skill.completed"],
+                secret="my-secret",
+            )
+        )
 
         deliver_event(store, "skill.completed", {"skill_id": "demo"})
 
@@ -198,15 +224,19 @@ class TestDelivery:
 
         server = HTTPServer(("127.0.0.1", 0), Handler)
         port = server.server_address[1]
-        t = threading.Thread(target=lambda: [server.handle_request() for _ in range(2)], daemon=True)
+        t = threading.Thread(
+            target=lambda: [server.handle_request() for _ in range(2)], daemon=True
+        )
         t.start()
 
         store = WebhookStore()
-        store.register(WebhookSubscription(
-            id="s1",
-            url=f"http://127.0.0.1:{port}/hook",
-            events=["skill.completed"],
-        ))
+        store.register(
+            WebhookSubscription(
+                id="s1",
+                url=f"http://127.0.0.1:{port}/hook",
+                events=["skill.completed"],
+            )
+        )
 
         # Reduce backoff for test speed
         with patch("runtime.webhook._RETRY_BACKOFF_BASE", 0.1):

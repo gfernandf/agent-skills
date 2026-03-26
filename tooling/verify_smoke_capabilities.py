@@ -67,7 +67,9 @@ def main():
 
         test_input = batch.TEST_DATA.get(capability_id)
         if not test_input:
-            failures.append((capability_id, "No test data defined in test_capabilities_batch.py"))
+            failures.append(
+                (capability_id, "No test data defined in test_capabilities_batch.py")
+            )
             continue
 
         success, reason, _ = batch.call_capability(capability_id, binding, test_input)
@@ -81,7 +83,10 @@ def main():
         "passed": len(passes),
         "failed": len(failures),
         "pass_ids": passes,
-        "failures": [{"capability": capability_id, "reason": reason} for capability_id, reason in failures],
+        "failures": [
+            {"capability": capability_id, "reason": reason}
+            for capability_id, reason in failures
+        ],
     }
 
     if args.report_file is not None:

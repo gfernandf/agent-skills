@@ -8,7 +8,7 @@ import time
 
 from runtime.observability import elapsed_ms, log_event
 
-_MAX_AUDIO_BYTES = 100 * 1024 * 1024   # 100 MB
+_MAX_AUDIO_BYTES = 100 * 1024 * 1024  # 100 MB
 _SUPPORTED_AUDIO_EXTENSIONS = {".wav", ".mp3", ".ogg", ".flac", ".m4a", ".aac", ".opus"}
 
 
@@ -17,28 +17,45 @@ def _load_audio_bytes(audio_data):
     if isinstance(audio_data, (bytes, bytearray)):
         payload = bytes(audio_data)
         if len(payload) > _MAX_AUDIO_BYTES:
-            return None, None, f"Audio input exceeds maximum allowed size ({_MAX_AUDIO_BYTES // (1024*1024)} MB)."
+            return (
+                None,
+                None,
+                f"Audio input exceeds maximum allowed size ({_MAX_AUDIO_BYTES // (1024 * 1024)} MB).",
+            )
         return payload, None, None
 
     if isinstance(audio_data, str):
         source = audio_data.strip()
         if not source:
-            return None, None, "Invalid input: 'audio' must be a non-empty string or bytes."
+            return (
+                None,
+                None,
+                "Invalid input: 'audio' must be a non-empty string or bytes.",
+            )
 
         path = Path(source)
         if not path.is_file():
-            return None, None, None   # Treat as opaque source descriptor
+            return None, None, None  # Treat as opaque source descriptor
 
         if path.suffix.lower() not in _SUPPORTED_AUDIO_EXTENSIONS:
-            return None, None, f"Unsupported audio format: '{path.suffix}'. Supported: {', '.join(sorted(_SUPPORTED_AUDIO_EXTENSIONS))}."
+            return (
+                None,
+                None,
+                f"Unsupported audio format: '{path.suffix}'. Supported: {', '.join(sorted(_SUPPORTED_AUDIO_EXTENSIONS))}.",
+            )
 
         file_size = path.stat().st_size
         if file_size > _MAX_AUDIO_BYTES:
-            return None, None, f"File exceeds maximum allowed size ({_MAX_AUDIO_BYTES // (1024*1024)} MB)."
+            return (
+                None,
+                None,
+                f"File exceeds maximum allowed size ({_MAX_AUDIO_BYTES // (1024 * 1024)} MB).",
+            )
 
         return path.read_bytes(), str(path), None
 
     return None, None, "Invalid input: 'audio' must be bytes or a file path string."
+
 
 def transcribe_audio(audio_data):
     """
@@ -62,10 +79,14 @@ def transcribe_audio(audio_data):
         )
         return payload
 
-    log_event("service.audio.speech.transcribe.start", input_type=type(audio_data).__name__)
+    log_event(
+        "service.audio.speech.transcribe.start", input_type=type(audio_data).__name__
+    )
 
     if audio_data is None:
-        return _finish({"transcript": "No audio provided."}, "rejected", "ValidationError")
+        return _finish(
+            {"transcript": "No audio provided."}, "rejected", "ValidationError"
+        )
 
     payload, source_path, error = _load_audio_bytes(audio_data)
 
@@ -75,14 +96,24 @@ def transcribe_audio(audio_data):
     if payload is not None:
         size = len(payload)
         if source_path:
-            return _finish({"transcript": f"Transcription of '{source_path}' ({size} bytes)."}, "completed")
-        return _finish({"transcript": f"Transcription of in-memory audio ({size} bytes)."}, "completed")
+            return _finish(
+                {"transcript": f"Transcription of '{source_path}' ({size} bytes)."},
+                "completed",
+            )
+        return _finish(
+            {"transcript": f"Transcription of in-memory audio ({size} bytes)."},
+            "completed",
+        )
 
     # Opaque string descriptor fallback
     source = str(audio_data).strip()
     if not source:
-        return _finish({"transcript": "No audio provided."}, "rejected", "ValidationError")
-    return _finish({"transcript": f"Transcription from source descriptor: {source}."}, "completed")
+        return _finish(
+            {"transcript": "No audio provided."}, "rejected", "ValidationError"
+        )
+    return _finish(
+        {"transcript": f"Transcription from source descriptor: {source}."}, "completed"
+    )
 
 
 def synthesize_speech(text, language=None, voice=None):

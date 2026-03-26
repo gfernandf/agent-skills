@@ -40,7 +40,9 @@ from openapi_harness.mocks import start_mock_server  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Verify OpenAPI bindings using reusable scenarios.")
+    parser = argparse.ArgumentParser(
+        description="Verify OpenAPI bindings using reusable scenarios."
+    )
     parser.add_argument(
         "--scenario",
         type=Path,
@@ -158,7 +160,8 @@ def _run_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
             result = executor.execute(
                 capability,
                 scenario["input"],
-                trace_id=scenario.get("trace_id") or f"openapi-scenario-{scenario['id']}",
+                trace_id=scenario.get("trace_id")
+                or f"openapi-scenario-{scenario['id']}",
             )
 
             if isinstance(result, tuple):
@@ -186,7 +189,10 @@ def _run_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
                 }
 
             expected_service_id = scenario.get("expected_service_id")
-            if expected_service_id is not None and meta.get("service_id") != expected_service_id:
+            if (
+                expected_service_id is not None
+                and meta.get("service_id") != expected_service_id
+            ):
                 return {
                     "id": scenario["id"],
                     "passed": False,
@@ -251,7 +257,16 @@ def main() -> int:
         args.report_file.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print("\nOpenAPI verification summary")
-    print(json.dumps({"total": summary["total"], "passed": summary["passed"], "failed": summary["failed"]}, indent=2))
+    print(
+        json.dumps(
+            {
+                "total": summary["total"],
+                "passed": summary["passed"],
+                "failed": summary["failed"],
+            },
+            indent=2,
+        )
+    )
 
     return 0 if failed == 0 else 1
 

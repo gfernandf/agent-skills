@@ -42,7 +42,9 @@ def validate_consumes_chain(
         produces = hints.get("produces")
         if isinstance(produces, dict):
             for field_spec in produces.values():
-                if isinstance(field_spec, dict) and isinstance(field_spec.get("type"), str):
+                if isinstance(field_spec, dict) and isinstance(
+                    field_spec.get("type"), str
+                ):
                     produced_types.add(field_spec["type"])
 
     return warnings

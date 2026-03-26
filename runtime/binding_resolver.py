@@ -93,7 +93,9 @@ class BindingResolver:
             )
 
         # --- 3. Official default (fallback policy) ---
-        default_binding_id = self.binding_registry.get_official_default_binding_id(capability_id)
+        default_binding_id = self.binding_registry.get_official_default_binding_id(
+            capability_id
+        )
         if default_binding_id is not None:
             binding = self._get_binding_or_raise(
                 binding_id=default_binding_id,
@@ -156,8 +158,7 @@ class BindingResolver:
         for env_var, service_substr in _ENV_SERVICE_PREFERENCES:
             if os.environ.get(env_var):
                 preferred = [
-                    b for b in official
-                    if service_substr in b.service_id.lower()
+                    b for b in official if service_substr in b.service_id.lower()
                 ]
                 if preferred:
                     return preferred[0].id

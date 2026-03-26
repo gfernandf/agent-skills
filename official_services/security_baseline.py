@@ -10,7 +10,9 @@ import re
 
 _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _PHONE_RE = re.compile(r"\b\+?\d[\d\s\-]{7,}\d\b")
-_SECRET_RE = re.compile(r"\b(?:sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,})\b")
+_SECRET_RE = re.compile(
+    r"\b(?:sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,})\b"
+)
 
 
 def detect_pii(text):
@@ -50,7 +52,9 @@ def detect_secret(text):
     if not isinstance(text, str):
         return {"contains_secret": False, "findings": []}
 
-    findings = [{"type": "secret_token", "value": m.group(0)} for m in _SECRET_RE.finditer(text)]
+    findings = [
+        {"type": "secret_token", "value": m.group(0)} for m in _SECRET_RE.finditer(text)
+    ]
     return {"contains_secret": len(findings) > 0, "findings": findings}
 
 

@@ -22,7 +22,9 @@ class AttachTargetResolver:
             "task_registry": {"hits": 0, "misses": 0, "reloads": 0, "invalidations": 0},
         }
 
-    def validate(self, *, target_type: str, target_ref: str) -> tuple[bool, str, dict[str, Any]]:
+    def validate(
+        self, *, target_type: str, target_ref: str
+    ) -> tuple[bool, str, dict[str, Any]]:
         index = self._load_formal_index()
         bucket = index.get(target_type)
         context: dict[str, Any] = {
@@ -56,10 +58,14 @@ class AttachTargetResolver:
                     return True, "ok", context
 
             context["validation_result"] = "index_miss"
-            return False, (
-                f"target_ref '{target_ref}' is not present in attach target index bucket '{target_type}'. "
-                "Regenerate index with tooling/build_attach_target_index.py or provide a valid indexed target_ref."
-            ), context
+            return (
+                False,
+                (
+                    f"target_ref '{target_ref}' is not present in attach target index bucket '{target_type}'. "
+                    "Regenerate index with tooling/build_attach_target_index.py or provide a valid indexed target_ref."
+                ),
+                context,
+            )
 
         # Backward-compatible fallback when index is missing or bucket is empty.
         if target_type in {"run", "output", "transcript"}:
@@ -75,10 +81,14 @@ class AttachTargetResolver:
                 context["validation_result"] = "trace_match"
                 return True, "ok", context
             context["validation_result"] = "trace_miss"
-            return False, (
-                f"target_ref '{target_ref}' was not found in runtime audit trace ids. "
-                "Run the target workflow first or provide a valid existing trace_id."
-            ), context
+            return (
+                False,
+                (
+                    f"target_ref '{target_ref}' was not found in runtime audit trace ids. "
+                    "Run the target workflow first or provide a valid existing trace_id."
+                ),
+                context,
+            )
 
         if target_type == "artifact":
             context["validation_source"] = "artifact_or_audit_fallback"
@@ -99,10 +109,14 @@ class AttachTargetResolver:
                 return True, "ok", context
 
             context["validation_result"] = "artifact_and_trace_miss"
-            return False, (
-                f"target_ref '{target_ref}' was not found as file path or trace_id. "
-                "Provide an existing artifact file path or known trace_id."
-            ), context
+            return (
+                False,
+                (
+                    f"target_ref '{target_ref}' was not found as file path or trace_id. "
+                    "Provide an existing artifact file path or known trace_id."
+                ),
+                context,
+            )
 
         if target_type == "task":
             task_ids = self._load_task_ids()
@@ -120,10 +134,14 @@ class AttachTargetResolver:
                 context["validation_result"] = "task_prefix_match"
                 return True, "ok", context
             context["validation_result"] = "task_miss"
-            return False, (
-                f"target_ref '{target_ref}' is not a known task id. "
-                "Use task:<id> or register ids in artifacts/attach_targets/tasks.json"
-            ), context
+            return (
+                False,
+                (
+                    f"target_ref '{target_ref}' is not a known task id. "
+                    "Use task:<id> or register ids in artifacts/attach_targets/tasks.json"
+                ),
+                context,
+            )
 
         context["validation_source"] = "unsupported_target_type"
         context["validation_result"] = "unsupported"
@@ -165,9 +183,7 @@ class AttachTargetResolver:
                 continue
             if not isinstance(values, list):
                 continue
-            result[target_type] = {
-                v for v in values if isinstance(v, str) and v
-            }
+            result[target_type] = {v for v in values if isinstance(v, str) and v}
 
         self._index_cache = result
         self._index_stamp = stamp
@@ -251,17 +267,23 @@ class AttachTargetResolver:
             "formal_index": {
                 **self._cache_metrics["formal_index"],
                 "mtime_ns": self._index_stamp,
-                "bucket_count": len(self._index_cache) if isinstance(self._index_cache, dict) else 0,
+                "bucket_count": len(self._index_cache)
+                if isinstance(self._index_cache, dict)
+                else 0,
             },
             "runtime_audit": {
                 **self._cache_metrics["runtime_audit"],
                 "mtime_ns": self._trace_stamp,
-                "trace_count": len(self._trace_ids_cache) if isinstance(self._trace_ids_cache, set) else 0,
+                "trace_count": len(self._trace_ids_cache)
+                if isinstance(self._trace_ids_cache, set)
+                else 0,
             },
             "task_registry": {
                 **self._cache_metrics["task_registry"],
                 "mtime_ns": self._task_stamp,
-                "task_count": len(self._task_ids_cache) if isinstance(self._task_ids_cache, set) else 0,
+                "task_count": len(self._task_ids_cache)
+                if isinstance(self._task_ids_cache, set)
+                else 0,
             },
         }
 

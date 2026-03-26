@@ -14,7 +14,7 @@ from runtime.observability import elapsed_ms, log_event
 
 # Limits
 _FETCH_TIMEOUT_SECONDS = 10
-_MAX_RESPONSE_BYTES = 2 * 1024 * 1024   # 2 MB
+_MAX_RESPONSE_BYTES = 2 * 1024 * 1024  # 2 MB
 _ALLOWED_SCHEMES = {"http", "https"}
 
 
@@ -32,42 +32,44 @@ def _validate_url(url):
         return False, "URL must include a valid host."
     return True, None
 
+
 class TextExtractor(HTMLParser):
     """Extract text content from HTML."""
+
     def __init__(self):
         super().__init__()
         self.text_parts = []
         self.in_script = False
         self.in_style = False
-    
+
     def handle_starttag(self, tag, attrs):
-        if tag in ('script', 'style'):
-            if tag == 'script':
+        if tag in ("script", "style"):
+            if tag == "script":
                 self.in_script = True
             else:
                 self.in_style = True
-    
+
     def handle_endtag(self, tag):
-        if tag == 'script':
+        if tag == "script":
             self.in_script = False
-        elif tag == 'style':
+        elif tag == "style":
             self.in_style = False
-    
+
     def handle_data(self, data):
         if not self.in_script and not self.in_style:
             text = data.strip()
             if text:
                 self.text_parts.append(text)
-    
+
     def get_text(self):
-        return ' '.join(self.text_parts)
+        return " ".join(self.text_parts)
 
 
 _META_CHARSET_RE = re.compile(
-    rb'''<meta[^>]+charset\s*=\s*["']?\s*([A-Za-z0-9_-]+)''', re.IGNORECASE
+    rb"""<meta[^>]+charset\s*=\s*["']?\s*([A-Za-z0-9_-]+)""", re.IGNORECASE
 )
 _META_HTTP_EQUIV_RE = re.compile(
-    rb'''<meta[^>]+http-equiv\s*=\s*["']?Content-Type[^>]+charset\s*=\s*([A-Za-z0-9_-]+)''',
+    rb"""<meta[^>]+http-equiv\s*=\s*["']?Content-Type[^>]+charset\s*=\s*([A-Za-z0-9_-]+)""",
     re.IGNORECASE,
 )
 
@@ -76,7 +78,7 @@ def _detect_charset(raw: bytes, content_type: str) -> str:
     """Detect charset from Content-Type header, HTML meta tag, or heuristic."""
     # 1. Content-Type header
     if "charset=" in content_type:
-        charset = content_type.split("charset=")[-1].split(";")[0].strip().strip('"\'')
+        charset = content_type.split("charset=")[-1].split(";")[0].strip().strip("\"'")
         if charset:
             return charset
 
@@ -121,7 +123,7 @@ def _repair_mojibake(text: str) -> str:
 
     # Strategy 2: curated table (sorted longest-first to avoid partial matches)
     _REPAIRS = [
-        ("Ôé¼",  "\u20ac"),   # € (non-standard double-encoding)
+        ("Ôé¼", "\u20ac"),  # € (non-standard double-encoding)
         ("â\u0082\u00ac", "\u20ac"),  # € (UTF-8 through cp1252)
         ("\u00e2\u0080\u0099", "\u2019"),  # ' right single quote
         ("\u00e2\u0080\u0098", "\u2018"),  # ' left single quote
@@ -165,7 +167,9 @@ def fetch_webpage(url):
         dict: {"content": str, "status": int}
     """
     start_time = time.perf_counter()
-    parsed_url = urllib.parse.urlparse(url) if isinstance(url, str) and url.strip() else None
+    parsed_url = (
+        urllib.parse.urlparse(url) if isinstance(url, str) and url.strip() else None
+    )
 
     def _finish(payload, status):
         log_event(
@@ -191,15 +195,30 @@ def fetch_webpage(url):
 
     try:
         req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "AgentSkills/1.0 (capability=web.page.fetch)"}
+            url, headers={"User-Agent": "AgentSkills/1.0 (capability=web.page.fetch)"}
         )
         with urllib.request.urlopen(req, timeout=_FETCH_TIMEOUT_SECONDS) as response:
             # Reject binary content types (PDFs, images, etc.)
             ct = response.headers.get("Content-Type", "")
             ct_lower = ct.lower()
-            if any(t in ct_lower for t in ("application/pdf", "image/", "audio/", "video/", "application/octet-stream", "application/zip")):
-                return _finish({"content": f"Binary content type not supported: {ct}", "status": 415}, "rejected")
+            if any(
+                t in ct_lower
+                for t in (
+                    "application/pdf",
+                    "image/",
+                    "audio/",
+                    "video/",
+                    "application/octet-stream",
+                    "application/zip",
+                )
+            ):
+                return _finish(
+                    {
+                        "content": f"Binary content type not supported: {ct}",
+                        "status": 415,
+                    },
+                    "rejected",
+                )
             raw = response.read(_MAX_RESPONSE_BYTES)
             charset = _detect_charset(raw, ct)
             try:
@@ -209,13 +228,25 @@ def fetch_webpage(url):
             content = _repair_mojibake(content)
             return _finish({"content": content, "status": response.status}, "completed")
     except urllib.error.HTTPError as e:
-        return _finish({"content": f"HTTP error: {e.code} {e.reason}", "status": e.code}, "failed")
+        return _finish(
+            {"content": f"HTTP error: {e.code} {e.reason}", "status": e.code}, "failed"
+        )
     except urllib.error.URLError as e:
         return _finish({"content": f"URL error: {e.reason}", "status": 502}, "failed")
     except TimeoutError:
-        return _finish({"content": f"Request timed out after {_FETCH_TIMEOUT_SECONDS}s.", "status": 504}, "failed")
+        return _finish(
+            {
+                "content": f"Request timed out after {_FETCH_TIMEOUT_SECONDS}s.",
+                "status": 504,
+            },
+            "failed",
+        )
     except Exception as e:
-        return _finish({"content": f"Unexpected error: {type(e).__name__}: {e}", "status": 500}, "failed")
+        return _finish(
+            {"content": f"Unexpected error: {type(e).__name__}: {e}", "status": 500},
+            "failed",
+        )
+
 
 def extract_webpage(content):
     """
@@ -231,7 +262,9 @@ def extract_webpage(content):
         html_content = content
 
         # Extract title
-        title_match = re.search(r'<title[^>]*>([^<]+)</title>', html_content, re.IGNORECASE)
+        title_match = re.search(
+            r"<title[^>]*>([^<]+)</title>", html_content, re.IGNORECASE
+        )
         title = title_match.group(1).strip() if title_match else "Unknown Title"
 
         # Extract text
@@ -267,25 +300,27 @@ def _parse_ddg_results(html, limit):
     for idx, (raw_href, raw_title) in enumerate(links[:limit]):
         # Resolve DDG redirect URL → actual URL
         url = raw_href
-        uddg_match = re.search(r'[?&]uddg=([^&]+)', raw_href)
+        uddg_match = re.search(r"[?&]uddg=([^&]+)", raw_href)
         if uddg_match:
             url = urllib.parse.unquote(uddg_match.group(1))
 
-        title = re.sub(r'<[^>]+>', '', raw_title).strip()
+        title = re.sub(r"<[^>]+>", "", raw_title).strip()
         snippet = ""
         if idx < len(snippets):
-            snippet = re.sub(r'<[^>]+>', '', snippets[idx]).strip()
+            snippet = re.sub(r"<[^>]+>", "", snippets[idx]).strip()
 
         parsed_url = urllib.parse.urlparse(url)
         domain = parsed_url.netloc or ""
 
-        results.append({
-            "url": url,
-            "title": title or f"Result {idx + 1}",
-            "snippet": snippet,
-            "rank": idx + 1,
-            "domain": domain,
-        })
+        results.append(
+            {
+                "url": url,
+                "title": title or f"Result {idx + 1}",
+                "snippet": snippet,
+                "rank": idx + 1,
+                "domain": domain,
+            }
+        )
 
     return results
 
@@ -298,16 +333,18 @@ def _synthetic_results(query, limit):
     results = []
     for i in range(limit):
         word = tokens[i % len(tokens)]
-        results.append({
-            "url": f"https://example.com/{word.lower()}-{i + 1}",
-            "title": f"{word.title()} — Result {i + 1} for '{query}'",
-            "snippet": (
-                f"Synthetic result {i + 1} for '{query}'. "
-                f"Live search unavailable; this placeholder mentions {word}."
-            ),
-            "rank": i + 1,
-            "domain": "example.com",
-        })
+        results.append(
+            {
+                "url": f"https://example.com/{word.lower()}-{i + 1}",
+                "title": f"{word.title()} — Result {i + 1} for '{query}'",
+                "snippet": (
+                    f"Synthetic result {i + 1} for '{query}'. "
+                    f"Live search unavailable; this placeholder mentions {word}."
+                ),
+                "rank": i + 1,
+                "domain": "example.com",
+            }
+        )
     return results
 
 
@@ -344,17 +381,21 @@ def search_web(query, limit=None):
 
         results = _parse_ddg_results(html, limit)
         if results:
-            log_event("web.source.search.live",
-                      provider="duckduckgo",
-                      result_count=len(results),
-                      duration_ms=elapsed_ms(t0))
+            log_event(
+                "web.source.search.live",
+                provider="duckduckgo",
+                result_count=len(results),
+                duration_ms=elapsed_ms(t0),
+            )
             return {"results": results}
     except Exception:
         pass  # fall through to synthetic
 
-    log_event("web.source.search.fallback",
-              reason="live_search_unavailable",
-              duration_ms=elapsed_ms(t0))
+    log_event(
+        "web.source.search.fallback",
+        reason="live_search_unavailable",
+        duration_ms=elapsed_ms(t0),
+    )
     return {"results": _synthetic_results(query, limit)}
 
 

@@ -12,6 +12,7 @@ Benchmarks for the five critical hot paths:
 Run:
     pytest test_performance_baselines.py --benchmark-only -v
 """
+
 from __future__ import annotations
 
 import sys
@@ -31,6 +32,7 @@ from runtime.binding_models import BindingSpec, InvocationResponse
 # ---------------------------------------------------------------------------
 # Fixtures: lightweight fakes that avoid hitting real services
 # ---------------------------------------------------------------------------
+
 
 def _make_state(n_inputs: int = 10, n_vars: int = 5):
     """Produce a SimpleNamespace mimicking ExecutionState."""
@@ -65,7 +67,7 @@ def _make_binding(n_req: int = 6, n_resp: int = 3) -> BindingSpec:
 
 def _make_invocation_response(n_fields: int = 3) -> InvocationResponse:
     raw = {f"result_{i}": f"data_{i}" for i in range(n_fields)}
-    return InvocationResponse(raw_response=raw)
+    return InvocationResponse(status="success", raw_response=raw)
 
 
 def _make_step_plan(n_steps: int = 20):
@@ -74,6 +76,7 @@ def _make_step_plan(n_steps: int = 20):
     for i in range(n_steps):
         step = SimpleNamespace()
         step.id = f"step_{i}"
+        step.uses = "bench.capability"
         step.config = {}
         if i > 0:
             step.config["depends_on"] = [f"step_{i - 1}"]
@@ -121,8 +124,8 @@ def test_bench_scheduler_dag_build(benchmark):
     plan = _make_step_plan(20)
 
     # The scheduler expects a step_executor callback
-    def _noop_executor(step, context, trace_callback=None):
-        return SimpleNamespace(step_id=step.id, status="success", output={})
+    def _noop_executor(step, skill_id, context, trace_callback=None):
+        return SimpleNamespace(step_id=step.id, status="completed", output={})
 
     context = SimpleNamespace(
         state=SimpleNamespace(skill_id="bench"),

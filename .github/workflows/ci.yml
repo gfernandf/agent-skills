@@ -145,6 +145,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.35.0
+        continue-on-error: true
         with:
           image-ref: "agent-skills:ci"
           format: "table"

@@ -43,9 +43,13 @@ class SkillGateway:
         self.discovery_evidence_cache = DiscoveryEvidenceCache(runtime_root)
         self._pid = os.getpid()
         self._started_monotonic = time.monotonic()
-        self._started_at_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        self._started_at_utc = (
+            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        )
         self._persist_enabled = True
-        self._state_path = self.runtime_root / "artifacts" / "gateway_diagnostics_state.json"
+        self._state_path = (
+            self.runtime_root / "artifacts" / "gateway_diagnostics_state.json"
+        )
         self._loaded_from_disk = False
         self._last_loaded_at_utc: str | None = None
         self._last_persisted_at_utc: str | None = None
@@ -182,7 +186,11 @@ class SkillGateway:
         for skill_id in self._iter_skill_ids():
             spec = self.components.skill_loader.get_skill(skill_id)
             metadata = spec.metadata if isinstance(spec.metadata, dict) else {}
-            classification = metadata.get("classification") if isinstance(metadata.get("classification"), dict) else {}
+            classification = (
+                metadata.get("classification")
+                if isinstance(metadata.get("classification"), dict)
+                else {}
+            )
 
             summary = SkillSummary(
                 skill_id=spec.id,
@@ -190,11 +198,29 @@ class SkillGateway:
                 description=spec.description,
                 domain=spec.domain,
                 channel=spec.channel,
-                status=(metadata.get("status") if isinstance(metadata.get("status"), str) else "unspecified"),
-                role=(classification.get("role") if isinstance(classification.get("role"), str) else None),
-                invocation=(classification.get("invocation") if isinstance(classification.get("invocation"), str) else None),
-                effect_mode=(classification.get("effect_mode") if isinstance(classification.get("effect_mode"), str) else None),
-                tags=tuple(str(t) for t in metadata.get("tags", []) if isinstance(t, str)),
+                status=(
+                    metadata.get("status")
+                    if isinstance(metadata.get("status"), str)
+                    else "unspecified"
+                ),
+                role=(
+                    classification.get("role")
+                    if isinstance(classification.get("role"), str)
+                    else None
+                ),
+                invocation=(
+                    classification.get("invocation")
+                    if isinstance(classification.get("invocation"), str)
+                    else None
+                ),
+                effect_mode=(
+                    classification.get("effect_mode")
+                    if isinstance(classification.get("effect_mode"), str)
+                    else None
+                ),
+                tags=tuple(
+                    str(t) for t in metadata.get("tags", []) if isinstance(t, str)
+                ),
             )
 
             if domain and summary.domain != domain:
@@ -271,7 +297,7 @@ class SkillGateway:
                     "loaded_from_disk": self._loaded_from_disk,
                     "last_loaded_at_utc": self._last_loaded_at_utc,
                     "last_persisted_at_utc": self._last_persisted_at_utc,
-                }
+                },
             }
         }
         self._persist_diagnostics_state()
@@ -322,7 +348,9 @@ class SkillGateway:
             self.attach_target_resolver.load_metrics_snapshot(attach_metrics)
 
         self._loaded_from_disk = True
-        self._last_loaded_at_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        self._last_loaded_at_utc = (
+            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        )
 
     def _persist_diagnostics_state(self) -> None:
         if not self._persist_enabled:
@@ -330,7 +358,9 @@ class SkillGateway:
 
         payload = {
             "schema_version": "1.0",
-            "updated_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "updated_at_utc": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "operation_counts": dict(self._operation_counts),
             "discovery_evidence_metrics": self.discovery_evidence_cache.metrics_snapshot(),
             "attach_target_metrics": self.attach_target_resolver.metrics_snapshot(),
@@ -338,6 +368,8 @@ class SkillGateway:
 
         self._state_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_path = self._state_path.with_suffix(".tmp")
-        tmp_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        tmp_path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
         tmp_path.replace(self._state_path)
         self._last_persisted_at_utc = payload["updated_at_utc"]

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import fields as dataclass_fields, asdict
 from typing import Any
 
 from runtime.errors import ReferenceResolutionError
@@ -67,14 +66,20 @@ class ReferenceResolver:
             return self._resolve_flat(state.vars, rest, permissive=False, state=state)
 
         if namespace == "outputs":
-            return self._resolve_flat(state.outputs, rest, permissive=False, state=state)
+            return self._resolve_flat(
+                state.outputs, rest, permissive=False, state=state
+            )
 
         # ── Cognitive namespaces (path traversal) ───────
         root = getattr(state, namespace)
         permissive = namespace in _PERMISSIVE_NAMESPACES or namespace == "output"
-        return self._walk_path(root, rest, full_ref=value, permissive=permissive, state=state)
+        return self._walk_path(
+            root, rest, full_ref=value, permissive=permissive, state=state
+        )
 
-    def resolve_mapping(self, mapping: dict[str, Any], state: ExecutionState) -> dict[str, Any]:
+    def resolve_mapping(
+        self, mapping: dict[str, Any], state: ExecutionState
+    ) -> dict[str, Any]:
         """
         Resolve all values inside a mapping structure.
 
@@ -90,7 +95,12 @@ class ReferenceResolver:
     # ── Internal helpers ────────────────────────────────
 
     def _resolve_flat(
-        self, container: dict[str, Any], field: str, *, permissive: bool, state: ExecutionState,
+        self,
+        container: dict[str, Any],
+        field: str,
+        *,
+        permissive: bool,
+        state: ExecutionState,
     ) -> Any:
         """Resolve a single key from a flat dict (legacy namespaces)."""
         if field not in container:
@@ -130,7 +140,10 @@ class ReferenceResolver:
                 )
 
             # dataclass attribute
-            if hasattr(type(current), "__dataclass_fields__") and segment in type(current).__dataclass_fields__:
+            if (
+                hasattr(type(current), "__dataclass_fields__")
+                and segment in type(current).__dataclass_fields__
+            ):
                 current = getattr(current, segment)
                 continue
 

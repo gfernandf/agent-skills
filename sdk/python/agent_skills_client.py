@@ -9,6 +9,7 @@ Usage::
     result = client.execute("text.content.generate", {"prompt": "Hello"})
     print(result)
 """
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,9 @@ from urllib.error import HTTPError
 class AgentSkillsClient:
     """Thin client for the agent-skills consumer-facing API."""
 
-    def __init__(self, base_url: str = "http://localhost:8080", *, api_key: str | None = None) -> None:
+    def __init__(
+        self, base_url: str = "http://localhost:8080", *, api_key: str | None = None
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
 
@@ -60,7 +63,9 @@ class AgentSkillsClient:
         return self._request("POST", f"/v1/skills/{skill_id}/execute", body)
 
     def discover(self, intent: str, *, limit: int = 10) -> dict:
-        return self._request("POST", "/v1/skills/discover", {"intent": intent, "limit": limit})
+        return self._request(
+            "POST", "/v1/skills/discover", {"intent": intent, "limit": limit}
+        )
 
     # ── Async execution ──────────────────────────────────────────
 
@@ -76,7 +81,9 @@ class AgentSkillsClient:
     def list_runs(self) -> dict:
         return self._request("GET", "/v1/runs")
 
-    def wait_for_run(self, run_id: str, *, poll_interval: float = 1.0, timeout: float = 300) -> dict:
+    def wait_for_run(
+        self, run_id: str, *, poll_interval: float = 1.0, timeout: float = 300
+    ) -> dict:
         """Poll until a run completes or times out."""
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -88,7 +95,9 @@ class AgentSkillsClient:
 
     # ── Streaming (SSE) ──────────────────────────────────────────
 
-    def execute_stream(self, skill_id: str, inputs: dict, **options: Any) -> Generator[dict, None, None]:
+    def execute_stream(
+        self, skill_id: str, inputs: dict, **options: Any
+    ) -> Generator[dict, None, None]:
         """Yield parsed SSE events from a streaming execution."""
         body: dict[str, Any] = {"inputs": inputs}
         if options:

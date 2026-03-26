@@ -91,7 +91,9 @@ class BindingActivationService:
         self.service_loader.load()
 
         overrides = self.override_loader.load()
-        matching = [intent for intent in overrides if capability_id in intent.capabilities]
+        matching = [
+            intent for intent in overrides if capability_id in intent.capabilities
+        ]
 
         if not matching:
             raise BindingActivationError(
@@ -121,7 +123,7 @@ class BindingActivationService:
         capability_id: str,
         intent: OverrideIntent,
     ) -> str | None:
-        capability = self._load_capability(capability_id)
+        self._load_capability(capability_id)
 
         if intent.binding_id is not None:
             return self._resolve_binding_override(

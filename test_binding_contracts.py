@@ -7,9 +7,9 @@ For every binding YAML under bindings/official/, verify:
 3. Every *required* capability output has a ``response.*`` mapping in the binding response template.
 4. No binding request references an input that does not exist in the capability.
 """
+
 from __future__ import annotations
 
-import itertools
 from pathlib import Path
 from typing import Any, Dict, Set
 
@@ -50,7 +50,10 @@ def _collect_input_refs(template: Any, refs: Set[str]) -> None:
     if isinstance(template, str):
         # Handles both direct "input.x" and template vars "${input.x}"
         import re
-        for m in re.finditer(r"(?:\$\{)?input\.([A-Za-z_][A-Za-z0-9_]*)(?:\})?", template):
+
+        for m in re.finditer(
+            r"(?:\$\{)?input\.([A-Za-z_][A-Za-z0-9_]*)(?:\})?", template
+        ):
             refs.add(m.group(1))
     elif isinstance(template, dict):
         for v in template.values():
@@ -112,7 +115,11 @@ class TestBindingContract:
         if cap is None:
             pytest.skip("capability not found")
         cap_inputs = cap.get("inputs", {})
-        required = {k for k, v in cap_inputs.items() if isinstance(v, dict) and v.get("required")}
+        required = {
+            k
+            for k, v in cap_inputs.items()
+            if isinstance(v, dict) and v.get("required")
+        }
         if not required:
             return
 
@@ -128,7 +135,11 @@ class TestBindingContract:
         if cap is None:
             pytest.skip("capability not found")
         cap_outputs = cap.get("outputs", {})
-        required_out = {k for k, v in cap_outputs.items() if isinstance(v, dict) and v.get("required")}
+        required_out = {
+            k
+            for k, v in cap_outputs.items()
+            if isinstance(v, dict) and v.get("required")
+        }
         if not required_out:
             return
 

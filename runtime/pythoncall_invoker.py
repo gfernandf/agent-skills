@@ -27,12 +27,27 @@ _DEFAULT_ALLOWED_PREFIXES: tuple[str, ...] = (
     "tooling.",
 )
 
-_DANGEROUS_MODULES: frozenset[str] = frozenset({
-    "os", "subprocess", "shutil", "sys", "importlib",
-    "ctypes", "socket", "http", "ftplib", "smtplib",
-    "code", "codeop", "compileall", "py_compile",
-    "pickle", "shelve", "marshal",
-})
+_DANGEROUS_MODULES: frozenset[str] = frozenset(
+    {
+        "os",
+        "subprocess",
+        "shutil",
+        "sys",
+        "importlib",
+        "ctypes",
+        "socket",
+        "http",
+        "ftplib",
+        "smtplib",
+        "code",
+        "codeop",
+        "compileall",
+        "py_compile",
+        "pickle",
+        "shelve",
+        "marshal",
+    }
+)
 
 
 def _get_allowed_prefixes() -> tuple[str, ...]:
@@ -53,7 +68,9 @@ def _is_module_allowed(module_name: str) -> bool:
 
 
 # ── Execution timeout ────────────────────────────────────────────
-_DEFAULT_TIMEOUT_SECONDS = float(os.environ.get("AGENT_SKILLS_PYTHONCALL_TIMEOUT", "30"))
+_DEFAULT_TIMEOUT_SECONDS = float(
+    os.environ.get("AGENT_SKILLS_PYTHONCALL_TIMEOUT", "30")
+)
 
 
 class PythonCallInvoker:
@@ -96,7 +113,9 @@ class PythonCallInvoker:
         if not _is_module_allowed(service.module):
             logger.warning(
                 "pythoncall.module_blocked module=%s service=%s capability=%s",
-                service.module, service.id, capability_id,
+                service.module,
+                service.id,
+                capability_id,
             )
             raise PythonCallInvocationError(
                 f"Module '{service.module}' is not in the allowed modules list. "
@@ -113,7 +132,10 @@ class PythonCallInvoker:
 
         logger.info(
             "pythoncall.invoke module=%s callable=%s service=%s capability=%s",
-            service.module, binding.operation_id, service.id, capability_id,
+            service.module,
+            binding.operation_id,
+            service.id,
+            capability_id,
         )
 
         try:
@@ -171,7 +193,10 @@ class PythonCallInvoker:
         if worker.is_alive():
             logger.error(
                 "pythoncall.timeout module=%s callable=%s timeout=%.1fs capability=%s",
-                service.module, binding.operation_id, timeout, capability_id,
+                service.module,
+                binding.operation_id,
+                timeout,
+                capability_id,
             )
             raise PythonCallInvocationError(
                 f"Callable '{binding.operation_id}' in module '{service.module}' "
@@ -186,7 +211,10 @@ class PythonCallInvoker:
 
         logger.info(
             "pythoncall.complete module=%s callable=%s duration_ms=%.3f capability=%s",
-            service.module, binding.operation_id, duration_ms, capability_id,
+            service.module,
+            binding.operation_id,
+            duration_ms,
+            capability_id,
         )
 
         return InvocationResponse(

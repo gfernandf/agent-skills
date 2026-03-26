@@ -38,14 +38,15 @@ def _write_active_bindings(host_root: Path) -> None:
     )
 
 
-def _assert_mcp_result(result: dict, expected_outputs: dict, expected_binding: str, expected_service: str) -> None:
+def _assert_mcp_result(
+    result: dict, expected_outputs: dict, expected_binding: str, expected_service: str
+) -> None:
     outputs = result.get("outputs")
     meta = result.get("meta", {})
 
     if outputs != expected_outputs:
         raise RuntimeError(
-            "MCP output mismatch. "
-            f"expected={expected_outputs!r} actual={outputs!r}"
+            f"MCP output mismatch. expected={expected_outputs!r} actual={outputs!r}"
         )
 
     if meta.get("binding_id") != expected_binding:

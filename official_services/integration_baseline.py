@@ -11,9 +11,24 @@ from datetime import datetime, timezone
 # ── In-memory stores ──
 
 _CONNECTORS: dict[str, dict] = {
-    "crm-rest": {"id": "crm-rest", "name": "CRM REST Connector", "type": "rest", "status": "active"},
-    "erp-db": {"id": "erp-db", "name": "ERP Database Connector", "type": "database", "status": "active"},
-    "queue-kafka": {"id": "queue-kafka", "name": "Kafka Queue Connector", "type": "queue", "status": "inactive"},
+    "crm-rest": {
+        "id": "crm-rest",
+        "name": "CRM REST Connector",
+        "type": "rest",
+        "status": "active",
+    },
+    "erp-db": {
+        "id": "erp-db",
+        "name": "ERP Database Connector",
+        "type": "database",
+        "status": "active",
+    },
+    "queue-kafka": {
+        "id": "queue-kafka",
+        "name": "Kafka Queue Connector",
+        "type": "queue",
+        "status": "inactive",
+    },
 }
 
 # connector_id -> { record_id -> record }
@@ -50,7 +65,11 @@ def list_connectors(type_filter=None, status_filter=None):
 def sync_connector(connector_id, options=None):
     conn = _CONNECTORS.get(str(connector_id))
     if not conn:
-        return {"synced": False, "records_processed": 0, "timestamp": datetime.now(timezone.utc).isoformat()}
+        return {
+            "synced": False,
+            "records_processed": 0,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
 
     store = _RECORDS.setdefault(str(connector_id), {})
     return {
@@ -64,7 +83,11 @@ def sync_connector(connector_id, options=None):
 
 
 def acknowledge_event(event_id, connector_id=None, notes=None):
-    _EVENTS[str(event_id)] = {"acknowledged": True, "connector_id": connector_id, "notes": notes}
+    _EVENTS[str(event_id)] = {
+        "acknowledged": True,
+        "connector_id": connector_id,
+        "notes": notes,
+    }
     return {"acknowledged": True, "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
@@ -138,7 +161,11 @@ def compare_records(record_a, record_b, key_fields=None):
     if not isinstance(record_a, dict) or not isinstance(record_b, dict):
         return {"match": False, "differences": ["non_dict_input"], "similarity": 0.0}
 
-    fields = key_fields if isinstance(key_fields, list) else list(set(record_a.keys()) | set(record_b.keys()))
+    fields = (
+        key_fields
+        if isinstance(key_fields, list)
+        else list(set(record_a.keys()) | set(record_b.keys()))
+    )
     diffs = []
     matches = 0
 
@@ -204,7 +231,12 @@ def reconcile_records(records_a, records_b, key_field):
         if k not in a_map:
             only_b.append(rb)
 
-    return {"matched": matched, "only_a": only_a, "only_b": only_b, "discrepancies": discrepancies}
+    return {
+        "matched": matched,
+        "only_a": only_a,
+        "only_b": only_b,
+        "discrepancies": discrepancies,
+    }
 
 
 def update_record(connector_id, record_id, fields):

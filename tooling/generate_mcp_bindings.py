@@ -11,6 +11,7 @@ for the missing ones.
 Each generated binding delegates to an in-process MCP server that must be
 implemented in official_mcp_servers/.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -127,12 +128,16 @@ def find_existing_mcp_bindings() -> set[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate MCP binding scaffolds")
-    parser.add_argument("--dry-run", action="store_true", help="Print what would be generated")
-    parser.add_argument("--limit", type=int, default=24, help="Max bindings to generate")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print what would be generated"
+    )
+    parser.add_argument(
+        "--limit", type=int, default=24, help="Max bindings to generate"
+    )
     args = parser.parse_args()
 
     existing = find_existing_mcp_bindings()
-    to_generate = [c for c in PHASE_1_CAPABILITIES if c not in existing][:args.limit]
+    to_generate = [c for c in PHASE_1_CAPABILITIES if c not in existing][: args.limit]
 
     if not to_generate:
         print("All Phase 1 capabilities already have MCP bindings.")
@@ -164,17 +169,25 @@ def main() -> None:
         stub_file = MCP_SERVERS_DIR / f"{domain}_tools.py"
         if stub_file.exists():
             if args.dry_run:
-                print(f"  [DRY-RUN] Server stub exists, would skip: {stub_file.relative_to(ROOT)}")
+                print(
+                    f"  [DRY-RUN] Server stub exists, would skip: {stub_file.relative_to(ROOT)}"
+                )
             else:
                 print(f"  Server stub exists, skipping: {stub_file.relative_to(ROOT)}")
         else:
             if args.dry_run:
-                print(f"  [DRY-RUN] Would create server stub: {stub_file.relative_to(ROOT)}")
+                print(
+                    f"  [DRY-RUN] Would create server stub: {stub_file.relative_to(ROOT)}"
+                )
             else:
-                stub_file.write_text(_server_stub_template(domain, caps), encoding="utf-8")
+                stub_file.write_text(
+                    _server_stub_template(domain, caps), encoding="utf-8"
+                )
                 print(f"  Created server stub: {stub_file.relative_to(ROOT)}")
 
-    print(f"\nDone. {len(to_generate)} scaffolds {'would be ' if args.dry_run else ''}generated.")
+    print(
+        f"\nDone. {len(to_generate)} scaffolds {'would be ' if args.dry_run else ''}generated."
+    )
     print("Next steps:")
     print("  1. Implement tool functions in official_mcp_servers/<domain>_tools.py")
     print("  2. Map inputs/outputs in each binding YAML")

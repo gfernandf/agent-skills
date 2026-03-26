@@ -19,7 +19,9 @@ from runtime.protocol_router import ProtocolRouter
 class BindingExecutionError(RuntimeErrorBase):
     """Raised when a binding invocation fails."""
 
-    def __init__(self, *args: Any, conformance_unmet: bool = False, **kwargs: Any) -> None:
+    def __init__(
+        self, *args: Any, conformance_unmet: bool = False, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.conformance_unmet = conformance_unmet
 
@@ -132,7 +134,9 @@ class BindingExecutor:
                 binding = self.binding_registry.get_binding(binding_id)
                 service = self.service_resolver.resolve(binding.service_id)
                 resolved_service_id = service.id
-                conformance_profile = self._resolve_conformance_profile(binding.metadata)
+                conformance_profile = self._resolve_conformance_profile(
+                    binding.metadata
+                )
 
                 # Circuit breaker: skip binding if its service circuit is open.
                 try:
@@ -288,8 +292,7 @@ class BindingExecutor:
             reason = "eligible"
             if not eligible:
                 reason = (
-                    f"profile '{profile}' does not meet required "
-                    f"'{required_profile}'"
+                    f"profile '{profile}' does not meet required '{required_profile}'"
                 )
 
             plan_items.append(
@@ -316,7 +319,9 @@ class BindingExecutor:
 
         return plan
 
-    def _build_fallback_chain(self, *, capability_id: str, primary_binding_id: str) -> list[str]:
+    def _build_fallback_chain(
+        self, *, capability_id: str, primary_binding_id: str
+    ) -> list[str]:
         """
         Build deterministic fallback chain:
 
@@ -336,13 +341,23 @@ class BindingExecutor:
             chain.append(current_id)
             visited.add(current_id)
 
-            raw_next = binding.metadata.get("fallback_binding_id") if isinstance(binding.metadata, dict) else None
+            raw_next = (
+                binding.metadata.get("fallback_binding_id")
+                if isinstance(binding.metadata, dict)
+                else None
+            )
             if not isinstance(raw_next, str) or not raw_next:
                 break
             current_id = raw_next
 
-        default_binding_id = self.binding_registry.get_official_default_binding_id(capability_id)
-        if isinstance(default_binding_id, str) and default_binding_id and default_binding_id not in visited:
+        default_binding_id = self.binding_registry.get_official_default_binding_id(
+            capability_id
+        )
+        if (
+            isinstance(default_binding_id, str)
+            and default_binding_id
+            and default_binding_id not in visited
+        ):
             chain.append(default_binding_id)
 
         return chain
@@ -389,5 +404,7 @@ class BindingExecutor:
 
         return candidate
 
-    def _is_profile_eligible(self, *, actual_profile: str, required_profile: str) -> bool:
+    def _is_profile_eligible(
+        self, *, actual_profile: str, required_profile: str
+    ) -> bool:
         return _CONFORMANCE_RANK[actual_profile] >= _CONFORMANCE_RANK[required_profile]

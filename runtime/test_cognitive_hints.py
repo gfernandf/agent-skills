@@ -1,6 +1,7 @@
 """
 Tests for cognitive_hints: loader, auto-wire mapping, and consumes chain validation.
 """
+
 from __future__ import annotations
 
 import sys
@@ -49,8 +50,12 @@ def _make_cap(
     )
 
 
-def _make_step(id: str, uses: str, output_mapping: dict[str, str] | None = None) -> StepSpec:
-    return StepSpec(id=id, uses=uses, input_mapping={}, output_mapping=output_mapping or {})
+def _make_step(
+    id: str, uses: str, output_mapping: dict[str, str] | None = None
+) -> StepSpec:
+    return StepSpec(
+        id=id, uses=uses, input_mapping={}, output_mapping=output_mapping or {}
+    )
 
 
 class _FakeCapLoader:
@@ -66,6 +71,7 @@ class _FakeCapLoader:
 # ---------------------------------------------------------------------------
 # 1. CapabilitySpec cognitive_hints field
 # ---------------------------------------------------------------------------
+
 
 def test_capability_spec_cognitive_hints():
     print("▸ CapabilitySpec cognitive_hints field")
@@ -83,6 +89,7 @@ def test_capability_spec_cognitive_hints():
 # 2. YamlCapabilityLoader cognitive_hints normalization
 # ---------------------------------------------------------------------------
 
+
 def test_loader_normalization():
     print("▸ YamlCapabilityLoader cognitive_hints normalization")
 
@@ -95,7 +102,8 @@ def test_loader_normalization():
         cap_dir.mkdir()
 
         # Capability with cognitive_hints
-        (cap_dir / "test.cap.hint.yaml").write_text(textwrap.dedent("""\
+        (cap_dir / "test.cap.hint.yaml").write_text(
+            textwrap.dedent("""\
             id: test.cap.hint
             version: 1.0.0
             description: test cap with hints
@@ -116,10 +124,13 @@ def test_loader_normalization():
               produces:
                 result:
                   type: Summary
-        """), encoding="utf-8")
+        """),
+            encoding="utf-8",
+        )
 
         # Capability without cognitive_hints
-        (cap_dir / "test.cap.plain.yaml").write_text(textwrap.dedent("""\
+        (cap_dir / "test.cap.plain.yaml").write_text(
+            textwrap.dedent("""\
             id: test.cap.plain
             version: 1.0.0
             description: test cap without hints
@@ -132,16 +143,23 @@ def test_loader_normalization():
             outputs:
               result:
                 type: string
-        """), encoding="utf-8")
+        """),
+            encoding="utf-8",
+        )
 
         loader = YamlCapabilityLoader(root)
 
         cap_hint = loader.get_capability("test.cap.hint")
         _test("hints loaded", cap_hint.cognitive_hints is not None)
-        _test("role normalized to list", cap_hint.cognitive_hints["role"] == ["analyze"])
+        _test(
+            "role normalized to list", cap_hint.cognitive_hints["role"] == ["analyze"]
+        )
         _test("consumes preserved", cap_hint.cognitive_hints["consumes"] == ["Context"])
         _test("produces preserved", "result" in cap_hint.cognitive_hints["produces"])
-        _test("produces type", cap_hint.cognitive_hints["produces"]["result"]["type"] == "Summary")
+        _test(
+            "produces type",
+            cap_hint.cognitive_hints["produces"]["result"]["type"] == "Summary",
+        )
 
         cap_plain = loader.get_capability("test.cap.plain")
         _test("no hints → None", cap_plain.cognitive_hints is None)
@@ -164,7 +182,8 @@ def test_loader_cognitive_types():
         # With vocabulary file
         vocab_dir = root / "vocabulary"
         vocab_dir.mkdir()
-        (vocab_dir / "cognitive_types.yaml").write_text(textwrap.dedent("""\
+        (vocab_dir / "cognitive_types.yaml").write_text(
+            textwrap.dedent("""\
             version: 0.1.0
             types:
               Risk:
@@ -176,7 +195,9 @@ def test_loader_cognitive_types():
             roles:
               - analyze
               - synthesize
-        """), encoding="utf-8")
+        """),
+            encoding="utf-8",
+        )
 
         loader2 = YamlCapabilityLoader(root)
         ct2 = loader2.get_cognitive_types()
@@ -188,6 +209,7 @@ def test_loader_cognitive_types():
 # ---------------------------------------------------------------------------
 # 3. _build_auto_wire_mapping
 # ---------------------------------------------------------------------------
+
 
 def test_auto_wire_mapping():
     print("▸ _build_auto_wire_mapping")
@@ -204,38 +226,50 @@ def test_auto_wire_mapping():
 
     # Capability without hints → None
     cap_no_hints = _make_cap("noop")
-    _test("no hints → None", _build_auto_wire_mapping(cap_no_hints, cognitive_types) is None)
+    _test(
+        "no hints → None",
+        _build_auto_wire_mapping(cap_no_hints, cognitive_types) is None,
+    )
 
     # Capability with produces using default slots
-    cap_risk = _make_cap("risk.extract", cognitive_hints={
-        "role": ["analyze"],
-        "produces": {
-            "risks": {"type": "Risk"},
-            "summary": {"type": "Summary"},
+    cap_risk = _make_cap(
+        "risk.extract",
+        cognitive_hints={
+            "role": ["analyze"],
+            "produces": {
+                "risks": {"type": "Risk"},
+                "summary": {"type": "Summary"},
+            },
         },
-    })
+    )
     mapping = _build_auto_wire_mapping(cap_risk, cognitive_types)
     _test("mapping not None", mapping is not None)
     _test("risks → default slot", mapping["risks"] == "working.risks")
     _test("summary → default slot", mapping["summary"] == "output.summary")
 
     # Produces with target override
-    cap_override = _make_cap("custom", cognitive_hints={
-        "role": ["synthesize"],
-        "produces": {
-            "result": {"type": "Summary", "target": "output.custom_summary"},
+    cap_override = _make_cap(
+        "custom",
+        cognitive_hints={
+            "role": ["synthesize"],
+            "produces": {
+                "result": {"type": "Summary", "target": "output.custom_summary"},
+            },
         },
-    })
+    )
     mapping2 = _build_auto_wire_mapping(cap_override, cognitive_types)
     _test("target override used", mapping2["result"] == "output.custom_summary")
 
     # Unknown type (no default_slot) → skipped
-    cap_unknown = _make_cap("unk", cognitive_hints={
-        "role": ["analyze"],
-        "produces": {
-            "data": {"type": "UnknownType"},
+    cap_unknown = _make_cap(
+        "unk",
+        cognitive_hints={
+            "role": ["analyze"],
+            "produces": {
+                "data": {"type": "UnknownType"},
+            },
         },
-    })
+    )
     mapping3 = _build_auto_wire_mapping(cap_unknown, cognitive_types)
     _test("unknown type → None mapping", mapping3 is None)
 
@@ -244,19 +278,26 @@ def test_auto_wire_mapping():
 # 4. validate_consumes_chain
 # ---------------------------------------------------------------------------
 
+
 def test_consumes_chain_valid():
     print("▸ validate_consumes_chain — valid chain")
 
     caps = {
-        "web.page.fetch": _make_cap("web.page.fetch", cognitive_hints={
-            "role": ["perceive"],
-            "produces": {"content": {"type": "Artifact"}},
-        }),
-        "text.content.summarize": _make_cap("text.content.summarize", cognitive_hints={
-            "role": ["synthesize"],
-            "consumes": ["Artifact"],
-            "produces": {"summary": {"type": "Summary"}},
-        }),
+        "web.page.fetch": _make_cap(
+            "web.page.fetch",
+            cognitive_hints={
+                "role": ["perceive"],
+                "produces": {"content": {"type": "Artifact"}},
+            },
+        ),
+        "text.content.summarize": _make_cap(
+            "text.content.summarize",
+            cognitive_hints={
+                "role": ["synthesize"],
+                "consumes": ["Artifact"],
+                "produces": {"summary": {"type": "Summary"}},
+            },
+        ),
     }
     loader = _FakeCapLoader(caps)
 
@@ -273,17 +314,18 @@ def test_consumes_chain_missing():
     print("▸ validate_consumes_chain — missing upstream type")
 
     caps = {
-        "text.content.summarize": _make_cap("text.content.summarize", cognitive_hints={
-            "role": ["synthesize"],
-            "consumes": ["Artifact"],
-            "produces": {"summary": {"type": "Summary"}},
-        }),
+        "text.content.summarize": _make_cap(
+            "text.content.summarize",
+            cognitive_hints={
+                "role": ["synthesize"],
+                "consumes": ["Artifact"],
+                "produces": {"summary": {"type": "Summary"}},
+            },
+        ),
     }
     loader = _FakeCapLoader(caps)
 
-    steps = (
-        _make_step("summarize", "text.content.summarize"),
-    )
+    steps = (_make_step("summarize", "text.content.summarize"),)
 
     warnings = validate_consumes_chain(steps, loader)
     _test("warning emitted", len(warnings) == 1)
@@ -294,11 +336,14 @@ def test_consumes_chain_skill_step_ignored():
     print("▸ validate_consumes_chain — skill: steps are ignored")
 
     caps = {
-        "analysis.risk.extract": _make_cap("analysis.risk.extract", cognitive_hints={
-            "role": ["analyze"],
-            "consumes": ["Artifact"],
-            "produces": {"risks": {"type": "Risk"}},
-        }),
+        "analysis.risk.extract": _make_cap(
+            "analysis.risk.extract",
+            cognitive_hints={
+                "role": ["analyze"],
+                "consumes": ["Artifact"],
+                "produces": {"risks": {"type": "Risk"}},
+            },
+        ),
     }
     loader = _FakeCapLoader(caps)
 
@@ -316,11 +361,14 @@ def test_consumes_chain_no_hints():
 
     caps = {
         "fs.file.read": _make_cap("fs.file.read"),
-        "text.content.summarize": _make_cap("text.content.summarize", cognitive_hints={
-            "role": ["synthesize"],
-            "consumes": ["Context"],
-            "produces": {"summary": {"type": "Summary"}},
-        }),
+        "text.content.summarize": _make_cap(
+            "text.content.summarize",
+            cognitive_hints={
+                "role": ["synthesize"],
+                "consumes": ["Context"],
+                "produces": {"summary": {"type": "Summary"}},
+            },
+        ),
     }
     loader = _FakeCapLoader(caps)
 
@@ -337,20 +385,32 @@ def test_consumes_chain_multi_step():
     print("▸ validate_consumes_chain — multi-step accumulation")
 
     caps = {
-        "web.page.fetch": _make_cap("web.page.fetch", cognitive_hints={
-            "role": ["perceive"],
-            "produces": {"content": {"type": "Artifact"}},
-        }),
-        "analysis.risk.extract": _make_cap("analysis.risk.extract", cognitive_hints={
-            "role": ["analyze"],
-            "consumes": ["Artifact"],
-            "produces": {"risks": {"type": "Risk"}, "assumptions": {"type": "Evidence"}},
-        }),
-        "eval.option.score": _make_cap("eval.option.score", cognitive_hints={
-            "role": ["evaluate"],
-            "consumes": ["Risk", "Evidence"],
-            "produces": {"scored": {"type": "Score"}},
-        }),
+        "web.page.fetch": _make_cap(
+            "web.page.fetch",
+            cognitive_hints={
+                "role": ["perceive"],
+                "produces": {"content": {"type": "Artifact"}},
+            },
+        ),
+        "analysis.risk.extract": _make_cap(
+            "analysis.risk.extract",
+            cognitive_hints={
+                "role": ["analyze"],
+                "consumes": ["Artifact"],
+                "produces": {
+                    "risks": {"type": "Risk"},
+                    "assumptions": {"type": "Evidence"},
+                },
+            },
+        ),
+        "eval.option.score": _make_cap(
+            "eval.option.score",
+            cognitive_hints={
+                "role": ["evaluate"],
+                "consumes": ["Risk", "Evidence"],
+                "produces": {"scored": {"type": "Score"}},
+            },
+        ),
     }
     loader = _FakeCapLoader(caps)
 
@@ -368,12 +428,12 @@ def test_consumes_chain_multi_step():
 # 5. apply_step_output with mapping_override
 # ---------------------------------------------------------------------------
 
+
 def test_output_mapper_override():
     print("▸ apply_step_output with mapping_override")
 
     from runtime.output_mapper import apply_step_output
     from runtime.execution_state import create_execution_state
-    from runtime.models import SkillSpec
 
     skill = SkillSpec(
         id="test.skill",
@@ -396,7 +456,9 @@ def test_output_mapper_override():
     _test("empty mapping → nothing written", state.vars == {})
 
     # With mapping_override, values should be written
-    apply_step_output(step, produced, state, mapping_override={"summary": "outputs.summary"})
+    apply_step_output(
+        step, produced, state, mapping_override={"summary": "outputs.summary"}
+    )
     _test("override writes to output", state.outputs.get("summary") == "hello world")
 
 

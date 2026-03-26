@@ -15,14 +15,17 @@ Usage::
 
 Requires: ``langchain-core`` (``pip install langchain-core``)
 """
+
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 import requests
 
 
-def _call_capability(base_url: str, capability_id: str, payload: dict, api_key: str | None = None) -> dict:
+def _call_capability(
+    base_url: str, capability_id: str, payload: dict, api_key: str | None = None
+) -> dict:
     """POST to the agent-skills neutral API and return the result."""
     url = f"{base_url.rstrip('/')}/v1/capabilities/{capability_id}/execute"
     headers: dict[str, str] = {"Content-Type": "application/json"}
@@ -67,7 +70,9 @@ def build_langchain_tools(
     for cap_id in capabilities:
         # Fetch schema from discovery to build the tool description
         try:
-            info = requests.get(f"{base_url.rstrip('/')}/v1/capabilities/{cap_id}", timeout=10)
+            info = requests.get(
+                f"{base_url.rstrip('/')}/v1/capabilities/{cap_id}", timeout=10
+            )
             info.raise_for_status()
             meta = info.json()
             description = meta.get("description", cap_id)

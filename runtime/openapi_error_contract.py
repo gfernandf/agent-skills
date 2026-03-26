@@ -54,7 +54,15 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
             message=sanitize_error_message(error),
         )
 
-    if isinstance(error, (InputMappingError, ReferenceResolutionError, OutputMappingError, AttachValidationError)):
+    if isinstance(
+        error,
+        (
+            InputMappingError,
+            ReferenceResolutionError,
+            OutputMappingError,
+            AttachValidationError,
+        ),
+    ):
         return HttpErrorContract(
             status_code=400,
             code="invalid_request",
@@ -78,7 +86,9 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
             message="Nested skill execution exceeded the maximum allowed depth.",
         )
 
-    if isinstance(error, (SafetyTrustLevelError, SafetyGateFailedError, GateDeniedError)):
+    if isinstance(
+        error, (SafetyTrustLevelError, SafetyGateFailedError, GateDeniedError)
+    ):
         return HttpErrorContract(
             status_code=403,
             code="safety_denied",
@@ -110,7 +120,10 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
             message="A step exceeded its configured timeout.",
         )
 
-    if isinstance(error, (FinalOutputValidationError, InvalidSkillSpecError, InvalidCapabilitySpecError)):
+    if isinstance(
+        error,
+        (FinalOutputValidationError, InvalidSkillSpecError, InvalidCapabilitySpecError),
+    ):
         return HttpErrorContract(
             status_code=409,
             code="invalid_configuration",
@@ -126,7 +139,9 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
             message="No eligible binding satisfies the requested conformance profile.",
         )
 
-    if isinstance(error, (CapabilityExecutionError, StepExecutionError, NestedSkillExecutionError)):
+    if isinstance(
+        error, (CapabilityExecutionError, StepExecutionError, NestedSkillExecutionError)
+    ):
         root = _root_cause(error)
         if isinstance(root, BindingExecutionError) and root.conformance_unmet:
             return HttpErrorContract(

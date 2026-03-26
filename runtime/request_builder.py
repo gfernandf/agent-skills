@@ -75,7 +75,9 @@ class RequestBuilder:
             )
 
         # Strip keys whose input references were absent (optional fields).
-        payload = {k: v for k, v in payload.items() if not isinstance(v, _MissingInputSentinel)}
+        payload = {
+            k: v for k, v in payload.items() if not isinstance(v, _MissingInputSentinel)
+        }
 
         return payload
 
@@ -129,7 +131,10 @@ class RequestBuilder:
     ) -> Any:
         template_matches = list(_INPUT_TEMPLATE_RE.finditer(value))
         if template_matches:
-            if len(template_matches) == 1 and template_matches[0].span() == (0, len(value)):
+            if len(template_matches) == 1 and template_matches[0].span() == (
+                0,
+                len(value),
+            ):
                 return self._resolve_string_reference(
                     template_matches[0].group(1),
                     step_input=step_input,
@@ -139,7 +144,7 @@ class RequestBuilder:
             rendered_parts: list[str] = []
             last_index = 0
             for match in template_matches:
-                rendered_parts.append(value[last_index:match.start()])
+                rendered_parts.append(value[last_index : match.start()])
                 resolved = self._resolve_string_reference(
                     match.group(1),
                     step_input=step_input,

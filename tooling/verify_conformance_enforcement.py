@@ -17,7 +17,9 @@ from customer_facing.neutral_api import NeutralRuntimeAPI
 
 
 def _assert_strict_requirement_fails_without_strict_binding() -> None:
-    api = NeutralRuntimeAPI(registry_root=REGISTRY_ROOT, runtime_root=ROOT, host_root=ROOT)
+    api = NeutralRuntimeAPI(
+        registry_root=REGISTRY_ROOT, runtime_root=ROOT, host_root=ROOT
+    )
 
     try:
         api.execute_capability(
@@ -33,7 +35,9 @@ def _assert_strict_requirement_fails_without_strict_binding() -> None:
             ) from e
         return
 
-    raise RuntimeError("Expected strict conformance requirement to fail, but execution succeeded.")
+    raise RuntimeError(
+        "Expected strict conformance requirement to fail, but execution succeeded."
+    )
 
 
 def _write_strict_local_binding(host_root: Path) -> None:
@@ -41,7 +45,12 @@ def _write_strict_local_binding(host_root: Path) -> None:
     agent_dir.mkdir(parents=True, exist_ok=True)
 
     (agent_dir / "active_bindings.json").write_text(
-        json.dumps({"text.content.summarize": "local_text_summarize_strict"}, indent=2, ensure_ascii=False) + "\n",
+        json.dumps(
+            {"text.content.summarize": "local_text_summarize_strict"},
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n",
         encoding="utf-8",
     )
 

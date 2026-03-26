@@ -3,7 +3,11 @@ from __future__ import annotations
 import time
 from typing import Any, Protocol
 
-from runtime.errors import CapabilityExecutionError, CapabilityNotFoundError, InputMappingError
+from runtime.errors import (
+    CapabilityExecutionError,
+    CapabilityNotFoundError,
+    InputMappingError,
+)
 from runtime.models import CapabilitySpec
 from runtime.observability import elapsed_ms, log_event
 
@@ -19,7 +23,9 @@ _TYPE_MAP: dict[str, tuple[type, ...]] = {
 }
 
 
-def _validate_capability_input(capability: CapabilitySpec, step_input: dict[str, Any]) -> None:
+def _validate_capability_input(
+    capability: CapabilitySpec, step_input: dict[str, Any]
+) -> None:
     """Validate step_input against the capability's declared input schema.
 
     Raises InputMappingError on missing required fields or type mismatches.
@@ -39,6 +45,7 @@ def _validate_capability_input(capability: CapabilitySpec, step_input: dict[str,
                     f"expected type '{field_spec.type}' but got '{type(value).__name__}'.",
                     capability_id=capability.id,
                 )
+
 
 class CapabilityExecutor(Protocol):
     """
@@ -174,7 +181,9 @@ class DefaultCapabilityExecutor:
             output_keys=sorted(outputs.keys()),
             binding_id=(meta.get("binding_id") if isinstance(meta, dict) else None),
             service_id=(meta.get("service_id") if isinstance(meta, dict) else None),
-            conformance_profile=(meta.get("conformance_profile") if isinstance(meta, dict) else None),
+            conformance_profile=(
+                meta.get("conformance_profile") if isinstance(meta, dict) else None
+            ),
         )
 
         # attach metadata into return if present

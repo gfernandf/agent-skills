@@ -6,19 +6,21 @@ Provides baseline implementations for memory-related capabilities.
 # Simple in-memory storage for baseline
 _memory_store = {}
 
+
 def retrieve_memory(key):
     """
     Retrieve a value from memory by key.
-    
+
     Args:
         key (str): The memory key.
-    
+
     Returns:
         dict: {"found": bool, "value": any}
     """
     found = key in _memory_store
     value = _memory_store.get(key)  # None when not found; skips type check
     return {"found": found, "value": value}
+
 
 def store_memory(key, value):
     """
@@ -45,7 +47,11 @@ def store_record(namespace, record, ttl_seconds=None):
 
     record_id = str(record.get("id", id(record)))
     ns_key = f"{ns}:{record_id}"
-    _memory_store[ns_key] = {"record": record, "namespace": ns, "ttl_seconds": ttl_seconds}
+    _memory_store[ns_key] = {
+        "record": record,
+        "namespace": ns,
+        "ttl_seconds": ttl_seconds,
+    }
     return {"stored": True, "record_id": record_id}
 
 
@@ -55,7 +61,6 @@ def vector_search(query, namespace=None, top_k=None):
 
     Baseline: simple keyword overlap scoring (not real vector search).
     """
-    import hashlib
 
     k = int(top_k) if isinstance(top_k, (int, float)) and top_k > 0 else 5
     query_words = set(str(query).lower().split())
@@ -65,7 +70,9 @@ def vector_search(query, namespace=None, top_k=None):
         if namespace and not ns_key.startswith(f"{namespace}:"):
             continue
         rec = entry if not isinstance(entry, dict) else entry.get("record", entry)
-        rec_text = " ".join(str(v) for v in (rec.values() if isinstance(rec, dict) else [rec]))
+        rec_text = " ".join(
+            str(v) for v in (rec.values() if isinstance(rec, dict) else [rec])
+        )
         rec_words = set(rec_text.lower().split())
         overlap = len(query_words & rec_words)
         if overlap > 0:

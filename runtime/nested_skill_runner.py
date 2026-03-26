@@ -89,7 +89,7 @@ class NestedSkillRunner:
                 f"Invalid nested skill reference '{reference}'."
             )
 
-        skill_id = reference[len(prefix):].strip()
+        skill_id = reference[len(prefix) :].strip()
 
         if not skill_id:
             raise NestedSkillExecutionError(

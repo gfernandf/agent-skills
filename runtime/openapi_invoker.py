@@ -28,8 +28,12 @@ _DEFAULT_RETRY_BACKOFF_BASE = 1.0
 _DEFAULT_RETRY_BACKOFF_FACTOR = 2.0
 _MAX_RETRY_AFTER_SECONDS = 60.0
 
-_DEFAULT_MAX_REQUEST_BYTES = int(os.getenv("AGENT_SKILLS_MAX_REQUEST_BYTES", str(10 * 1024 * 1024)))
-_DEFAULT_MAX_RESPONSE_BYTES = int(os.getenv("AGENT_SKILLS_MAX_RESPONSE_BYTES", str(10 * 1024 * 1024)))
+_DEFAULT_MAX_REQUEST_BYTES = int(
+    os.getenv("AGENT_SKILLS_MAX_REQUEST_BYTES", str(10 * 1024 * 1024))
+)
+_DEFAULT_MAX_RESPONSE_BYTES = int(
+    os.getenv("AGENT_SKILLS_MAX_RESPONSE_BYTES", str(10 * 1024 * 1024))
+)
 
 
 class OpenAPIInvoker:
@@ -48,11 +52,13 @@ class OpenAPIInvoker:
     _ENV_PLACEHOLDER = re.compile(r"\$\{([A-Z][A-Z0-9_]*)\}")
 
     # Cloud metadata endpoints that are ALWAYS blocked regardless of allow_private_networks.
-    _BLOCKED_METADATA_IPS = frozenset({
-        "169.254.169.254",  # AWS / GCP / Azure instance metadata
-        "100.100.100.200",  # Alibaba Cloud metadata
-        "fd00:ec2::254",    # AWS IPv6 metadata
-    })
+    _BLOCKED_METADATA_IPS = frozenset(
+        {
+            "169.254.169.254",  # AWS / GCP / Azure instance metadata
+            "100.100.100.200",  # Alibaba Cloud metadata
+            "fd00:ec2::254",  # AWS IPv6 metadata
+        }
+    )
 
     _SESSION_POOL_MAX = 32
 
@@ -112,7 +118,9 @@ class OpenAPIInvoker:
 
         url = self._build_url(service.base_url, binding.operation_id)
 
-        method = self._resolve_method(binding.metadata.get("method", "POST"), capability_id)
+        method = self._resolve_method(
+            binding.metadata.get("method", "POST"), capability_id
+        )
         timeout_seconds = self._resolve_timeout_seconds(
             binding_timeout=binding.metadata.get("timeout_seconds"),
             service_timeout=service.metadata.get("timeout_seconds"),
@@ -144,8 +152,10 @@ class OpenAPIInvoker:
                 safe_headers = self._redact_headers(headers or {})
                 safe_payload = self._redact_payload(request.payload)
                 with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
-                    f.write(f"\n[DEBUG] OpenAI request: headers={json.dumps(safe_headers)} "
-                            f"payload={json.dumps(safe_payload)[:2000]}\n")
+                    f.write(
+                        f"\n[DEBUG] OpenAI request: headers={json.dumps(safe_headers)} "
+                        f"payload={json.dumps(safe_payload)[:2000]}\n"
+                    )
             except Exception:
                 pass
 
@@ -162,7 +172,11 @@ class OpenAPIInvoker:
 
         # Validate request payload size
         try:
-            payload_bytes = len(json.dumps(request.payload).encode("utf-8")) if request.payload else 0
+            payload_bytes = (
+                len(json.dumps(request.payload).encode("utf-8"))
+                if request.payload
+                else 0
+            )
         except (TypeError, ValueError):
             payload_bytes = 0
         if payload_bytes > max_request_bytes:
@@ -172,8 +186,6 @@ class OpenAPIInvoker:
                 capability_id=capability_id,
             )
 
-        last_error: Exception | None = None
-        last_response: requests.Response | None = None
         cancel_event = request.cancel_event
 
         for attempt in range(max_retries + 1):
@@ -187,7 +199,11 @@ class OpenAPIInvoker:
             # W3C trace context propagation (O2)
             trace_id = request.context_metadata.get("trace_id")
             if trace_id:
-                from runtime.trace_context import inject_traceparent, trace_id_from_internal
+                from runtime.trace_context import (
+                    inject_traceparent,
+                    trace_id_from_internal,
+                )
+
                 tp_headers = inject_traceparent(trace_id_from_internal(trace_id))
                 headers = dict(headers or {})
                 headers.update(tp_headers)
@@ -202,7 +218,6 @@ class OpenAPIInvoker:
                     timeout=timeout_seconds,
                 )
             except requests.Timeout as e:
-                last_error = e
                 if attempt < max_retries:
                     self._wait_backoff(attempt, backoff_base, backoff_factor)
                     continue
@@ -213,7 +228,6 @@ class OpenAPIInvoker:
                     cause=e,
                 ) from e
             except requests.ConnectionError as e:
-                last_error = e
                 if attempt < max_retries:
                     self._wait_backoff(attempt, backoff_base, backoff_factor)
                     continue
@@ -230,9 +244,13 @@ class OpenAPIInvoker:
                     cause=e,
                 ) from e
 
-            if response.status_code in _TRANSIENT_STATUS_CODES and attempt < max_retries:
-                last_response = response
-                wait = self._extract_retry_after(response, attempt, backoff_base, backoff_factor)
+            if (
+                response.status_code in _TRANSIENT_STATUS_CODES
+                and attempt < max_retries
+            ):
+                wait = self._extract_retry_after(
+                    response, attempt, backoff_base, backoff_factor
+                )
                 time.sleep(wait)
                 continue
 
@@ -243,8 +261,10 @@ class OpenAPIInvoker:
             try:
                 safe_body = self._redact_response_text(response.text[:2000])
                 with open("artifacts/openai_debug.log", "a", encoding="utf-8") as f:
-                    f.write(f"[DEBUG] OpenAI response: status={response.status_code} "
-                            f"body={safe_body}\n")
+                    f.write(
+                        f"[DEBUG] OpenAI response: status={response.status_code} "
+                        f"body={safe_body}\n"
+                    )
             except Exception:
                 pass
 
@@ -351,7 +371,12 @@ class OpenAPIInvoker:
 
             if not self._allow_private_networks:
                 addr = ipaddress.ip_address(ip_str)
-                if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved:
+                if (
+                    addr.is_private
+                    or addr.is_loopback
+                    or addr.is_link_local
+                    or addr.is_reserved
+                ):
                     raise OpenAPIInvocationError(
                         f"Blocked request to private/reserved IP {ip_str} "
                         f"(hostname '{hostname}'). Set allow_private_networks=True "
@@ -398,8 +423,12 @@ class OpenAPIInvoker:
         capability_id: str | None,
     ) -> dict[str, str]:
         merged: dict[str, str] = {}
-        merged.update(self._normalize_headers(service_headers, "service", capability_id))
-        merged.update(self._normalize_headers(binding_headers, "binding", capability_id))
+        merged.update(
+            self._normalize_headers(service_headers, "service", capability_id)
+        )
+        merged.update(
+            self._normalize_headers(binding_headers, "binding", capability_id)
+        )
         return merged
 
     def _normalize_headers(
@@ -527,9 +556,15 @@ class OpenAPIInvoker:
         compact = " ".join(text.split())
         return compact[:max_len]
 
-    _SENSITIVE_HEADER_NAMES = frozenset({
-        "authorization", "x-api-key", "api-key", "x-secret", "cookie",
-    })
+    _SENSITIVE_HEADER_NAMES = frozenset(
+        {
+            "authorization",
+            "x-api-key",
+            "api-key",
+            "x-secret",
+            "cookie",
+        }
+    )
 
     def _redact_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """Return a copy of *headers* with sensitive values replaced by '***'."""
@@ -541,10 +576,19 @@ class OpenAPIInvoker:
                 redacted[k] = v
         return redacted
 
-    _SENSITIVE_PAYLOAD_KEYS = frozenset({
-        "api_key", "apikey", "secret", "password", "token", "access_token",
-        "refresh_token", "credentials", "private_key",
-    })
+    _SENSITIVE_PAYLOAD_KEYS = frozenset(
+        {
+            "api_key",
+            "apikey",
+            "secret",
+            "password",
+            "token",
+            "access_token",
+            "refresh_token",
+            "credentials",
+            "private_key",
+        }
+    )
 
     def _redact_payload(self, payload: Any) -> Any:
         """Return a copy of *payload* with sensitive keys redacted."""
@@ -563,9 +607,14 @@ class OpenAPIInvoker:
     def _redact_response_text(self, text: str) -> str:
         """Remove potential secrets from response body text for debug logging."""
         import re
+
         # Redact JWT-like tokens and long base64 strings that might be keys
-        text = re.sub(r'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}', '***JWT_REDACTED***', text)
-        text = re.sub(r'(sk-|pk-|key-)[A-Za-z0-9]{20,}', '***KEY_REDACTED***', text)
+        text = re.sub(
+            r"eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}",
+            "***JWT_REDACTED***",
+            text,
+        )
+        text = re.sub(r"(sk-|pk-|key-)[A-Za-z0-9]{20,}", "***KEY_REDACTED***", text)
         return text
 
     # ── Retry helpers ──────────────────────────────────────────────
@@ -580,7 +629,9 @@ class OpenAPIInvoker:
         return _DEFAULT_MAX_RETRIES
 
     @staticmethod
-    def _resolve_positive_float(binding_val: Any, service_val: Any, default: float) -> float:
+    def _resolve_positive_float(
+        binding_val: Any, service_val: Any, default: float
+    ) -> float:
         chosen = binding_val if binding_val is not None else service_val
         if chosen is None:
             return default
@@ -599,7 +650,7 @@ class OpenAPIInvoker:
 
     @staticmethod
     def _wait_backoff(attempt: int, base: float, factor: float) -> None:
-        delay = base * (factor ** attempt)
+        delay = base * (factor**attempt)
         time.sleep(delay)
 
     @staticmethod
@@ -617,4 +668,4 @@ class OpenAPIInvoker:
                 return min(max(wait, 0), _MAX_RETRY_AFTER_SECONDS)
             except (ValueError, TypeError):
                 pass
-        return backoff_base * (backoff_factor ** attempt)
+        return backoff_base * (backoff_factor**attempt)

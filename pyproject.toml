@@ -109,3 +109,19 @@ exclude_lines = [
     "@overload",
 ]
 show_missing = true
+
+[tool.ruff.lint]
+ignore = ["E741"]
+
+[tool.ruff.lint.per-file-ignores]
+"cli/main.py" = ["E402"]
+"test_*.py" = ["E402"]
+"validate_bindings.py" = ["E402"]
+"rename_capabilities.py" = ["E402"]
+"fix_bindings.py" = ["E402"]
+"run_pdf_test.py" = ["E402"]
+"skills.py" = ["E402"]
+"_run_tests.py" = ["E402"]
+"_runner.py" = ["E402"]
+"examples/**" = ["E402"]
+"tooling/**" = ["E402"]

@@ -7,6 +7,7 @@ and a machine-readable JSON file in ``docs/``.
 Usage:
     python tooling/generate_error_catalog.py
 """
+
 from __future__ import annotations
 
 import importlib
@@ -31,7 +32,9 @@ def _discover_errors():
     for name, obj in sorted(inspect.getmembers(mod, inspect.isclass)):
         if issubclass(obj, base) and obj is not base:
             doc = (inspect.getdoc(obj) or "").strip()
-            entries.append({"class": name, "description": doc, "module": "runtime.errors"})
+            entries.append(
+                {"class": name, "description": doc, "module": "runtime.errors"}
+            )
     return entries
 
 

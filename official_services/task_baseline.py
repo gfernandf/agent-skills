@@ -42,12 +42,20 @@ def _now() -> str:
 
 
 def approve_request(approval_id, approver=None, notes=None):
-    _APPROVALS[str(approval_id)] = {"status": "approved", "approver": approver, "notes": notes}
+    _APPROVALS[str(approval_id)] = {
+        "status": "approved",
+        "approver": approver,
+        "notes": notes,
+    }
     return {"approved": True, "timestamp": _now()}
 
 
 def reject_request(approval_id, rejector=None, reason=""):
-    _APPROVALS[str(approval_id)] = {"status": "rejected", "rejector": rejector, "reason": reason}
+    _APPROVALS[str(approval_id)] = {
+        "status": "rejected",
+        "rejector": rejector,
+        "reason": reason,
+    }
     return {"rejected": True, "timestamp": _now()}
 
 
@@ -104,7 +112,10 @@ def search_cases(query, filters=None):
             if isinstance(filters, dict):
                 if filters.get("status") and case.get("status") != filters["status"]:
                     continue
-                if filters.get("priority") and case.get("priority") != filters["priority"]:
+                if (
+                    filters.get("priority")
+                    and case.get("priority") != filters["priority"]
+                ):
                     continue
             results.append(case)
     return {"results": results, "total": len(results)}
@@ -177,14 +188,18 @@ def schedule_milestone(milestone_name, target_date, deliverables=None):
 
 def classify_priority(task, context=None):
     if not isinstance(task, dict):
-        return {"priority": "medium", "confidence": 0.5, "rationale": "No task data provided."}
+        return {
+            "priority": "medium",
+            "confidence": 0.5,
+            "rationale": "No task data provided.",
+        }
 
     text = f"{task.get('title', '')} {task.get('description', '')}".lower()
     score = 0
 
-    critical_pats = [r'\b(outage|down|breach|data.?loss|p0|sev.?1)\b']
-    high_pats = [r'\b(urgent|blocker|escalat|security|production)\b']
-    medium_pats = [r'\b(important|deadline|customer|regression)\b']
+    critical_pats = [r"\b(outage|down|breach|data.?loss|p0|sev.?1)\b"]
+    high_pats = [r"\b(urgent|blocker|escalat|security|production)\b"]
+    medium_pats = [r"\b(important|deadline|customer|regression)\b"]
 
     for pat in critical_pats:
         if re.search(pat, text):
@@ -199,7 +214,10 @@ def classify_priority(task, context=None):
     if isinstance(context, dict):
         if context.get("sla_tier") in ("platinum", "gold"):
             score += 1
-        if isinstance(context.get("impacted_users"), (int, float)) and context["impacted_users"] > 1000:
+        if (
+            isinstance(context.get("impacted_users"), (int, float))
+            and context["impacted_users"] > 1000
+        ):
             score += 1
 
     if score >= 3:
@@ -212,9 +230,17 @@ def classify_priority(task, context=None):
         priority = "low"
 
     confidence = min(score / 4.0, 1.0) if score > 0 else 0.6
-    rationale = f"Keyword heuristic scored {score}." if score > 0 else "No priority indicators detected."
+    rationale = (
+        f"Keyword heuristic scored {score}."
+        if score > 0
+        else "No priority indicators detected."
+    )
 
-    return {"priority": priority, "confidence": round(confidence, 3), "rationale": rationale}
+    return {
+        "priority": priority,
+        "confidence": round(confidence, 3),
+        "rationale": rationale,
+    }
 
 
 # ── SLA monitoring ──

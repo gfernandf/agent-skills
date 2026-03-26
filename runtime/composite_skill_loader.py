@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Sequence
 
 from runtime.errors import SkillNotFoundError

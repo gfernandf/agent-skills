@@ -2,8 +2,8 @@
 Filesystem baseline service module.
 Provides baseline implementations for filesystem-related capabilities.
 """
+
 import os
-from pathlib import Path
 
 _FS_ROOT = os.getenv("AGENT_SKILLS_FS_ROOT", os.getcwd())
 
@@ -22,23 +22,20 @@ def _validate_path(path: str) -> str:
     try:
         common = os.path.commonpath([root, resolved])
     except ValueError:
-        raise ValueError(
-            f"Access denied: '{path}' is outside the allowed root."
-        )
+        raise ValueError(f"Access denied: '{path}' is outside the allowed root.")
     if common != root:
-        raise ValueError(
-            f"Access denied: '{path}' resolves outside the allowed root."
-        )
+        raise ValueError(f"Access denied: '{path}' resolves outside the allowed root.")
     return resolved
+
 
 def read_file(path, mode=None):
     """
     Read the contents of a file.
-    
+
     Args:
         path (str): The file path.
         mode (str): "text" or "binary". Defaults to "text".
-    
+
     Returns:
         dict: {"content": str} for text mode, {"bytes": bytes} for binary mode.
     """
@@ -48,11 +45,11 @@ def read_file(path, mode=None):
         return {"content": str(e)}
     try:
         if mode == "binary":
-            with open(safe_path, 'rb') as f:
+            with open(safe_path, "rb") as f:
                 content = f.read()
             return {"bytes": content}
         else:
-            with open(safe_path, 'r', encoding='utf-8') as f:
+            with open(safe_path, "r", encoding="utf-8") as f:
                 content = f.read()
             return {"content": content}
     except Exception as e:
@@ -109,7 +106,7 @@ def list_files(path, pattern=None, recursive=None):
     """
     try:
         safe_path = _validate_path(path)
-    except ValueError as e:
+    except ValueError:
         return {"entries": [], "total": 0}
 
     from pathlib import Path as _P

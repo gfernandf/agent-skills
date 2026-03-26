@@ -86,13 +86,13 @@ class YamlCapabilityLoader:
     def get_all_capabilities(self) -> dict[str, CapabilitySpec]:
         """
         Load and return all capabilities from the registry.
-        
+
         Returns a dict mapping capability_id to CapabilitySpec.
         Invalid capabilities are skipped silently.
         """
         if self._capability_index is None:
             self._capability_index = self._build_capability_index()
-        
+
         capabilities = {}
         for capability_id, path in self._capability_index.items():
             try:
@@ -100,7 +100,7 @@ class YamlCapabilityLoader:
             except Exception:
                 # Skip invalid capabilities
                 pass
-        
+
         return capabilities
 
     def get_cognitive_types(self) -> dict[str, Any]:
@@ -160,9 +160,13 @@ class YamlCapabilityLoader:
         properties = self._normalize_properties(raw.get("properties"), path)
         requires = self._normalize_requires(raw.get("requires"), path)
         deprecated = self._normalize_deprecated(raw.get("deprecated"), metadata, path)
-        replacement = self._normalize_optional_string(raw.get("replacement"), "replacement", path)
+        replacement = self._normalize_optional_string(
+            raw.get("replacement"), "replacement", path
+        )
         aliases = self._normalize_aliases(raw.get("aliases"), path)
-        cognitive_hints = self._normalize_cognitive_hints(raw.get("cognitive_hints"), path)
+        cognitive_hints = self._normalize_cognitive_hints(
+            raw.get("cognitive_hints"), path
+        )
         safety = self._normalize_safety(raw.get("safety"), path)
 
         return CapabilitySpec(
@@ -369,7 +373,9 @@ class YamlCapabilityLoader:
             safety[gate_key] = normalized_gates
         return safety if safety else None
 
-    def _require_non_empty_string(self, raw: dict[str, Any], key: str, path: Path) -> str:
+    def _require_non_empty_string(
+        self, raw: dict[str, Any], key: str, path: Path
+    ) -> str:
         value = raw.get(key)
         if not isinstance(value, str) or not value:
             raise InvalidCapabilitySpecError(

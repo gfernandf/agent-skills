@@ -12,6 +12,7 @@ Usage::
     degrade_reason = policy.enforce_pre(capability, step, context, step_input)
     policy.enforce_post(capability, step, context, produced)
 """
+
 from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
@@ -85,7 +86,8 @@ class DefaultPolicyEngine:
         if isinstance(required_trust, str):
             required_rank = _TRUST_LEVEL_RANK.get(required_trust, 1)
             context_rank = _TRUST_LEVEL_RANK.get(
-                context.options.trust_level, 1,
+                context.options.trust_level,
+                1,
             )
             if context_rank < required_rank:
                 raise SafetyTrustLevelError(
@@ -147,9 +149,13 @@ class DefaultPolicyEngine:
             try:
                 gate_cap = self._capability_loader.get_capability(gate_cap_id)
                 gate_result = self._capability_executor.execute(
-                    gate_cap, gate_input, trace_id=context.trace_id,
+                    gate_cap,
+                    gate_input,
+                    trace_id=context.trace_id,
                 )
-                produced = gate_result[0] if isinstance(gate_result, tuple) else gate_result
+                produced = (
+                    gate_result[0] if isinstance(gate_result, tuple) else gate_result
+                )
             except Exception as exc:
                 log_event(
                     "safety_gate.execution_error",

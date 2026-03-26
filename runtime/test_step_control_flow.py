@@ -8,6 +8,7 @@ Covers:
 
 Run: python -m runtime.test_step_control_flow
 """
+
 from __future__ import annotations
 
 import sys
@@ -31,11 +32,8 @@ from runtime.step_control import (
     ScatterConfig,
 )
 from runtime.execution_engine import ExecutionEngine
-from runtime.execution_state import create_execution_state
 from runtime.models import (
     CapabilitySpec,
-    ExecutionContext,
-    ExecutionOptions,
     ExecutionRequest,
     FieldSpec,
     SkillSpec,
@@ -65,6 +63,7 @@ def _test(label: str, condition: bool, detail: str = "") -> None:
 @dataclass
 class _FakeState:
     """Minimal ExecutionState-like object for expression tests."""
+
     inputs: dict[str, Any] = field(default_factory=dict)
     vars: dict[str, Any] = field(default_factory=dict)
     outputs: dict[str, Any] = field(default_factory=dict)
@@ -77,6 +76,7 @@ class _FakeState:
 # ═══════════════════════════════════════════════════════════════
 # 1. Expression evaluator — step_expression.py
 # ═══════════════════════════════════════════════════════════════
+
 
 def test_expression_literals():
     s = _FakeState()
@@ -138,8 +138,13 @@ def test_expression_in_operator():
     s = _FakeState(vars={"lang": "es", "langs": ["es", "en", "fr"]})
     _test("expr: in list", evaluate_bool("vars.lang in vars.langs", s) is True)
     _test("expr: not in list", evaluate_bool("'de' not in vars.langs", s) is True)
-    _test("expr: in literal list", evaluate_bool("vars.lang in ['es', 'en']", s) is True)
-    _test("expr: not in literal list", evaluate_bool("vars.lang in ['en', 'fr']", s) is False)
+    _test(
+        "expr: in literal list", evaluate_bool("vars.lang in ['es', 'en']", s) is True
+    )
+    _test(
+        "expr: not in literal list",
+        evaluate_bool("vars.lang in ['en', 'fr']", s) is False,
+    )
 
 
 def test_expression_parentheses():
@@ -167,6 +172,7 @@ def test_expression_errors():
 # 2. Condition gate — step_control.check_condition
 # ═══════════════════════════════════════════════════════════════
 
+
 def test_condition_no_config():
     s = _FakeState()
     result = check_condition({}, s)
@@ -191,6 +197,7 @@ def test_condition_false():
 # ═══════════════════════════════════════════════════════════════
 # 3. Retry — step_control.invoke_with_retry
 # ═══════════════════════════════════════════════════════════════
+
 
 def test_retry_no_policy():
     calls = []
@@ -247,7 +254,10 @@ def test_retry_exhaustion():
 
 def test_retry_from_config():
     policy = RetryPolicy.from_config({"max_attempts": 5, "backoff_seconds": 2.0})
-    _test("retry: from_config max_attempts", policy is not None and policy.max_attempts == 5)
+    _test(
+        "retry: from_config max_attempts",
+        policy is not None and policy.max_attempts == 5,
+    )
     _test("retry: from_config backoff", policy.backoff_seconds == 2.0)
     _test("retry: from_config none", RetryPolicy.from_config(None) is None)
     _test("retry: from_config bad type", RetryPolicy.from_config("bad") is None)
@@ -256,6 +266,7 @@ def test_retry_from_config():
 # ═══════════════════════════════════════════════════════════════
 # 4. Foreach — step_control.execute_foreach
 # ═══════════════════════════════════════════════════════════════
+
 
 def test_foreach_basic():
     s = _FakeState(vars={"docs": ["doc_a", "doc_b", "doc_c"]})
@@ -270,8 +281,10 @@ def test_foreach_basic():
     _test("foreach: called 3 times", len(calls) == 3)
     _test("foreach: item injected", calls[0]["item"] == "doc_a")
     _test("foreach: idx injected", calls[1]["idx"] == 1)
-    _test("foreach: output collected as list",
-          produced.get("summary") == ["sum_doc_a", "sum_doc_b", "sum_doc_c"])
+    _test(
+        "foreach: output collected as list",
+        produced.get("summary") == ["sum_doc_a", "sum_doc_b", "sum_doc_c"],
+    )
     _test("foreach: meta has count", meta.get("foreach_count") == 3)
 
 
@@ -311,17 +324,25 @@ def test_foreach_non_list_raises():
 
 
 def test_foreach_from_config():
-    cfg = ForeachConfig.from_config({"items": "vars.docs", "as": "doc", "index_as": "i"})
-    _test("foreach: from_config items", cfg is not None and cfg.items_expr == "vars.docs")
+    cfg = ForeachConfig.from_config(
+        {"items": "vars.docs", "as": "doc", "index_as": "i"}
+    )
+    _test(
+        "foreach: from_config items", cfg is not None and cfg.items_expr == "vars.docs"
+    )
     _test("foreach: from_config as_var", cfg.as_var == "doc")
     _test("foreach: from_config index_var", cfg.index_var == "i")
     _test("foreach: from_config none", ForeachConfig.from_config(None) is None)
-    _test("foreach: from_config missing items", ForeachConfig.from_config({"as": "x"}) is None)
+    _test(
+        "foreach: from_config missing items",
+        ForeachConfig.from_config({"as": "x"}) is None,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════
 # 5. While — step_control.execute_while
 # ═══════════════════════════════════════════════════════════════
+
 
 def test_while_basic():
     s = _FakeState(vars={"counter": 0})
@@ -375,15 +396,22 @@ def test_while_with_retry():
 
 def test_while_from_config():
     cfg = WhileConfig.from_config({"condition": "vars.x < 5", "max_iterations": 20})
-    _test("while: from_config condition", cfg is not None and cfg.condition_expr == "vars.x < 5")
+    _test(
+        "while: from_config condition",
+        cfg is not None and cfg.condition_expr == "vars.x < 5",
+    )
     _test("while: from_config max_iter", cfg.max_iterations == 20)
     _test("while: from_config none", WhileConfig.from_config(None) is None)
-    _test("while: from_config missing condition", WhileConfig.from_config({"max_iterations": 5}) is None)
+    _test(
+        "while: from_config missing condition",
+        WhileConfig.from_config({"max_iterations": 5}) is None,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════
 # 6. Integration — execution_engine._execute_step
 # ═══════════════════════════════════════════════════════════════
+
 
 class _FakeCapLoader:
     def __init__(self, caps: dict[str, CapabilitySpec]):
@@ -421,6 +449,7 @@ class _FakeResolver:
 
 class _CountingExecutor:
     """Executor that counts calls and returns configurable results."""
+
     def __init__(self, results=None, fail_first_n=0):
         self.call_count = 0
         self._results = results or [{"result": "done"}]
@@ -446,16 +475,20 @@ class _FakeAudit:
 
 def _make_cap(cap_id="test.cap", outputs=None):
     return CapabilitySpec(
-        id=cap_id, version="1.0.0", description="test",
+        id=cap_id,
+        version="1.0.0",
+        description="test",
         inputs={"text": FieldSpec(type="string", required=True)},
         outputs=outputs or {"result": FieldSpec(type="string", required=True)},
-        metadata={}, properties={},
+        metadata={},
+        properties={},
     )
 
 
 def _make_step(step_id="s1", uses="test.cap", config=None):
     return StepSpec(
-        id=step_id, uses=uses,
+        id=step_id,
+        uses=uses,
         input_mapping={"text": "inputs.text"},
         output_mapping={"result": "outputs.result"},
         config=config or {},
@@ -464,7 +497,9 @@ def _make_step(step_id="s1", uses="test.cap", config=None):
 
 def _make_skill(steps=None):
     return SkillSpec(
-        id="test.skill", version="1.0.0", name="Test",
+        id="test.skill",
+        version="1.0.0",
+        name="Test",
         description="test",
         inputs={"text": FieldSpec(type="string", required=True)},
         outputs={"result": FieldSpec(type="string", required=True)},
@@ -501,7 +536,9 @@ def test_engine_condition_false():
     step = _make_step(config={"condition": "inputs.text == 'nope'"})
     # Skill output is optional so skipping the step doesn't fail validation.
     skill = SkillSpec(
-        id="test.skill", version="1.0.0", name="Test",
+        id="test.skill",
+        version="1.0.0",
+        name="Test",
         description="test",
         inputs={"text": FieldSpec(type="string", required=True)},
         outputs={"result": FieldSpec(type="string", required=False)},
@@ -518,13 +555,22 @@ def test_engine_condition_false():
     _test("engine: condition false → not executed", executor.call_count == 0)
     # The step result should be "skipped"
     sr = result.state.step_results.get("s1")
-    _test("engine: condition false → status skipped", sr is not None and sr.status == "skipped")
+    _test(
+        "engine: condition false → status skipped",
+        sr is not None and sr.status == "skipped",
+    )
 
 
 def test_engine_retry():
-    step = _make_step(config={
-        "retry": {"max_attempts": 3, "backoff_seconds": 0.001, "backoff_multiplier": 1},
-    })
+    step = _make_step(
+        config={
+            "retry": {
+                "max_attempts": 3,
+                "backoff_seconds": 0.001,
+                "backoff_multiplier": 1,
+            },
+        }
+    )
     skill = _make_skill(steps=[step])
     executor = _CountingExecutor(fail_first_n=2)
     engine = _build_engine(executor=executor, skill=skill)
@@ -549,6 +595,7 @@ def test_engine_no_control_flow():
 # ═══════════════════════════════════════════════════════════════
 # 7. Router — step_control.resolve_router
 # ═══════════════════════════════════════════════════════════════
+
 
 def test_router_exact_match():
     s = _FakeState(vars={"doc_type": "invoice"})
@@ -589,18 +636,29 @@ def test_router_no_match_no_default():
 
 
 def test_router_from_config():
-    cfg = RouterConfig.from_config({
-        "on": "vars.doc_type",
-        "cases": {"invoice": "doc.invoice.parse", "contract": "doc.contract.analyze"},
-        "default": "doc.generic.process",
-    })
+    cfg = RouterConfig.from_config(
+        {
+            "on": "vars.doc_type",
+            "cases": {
+                "invoice": "doc.invoice.parse",
+                "contract": "doc.contract.analyze",
+            },
+            "default": "doc.generic.process",
+        }
+    )
     _test("router: from_config ok", cfg is not None)
     _test("router: from_config on", cfg.on_expr == "vars.doc_type")
     _test("router: from_config cases count", len(cfg.cases) == 2)
     _test("router: from_config default", cfg.default == "doc.generic.process")
     _test("router: from_config none", RouterConfig.from_config(None) is None)
-    _test("router: from_config missing on", RouterConfig.from_config({"cases": {"a": "b"}}) is None)
-    _test("router: from_config missing cases", RouterConfig.from_config({"on": "x"}) is None)
+    _test(
+        "router: from_config missing on",
+        RouterConfig.from_config({"cases": {"a": "b"}}) is None,
+    )
+    _test(
+        "router: from_config missing cases",
+        RouterConfig.from_config({"on": "x"}) is None,
+    )
 
 
 def test_router_with_condition():
@@ -616,8 +674,12 @@ def test_router_with_condition():
 
 def test_engine_router():
     """Engine integration: router resolves to a different capability."""
-    cap_a = _make_cap("cap.alpha", outputs={"result": FieldSpec(type="string", required=True)})
-    cap_b = _make_cap("cap.beta", outputs={"result": FieldSpec(type="string", required=True)})
+    cap_a = _make_cap(
+        "cap.alpha", outputs={"result": FieldSpec(type="string", required=True)}
+    )
+    cap_b = _make_cap(
+        "cap.beta", outputs={"result": FieldSpec(type="string", required=True)}
+    )
     # The step uses cap.alpha as default, but the router should pick cap.beta
     step = _make_step(
         uses="cap.alpha",
@@ -655,8 +717,16 @@ def test_engine_router_with_retry():
     step = _make_step(
         uses="cap.alpha",
         config={
-            "router": {"on": "inputs.text", "cases": {"hello": "cap.beta"}, "default": "cap.alpha"},
-            "retry": {"max_attempts": 3, "backoff_seconds": 0.001, "backoff_multiplier": 1},
+            "router": {
+                "on": "inputs.text",
+                "cases": {"hello": "cap.beta"},
+                "default": "cap.alpha",
+            },
+            "retry": {
+                "max_attempts": 3,
+                "backoff_seconds": 0.001,
+                "backoff_multiplier": 1,
+            },
         },
     )
     skill = _make_skill(steps=[step])
@@ -681,6 +751,7 @@ def test_engine_router_with_retry():
 # 8. Scatter-Gather — step_control.execute_scatter
 # ═══════════════════════════════════════════════════════════════
 
+
 def test_scatter_collect():
     cfg = ScatterConfig(capabilities=["cap.a", "cap.b", "cap.c"], merge="collect")
 
@@ -689,15 +760,20 @@ def test_scatter_collect():
 
     produced, meta = execute_scatter(cfg, invoke, None)
     _test("scatter collect: 3 results", len(produced) == 3)
-    _test("scatter collect: cap.a present", produced.get("cap.a") == {"summary": "result_cap.a"})
-    _test("scatter collect: cap.b present", produced.get("cap.b") == {"summary": "result_cap.b"})
+    _test(
+        "scatter collect: cap.a present",
+        produced.get("cap.a") == {"summary": "result_cap.a"},
+    )
+    _test(
+        "scatter collect: cap.b present",
+        produced.get("cap.b") == {"summary": "result_cap.b"},
+    )
     _test("scatter collect: meta strategy", meta.get("scatter_strategy") == "collect")
     _test("scatter collect: meta count", meta.get("scatter_count") == 3)
 
 
 def test_scatter_first_success():
     cfg = ScatterConfig(capabilities=["cap.slow", "cap.fast"], merge="first_success")
-    import time
 
     def invoke(cap_id):
         if cap_id == "cap.slow":
@@ -707,7 +783,10 @@ def test_scatter_first_success():
 
     produced, meta = execute_scatter(cfg, invoke, None)
     _test("scatter first_success: got result", produced.get("val") is not None)
-    _test("scatter first_success: meta strategy", meta.get("scatter_strategy") == "first_success")
+    _test(
+        "scatter first_success: meta strategy",
+        meta.get("scatter_strategy") == "first_success",
+    )
     _test("scatter first_success: has winner", "scatter_winner" in meta)
 
 
@@ -757,23 +836,35 @@ def test_scatter_with_retry():
 
 
 def test_scatter_from_config():
-    cfg = ScatterConfig.from_config({
-        "capabilities": ["cap.a", "cap.b", "cap.c"],
-        "merge": "concat_lists",
-    })
+    cfg = ScatterConfig.from_config(
+        {
+            "capabilities": ["cap.a", "cap.b", "cap.c"],
+            "merge": "concat_lists",
+        }
+    )
     _test("scatter: from_config ok", cfg is not None)
     _test("scatter: from_config count", len(cfg.capabilities) == 3)
     _test("scatter: from_config merge", cfg.merge == "concat_lists")
     _test("scatter: from_config none", ScatterConfig.from_config(None) is None)
-    _test("scatter: from_config too few", ScatterConfig.from_config({"capabilities": ["a"]}) is None)
+    _test(
+        "scatter: from_config too few",
+        ScatterConfig.from_config({"capabilities": ["a"]}) is None,
+    )
     cfg2 = ScatterConfig.from_config({"capabilities": ["a", "b"]})
-    _test("scatter: from_config default merge", cfg2 is not None and cfg2.merge == "collect")
+    _test(
+        "scatter: from_config default merge",
+        cfg2 is not None and cfg2.merge == "collect",
+    )
 
 
 def test_engine_scatter():
     """Engine integration: scatter with 2 capabilities in collect mode."""
-    cap_a = _make_cap("cap.alpha", outputs={"result": FieldSpec(type="string", required=True)})
-    cap_b = _make_cap("cap.beta", outputs={"result": FieldSpec(type="string", required=True)})
+    cap_a = _make_cap(
+        "cap.alpha", outputs={"result": FieldSpec(type="string", required=True)}
+    )
+    cap_b = _make_cap(
+        "cap.beta", outputs={"result": FieldSpec(type="string", required=True)}
+    )
     step = StepSpec(
         id="s1",
         uses="cap.alpha",  # ignored when scatter is present
@@ -787,7 +878,9 @@ def test_engine_scatter():
         },
     )
     skill = SkillSpec(
-        id="test.skill", version="1.0.0", name="Test",
+        id="test.skill",
+        version="1.0.0",
+        name="Test",
         description="test",
         inputs={"text": FieldSpec(type="string", required=True)},
         outputs={"result": FieldSpec(type="string", required=False)},
@@ -814,6 +907,7 @@ def test_engine_scatter():
 # ═══════════════════════════════════════════════════════════════
 # Runner
 # ═══════════════════════════════════════════════════════════════
+
 
 def main():
     global _pass, _fail

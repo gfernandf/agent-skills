@@ -104,8 +104,7 @@ class CircuitBreakerRegistry:
                         service_id,
                         remaining_seconds=max(
                             0.0,
-                            self._recovery_timeout
-                            - (time.monotonic() - cb.opened_at),
+                            self._recovery_timeout - (time.monotonic() - cb.opened_at),
                         ),
                     )
                 cb.half_open_calls += 1

@@ -82,8 +82,15 @@ def build_usage(log_file: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="ingest_skill_usage_from_logs")
-    parser.add_argument("--log-file", type=Path, required=True, help="JSONL log file with runtime events")
-    parser.add_argument("--out", type=Path, default=Path("artifacts") / "skill_usage_30d.json")
+    parser.add_argument(
+        "--log-file",
+        type=Path,
+        required=True,
+        help="JSONL log file with runtime events",
+    )
+    parser.add_argument(
+        "--out", type=Path, default=Path("artifacts") / "skill_usage_30d.json"
+    )
     args = parser.parse_args()
 
     if not args.log_file.exists():

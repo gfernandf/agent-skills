@@ -7,6 +7,7 @@ Usage:
 Requires a running HTTP server.  Sends a request to /execute/stream and
 validates that SSE events are received in the correct format.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,16 +43,19 @@ def main() -> None:
 
             print(f"  Content-Type: {content_type}")
             events = []
-            buffer = ""
 
             for raw_line in resp:
-                line = raw_line.decode("utf-8", errors="replace").rstrip("\n").rstrip("\r")
+                line = (
+                    raw_line.decode("utf-8", errors="replace").rstrip("\n").rstrip("\r")
+                )
                 if line.startswith("event: "):
                     current_event = line[7:]
                 elif line.startswith("data: "):
                     data = json.loads(line[6:])
                     events.append({"event": current_event, "data": data})
-                    print(f"  ← event: {current_event}  ({data.get('message', '')[:60]})")
+                    print(
+                        f"  ← event: {current_event}  ({data.get('message', '')[:60]})"
+                    )
 
             # Validation
             if not events:
