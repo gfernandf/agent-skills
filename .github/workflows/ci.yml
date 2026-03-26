@@ -41,6 +41,7 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
+          mkdir -p artifacts
           python -m pytest --tb=short -q -o "addopts=--cov=runtime --cov=gateway --cov=customer_facing --cov=customization --cov-report=term-missing:skip-covered --cov-report=html:artifacts/htmlcov" 2>&1 | tee artifacts/pytest.log
         env:
           PYTHONPATH: .
