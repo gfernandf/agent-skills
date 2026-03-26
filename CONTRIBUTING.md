@@ -38,6 +38,43 @@ and the [Skill Admission Policy](https://github.com/gfernandf/agent-skill-regist
 
 ---
 
+## Project Structure
+
+```
+agent-skills/                  ← This repo: execution runtime
+├── runtime/                   ← Core engine
+│   ├── models.py              ← ExecutionState, CognitiveState v1 dataclasses
+│   ├── execution_engine.py    ← Main execution loop
+│   ├── scheduler.py           ← DAG scheduler (Kahn's topological sort)
+│   ├── policy_engine.py       ← Safety gates, trust levels, confirmation
+│   ├── binding_resolver.py    ← Protocol routing + fallback chain
+│   ├── *_invoker.py           ← Protocol invokers (OpenAPI, MCP, OpenRPC, PythonCall)
+│   ├── checkpoint.py          ← State serialization / restore
+│   └── test_*.py              ← Unit tests (175+)
+├── gateway/                   ← Skill discovery, ranking, governance
+├── customer_facing/           ← HTTP server, neutral API, FastAPI adapter
+├── sdk/                       ← Framework adapters (LangChain, CrewAI, AutoGen, SK) + TypeScript SDK
+├── bindings/official/         ← 163 binding YAMLs (PythonCall, OpenAPI, MCP)
+├── official_services/         ← 25 Python baseline modules (deterministic, no LLM)
+├── skills/local/              ← Ready-to-run skill definitions
+├── services/official/         ← Service descriptors (endpoints, auth)
+├── customization/             ← User override layer
+├── policies/                  ← Safety & admission policies
+├── cli/                       ← CLI entry point (run, describe, discover, list, attach)
+├── tooling/                   ← Validators, verifiers, load tests (k6)
+├── examples/                  ← Runnable example skills + client usage
+└── docs/                      ← 42 documentation files
+
+agent-skill-registry/          ← Companion repo: canonical definitions
+├── capabilities/              ← 122 capability contracts (YAML)
+├── skills/                    ← 35 skill definitions
+├── vocabulary/                ← Controlled vocabulary, domains, naming
+├── catalog/                   ← Generated governance artifacts
+└── tools/                     ← Registry validation & generation
+```
+
+---
+
 ## Review Process
 
 | Stage | SLA | Who |

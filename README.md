@@ -1,13 +1,135 @@
 # Agent Skills Runtime
 
-Runtime implementation for executing reusable **AI agent skills** and **capability bindings**.
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/Tests-1474_passed-brightgreen.svg)]()
+[![Capabilities](https://img.shields.io/badge/Capabilities-122-blueviolet.svg)]()
+[![Skills](https://img.shields.io/badge/Skills-35-blueviolet.svg)]()
+
+**A deterministic, binding-driven execution engine for composable AI agent skills.**
+
+Agent Skills Runtime lets you define agent capabilities as abstract contracts, wire them to any backend (Python, OpenAPI, MCP, OpenRPC), and execute multi-step workflows as declarative DAGs — with built-in safety gates, cognitive state tracking, and full observability.
+
+> **No API keys required.** 122 capabilities ship with deterministic Python baselines.
+> Clone, install, run your first skill in under 3 minutes.
+
+---
+
+## Why Agent Skills?
+
+| Problem | How Agent Skills solves it |
+|---------|--------------------------|
+| Tools are coupled to one framework | **Binding abstraction** — same capability, 4 protocols (PythonCall, OpenAPI, MCP, OpenRPC) |
+| Workflows are imperative code | **Declarative YAML skills** — steps, dependencies, mappings resolved by the runtime |
+| No safety model | **4-tier safety gates** — trust levels, confirmation prompts, scope constraints, side-effect tracking |
+| No structured reasoning state | **CognitiveState v1** — typed Frame/Working/Output/Trace aligned with CoALA |
+| Inconsistent naming | **Controlled vocabulary** — 122 capabilities across 27 domains with governed naming |
+| Hard to observe | **OTel + metrics + audit** — hash-chain audit trail, Prometheus metrics, SSE streaming |
+
+---
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Developer Interface"
+        CLI["CLI<br/>agent-skills run / describe / discover"]
+        HTTP["HTTP API<br/>REST + SSE streaming"]
+        SDK["SDKs<br/>Python · TypeScript · LangChain · CrewAI · AutoGen · SemanticKernel"]
+    end
+
+    subgraph "Gateway Layer"
+        GW["Skill Gateway<br/>Discovery · Ranking · Governance"]
+    end
+
+    subgraph "Execution Engine"
+        SCHED["DAG Scheduler<br/>Kahn's topological sort · parallel / sequential"]
+        POLICY["Policy Engine<br/>Safety gates · Trust levels · Confirmation"]
+        COGSTATE["CognitiveState v1<br/>Frame · Working · Output · Trace"]
+    end
+
+    subgraph "Binding Layer"
+        BR["Binding Resolver<br/>Protocol routing · Fallback chain · Conformance"]
+        PC["PythonCall"]
+        OA["OpenAPI"]
+        MCP_P["MCP"]
+        RPC["OpenRPC"]
+    end
+
+    subgraph "Services"
+        BASELINE["Python Baselines<br/>122 deterministic functions"]
+        EXTERNAL["External APIs<br/>OpenAI · custom services"]
+        MCP_SRV["MCP Servers<br/>In-process + subprocess"]
+    end
+
+    CLI --> GW
+    HTTP --> GW
+    SDK --> HTTP
+    GW --> SCHED
+    SCHED --> POLICY
+    POLICY --> BR
+    SCHED -.-> COGSTATE
+    BR --> PC --> BASELINE
+    BR --> OA --> EXTERNAL
+    BR --> MCP_P --> MCP_SRV
+    BR --> RPC --> EXTERNAL
+```
+
+---
+
+## How it compares
+
+| Dimension | Agent Skills | LangGraph | SemanticKernel | OpenAI SDK | CrewAI |
+|-----------|:-----:|:-----:|:-----:|:-----:|:-----:|
+| **DAG Execution** | ✅ Kahn sort | ✅ StateGraph | ⚠️ Linear | ⚠️ Tool-loop | ⚠️ Sequential |
+| **Multi-Protocol Bindings** | ✅ 4 protocols | ❌ Python only | ⚠️ HTTP+plugins | ❌ Function only | ❌ Function only |
+| **Safety Model** | ✅ 4-tier gates | ❌ None | ⚠️ Basic | ❌ Minimal | ❌ None |
+| **Cognitive State** | ✅ Typed (CoALA) | ❌ No formal | ❌ No formal | ❌ No formal | ⚠️ Roles |
+| **Capability Registry** | ✅ 122 governed | ❌ None | ⚠️ Plugin store | ❌ None | ⚠️ Templates |
+| **Observability** | ✅ OTel+Metrics+Audit | ✅ LangSmith | ⚠️ AppInsights | ⚠️ Log-only | ⚠️ Basic |
+| **Zero-config local run** | ✅ Python baselines | ⚠️ Needs LLM key | ⚠️ Needs Azure | ❌ Needs API key | ⚠️ Needs LLM key |
+| **Declarative workflows** | ✅ YAML skills | ⚠️ Python code | ⚠️ C# code | ❌ Imperative | ⚠️ Python code |
+| **Checkpoint/Restore** | ✅ Full state | ✅ Checkpoints | ✅ State | ❌ Stateless | ⚠️ Memory |
+
+---
 
 ## Quick Start
 
 ```bash
-pip install -e ".[all]"          # install with all optional extras
-agent-skills --help              # verify CLI
-agent-skills doctor              # check environment health
+# Clone & install
+git clone https://github.com/gfernandf/agent-skills.git
+cd agent-skills
+pip install -e ".[all]"
+
+# Verify environment
+agent-skills doctor
+```
+
+### Run your first skill
+
+```bash
+agent-skills run text.summarize-plain-input \
+  --input '{"text": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills. It supports four binding protocols and ships with 122 Python baselines.", "max_length": 50}'
+```
+
+Expected output:
+```json
+{
+  "status": "success",
+  "outputs": {
+    "summary": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills..."
+  }
+}
+```
+
+### Run via HTTP
+
+```bash
+agent-skills serve                     # starts server on :9100
+curl http://localhost:9100/v1/health   # health check
+curl -X POST http://localhost:9100/v1/skills/text.summarize-plain-input/execute \
+  -H "Content-Type: application/json" \
+  -d '{"inputs": {"text": "Hello world", "max_length": 20}}'
 ```
 
 See [docs/INSTALLATION.md](docs/INSTALLATION.md) for full setup instructions, optional extras, and environment variable reference.
@@ -388,28 +510,6 @@ All package workflow commands support machine-readable output for UI/backend orc
 - **Webhook event system**: `docs/WEBHOOKS.md`
 - **Plugin system (entry points, extension groups)**: `docs/PLUGINS.md`
 - **JSON Schema inventory and validation**: `docs/JSON_SCHEMAS.md`
-
----
-
-# Why this exists
-
-AI agents increasingly rely on structured tools and workflows.
-
-However, most implementations today are:
-
-- tightly coupled to a specific framework
-- implemented imperatively in code
-- difficult to reuse across systems
-- inconsistent in naming and structure
-
-The **Agent Skills Runtime** addresses this by providing:
-
-- a **deterministic execution engine**
-- a **binding-driven integration layer**
-- a **local-first developer workflow**
-- a **verification and observability surface for runtime operations**
-
-The goal is to make agent capabilities **reliable, composable, and production-ready** in local and CI environments.
 
 ---
 
