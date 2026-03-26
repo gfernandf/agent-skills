@@ -23,8 +23,8 @@ resolved against the live :class:`ExecutionState` using the same namespace
 rules as the input mapper (inputs.*, vars.*, outputs.*, working.*, frame.*,
 output.*, extensions.*).
 
-Security: **No** ``eval()`` / ``exec()`` / ``compile()``.  Only comparison
-operators and boolean logic are supported.
+Security: **No** use of ``eval``, ``exec``, or ``compile`` builtins.  Only
+comparison operators and boolean logic are supported.
 """
 
 from __future__ import annotations

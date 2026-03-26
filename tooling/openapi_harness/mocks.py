@@ -347,7 +347,7 @@ class AgentRouteHandler(BaseHTTPRequestHandler):
         else:
             route = "default"
 
-        self._write_json(200, {"route": route})
+        self._write_json(200, {"route": route, "confidence": 0.95})
 
     def _read_json(self) -> dict[str, Any] | None:
         content_length = int(self.headers.get("Content-Length", "0"))

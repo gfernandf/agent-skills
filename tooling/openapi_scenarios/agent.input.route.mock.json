@@ -7,7 +7,8 @@
     "agents": ["summarizer", "analyst"]
   },
   "expected_output": {
-    "route": "summarizer"
+    "route": "summarizer",
+    "confidence": 0.95
   },
   "mock_server": {
     "type": "agent_route",
