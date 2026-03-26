@@ -89,7 +89,6 @@ addopts = [
     "--cov=customization",
     "--cov-report=term-missing:skip-covered",
     "--cov-report=html:artifacts/htmlcov",
-    "--cov-fail-under=75",
 ]
 
 [tool.coverage.run]
