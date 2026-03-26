@@ -69,10 +69,11 @@ def build_crewai_tools(
         _base_url = base_url
         _cap_id = cap_id
         _api_key = api_key
+        _description = description
 
         class _Tool(CrewAIBaseTool):
             name: str = _cap_id.replace(".", "_")
-            description: str = description  # type: ignore[assignment]
+            description: str = _description  # type: ignore[assignment]
 
             def _run(self, **kwargs: Any) -> str:
                 result = _call_capability(_base_url, _cap_id, kwargs, _api_key)
