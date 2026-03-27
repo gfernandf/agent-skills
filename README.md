@@ -378,6 +378,23 @@ agent-skills compose pipeline.compose --out skill.yaml  # write to file
 agent-skills compose pipeline.compose --run --input '{"document":"..."}'
 ```
 
+### Showcase (K7)
+
+Generate a shareable markdown document for any skill — one command:
+
+```bash
+# Metadata + diagram (no execution)
+agent-skills showcase text.summarize-plain-input --no-run
+
+# Full showcase with live example
+agent-skills showcase text.summarize-plain-input
+
+# Include benchmark table and write to file
+agent-skills showcase text.summarize-plain-input --benchmark --runs 5 --file showcase.md
+```
+
+Also: `benchmark-lab --format markdown` exports tables ready for PRs and blog posts.
+
 ## JSON Schema Validation
 
 15 schemas in `docs/schemas/` (JSON Schema 2020-12) cover capabilities, skills, bindings, services, and runtime artifacts.

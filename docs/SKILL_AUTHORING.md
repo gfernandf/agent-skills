@@ -227,6 +227,7 @@ skills to combine.
 | `compose <file>` | Compile `.compose` DSL to skill YAML |
 | `triggers list` | Show registered skill triggers |
 | `triggers fire <type> ...` | Fire a trigger event manually |
+| `showcase <id>` | Shareable markdown: diagram + example + benchmark |
 
 ---
 

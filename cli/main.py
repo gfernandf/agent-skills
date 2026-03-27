@@ -585,6 +585,10 @@ def main() -> None:
         help="Export results to a JSON file.",
     )
     benchmark_lab_cmd.add_argument(
+        "--format", default="table", choices=["table", "markdown"],
+        help="Output format: 'table' (default) or 'markdown' for copy-paste.",
+    )
+    benchmark_lab_cmd.add_argument(
         "--json", action="store_true", help="Emit machine-readable JSON output",
     )
     add_root_args(benchmark_lab_cmd)
@@ -739,6 +743,33 @@ def main() -> None:
         help="Open the GitHub new-issue URL in the default browser.",
     )
     add_root_args(report_cmd)
+
+    # --- K7: showcase ---
+    showcase_cmd = sub.add_parser(
+        "showcase",
+        help="Generate a shareable markdown showcase for a skill (diagram + example + benchmark)",
+    )
+    showcase_cmd.add_argument(
+        "skill_id",
+        help="Skill identifier to showcase (e.g. text.summarize-plain-input)",
+    )
+    showcase_cmd.add_argument(
+        "--no-run", action="store_true",
+        help="Skip real execution — only emit metadata + diagram.",
+    )
+    showcase_cmd.add_argument(
+        "--benchmark", action="store_true",
+        help="Include a performance comparison table (runs benchmark-lab internally).",
+    )
+    showcase_cmd.add_argument(
+        "--runs", type=int, default=5,
+        help="Number of benchmark runs per binding (default: 5, requires --benchmark).",
+    )
+    showcase_cmd.add_argument(
+        "--file", type=Path, default=None,
+        help="Write the markdown to a file instead of stdout.",
+    )
+    add_root_args(showcase_cmd)
 
     # --- K6: compose ---
     compose_cmd = sub.add_parser(
@@ -1032,6 +1063,7 @@ def main() -> None:
             getattr(args, "protocols", None),
             getattr(args, "export", None),
             args.json,
+            getattr(args, "format", "table"),
             local_skills_root,
         )
 
@@ -1111,6 +1143,19 @@ def main() -> None:
             args.issue,
             args.severity,
             args.open_browser,
+        )
+
+    elif args.command == "showcase":
+        _cmd_showcase(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.skill_id,
+            no_run=args.no_run,
+            include_benchmark=args.benchmark,
+            benchmark_runs=args.runs,
+            out_file=getattr(args, "file", None),
+            local_skills_root=local_skills_root,
         )
 
     elif args.command == "compose":
@@ -3100,8 +3145,9 @@ def _cmd_benchmark_lab(
     protocols_filter: str | None,
     export_path: Path | None,
     json_output: bool,
+    output_format: str = "table",
     local_skills_root: Path | None = None,
-) -> None:
+) -> dict | None:
     """Compare execution of the same capability across all available bindings/protocols."""
     import statistics
     import time
@@ -3256,6 +3302,8 @@ def _cmd_benchmark_lab(
 
     if json_output:
         print(json.dumps(report, indent=2, ensure_ascii=False))
+    elif output_format == "markdown":
+        print(_format_benchmark_markdown(capability_id, results))
     else:
         # Pretty table
         header = f"{'Binding':<40} {'Proto':<12} {'Mean':>8} {'Median':>8} {'P95':>8} {'Match':>6} {'Err':>4}"
@@ -3274,6 +3322,8 @@ def _cmd_benchmark_lab(
         print()
         if export_path:
             print(f"[benchmark-lab] Exported: {export_path}")
+
+    return report
 
 
 def _benchmark_lab_build_input(cap) -> dict:
@@ -3305,9 +3355,169 @@ def _benchmark_lab_outputs_match(ref: dict | None, current: dict | None) -> bool
     return set(ref.keys()) == set(current.keys())
 
 
+def _format_benchmark_markdown(capability_id: str, results: list[dict]) -> str:
+    """Format benchmark results as a markdown table."""
+    lines = [
+        f"### Performance — `{capability_id}`",
+        "",
+        "| Binding | Protocol | Mean | Median | P95 | Match |",
+        "|---------|----------|-----:|-------:|----:|:-----:|",
+    ]
+    for r in results:
+        if r["status"] != "ok":
+            lines.append(f"| {r['binding_id']} | {r['protocol']} | FAILED | — | — | — |")
+        else:
+            match_str = "✓" if r["output_match"] else "✗"
+            lines.append(
+                f"| {r['binding_id']} | {r['protocol']} "
+                f"| {r['mean_ms']:.1f} ms | {r['median_ms']:.1f} ms "
+                f"| {r['p95_ms']:.1f} ms | {match_str} |"
+            )
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
-# K3 — Dev Watch Mode
+# K7 — Showcase
 # ---------------------------------------------------------------------------
+
+def _cmd_showcase(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    skill_id: str,
+    no_run: bool = False,
+    include_benchmark: bool = False,
+    benchmark_runs: int = 5,
+    out_file: Path | None = None,
+    local_skills_root: Path | None = None,
+) -> None:
+    """Generate a shareable markdown showcase for a skill."""
+    import io
+    from contextlib import redirect_stdout
+    from tooling.skill_authoring import generate_mermaid_dag, generate_test_fixture
+
+    components = build_runtime_components(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+        mcp_client_registry=None,
+        local_skills_root=local_skills_root,
+    )
+    skill = components.skill_loader.get_skill(skill_id)
+
+    # ----- Header -----
+    md = io.StringIO()
+    md.write(f"## {skill.id} — {skill.name}\n\n")
+    if skill.description:
+        desc = skill.description.strip().replace("\n", " ")
+        md.write(f"> {desc}\n\n")
+
+    # ----- Mermaid diagram -----
+    raw = None
+    if skill.source_file:
+        raw = yaml.safe_load(Path(skill.source_file).read_text(encoding="utf-8"))
+    if not raw:
+        raw = {"id": skill.id, "name": skill.name, "steps": [], "inputs": {}, "outputs": {}}
+        for s in skill.steps:
+            raw.setdefault("steps", []).append({
+                "id": s.id, "uses": s.uses,
+                "config": s.config if s.config else {},
+            })
+        raw["inputs"] = {k: {"type": "string"} for k in skill.inputs}
+        raw["outputs"] = {k: {"type": "string"} for k in skill.outputs}
+
+    mermaid_code = generate_mermaid_dag(raw)
+    md.write("### Pipeline\n\n")
+    md.write(f"```mermaid\n{mermaid_code}\n```\n\n")
+
+    # ----- Skill metadata -----
+    md.write("### Inputs / Outputs\n\n")
+    md.write("| Field | Direction | Type |\n")
+    md.write("|-------|-----------|------|\n")
+    for k, v in skill.inputs.items():
+        ftype = getattr(v, "type", "string")
+        md.write(f"| `{k}` | input | `{ftype}` |\n")
+    for k, v in skill.outputs.items():
+        ftype = getattr(v, "type", "string")
+        md.write(f"| `{k}` | output | `{ftype}` |\n")
+    md.write("\n")
+
+    # ----- Example execution -----
+    if not no_run:
+        # Build skill_doc for fixture generation
+        skill_doc = {"id": skill.id, "inputs": {}, "outputs": {}}
+        for k, v in skill.inputs.items():
+            skill_doc["inputs"][k] = {
+                "type": getattr(v, "type", "string"),
+                "required": getattr(v, "required", False),
+            }
+        for k, v in skill.outputs.items():
+            skill_doc["outputs"][k] = {"type": getattr(v, "type", "string")}
+
+        # Resolve test inputs
+        candidate = None
+        if skill.source_file:
+            candidate = Path(skill.source_file).parent / "test_input.json"
+        if candidate and candidate.exists():
+            inputs = json.loads(candidate.read_text(encoding="utf-8"))
+        else:
+            inputs = generate_test_fixture(skill_doc)
+
+        request = ExecutionRequest(
+            skill_id=skill_id,
+            inputs=inputs,
+            channel="showcase",
+        )
+        result = components.engine.execute(request)
+
+        md.write("### Example\n\n")
+        md.write("**Input:**\n\n")
+        md.write(f"```json\n{json.dumps(inputs, indent=2, ensure_ascii=False)}\n```\n\n")
+        md.write("**Output:**\n\n")
+        outputs = dict(result.outputs) if result.outputs else {}
+        md.write(f"```json\n{json.dumps(outputs, indent=2, ensure_ascii=False)}\n```\n\n")
+
+    # ----- Benchmark -----
+    if include_benchmark:
+        # Collect capabilities used by this skill
+        cap_ids = list({s.uses for s in skill.steps if s.uses})
+        for cap_id in cap_ids:
+            bench_buf = io.StringIO()
+            with redirect_stdout(bench_buf):
+                report = _cmd_benchmark_lab(
+                    registry_root, runtime_root, host_root,
+                    cap_id, benchmark_runs,
+                    protocols_filter=None,
+                    export_path=None,
+                    json_output=True,
+                    output_format="table",
+                    local_skills_root=local_skills_root,
+                )
+            if report and report.get("bindings"):
+                md.write(_format_benchmark_markdown(cap_id, report["bindings"]))
+                md.write("\n\n")
+
+    # ----- Try-it footer -----
+    input_example = "{...}"
+    if not no_run:
+        compact = json.dumps(inputs, ensure_ascii=False)
+        if len(compact) < 120:
+            input_example = compact
+
+    md.write("### Try it\n\n")
+    md.write("```bash\n")
+    md.write("pip install -e \".[all]\"\n")
+    md.write(f"agent-skills run {skill_id} --input '{input_example}'\n")
+    md.write("```\n")
+
+    # ----- Output -----
+    content = md.getvalue()
+    if out_file:
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        out_file.write_text(content, encoding="utf-8")
+        print(f"[showcase] Written to {out_file}")
+    else:
+        print(content)
 
 def _cmd_dev(
     registry_root: Path,

@@ -550,3 +550,138 @@ class TestK4Triggers:
         schedule_event = TriggerEvent(event_type="schedule")
         assert len(reg.match(schedule_event)) == 1
         assert reg.match(schedule_event)[0].trigger.skill_id == "test.b"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# K7: Showcase + Benchmark Markdown
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestK7Showcase:
+    """Validate the showcase command and benchmark markdown format."""
+
+    def test_showcase_subparser_registered(self):
+        import io
+        from contextlib import redirect_stderr
+        buf = io.StringIO()
+        try:
+            from cli.main import main
+            import sys
+            old = sys.argv
+            sys.argv = ["agent-skills", "showcase", "--help"]
+            with pytest.raises(SystemExit):
+                main()
+            sys.argv = old
+        except SystemExit:
+            pass
+
+    def test_showcase_no_run(self):
+        """showcase --no-run emits markdown with mermaid + fields, no example."""
+        from cli.main import _cmd_showcase
+        import io
+        from contextlib import redirect_stdout
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            _cmd_showcase(
+                registry_root=_ROOT.parent / "agent-skill-registry",
+                runtime_root=_ROOT,
+                host_root=_ROOT,
+                skill_id="text.summarize-plain-input",
+                no_run=True,
+                local_skills_root=_ROOT / "skills" / "local",
+            )
+        md = buf.getvalue()
+        assert "## text.summarize-plain-input" in md
+        assert "```mermaid" in md
+        assert "### Pipeline" in md
+        assert "### Inputs / Outputs" in md
+        assert "### Try it" in md
+        # No example section when --no-run
+        assert "### Example" not in md
+
+    def test_showcase_with_run(self):
+        """showcase with run produces example section."""
+        from cli.main import _cmd_showcase
+        import io
+        from contextlib import redirect_stdout
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            _cmd_showcase(
+                registry_root=_ROOT.parent / "agent-skill-registry",
+                runtime_root=_ROOT,
+                host_root=_ROOT,
+                skill_id="text.summarize-plain-input",
+                no_run=False,
+                local_skills_root=_ROOT / "skills" / "local",
+            )
+        md = buf.getvalue()
+        assert "### Example" in md
+        assert "**Input:**" in md
+        assert "**Output:**" in md
+
+    def test_showcase_write_to_file(self):
+        """showcase --file writes to disk."""
+        from cli.main import _cmd_showcase
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "showcase.md"
+            _cmd_showcase(
+                registry_root=_ROOT.parent / "agent-skill-registry",
+                runtime_root=_ROOT,
+                host_root=_ROOT,
+                skill_id="text.summarize-plain-input",
+                no_run=True,
+                out_file=out,
+                local_skills_root=_ROOT / "skills" / "local",
+            )
+            assert out.exists()
+            content = out.read_text(encoding="utf-8")
+            assert "## text.summarize-plain-input" in content
+            assert "```mermaid" in content
+
+    def test_format_benchmark_markdown(self):
+        """_format_benchmark_markdown produces a valid markdown table."""
+        from cli.main import _format_benchmark_markdown
+
+        results = [
+            {
+                "binding_id": "python_text_summarize",
+                "protocol": "python_call",
+                "status": "ok",
+                "mean_ms": 12.5,
+                "median_ms": 11.0,
+                "p95_ms": 15.3,
+                "output_match": True,
+            },
+            {
+                "binding_id": "openapi_text_summarize",
+                "protocol": "openapi",
+                "status": "ok",
+                "mean_ms": 89.2,
+                "median_ms": 85.0,
+                "p95_ms": 102.1,
+                "output_match": False,
+            },
+            {
+                "binding_id": "mcp_text_summarize",
+                "protocol": "mcp",
+                "status": "error",
+                "errors": "timeout",
+            },
+        ]
+        md = _format_benchmark_markdown("text.content.summarize", results)
+        assert "| Binding | Protocol |" in md
+        assert "python_text_summarize" in md
+        assert "✓" in md
+        assert "✗" in md
+        assert "FAILED" in md
+        assert "text.content.summarize" in md
+
+    def test_format_benchmark_markdown_empty(self):
+        from cli.main import _format_benchmark_markdown
+        md = _format_benchmark_markdown("test.cap", [])
+        assert "| Binding | Protocol |" in md
+        assert "test.cap" in md

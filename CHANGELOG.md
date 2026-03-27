@@ -38,6 +38,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **65 new tests** across `test_phase_a_features.py` (26) and
   `test_phase_bc_features.py` (39). Total suite: 1586 passed, 2 skipped.
 
+#### Sharing & showcase — K7
+
+- **`showcase`** (K7): One-command shareable markdown — combines skill
+  description, Mermaid DAG diagram, I/O table, live execution example,
+  and "try it" one-liner. Flags: `--no-run`, `--benchmark`, `--runs`,
+  `--file`. Designed for the evangelista técnica persona (blog posts,
+  Slack, PRs).
+- **`benchmark-lab --format markdown`**: New output format for copy-paste
+  benchmark tables into markdown documents and PRs.
+- **6 new tests** for K7 in `test_phase_bc_features.py`.
+  Total suite: 1592 passed, 2 skipped.
+
 #### Skill authoring UX — M1 through M15
 
 - **`scaffold --wizard`** (M1): Interactive guided mode — asks for intent, channel,
