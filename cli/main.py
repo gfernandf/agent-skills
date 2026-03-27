@@ -35,7 +35,26 @@ from tooling.promotion_package import (
 
 def main() -> None:
 
-    parser = argparse.ArgumentParser(prog="skills")
+    parser = argparse.ArgumentParser(
+        prog="skills",
+        description="Agent Skills Runtime — declarative AI agent skill execution engine.",
+        epilog=(
+            "Getting started:\n"
+            "  agent-skills doctor                           Verify environment\n"
+            "  agent-skills list                             List available skills\n"
+            "  agent-skills run <skill_id> --input '{...}'   Execute a skill\n"
+            "  agent-skills scaffold \"<intent>\"             Generate a new skill\n"
+            "\n"
+            "Command groups:\n"
+            "  Core:      run, describe, discover, list, capabilities\n"
+            "  Author:    scaffold, validate, trace, explain-capability\n"
+            "  Package:   package-prepare, package-validate, package-pr\n"
+            "  Operate:   serve, doctor, attach, activate, openapi\n"
+            "  Admin:     gateway-diagnostics, gateway-reset-metrics,\n"
+            "             skill-governance, audit-purge"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     # Common arguments for roots
@@ -70,9 +89,9 @@ def main() -> None:
         )
 
     run_cmd = sub.add_parser("run", help="Execute a skill")
-    run_cmd.add_argument("skill_id")
-    run_cmd.add_argument("--input", default=None)
-    run_cmd.add_argument("--input-file", default=None)
+    run_cmd.add_argument("skill_id", help="Skill identifier (e.g. text.translate-summary)")
+    run_cmd.add_argument("--input", default=None, help="Inline JSON object with skill inputs (e.g. '{\"text\": \"hello\"}')")
+    run_cmd.add_argument("--input-file", default=None, help="Path to a JSON file with skill inputs")
     run_cmd.add_argument(
         "--trace-id", default=None, help="Optional trace id for correlation"
     )
@@ -90,8 +109,15 @@ def main() -> None:
     )
     add_root_args(run_cmd)
 
-    describe_cmd = sub.add_parser("describe", help="Describe a skill")
-    describe_cmd.add_argument("skill_id")
+    describe_cmd = sub.add_parser("describe", help="Describe a skill (inputs, outputs, steps, capabilities)")
+    describe_cmd.add_argument("skill_id", help="Skill identifier (e.g. text.translate-summary)")
+    describe_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output"
+    )
+    describe_cmd.add_argument(
+        "--verbose", "-v", action="store_true",
+        help="Show full detail: capabilities used, dependencies, DAG edges, and raw YAML",
+    )
     add_root_args(describe_cmd)
 
     discover_cmd = sub.add_parser("discover", help="Discover skills for an intent")
@@ -216,10 +242,13 @@ def main() -> None:
     activate_cmd.add_argument("--capability", default=None)
     add_root_args(activate_cmd)
 
-    trace_cmd = sub.add_parser("trace", help="Execute a skill with detailed tracing")
-    trace_cmd.add_argument("skill_id")
-    trace_cmd.add_argument("--input", default=None)
-    trace_cmd.add_argument("--input-file", default=None)
+    trace_cmd = sub.add_parser(
+        "trace",
+        help="Execute a skill with step-by-step event tracing (like 'run' but prints each step's lifecycle)",
+    )
+    trace_cmd.add_argument("skill_id", help="Skill identifier (e.g. text.translate-summary)")
+    trace_cmd.add_argument("--input", default=None, help="Inline JSON object with skill inputs")
+    trace_cmd.add_argument("--input-file", default=None, help="Path to a JSON file with skill inputs")
     trace_cmd.add_argument(
         "--trace-id", default=None, help="Optional trace id for correlation"
     )
@@ -436,7 +465,12 @@ def main() -> None:
     )
     add_root_args(openapi_verify_errors_cmd)
 
-    serve_cmd = sub.add_parser("serve", help="Start the HTTP API server")
+    serve_cmd = sub.add_parser(
+        "serve",
+        help="Start the HTTP API server",
+        epilog="OpenAPI spec available at http://<host>:<port>/openapi.json once running.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     serve_cmd.add_argument(
         "--host",
         default=None,
@@ -457,6 +491,41 @@ def main() -> None:
         "--cors-origins", default=None, help="Comma-separated CORS origins"
     )
     add_root_args(serve_cmd)
+
+    validate_cmd = sub.add_parser(
+        "validate",
+        help="Validate a skill YAML: check capability references, input mappings, and DAG integrity",
+    )
+    validate_grp = validate_cmd.add_mutually_exclusive_group()
+    validate_grp.add_argument(
+        "--skill", default=None,
+        help="Validate a single skill by id (e.g. text.translate-summary).",
+    )
+    validate_grp.add_argument(
+        "--file", type=Path, default=None,
+        help="Validate a single skill.yaml file path.",
+    )
+    validate_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output",
+    )
+    add_root_args(validate_cmd)
+
+    benchmark_cmd = sub.add_parser(
+        "benchmark",
+        help="Run reproducible execution benchmarks and print paper-ready results",
+    )
+    benchmark_cmd.add_argument(
+        "--skill", default=None,
+        help="Benchmark a single skill (default: text.translate-summary).",
+    )
+    benchmark_cmd.add_argument(
+        "--iterations", type=int, default=5,
+        help="Number of iterations per skill (default: 5).",
+    )
+    benchmark_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output",
+    )
+    add_root_args(benchmark_cmd)
 
     args = parser.parse_args()
 
@@ -481,7 +550,7 @@ def main() -> None:
         )
 
     elif args.command == "describe":
-        _cmd_describe(registry_root, args.skill_id)
+        _cmd_describe(registry_root, args.skill_id, args.json, args.verbose)
 
     elif args.command == "discover":
         _cmd_discover(
@@ -652,6 +721,25 @@ def main() -> None:
     elif args.command == "serve":
         _cmd_serve(args, registry_root, runtime_root, host_root)
 
+    elif args.command == "validate":
+        _cmd_validate(
+            registry_root,
+            getattr(args, "skill", None),
+            getattr(args, "file", None),
+            args.json,
+        )
+
+    elif args.command == "benchmark":
+        _cmd_benchmark(
+            registry_root,
+            runtime_root,
+            host_root,
+            getattr(args, "skill", None),
+            args.iterations,
+            args.json,
+            local_skills_root,
+        )
+
 
 def _cmd_serve(args, registry_root, runtime_root, host_root):
     """Start the HTTP API server."""
@@ -708,9 +796,14 @@ def _cmd_scaffold(
         f"[scaffold] Generating skill for: {intent[:80]}{'...' if len(intent) > 80 else ''}"
     )
     has_key = bool(os.environ.get("OPENAI_API_KEY"))
-    print(
-        f"[scaffold] Mode: {'LLM (OpenAI)' if has_key else 'template (no OPENAI_API_KEY found)'}"
-    )
+    scaffolder_env = os.environ.get("AGENT_SKILLS_SCAFFOLDER_MODE", "binding-first").strip().lower()
+    if scaffolder_env == "direct-openai" and has_key:
+        mode_label = "LLM (direct OpenAI)"
+    elif has_key:
+        mode_label = "binding-first (planner uses available bindings; OPENAI_API_KEY detected)"
+    else:
+        mode_label = "template (no OPENAI_API_KEY — offline deterministic generation)"
+    print(f"[scaffold] Mode: {mode_label}")
 
     result = generate_skill_from_prompt(
         intent_description=intent,
@@ -1342,6 +1435,13 @@ def _cmd_run(
     else:
         inputs = {}
 
+    if not inputs:
+        print(
+            "[warn] No --input or --input-file provided. "
+            "Running with empty inputs — results may be meaningless.",
+            file=sys.stderr,
+        )
+
     engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
 
     request = ExecutionRequest(
@@ -1360,26 +1460,70 @@ def _cmd_run(
     print(json.dumps(result.outputs, indent=2, ensure_ascii=False))
 
 
-def _cmd_describe(registry_root: Path, skill_id: str) -> None:
+def _cmd_describe(
+    registry_root: Path,
+    skill_id: str,
+    json_output: bool = False,
+    verbose: bool = False,
+) -> None:
 
     skill_loader = YamlSkillLoader(registry_root)
-
     skill = skill_loader.get_skill(skill_id)
 
-    print(
-        json.dumps(
-            {
-                "id": skill.id,
-                "name": skill.name,
-                "description": skill.description,
-                "inputs": list(skill.inputs.keys()),
-                "outputs": list(skill.outputs.keys()),
-                "steps": [s.id for s in skill.steps],
-            },
-            indent=2,
-            ensure_ascii=False,
-        )
-    )
+    # Build step details with capability references and dependencies
+    steps_detail = []
+    for idx, s in enumerate(skill.steps):
+        step_info: dict = {"id": s.id, "uses": s.uses}
+        deps = s.config.get("depends_on")
+        if deps is not None:
+            step_info["depends_on"] = deps
+        elif idx > 0:
+            step_info["depends_on"] = [skill.steps[idx - 1].id]
+        else:
+            step_info["depends_on"] = []
+        steps_detail.append(step_info)
+
+    # Build DAG edge list
+    edges = []
+    for step_info in steps_detail:
+        for dep in step_info.get("depends_on", []):
+            edges.append({"from": dep, "to": step_info["id"]})
+
+    payload: dict = {
+        "id": skill.id,
+        "name": skill.name,
+        "description": skill.description,
+        "inputs": list(skill.inputs.keys()),
+        "outputs": list(skill.outputs.keys()),
+        "steps": steps_detail,
+        "dag_edges": edges,
+    }
+
+    if verbose and skill.source_file:
+        try:
+            payload["raw_yaml"] = Path(skill.source_file).read_text(encoding="utf-8")
+        except OSError:
+            pass
+
+    if json_output or verbose:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    # Human-readable default output
+    print(f"Skill: {skill.id}")
+    print(f"  Name:        {skill.name}")
+    desc = skill.description.strip().replace("\n", " ")
+    print(f"  Description: {desc[:120]}{'...' if len(desc) > 120 else ''}")
+    print(f"  Inputs:      {', '.join(skill.inputs.keys())}")
+    print(f"  Outputs:     {', '.join(skill.outputs.keys())}")
+    print(f"  Steps ({len(skill.steps)}):")
+    for si in steps_detail:
+        deps_str = ', '.join(si.get('depends_on', []))
+        print(f"    {si['id']:<25} uses: {si['uses']}")
+        if deps_str:
+            print(f"    {'':<25} depends_on: [{deps_str}]")
+    if edges:
+        print(f"  DAG edges:   {' → '.join(e['from'] + '→' + e['to'] for e in edges)}")
 
 
 def _cmd_discover(
@@ -1460,7 +1604,26 @@ def _cmd_list_skills(
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         return
 
-    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    # Human-readable table
+    skills = results
+    if not skills:
+        print("No skills found.")
+        return
+    # Group by domain
+    by_domain: dict[str, list] = {}
+    for s in skills:
+        d = s.to_dict()
+        dom = d.get("domain") or (d["id"].split(".")[0] if "." in d["id"] else "(other)")
+        by_domain.setdefault(dom, []).append(d)
+
+    print(f"Skills: {len(skills)} total ({len(by_domain)} domains)\n")
+    for dom in sorted(by_domain):
+        print(f"  {dom}/ ({len(by_domain[dom])})")
+        for d in sorted(by_domain[dom], key=lambda x: x["id"]):
+            desc = (d.get("description") or "").replace("\n", " ").strip()
+            short = (desc[:55] + "...") if len(desc) > 55 else desc
+            print(f"    {d['id']:<40} {short}")
+        print()
 
 
 def _cmd_capabilities(
@@ -1943,6 +2106,102 @@ def _cmd_audit_purge(
         purge_all=purge_all,
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+def _cmd_validate(
+    registry_root: Path,
+    skill_filter: str | None,
+    skill_file: Path | None,
+    json_output: bool,
+) -> None:
+    """Validate skill YAML: capability references, input mappings, DAG integrity."""
+    from tooling.validate_skills_deep import validate_all
+
+    if skill_file is not None:
+        # Validate a single file by loading it as a temporary skill
+        import yaml as _yaml
+
+        try:
+            raw = _yaml.safe_load(skill_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            print(json.dumps({"ok": False, "errors": [str(exc)]}, indent=2))
+            raise SystemExit(1)
+        skill_filter = raw.get("id")
+
+    issues = validate_all(registry_root, skill_filter=skill_filter)
+    errors = [i for i in issues if i["level"] == "error"]
+    warnings = [i for i in issues if i["level"] == "warning"]
+
+    if json_output:
+        print(
+            json.dumps(
+                {"ok": len(errors) == 0, "errors": errors, "warnings": warnings},
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+    else:
+        for issue in issues:
+            tag = "ERROR" if issue["level"] == "error" else "WARN"
+            skill = issue.get("skill") or "(global)"
+            print(f"[{tag}] {skill}: {issue['message']}")
+        print()
+        print(f"Validation complete: {len(errors)} errors, {len(warnings)} warnings")
+
+    if errors:
+        raise SystemExit(1)
+
+
+def _cmd_benchmark(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    skill_id: str | None,
+    iterations: int,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    """Run reproducible execution benchmarks."""
+    import time
+    import statistics
+
+    skill_id = skill_id or "text.translate-summary"
+    engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
+
+    # Simple default input
+    inputs = {"text": "Agent Skills Runtime is a deterministic execution engine.", "target_language": "es"}
+
+    timings: list[float] = []
+    for i in range(iterations):
+        request = ExecutionRequest(
+            skill_id=skill_id,
+            inputs=inputs,
+            options=ExecutionOptions(),
+            channel="benchmark",
+        )
+        t0 = time.perf_counter()
+        engine.execute(request)
+        elapsed = (time.perf_counter() - t0) * 1000
+        timings.append(elapsed)
+
+    result = {
+        "skill": skill_id,
+        "iterations": iterations,
+        "mean_ms": round(statistics.mean(timings), 1),
+        "median_ms": round(statistics.median(timings), 1),
+        "p95_ms": round(sorted(timings)[int(len(timings) * 0.95)], 1) if len(timings) >= 2 else round(timings[0], 1),
+        "cold_start_ms": round(timings[0], 1),
+        "timings_ms": [round(t, 1) for t in timings],
+    }
+
+    if json_output:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(f"Benchmark: {skill_id} ({iterations} iterations)")
+        print(f"  Mean:       {result['mean_ms']:>8.1f} ms")
+        print(f"  Median:     {result['median_ms']:>8.1f} ms")
+        print(f"  P95:        {result['p95_ms']:>8.1f} ms")
+        print(f"  Cold start: {result['cold_start_ms']:>8.1f} ms")
 
 
 if __name__ == "__main__":
