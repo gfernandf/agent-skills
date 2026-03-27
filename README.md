@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-1474_passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-1490_passed-brightgreen.svg)]()
 [![Capabilities](https://img.shields.io/badge/Capabilities-122-blueviolet.svg)]()
-[![Skills](https://img.shields.io/badge/Skills-35-blueviolet.svg)]()
+[![Skills](https://img.shields.io/badge/Skills-36-blueviolet.svg)]()
 
 **A deterministic, binding-driven execution engine for composable AI agent skills.**
 
@@ -125,9 +125,9 @@ Expected output:
 ### Run via HTTP
 
 ```bash
-agent-skills serve                     # starts server on :9100
-curl http://localhost:9100/v1/health   # health check
-curl -X POST http://localhost:9100/v1/skills/text.summarize-plain-input/execute \
+agent-skills serve                     # starts server on :8080
+curl http://localhost:8080/v1/health   # health check
+curl -X POST http://localhost:8080/v1/skills/text.summarize-plain-input/execute \
   -H "Content-Type: application/json" \
   -d '{"inputs": {"text": "Hello world", "max_length": 20}}'
 ```
@@ -156,6 +156,22 @@ The binding resolver picks the best available backend automatically:
 This means your CI stays green without API keys, and production gets LLM quality — from the same skill YAML.
 
 See [docs/INSTALLATION.md](docs/INSTALLATION.md) for full setup instructions, optional extras, and environment variable reference.
+
+### Use with LangChain / LangGraph
+
+```python
+from sdk.langchain_adapter import build_langchain_tools
+
+# Start the server first: agent-skills serve
+tools = build_langchain_tools(
+    base_url="http://localhost:8080",
+    capabilities=["text.content.summarize", "text.content.translate"],
+)
+# Pass tools to any LangChain AgentExecutor or LangGraph node
+agent = create_react_agent(llm, tools)
+```
+
+Adapters are also available for **CrewAI**, **AutoGen**, and **Semantic Kernel** — see the [sdk/](sdk/) directory.
 
 ## License
 
