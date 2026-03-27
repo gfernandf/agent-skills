@@ -130,16 +130,24 @@ def prepare_promotion_package(
     evidence_dir = package_root / "evidence"
     evidence_dir.mkdir(parents=True, exist_ok=True)
 
-    admission_answers = {
-        "problem_statement": "TODO",
-        "differentiation": {
-            "overlapping_ids": [],
-            "why_not_extend_existing": "TODO",
-        },
-        "business_value": "TODO",
-        "contract_clarity": "TODO",
-        "sunset_plan": "TODO",
-    }
+    # Lighter admission template for experimental; full for community/official
+    if target_channel == "experimental":
+        admission_answers = {
+            "problem_statement": "TODO — What problem does this skill solve?",
+            "business_value": "TODO — Who benefits and how?",
+            "contract_clarity": "TODO — Are inputs/outputs stable enough for early adopters?",
+        }
+    else:
+        admission_answers = {
+            "problem_statement": "TODO — What problem does this skill solve?",
+            "differentiation": {
+                "overlapping_ids": [],
+                "why_not_extend_existing": "TODO — Why a new skill instead of extending an existing one?",
+            },
+            "business_value": "TODO — Who benefits and how?",
+            "contract_clarity": "TODO — Are inputs/outputs stable and reusable?",
+            "sunset_plan": "TODO — If this supersedes another skill, describe migration plan.",
+        }
     (evidence_dir / "admission_answers.yaml").write_text(
         yaml.dump(admission_answers, sort_keys=False, allow_unicode=True),
         encoding="utf-8",
