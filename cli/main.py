@@ -46,13 +46,14 @@ def main() -> None:
             "  agent-skills scaffold --wizard                Create a skill interactively\n"
             "\n"
             "Command groups:\n"
-            "  Core:      run, describe, discover, list, capabilities\n"
+            "  Core:      run, ask, describe, discover, list, capabilities\n"
             "  Author:    scaffold, validate, test, check-wiring, trace,\n"
-            "             explain-capability\n"
+            "             explain-capability, dev, compose\n"
             "  Package:   package-prepare, package-validate, package-pr,\n"
             "             export, import, contribute\n"
             "  Community: rate, report, discover --similar\n"
             "  Operate:   serve, doctor, attach, activate, openapi\n"
+            "  Bench:     benchmark, benchmark-lab\n"
             "  Admin:     gateway-diagnostics, gateway-reset-metrics,\n"
             "             skill-governance, audit-purge"
         ),
@@ -111,6 +112,32 @@ def main() -> None:
         help="Audit record mode for this run. Defaults to runtime configuration.",
     )
     add_root_args(run_cmd)
+
+    # --- K1: ask (NL autopilot) ---
+    ask_cmd = sub.add_parser(
+        "ask",
+        help="Natural language autopilot — describe what you need and let the runtime find and run the right skill",
+    )
+    ask_cmd.add_argument(
+        "question",
+        help="Natural language description of what you want (e.g. 'summarize this text in Spanish')",
+    )
+    ask_cmd.add_argument(
+        "--input", default=None,
+        help="Inline JSON with extra inputs (merged with auto-detected inputs)",
+    )
+    ask_cmd.add_argument(
+        "--dry-run", action="store_true",
+        help="Show the selected skill and input mapping without executing",
+    )
+    ask_cmd.add_argument(
+        "--top", type=int, default=1,
+        help="Number of candidate skills to show (default: 1, run top match)",
+    )
+    ask_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output",
+    )
+    add_root_args(ask_cmd)
 
     describe_cmd = sub.add_parser("describe", help="Describe a skill (inputs, outputs, steps, capabilities)")
     describe_cmd.add_argument("skill_id", help="Skill identifier (e.g. text.translate-summary)")
@@ -536,6 +563,51 @@ def main() -> None:
     )
     add_root_args(benchmark_cmd)
 
+    # --- K5: benchmark-lab (multi-protocol) ---
+    benchmark_lab_cmd = sub.add_parser(
+        "benchmark-lab",
+        help="Compare execution across protocols/bindings for the same capability",
+    )
+    benchmark_lab_cmd.add_argument(
+        "capability_id",
+        help="Capability identifier (e.g. text.content.summarize)",
+    )
+    benchmark_lab_cmd.add_argument(
+        "--runs", type=int, default=10,
+        help="Number of runs per protocol (default: 10).",
+    )
+    benchmark_lab_cmd.add_argument(
+        "--protocols", default=None,
+        help="Comma-separated protocols to compare (default: all available). E.g. pythoncall,openapi,mcp",
+    )
+    benchmark_lab_cmd.add_argument(
+        "--export", type=Path, default=None,
+        help="Export results to a JSON file.",
+    )
+    benchmark_lab_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output",
+    )
+    add_root_args(benchmark_lab_cmd)
+
+    # --- K3: dev watch mode ---
+    dev_cmd = sub.add_parser(
+        "dev",
+        help="Watch a skill for changes and auto-validate/test on save",
+    )
+    dev_cmd.add_argument(
+        "skill_id",
+        help="Skill identifier to watch (e.g. text.translate-summary)",
+    )
+    dev_cmd.add_argument(
+        "--interval", type=float, default=1.0,
+        help="Polling interval in seconds (default: 1.0).",
+    )
+    dev_cmd.add_argument(
+        "--no-test", action="store_true",
+        help="Skip test execution, only validate and check-wiring.",
+    )
+    add_root_args(dev_cmd)
+
     # --- M2: test ---
     test_cmd = sub.add_parser(
         "test",
@@ -668,6 +740,58 @@ def main() -> None:
     )
     add_root_args(report_cmd)
 
+    # --- K6: compose ---
+    compose_cmd = sub.add_parser(
+        "compose",
+        help="Compile a .compose DSL file into a skill.yaml (or run it directly)",
+    )
+    compose_cmd.add_argument(
+        "source",
+        help="Path to a .compose file",
+    )
+    compose_cmd.add_argument(
+        "--out", type=Path, default=None,
+        help="Write compiled skill.yaml to this path (default: print to stdout)",
+    )
+    compose_cmd.add_argument(
+        "--run", action="store_true",
+        help="Compile and immediately execute the composed skill",
+    )
+    compose_cmd.add_argument(
+        "--input", default=None,
+        help="Inline JSON inputs for --run mode",
+    )
+    compose_cmd.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON output",
+    )
+    add_root_args(compose_cmd)
+
+    # --- K4: triggers ---
+    triggers_cmd = sub.add_parser(
+        "triggers",
+        help="Manage skill triggers: list, fire events, check status",
+    )
+    triggers_sub = triggers_cmd.add_subparsers(dest="triggers_action", required=True)
+
+    triggers_list = triggers_sub.add_parser("list", help="List all registered triggers")
+    triggers_list.add_argument("--type", default=None, choices=["schedule", "event", "webhook", "file_change"], help="Filter by type")
+    triggers_list.add_argument("--json", action="store_true", help="JSON output")
+    add_root_args(triggers_list)
+
+    triggers_fire = triggers_sub.add_parser("fire", help="Manually fire a trigger event")
+    triggers_fire.add_argument("--event-type", default="webhook", choices=["webhook", "event", "file_change", "schedule"], help="Event type")
+    triggers_fire.add_argument("--webhook", default=None, help="Webhook name to fire")
+    triggers_fire.add_argument("--source-skill", default=None, help="Source skill for event chaining")
+    triggers_fire.add_argument("--status", default="completed", help="Status for event chaining")
+    triggers_fire.add_argument("--files", default=None, help="Comma-separated file paths for file_change")
+    triggers_fire.add_argument("--payload", default=None, help="Extra JSON payload")
+    triggers_fire.add_argument("--json", action="store_true", help="JSON output")
+    add_root_args(triggers_fire)
+
+    triggers_status = triggers_sub.add_parser("status", help="Show trigger registration summary")
+    triggers_status.add_argument("--json", action="store_true", help="JSON output")
+    add_root_args(triggers_status)
+
     args = parser.parse_args()
 
     # Resolve roots with defaults
@@ -687,6 +811,19 @@ def main() -> None:
             args.trace_id,
             args.required_conformance_profile,
             args.audit_mode,
+            local_skills_root,
+        )
+
+    elif args.command == "ask":
+        _cmd_ask(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.question,
+            getattr(args, "input", None),
+            args.dry_run,
+            args.top,
+            args.json,
             local_skills_root,
         )
 
@@ -885,6 +1022,30 @@ def main() -> None:
             local_skills_root,
         )
 
+    elif args.command == "benchmark-lab":
+        _cmd_benchmark_lab(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.capability_id,
+            args.runs,
+            getattr(args, "protocols", None),
+            getattr(args, "export", None),
+            args.json,
+            local_skills_root,
+        )
+
+    elif args.command == "dev":
+        _cmd_dev(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.skill_id,
+            args.interval,
+            args.no_test,
+            local_skills_root,
+        )
+
     elif args.command == "test":
         _cmd_test(
             registry_root,
@@ -950,6 +1111,29 @@ def main() -> None:
             args.issue,
             args.severity,
             args.open_browser,
+        )
+
+    elif args.command == "compose":
+        _cmd_compose(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.source,
+            getattr(args, "out", None),
+            args.run,
+            getattr(args, "input", None),
+            args.json,
+            local_skills_root,
+        )
+
+    elif args.command == "triggers":
+        _cmd_triggers(
+            registry_root,
+            runtime_root,
+            host_root,
+            args.triggers_action,
+            args,
+            local_skills_root,
         )
 
 
@@ -1899,6 +2083,221 @@ def _cmd_describe(
         print(f"  DAG edges:   {' → '.join(e['from'] + '→' + e['to'] for e in edges)}")
 
 
+# ---------------------------------------------------------------------------
+# K1 — Ask (NL Autopilot)
+# ---------------------------------------------------------------------------
+
+def _cmd_ask(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    question: str,
+    extra_input: str | None,
+    dry_run: bool,
+    top: int,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    """Natural-language autopilot: discover → map inputs → execute → return."""
+    gateway = SkillGateway(
+        registry_root=registry_root,
+        runtime_root=runtime_root,
+        host_root=host_root,
+        local_skills_root=local_skills_root,
+    )
+
+    # 1. Discover the best skill for this question
+    results = gateway.discover(intent=question, limit=max(top, 5))
+
+    if not results:
+        if json_output:
+            print(json.dumps({"ok": False, "error": "No skills match the question."}, indent=2))
+        else:
+            print("[ask] No skills found for your question.")
+        raise SystemExit(1)
+
+    # 2. Show candidates if top > 1
+    candidates = []
+    if top > 1 or dry_run:
+        candidates = [
+            {
+                "skill_id": r.skill.skill_id,
+                "name": r.skill.name,
+                "score": r.score,
+                "reason": r.reason,
+            }
+            for r in results[:top]
+        ]
+        if not json_output:
+            print(f"[ask] Question: \"{question}\"\n")
+            print(f"[ask] Top {min(top, len(results))} candidate(s):")
+            for i, c in enumerate(candidates):
+                print(f"  {i+1}. {c['skill_id']:<40} score={c['score']:.4f}  {c['name']}")
+            print()
+
+    # Select the best match
+    best = results[0]
+    skill_id = best.skill.skill_id
+    skill_spec = gateway.components.skill_loader.get_skill(skill_id)
+
+    # 3. Map inputs: extract from the question text + merge extra_input
+    mapped_inputs = _ask_map_inputs(question, skill_spec, extra_input)
+
+    if dry_run:
+        plan = {
+            "selected_skill": skill_id,
+            "score": best.score,
+            "mapped_inputs": mapped_inputs,
+            "skill_inputs": {
+                k: {"type": getattr(v, "type", "string"), "required": getattr(v, "required", False)}
+                for k, v in skill_spec.inputs.items()
+            },
+        }
+        if json_output:
+            payload = {"ok": True, "candidates": candidates, "plan": plan}
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        else:
+            print(f"[ask] Selected: {skill_id} (score={best.score:.4f})")
+            print(f"[ask] Mapped inputs:")
+            for k, v in mapped_inputs.items():
+                val_str = str(v)
+                if len(val_str) > 80:
+                    val_str = val_str[:77] + "..."
+                print(f"  {k}: {val_str}")
+            print(f"\n[ask] Use --no-dry-run to execute, or: agent-skills run {skill_id} --input '...'")
+        return
+
+    # 4. Execute
+    if not json_output:
+        print(f"[ask] Selected: {skill_id} (score={best.score:.4f})")
+        print(f"[ask] Executing...\n")
+
+    engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
+    request = ExecutionRequest(
+        skill_id=skill_id,
+        inputs=mapped_inputs,
+        channel="ask",
+    )
+    result = engine.execute(request)
+
+    output = {
+        "ok": result.status == "completed",
+        "skill_id": skill_id,
+        "status": result.status,
+        "outputs": dict(result.outputs) if result.outputs else {},
+        "discovery_score": best.score,
+    }
+
+    if json_output:
+        print(json.dumps(output, indent=2, ensure_ascii=False))
+    else:
+        if result.status == "completed":
+            print(f"[ask] ✓ Completed via '{skill_id}'")
+            for k, v in (result.outputs or {}).items():
+                val_str = str(v)
+                if len(val_str) > 200:
+                    val_str = val_str[:197] + "..."
+                print(f"  {k}: {val_str}")
+        else:
+            error = getattr(result, "error", None) or result.status
+            print(f"[ask] ✗ Failed: {error}")
+            raise SystemExit(1)
+
+
+def _ask_map_inputs(
+    question: str,
+    skill_spec,
+    extra_input_json: str | None,
+) -> dict:
+    """Map a natural-language question to a skill's required inputs.
+
+    Strategy:
+    - For string inputs named 'text', 'content', 'query', 'input', 'prompt': use the question itself
+    - For 'target_language', 'language', 'lang': try to detect from question
+    - For integer/number inputs with defaults: use defaults
+    - Merge any explicit --input JSON on top
+    """
+    inputs: dict = {}
+
+    # Well-known string field names that should receive the question text
+    text_field_names = {"text", "content", "query", "input", "prompt", "message", "source_text", "body"}
+    lang_field_names = {"target_language", "language", "lang", "locale"}
+
+    for name, field in skill_spec.inputs.items():
+        ftype = getattr(field, "type", "string")
+        required = getattr(field, "required", False)
+
+        if ftype == "string":
+            lower_name = name.lower()
+            if lower_name in text_field_names:
+                inputs[name] = question
+            elif lower_name in lang_field_names:
+                lang = _ask_detect_language(question)
+                if lang:
+                    inputs[name] = lang
+                elif required:
+                    inputs[name] = "en"
+            elif required:
+                inputs[name] = question  # fallback: pass the question
+        elif ftype == "integer":
+            if required:
+                inputs[name] = 10  # reasonable default
+        elif ftype == "number":
+            if required:
+                inputs[name] = 1.0
+        elif ftype == "boolean":
+            if required:
+                inputs[name] = True
+        elif ftype == "array":
+            if required:
+                inputs[name] = [question]
+        elif ftype == "object":
+            if required:
+                inputs[name] = {"value": question}
+
+    # Merge explicit extra inputs (override auto-mapped values)
+    if extra_input_json:
+        try:
+            extra = json.loads(extra_input_json)
+            if isinstance(extra, dict):
+                inputs.update(extra)
+        except json.JSONDecodeError:
+            pass
+
+    return inputs
+
+
+_LANG_HINTS: dict[str, str] = {
+    "spanish": "es", "español": "es", "espanol": "es",
+    "french": "fr", "français": "fr", "francais": "fr",
+    "german": "de", "deutsch": "de",
+    "italian": "it", "italiano": "it",
+    "portuguese": "pt", "português": "pt", "portugues": "pt",
+    "chinese": "zh", "mandarin": "zh",
+    "japanese": "ja",
+    "korean": "ko",
+    "russian": "ru",
+    "arabic": "ar",
+    "english": "en",
+    "dutch": "nl",
+    "swedish": "sv",
+}
+
+
+def _ask_detect_language(question: str) -> str | None:
+    """Try to detect a target language hint from the question text."""
+    lower = question.lower()
+    for hint, code in _LANG_HINTS.items():
+        if hint in lower:
+            return code
+    # Check for "in <lang>" or "to <lang>" patterns
+    for word in ["in", "to", "al", "en", "au"]:
+        for hint, code in _LANG_HINTS.items():
+            if f" {word} {hint}" in lower:
+                return code
+    return None
+
+
 def _cmd_discover(
     registry_root: Path,
     runtime_root: Path,
@@ -2689,6 +3088,365 @@ def _cmd_benchmark(
 
 
 # ---------------------------------------------------------------------------
+# K5 — Benchmark Lab (multi-protocol comparison)
+# ---------------------------------------------------------------------------
+
+def _cmd_benchmark_lab(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    capability_id: str,
+    runs: int,
+    protocols_filter: str | None,
+    export_path: Path | None,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    """Compare execution of the same capability across all available bindings/protocols."""
+    import statistics
+    import time
+
+    from runtime.binding_registry import BindingRegistry
+    from runtime.binding_models import InvocationRequest
+    from runtime.service_resolver import ServiceResolver
+    from runtime.request_builder import RequestBuilder
+    from runtime.response_mapper import ResponseMapper
+    from runtime.protocol_router import ProtocolRouter
+    from runtime.openapi_invoker import OpenAPIInvoker
+    from runtime.mcp_invoker import MCPInvoker
+    from runtime.openrpc_invoker import OpenRPCInvoker
+    from runtime.pythoncall_invoker import PythonCallInvoker
+    from runtime.default_mcp_client_registry import DefaultMCPClientRegistry
+    from runtime.capability_loader import YamlCapabilityLoader
+
+    # Load the capability spec + generate a synthetic input
+    cap_loader = YamlCapabilityLoader(registry_root)
+    cap = cap_loader.get_capability(capability_id)
+    test_input = _benchmark_lab_build_input(cap)
+
+    # Build binding infra
+    binding_registry = BindingRegistry(runtime_root, host_root)
+    service_resolver = ServiceResolver(binding_registry)
+    request_builder = RequestBuilder()
+    response_mapper = ResponseMapper()
+
+    mcp_client_registry = DefaultMCPClientRegistry(
+        fallback_registry=type("_", (), {"get_client": staticmethod(lambda s: (_ for _ in ()).throw(RuntimeError(f"MCP unavailable for {s}")))})()
+    )
+    protocol_router = ProtocolRouter(
+        openapi_invoker=OpenAPIInvoker(),
+        mcp_invoker=MCPInvoker(client_registry=mcp_client_registry),
+        openrpc_invoker=OpenRPCInvoker(),
+        pythoncall_invoker=PythonCallInvoker(),
+    )
+
+    # Discover available bindings for this capability
+    bindings = binding_registry.get_bindings_for_capability(capability_id)
+
+    if not bindings:
+        print(f"[benchmark-lab] No bindings found for capability '{capability_id}'.")
+        raise SystemExit(1)
+
+    # Filter by protocol if requested
+    allowed_protocols = None
+    if protocols_filter:
+        allowed_protocols = {p.strip().lower() for p in protocols_filter.split(",")}
+        bindings = [b for b in bindings if b.protocol.lower() in allowed_protocols]
+        if not bindings:
+            print(f"[benchmark-lab] No bindings match protocols: {protocols_filter}")
+            raise SystemExit(1)
+
+    if not json_output:
+        print(f"[benchmark-lab] Capability: {capability_id}")
+        print(f"[benchmark-lab] Bindings found: {len(bindings)}")
+        print(f"[benchmark-lab] Runs per binding: {runs}")
+        print()
+
+    results = []
+    reference_output = None
+
+    for binding in bindings:
+        binding_id = binding.id
+        protocol = binding.protocol
+
+        try:
+            service = service_resolver.resolve(binding.service_id)
+        except Exception as exc:
+            results.append({
+                "binding_id": binding_id,
+                "protocol": protocol,
+                "service_id": binding.service_id,
+                "status": "error",
+                "error": f"Service resolution failed: {exc}",
+            })
+            continue
+
+        timings: list[float] = []
+        last_output = None
+        errors = 0
+
+        for _ in range(runs):
+            try:
+                payload = request_builder.build(binding=binding, step_input=test_input)
+                invocation = InvocationRequest(
+                    protocol=binding.protocol,
+                    service=service,
+                    binding=binding,
+                    operation_id=binding.operation_id,
+                    payload=payload,
+                    context_metadata={
+                        "capability_id": capability_id,
+                        "binding_id": binding.id,
+                        "service_id": service.id,
+                    },
+                )
+                t0 = time.perf_counter()
+                response = protocol_router.invoke(invocation)
+                elapsed = (time.perf_counter() - t0) * 1000
+                timings.append(elapsed)
+
+                last_output = response_mapper.map(binding=binding, invocation_response=response)
+            except Exception:
+                errors += 1
+
+        if not timings:
+            results.append({
+                "binding_id": binding_id,
+                "protocol": protocol,
+                "service_id": binding.service_id,
+                "status": "all_failed",
+                "errors": errors,
+            })
+            continue
+
+        # Compare outputs
+        if reference_output is None:
+            reference_output = last_output
+            output_match = True
+        else:
+            output_match = _benchmark_lab_outputs_match(reference_output, last_output)
+
+        entry = {
+            "binding_id": binding_id,
+            "protocol": protocol,
+            "service_id": binding.service_id,
+            "status": "ok",
+            "runs": len(timings),
+            "errors": errors,
+            "mean_ms": round(statistics.mean(timings), 2),
+            "median_ms": round(statistics.median(timings), 2),
+            "p95_ms": round(sorted(timings)[int(len(timings) * 0.95)], 2) if len(timings) >= 2 else round(timings[0], 2),
+            "min_ms": round(min(timings), 2),
+            "max_ms": round(max(timings), 2),
+            "cold_start_ms": round(timings[0], 2),
+            "output_match": output_match,
+        }
+        results.append(entry)
+
+    report = {
+        "capability_id": capability_id,
+        "runs_per_binding": runs,
+        "test_input": test_input,
+        "bindings": results,
+    }
+
+    if export_path:
+        export_path.parent.mkdir(parents=True, exist_ok=True)
+        export_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    if json_output:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        # Pretty table
+        header = f"{'Binding':<40} {'Proto':<12} {'Mean':>8} {'Median':>8} {'P95':>8} {'Match':>6} {'Err':>4}"
+        print(header)
+        print("─" * len(header))
+        for r in results:
+            if r["status"] != "ok":
+                print(f"{r['binding_id']:<40} {r['protocol']:<12} {'FAILED':>8} {'—':>8} {'—':>8} {'—':>6} {r.get('errors', '?'):>4}")
+            else:
+                match_str = "✓" if r["output_match"] else "✗"
+                print(
+                    f"{r['binding_id']:<40} {r['protocol']:<12} "
+                    f"{r['mean_ms']:>7.1f}{'ms':} {r['median_ms']:>7.1f}{'ms':} "
+                    f"{r['p95_ms']:>7.1f}{'ms':} {match_str:>6} {r['errors']:>4}"
+                )
+        print()
+        if export_path:
+            print(f"[benchmark-lab] Exported: {export_path}")
+
+
+def _benchmark_lab_build_input(cap) -> dict:
+    """Build a synthetic test input from a capability spec."""
+    inputs: dict = {}
+    for name, field in (getattr(cap, "inputs", {}) or {}).items():
+        ftype = getattr(field, "type", "string")
+        if ftype == "string":
+            inputs[name] = f"benchmark test value for {name}"
+        elif ftype == "integer":
+            inputs[name] = 42
+        elif ftype == "number":
+            inputs[name] = 3.14
+        elif ftype == "boolean":
+            inputs[name] = True
+        elif ftype == "array":
+            inputs[name] = ["item1", "item2"]
+        elif ftype == "object":
+            inputs[name] = {"key": "value"}
+        else:
+            inputs[name] = f"test_{name}"
+    return inputs
+
+
+def _benchmark_lab_outputs_match(ref: dict | None, current: dict | None) -> bool:
+    """Loosely compare two output dicts — same keys present."""
+    if ref is None or current is None:
+        return ref is None and current is None
+    return set(ref.keys()) == set(current.keys())
+
+
+# ---------------------------------------------------------------------------
+# K3 — Dev Watch Mode
+# ---------------------------------------------------------------------------
+
+def _cmd_dev(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    skill_id: str,
+    interval: float,
+    no_test: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    """Watch a skill for changes and auto-validate + check-wiring + test on each save."""
+    import hashlib
+    import time
+
+    from runtime.skill_loader import YamlSkillLoader
+    from runtime.capability_loader import YamlCapabilityLoader
+    from tooling.validate_skill_schema import validate_skill_yaml
+    from tooling.skill_authoring import check_wiring, generate_test_fixture, run_skill_test
+
+    # Locate the skill file
+    loader = YamlSkillLoader(registry_root)
+    try:
+        skill = loader.get_skill(skill_id)
+    except Exception as exc:
+        print(f"[dev] ERROR: Could not load skill '{skill_id}': {exc}")
+        raise SystemExit(1)
+
+    if not skill.source_file:
+        print(f"[dev] ERROR: Skill '{skill_id}' has no source file on disk.")
+        raise SystemExit(1)
+
+    skill_path = Path(skill.source_file)
+    watch_dir = skill_path.parent
+    watch_files = list(watch_dir.glob("*.yaml")) + list(watch_dir.glob("*.json"))
+
+    print(f"[dev] Watching skill: {skill_id}")
+    print(f"[dev] Directory: {watch_dir}")
+    print(f"[dev] Interval: {interval}s | Tests: {'off' if no_test else 'on'}")
+    print(f"[dev] Press Ctrl+C to stop\n")
+
+    def _file_hash(path: Path) -> str:
+        try:
+            return hashlib.md5(path.read_bytes()).hexdigest()
+        except Exception:
+            return ""
+
+    def _get_snapshot() -> dict[str, str]:
+        snapshot = {}
+        for f in watch_dir.glob("*.yaml"):
+            snapshot[str(f)] = _file_hash(f)
+        for f in watch_dir.glob("*.json"):
+            snapshot[str(f)] = _file_hash(f)
+        return snapshot
+
+    def _run_cycle(cycle_num: int) -> None:
+        """Run the full validate → check-wiring → test cycle."""
+        timestamp = time.strftime("%H:%M:%S")
+        print(f"[{timestamp}] ── Cycle {cycle_num} ──")
+
+        # Phase 1: Schema validation
+        schema_errors = validate_skill_yaml(skill_path)
+        if schema_errors:
+            for err in schema_errors:
+                print(f"  [SCHEMA] {err}")
+            print(f"  ✗ Schema validation failed ({len(schema_errors)} errors)")
+            return
+        print("  ✓ Schema OK")
+
+        # Phase 2: Check wiring
+        try:
+            cap_loader = YamlCapabilityLoader(registry_root)
+            capabilities = cap_loader.get_all_capabilities()
+
+            raw = yaml.safe_load(skill_path.read_text(encoding="utf-8"))
+            skill_doc = {
+                "id": raw.get("id", skill_id),
+                "inputs": raw.get("inputs", {}),
+                "outputs": raw.get("outputs", {}),
+                "steps": raw.get("steps", []),
+            }
+
+            wiring_issues = check_wiring(skill_doc, capabilities)
+            if wiring_issues:
+                for issue in wiring_issues:
+                    tag = issue.get("level", "warn").upper()
+                    print(f"  [{tag}] step '{issue['step']}': {issue['message']}")
+                print(f"  ✗ Wiring: {len(wiring_issues)} issue(s)")
+            else:
+                print("  ✓ Wiring OK")
+        except Exception as exc:
+            print(f"  ✗ Wiring check error: {exc}")
+            wiring_issues = [{"error": str(exc)}]
+
+        # Phase 3: Test execution (optional)
+        if not no_test:
+            try:
+                engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
+
+                # Load or generate test input
+                test_input_file = watch_dir / "test_input.json"
+                if test_input_file.exists():
+                    test_inputs = json.loads(test_input_file.read_text(encoding="utf-8"))
+                else:
+                    test_inputs = generate_test_fixture(skill_doc)
+
+                report = run_skill_test(engine=engine, skill_doc=skill_doc, inputs=test_inputs)
+                if report["ok"]:
+                    print(f"  ✓ Test PASS ({report['duration_ms']}ms, {report.get('steps_executed', '?')} steps)")
+                else:
+                    err = report.get("error", "unknown")
+                    print(f"  ✗ Test FAIL: {err} ({report['duration_ms']}ms)")
+            except Exception as exc:
+                print(f"  ✗ Test error: {exc}")
+
+        print()
+
+    # Initial run
+    _run_cycle(0)
+    last_snapshot = _get_snapshot()
+    cycle = 1
+
+    try:
+        while True:
+            time.sleep(interval)
+            current = _get_snapshot()
+            if current != last_snapshot:
+                changed = [k for k in current if current.get(k) != last_snapshot.get(k)]
+                names = ", ".join(Path(c).name for c in changed[:3])
+                if len(changed) > 3:
+                    names += f" +{len(changed) - 3} more"
+                print(f"[dev] Change detected: {names}")
+                _run_cycle(cycle)
+                last_snapshot = current
+                cycle += 1
+    except KeyboardInterrupt:
+        print("\n[dev] Stopped.")
+
+
+# ---------------------------------------------------------------------------
 # M2 — Test a skill
 # ---------------------------------------------------------------------------
 
@@ -3095,6 +3853,276 @@ def _cmd_report(
         import webbrowser
         webbrowser.open(issue_url)
         print("[report] Opened in browser.")
+
+
+# ---------------------------------------------------------------------------
+# K4 — Skill Triggers
+# ---------------------------------------------------------------------------
+
+def _cmd_triggers(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    action: str,
+    args,
+    local_skills_root: Path | None = None,
+) -> None:
+    """Manage skill triggers: list, fire, status."""
+    from runtime.triggers import TriggerRegistry, TriggerEvent, TriggerEngine
+
+    reg = TriggerRegistry()
+    # Load triggers from registry skills
+    skills_root = registry_root / "skills"
+    reg.load_from_skills_root(skills_root)
+    # Also from local skills
+    local_root = local_skills_root or (runtime_root / "skills" / "local")
+    if local_root.exists():
+        reg.load_from_skills_root(local_root)
+
+    json_output = getattr(args, "json", False)
+
+    if action == "list":
+        type_filter = getattr(args, "type", None)
+        triggers = reg.list_by_type(type_filter) if type_filter else reg.list_all()
+
+        if json_output:
+            print(json.dumps({
+                "triggers": [
+                    {"skill_id": t.skill_id, "type": t.trigger_type, "config": t.config}
+                    for t in triggers
+                ],
+                "count": len(triggers),
+            }, indent=2, ensure_ascii=False))
+        else:
+            if not triggers:
+                print("[triggers] No triggers registered.")
+                print("[triggers] Add a 'triggers:' section to your skill.yaml to define triggers.")
+                return
+
+            print(f"[triggers] {len(triggers)} trigger(s) registered:\n")
+            for t in triggers:
+                print(f"  {t.skill_id:<40} type={t.trigger_type:<14} {_trigger_summary(t)}")
+
+    elif action == "fire":
+        event_type = getattr(args, "event_type", "webhook")
+        payload: dict = {}
+
+        if getattr(args, "payload", None):
+            try:
+                payload = json.loads(args.payload)
+            except json.JSONDecodeError:
+                pass
+
+        if event_type == "webhook":
+            webhook_name = getattr(args, "webhook", None)
+            if not webhook_name:
+                print("[triggers] --webhook is required for webhook events")
+                raise SystemExit(1)
+            payload["webhook_name"] = webhook_name
+
+        elif event_type == "event":
+            source_skill = getattr(args, "source_skill", None)
+            if not source_skill:
+                print("[triggers] --source-skill is required for event type")
+                raise SystemExit(1)
+            payload["source_skill"] = source_skill
+            payload["status"] = getattr(args, "status", "completed")
+
+        elif event_type == "file_change":
+            files_str = getattr(args, "files", None)
+            if files_str:
+                payload["changed_files"] = [f.strip() for f in files_str.split(",")]
+
+        event = TriggerEvent(event_type=event_type, payload=payload)
+
+        # Build engine for execution
+        engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
+
+        def _execute_skill(skill_id: str, inputs: dict) -> dict:
+            request = ExecutionRequest(skill_id=skill_id, inputs=inputs, channel="trigger")
+            result = engine.execute(request)
+            return {
+                "status": result.status,
+                "outputs": dict(result.outputs) if result.outputs else {},
+            }
+
+        trigger_engine = TriggerEngine(registry=reg, execute_fn=_execute_skill)
+        results = trigger_engine.fire(event)
+
+        if json_output:
+            print(json.dumps({
+                "event_type": event_type,
+                "payload": payload,
+                "results": results,
+                "matched": len(results),
+            }, indent=2, ensure_ascii=False))
+        else:
+            if not results:
+                print(f"[triggers] No triggers matched event: {event_type}")
+            else:
+                print(f"[triggers] Fired {len(results)} trigger(s):\n")
+                for r in results:
+                    status = r.get("status", "unknown")
+                    icon = "✓" if status == "completed" else "✗"
+                    print(f"  {icon} {r['skill_id']:<40} status={status}")
+
+    elif action == "status":
+        summary = reg.to_summary()
+        if json_output:
+            print(json.dumps(summary, indent=2, ensure_ascii=False))
+        else:
+            print(f"[triggers] Trigger Summary:")
+            print(f"  Total: {summary['total_triggers']}")
+            for ttype, count in summary.get("by_type", {}).items():
+                print(f"  {ttype}: {count}")
+            webhooks = summary.get("webhooks", {})
+            if webhooks:
+                print(f"\n  Webhooks:")
+                for name, skills in webhooks.items():
+                    print(f"    {name}: {', '.join(skills)}")
+            chains = summary.get("event_chains", {})
+            if chains:
+                print(f"\n  Event chains:")
+                for source, targets in chains.items():
+                    print(f"    {source} → {', '.join(targets)}")
+
+
+def _trigger_summary(t) -> str:
+    """One-line summary of a trigger spec."""
+    if t.trigger_type == "schedule":
+        return f"expr={t.expression or 'default'}"
+    elif t.trigger_type == "webhook":
+        return f"name={t.webhook_name or '?'}"
+    elif t.trigger_type == "event":
+        return f"source={t.source_skill or '?'} on={t.on_status}"
+    elif t.trigger_type == "file_change":
+        pats = t.file_patterns
+        return f"patterns={pats[:2]}{'...' if len(pats) > 2 else ''}"
+    return ""
+
+
+# ---------------------------------------------------------------------------
+# K6 — Compose DSL
+# ---------------------------------------------------------------------------
+
+def _cmd_compose(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    source_path: str,
+    out_path: Path | None,
+    run: bool,
+    extra_input: str | None,
+    json_output: bool,
+    local_skills_root: Path | None = None,
+) -> None:
+    """Compile a .compose file to skill.yaml, optionally execute."""
+    from tooling.compose_dsl import parse_compose, compile_to_yaml, compile_to_yaml_string, ComposeParseError
+
+    source_file = Path(source_path)
+    if not source_file.exists():
+        print(f"[compose] ERROR: File not found: {source_file}")
+        raise SystemExit(1)
+
+    source_text = source_file.read_text(encoding="utf-8")
+
+    try:
+        spec = parse_compose(source_text, source_path=str(source_file))
+    except ComposeParseError as exc:
+        if json_output:
+            print(json.dumps({"ok": False, "error": str(exc), "line": exc.line_num}, indent=2))
+        else:
+            print(f"[compose] Parse error: {exc}")
+        raise SystemExit(1)
+
+    skill_doc = compile_to_yaml(spec)
+    yaml_str = yaml.dump(skill_doc, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+    # Write to file if requested
+    if out_path:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(yaml_str, encoding="utf-8")
+        if not json_output:
+            print(f"[compose] Compiled: {source_file} → {out_path}")
+            print(f"[compose] Skill ID: {spec.skill_id}")
+            print(f"[compose] Steps: {len(spec.steps)}")
+
+    # Run mode: write to temp skill dir and execute
+    if run:
+        import tempfile
+
+        # Write the compiled YAML to a temporary skill directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            skill_dir = Path(tmpdir) / "skills" / "local" / "composed" / spec.skill_id.replace(".", "-")
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "skill.yaml").write_text(yaml_str, encoding="utf-8")
+
+            # Resolve inputs
+            inputs: dict = {}
+            if extra_input:
+                try:
+                    inputs = json.loads(extra_input)
+                except json.JSONDecodeError as exc:
+                    print(f"[compose] Invalid --input JSON: {exc}")
+                    raise SystemExit(1)
+            else:
+                # Auto-generate inputs from the skill document
+                for name, field_info in skill_doc.get("inputs", {}).items():
+                    ftype = field_info.get("type", "string")
+                    if ftype == "string":
+                        inputs[name] = f"test value for {name}"
+                    elif ftype == "integer":
+                        inputs[name] = 10
+                    elif ftype == "number":
+                        inputs[name] = 1.0
+                    elif ftype == "boolean":
+                        inputs[name] = True
+
+            # Build engine with the temporary local skills directory
+            engine = _build_engine(
+                registry_root, runtime_root, host_root,
+                local_skills_root=Path(tmpdir),
+            )
+
+            request = ExecutionRequest(
+                skill_id=spec.skill_id,
+                inputs=inputs,
+                channel="compose",
+            )
+            result = engine.execute(request)
+
+            output = {
+                "ok": result.status == "completed",
+                "skill_id": spec.skill_id,
+                "status": result.status,
+                "outputs": dict(result.outputs) if result.outputs else {},
+            }
+
+            if json_output:
+                print(json.dumps(output, indent=2, ensure_ascii=False))
+            else:
+                if result.status == "completed":
+                    print(f"[compose] ✓ Executed: {spec.skill_id}")
+                    for k, v in (result.outputs or {}).items():
+                        val_str = str(v)
+                        if len(val_str) > 200:
+                            val_str = val_str[:197] + "..."
+                        print(f"  {k}: {val_str}")
+                else:
+                    error = getattr(result, "error", None) or result.status
+                    print(f"[compose] ✗ Failed: {error}")
+                    raise SystemExit(1)
+        return
+
+    # Default: print compiled YAML
+    if not out_path:
+        if json_output:
+            print(json.dumps({"ok": True, "skill_id": spec.skill_id, "compiled": skill_doc}, indent=2, ensure_ascii=False))
+        else:
+            print(f"# Compiled from: {source_file}")
+            print(f"# Steps: {len(spec.steps)}, Outputs: {len(spec.outputs)}")
+            print()
+            print(yaml_str)
 
 
 if __name__ == "__main__":
