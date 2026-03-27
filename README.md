@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-1490_passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-1521_passed-brightgreen.svg)]()
 [![Capabilities](https://img.shields.io/badge/Capabilities-122-blueviolet.svg)]()
 [![Skills](https://img.shields.io/badge/Skills-36-blueviolet.svg)]()
 
@@ -33,7 +33,7 @@ Agent Skills Runtime lets you define agent capabilities as abstract contracts, w
 ```mermaid
 graph TB
     subgraph "Developer Interface"
-        CLI["CLI<br/>agent-skills run / describe / discover"]
+        CLI["CLI<br/>agent-skills run / describe / scaffold / test"]
         HTTP["HTTP API<br/>REST + SSE streaming"]
         SDK["SDKs<br/>Python · TypeScript · LangChain · CrewAI · AutoGen · SemanticKernel"]
     end
@@ -242,6 +242,42 @@ The `/v1/metrics` endpoint exposes operational counters and histograms:
 - Active execution gauge
 
 Reset via `skill.metrics.reset` or `POST /v1/skills/diagnostics/reset`.
+
+## Skill Authoring
+
+The CLI includes a complete authoring workflow for creating, testing, and sharing skills:
+
+```bash
+# Interactive wizard — guided step-by-step
+agent-skills scaffold --wizard
+
+# One-line generation from intent
+agent-skills scaffold "Summarize a PDF and extract key points"
+
+# Test with auto-discovered fixture
+agent-skills test text.summarize
+
+# Check type compatibility between steps
+agent-skills check-wiring text.summarize
+
+# Visualize the step DAG
+agent-skills describe text.summarize --mermaid
+
+# Export as portable bundle
+agent-skills export text.summarize
+
+# One-command contribution pipeline
+agent-skills contribute text.summarize
+
+# Rate and report
+agent-skills rate text.summarize 5 --comment "Fast and accurate"
+agent-skills report text.summarize "Empty output on large input" --severity high
+
+# Find similar skills
+agent-skills discover --similar text.summarize
+```
+
+See `docs/SKILL_AUTHORING.md` for the full authoring workflow guide.
 
 ## JSON Schema Validation
 
@@ -549,6 +585,7 @@ All package workflow commands support machine-readable output for UI/backend orc
 - **Webhook event system**: `docs/WEBHOOKS.md`
 - **Plugin system (entry points, extension groups)**: `docs/PLUGINS.md`
 - **JSON Schema inventory and validation**: `docs/JSON_SCHEMAS.md`
+- **Skill authoring workflow guide (create → test → share)**: `docs/SKILL_AUTHORING.md`
 
 ---
 

@@ -7,6 +7,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+#### Skill authoring UX — M1 through M15
+
+- **`scaffold --wizard`** (M1): Interactive guided mode — asks for intent, channel,
+  inputs/outputs, and suggests capabilities from the registry. Generates skill YAML,
+  `test_input.json`, and auto-validates.
+- **`test <skill_id>`** (M2): Execute a skill with auto-discovered test fixture;
+  structured report with output verification and timing.
+  Logic in `tooling/skill_authoring.py`.
+- **YAML schema validation for VS Code** (M3): Enhanced JSON schemas
+  (`docs/schemas/SkillSpec.schema.json`, `StepSpec.schema.json`, `FieldSpec.schema.json`)
+  with patterns, enums, and field descriptions. Local `.vscode/settings.json` (gitignored)
+  wires them to skill YAML files.
+- **`export` / `import`** (M4): Portable `.skill-bundle.tar.gz` with skill YAML,
+  test fixture, README, and manifest. Import verifies capability compatibility.
+- **Unified `validate`** (M5): Now runs schema validation first, then deep validation
+  (binding resolution, wiring checks) in two clear phases.
+- **`describe --mermaid`** (M6): Generates a Mermaid flowchart of the skill's step DAG
+  with input/output nodes and dependency edges.
+- **`capabilities --input-type/--output-type`** (M7): Filter capabilities by field types
+  (e.g. `--input-type string --output-type array`).
+- **`check-wiring <skill_id>`** (M8): Validates type compatibility between step outputs
+  and downstream inputs; reports mismatches and missing sources.
+- **`contribute <skill_id>`** (M9): One-command promotion pipeline —
+  similar-check → prepare → validate → PR instructions.
+- **`discover --similar <skill_id>`** (M10): Jaccard similarity across capabilities,
+  tags, and description words. Domain bonus for same-domain matches.
+- **`rate <skill_id>`** (M11): Local feedback system with JSON persistence and
+  Bayesian rating aggregates.
+- **`report <skill_id>`** (M12): Generates GitHub issue template with execution
+  context, severity labels, and structured sections.
+- **Lighter admission for experimental** (M13): `promote` template for experimental
+  channel requires only 3 sections (problem statement, business value, contract clarity)
+  instead of the full 6. In `tooling/promotion_package.py`.
+- **Auto-wiring suggestions** (M14): `suggest_wiring()` in `tooling/skill_authoring.py`
+  — proposes input/output mappings based on type matching and name similarity.
+- **GitHub Discussions template** (M15): `.github/DISCUSSION_TEMPLATE/skill-discussion.yml`
+  for skill ideas, feedback, capability gaps, and integration questions.
+- **Authoring workflow guide**: `docs/SKILL_AUTHORING.md` — end-to-end reference
+  for creating, testing, sharing, and maintaining skills.
+- **31 new tests** in `test_skill_authoring.py` covering all helper functions.
+  Total suite: 1521 passed, 2 skipped.
+
 #### Gap resolution — raising project from 5.6 → ≥8/10
 
 - **Webhook event system**: `runtime/webhook.py` — subscription store, HMAC-SHA256

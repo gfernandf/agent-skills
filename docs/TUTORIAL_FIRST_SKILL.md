@@ -159,10 +159,32 @@ in the capability and that the response maps to valid outputs.
 
 ---
 
+## Alternative: Use the Scaffold Wizard
+
+Instead of creating all files manually, you can generate a skill interactively:
+
+```bash
+agent-skills scaffold --wizard
+```
+
+The wizard handles capability selection, YAML generation, and test fixture creation.
+After scaffolding, validate and test with:
+
+```bash
+agent-skills test tutorial.greeting
+agent-skills check-wiring tutorial.greeting
+agent-skills describe tutorial.greeting --mermaid
+```
+
+See [docs/SKILL_AUTHORING.md](SKILL_AUTHORING.md) for the full authoring workflow.
+
+---
+
 ## What's Next?
 
 | Goal | Read |
 |------|------|
+| Full authoring workflow (test, export, contribute) | [docs/SKILL_AUTHORING.md](SKILL_AUTHORING.md) |
 | Multi-step skills with control flow | [docs/STEP_CONTROL_FLOW.md](STEP_CONTROL_FLOW.md) |
 | Using OpenAPI or MCP bindings | [docs/BINDING_GUIDE.md](BINDING_GUIDE.md) |
 | CognitiveState v1 (structured memory) | [docs/COGNITIVE_STATE_V1.md](COGNITIVE_STATE_V1.md) |
