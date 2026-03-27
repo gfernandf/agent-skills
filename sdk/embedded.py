@@ -336,59 +336,6 @@ def as_semantic_kernel_functions(
     return functions
 
 
-def as_anthropic_tools(
-    capabilities: list[str] | None = None,
-) -> tuple[list[dict[str, Any]], dict[str, callable]]:
-    """Build Anthropic-compatible tool definitions and a dispatch map.
-
-    Returns a 2-tuple:
-    - ``tools``:  list of tool dicts ready for the ``tools=`` parameter of
-      ``anthropic.Anthropic().messages.create()``.
-    - ``dispatch``: mapping of ``tool_name → callable(**kwargs) → dict``
-      for executing tool calls returned by Claude.
-
-    Usage::
-
-        from sdk.embedded import as_anthropic_tools
-
-        tools, dispatch = as_anthropic_tools(["text.content.summarize"])
-
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            tools=tools,
-            messages=[{"role": "user", "content": "Summarize this text: ..."}],
-        )
-
-        for block in response.content:
-            if block.type == "tool_use":
-                result = dispatch[block.name](**block.input)
-
-    No external dependencies required — uses the Anthropic native tool
-    format (JSON Schema for ``input_schema``).
-    """
-    caps = _resolve_capabilities(capabilities)
-    tools: list[dict[str, Any]] = []
-    dispatch: dict[str, callable] = {}
-
-    for cap_info in caps:
-        cap_id = cap_info["id"]
-        tool_name = cap_id.replace(".", "_")
-        description = cap_info.get("description", cap_id)
-        fn = _make_capability_fn(cap_id)
-
-        # Build JSON Schema for input_schema
-        input_schema = _build_json_schema(cap_info.get("inputs", {}))
-
-        tools.append({
-            "name": tool_name,
-            "description": description,
-            "input_schema": input_schema,
-        })
-        dispatch[tool_name] = fn
-
-    return tools, dispatch
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -423,42 +370,3 @@ def _try_build_pydantic_schema(cap_id: str, inputs_spec: dict) -> type | None:
         return create_model(f"{cap_id.replace('.', '_')}_Input", **fields)
     except Exception:
         return None
-
-
-_JSON_SCHEMA_TYPE_MAP: dict[str, str] = {
-    "string": "string",
-    "integer": "integer",
-    "number": "number",
-    "boolean": "boolean",
-    "array": "array",
-    "object": "object",
-}
-
-
-def _build_json_schema(inputs_spec: dict) -> dict[str, Any]:
-    """Build a JSON Schema object from a capability's inputs spec.
-
-    Used for Anthropic tool_use ``input_schema`` and any other integration
-    that needs raw JSON Schema (OpenAI function calling, etc.).
-    """
-    properties: dict[str, Any] = {}
-    required: list[str] = []
-
-    for name, spec in inputs_spec.items():
-        prop: dict[str, Any] = {
-            "type": _JSON_SCHEMA_TYPE_MAP.get(spec.get("type", "string"), "string"),
-        }
-        desc = spec.get("description")
-        if desc:
-            prop["description"] = desc
-        properties[name] = prop
-        if spec.get("required", False):
-            required.append(name)
-
-    schema: dict[str, Any] = {
-        "type": "object",
-        "properties": properties,
-    }
-    if required:
-        schema["required"] = required
-    return schema
