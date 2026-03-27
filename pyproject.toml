@@ -41,6 +41,9 @@ asgi = [
     "uvicorn[standard]>=0.27",
 ]
 all = ["PyPDF2>=3.0", "beautifulsoup4>=4.12"]
+langchain = ["langchain-core>=0.1"]
+crewai = ["crewai>=0.28"]
+sk = ["semantic-kernel>=0.9"]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.1",
