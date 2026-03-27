@@ -1,0 +1,66 @@
+title: "[Skill] "
+labels:
+  - skill-discussion
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to discuss skill ideas, share feedback on existing skills,
+        or propose improvements to the skill authoring experience.
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Discussion type
+      description: What kind of discussion is this?
+      options:
+        - "Skill idea — I want to build something new"
+        - "Skill feedback — I have feedback on an existing skill"
+        - "Authoring UX — Something about creating skills could be better"
+        - "Capability gap — I need a capability that doesn't exist yet"
+        - "Integration question — How do I connect skill X with service Y?"
+    validations:
+      required: true
+
+  - type: input
+    id: skill_id
+    attributes:
+      label: Related skill ID (if applicable)
+      description: "e.g. text.summarize or workflow.analyze-and-report"
+      placeholder: "domain.slug"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What do you want to discuss?
+      placeholder: Describe your idea, feedback, or question in detail.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and use case
+      description: Why is this important? What problem does it solve?
+      placeholder: |
+        - What is your use case?
+        - What have you tried so far?
+        - What would the ideal outcome look like?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: channel
+    attributes:
+      label: Target channel
+      description: Where would this skill live?
+      options:
+        - "local — personal use only"
+        - "experimental — early testing"
+        - "community — shared with everyone"
+        - "Not sure yet"
+    validations:
+      required: false
