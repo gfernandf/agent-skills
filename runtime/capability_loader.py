@@ -154,9 +154,6 @@ class YamlCapabilityLoader:
         version = self._require_non_empty_string(raw, "version", path)
         description = self._require_non_empty_string(raw, "description", path)
 
-        inputs = self._normalize_fields(raw.get("inputs"), "inputs", path)
-        outputs = self._normalize_fields(raw.get("outputs"), "outputs", path)
-
         metadata = self._normalize_metadata(raw.get("metadata"))
         properties = self._normalize_properties(raw.get("properties"), path)
         requires = self._normalize_requires(raw.get("requires"), path)
@@ -169,6 +166,19 @@ class YamlCapabilityLoader:
             raw.get("cognitive_hints"), path
         )
         safety = self._normalize_safety(raw.get("safety"), path)
+        extends = self._normalize_optional_string(
+            raw.get("extends"), "extends", path
+        )
+
+        # When extending, inputs/outputs are optional (inherited from base).
+        if extends:
+            raw_inputs = raw.get("inputs")
+            inputs = self._normalize_fields(raw_inputs, "inputs", path) if raw_inputs is not None else {}
+            raw_outputs = raw.get("outputs")
+            outputs = self._normalize_fields(raw_outputs, "outputs", path) if raw_outputs is not None else {}
+        else:
+            inputs = self._normalize_fields(raw.get("inputs"), "inputs", path)
+            outputs = self._normalize_fields(raw.get("outputs"), "outputs", path)
 
         return CapabilitySpec(
             id=capability_id,
@@ -182,6 +192,7 @@ class YamlCapabilityLoader:
             deprecated=deprecated,
             replacement=replacement,
             aliases=aliases,
+            extends=extends,
             source_file=self._safe_relpath(path),
             cognitive_hints=cognitive_hints,
             safety=safety,

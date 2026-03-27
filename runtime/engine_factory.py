@@ -11,6 +11,7 @@ from runtime.binding_registry import BindingRegistry
 from runtime.binding_resolver import BindingResolver
 from runtime.capability_executor import DefaultCapabilityExecutor
 from runtime.capability_loader import YamlCapabilityLoader
+from runtime.composite_capability_loader import CompositeCapabilityLoader
 from runtime.composite_skill_loader import CompositeSkillLoader
 from runtime.execution_engine import ExecutionEngine
 from runtime.execution_planner import ExecutionPlanner
@@ -40,7 +41,7 @@ class _UnavailableMCPClientRegistry:
 class RuntimeComponents:
     engine: ExecutionEngine
     skill_loader: YamlSkillLoader | CompositeSkillLoader
-    capability_loader: YamlCapabilityLoader
+    capability_loader: YamlCapabilityLoader | CompositeCapabilityLoader
     capability_executor: DefaultCapabilityExecutor
 
 
@@ -76,7 +77,20 @@ def build_runtime_components(
     else:
         skill_loader = registry_skill_loader
 
-    capability_loader = YamlCapabilityLoader(registry_root)
+    capability_loader: YamlCapabilityLoader | CompositeCapabilityLoader
+
+    # -- Local capabilities: .agent-skills/capabilities/ --
+    registry_cap_loader = YamlCapabilityLoader(registry_root)
+    local_caps_dir = host_root / ".agent-skills" / "capabilities"
+    if local_caps_dir.exists() and local_caps_dir.is_dir():
+        # YamlCapabilityLoader expects repo_root with a child "capabilities/" dir.
+        # .agent-skills/ is the repo_root, so .agent-skills/capabilities/ is found.
+        local_cap_loader = YamlCapabilityLoader(host_root / ".agent-skills")
+        capability_loader = CompositeCapabilityLoader(
+            [local_cap_loader, registry_cap_loader]
+        )
+    else:
+        capability_loader = registry_cap_loader
 
     planner = ExecutionPlanner()
     resolver = ReferenceResolver()

@@ -174,6 +174,7 @@ class CapabilitySpec:
     deprecated: bool | None = None
     replacement: str | None = None
     aliases: tuple[str, ...] = ()
+    extends: str | None = None
     source_file: str | None = None
     cognitive_hints: dict[str, Any] | None = None
     safety: dict[str, Any] | None = None
