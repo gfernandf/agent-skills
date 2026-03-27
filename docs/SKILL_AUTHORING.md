@@ -231,6 +231,69 @@ skills to combine.
 
 ---
 
+## Local Capabilities & Extends
+
+Capabilities are the stable contracts that skills consume. By default they come
+from the registry (`agent-skill-registry/capabilities/`), but you can define
+**local capabilities** and **extend** existing ones.
+
+### Local capabilities
+
+Place YAML files in `.agent-skills/capabilities/`:
+
+```yaml
+# .agent-skills/capabilities/my.org.custom.capability.yaml
+id: my.org.custom.capability
+version: 1.0.0
+description: Organization-specific capability
+
+inputs:
+  payload:
+    type: object
+    required: true
+
+outputs:
+  result:
+    type: string
+```
+
+The engine detects this directory automatically and gives local capabilities
+**priority** over registry ones with the same id.
+
+### Extending capabilities
+
+Use `extends` to inherit a base contract and add fields:
+
+```yaml
+# .agent-skills/capabilities/local.text.summarize_v2.yaml
+id: local.text.summarize_v2
+version: 1.0.0
+extends: text.content.summarize
+description: Summarization with format control
+
+inputs:
+  format:
+    type: string
+    required: false
+
+outputs:
+  keywords:
+    type: string
+    required: false
+```
+
+**Rules:**
+
+| Action | Allowed? |
+|--------|----------|
+| Add new inputs/outputs | ✅ Yes |
+| Strengthen optional → required | ✅ Yes |
+| Weaken required → optional | ❌ No |
+| Multi-level chain (A → B → C) | ✅ Yes |
+| Omit inputs/outputs (pure alias) | ✅ Yes — inherits all from base |
+
+---
+
 ## Related Docs
 
 - [Tutorial: First Skill](TUTORIAL_FIRST_SKILL.md) — Manual step-by-step approach

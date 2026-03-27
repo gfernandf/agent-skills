@@ -395,6 +395,43 @@ agent-skills showcase text.summarize-plain-input --benchmark --runs 5 --file sho
 
 Also: `benchmark-lab --format markdown` exports tables ready for PRs and blog posts.
 
+### Local Capabilities & Extends (K8)
+
+Define custom capabilities locally without modifying the registry:
+
+```bash
+# Create your local capabilities directory
+mkdir -p .agent-skills/capabilities/
+```
+
+```yaml
+# .agent-skills/capabilities/local.text.summarize_v2.yaml
+id: local.text.summarize_v2
+version: 1.0.0
+extends: text.content.summarize          # inherit base contract
+description: Summarization with format control
+
+inputs:                                    # additional fields only
+  format:
+    type: string
+    required: false
+  language:
+    type: string
+    required: false
+
+outputs:
+  keywords:
+    type: string
+    required: false
+```
+
+**Extends rules:**
+- Base inputs/outputs are inherited automatically.
+- Extensions can add new fields or strengthen optional → required.
+- Extensions **cannot** weaken required → optional.
+- Multi-level chains (A → B → C) resolve recursively.
+- Standalone local capabilities (without `extends`) are also supported.
+
 ## JSON Schema Validation
 
 15 schemas in `docs/schemas/` (JSON Schema 2020-12) cover capabilities, skills, bindings, services, and runtime artifacts.

@@ -50,6 +50,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **6 new tests** for K7 in `test_phase_bc_features.py`.
   Total suite: 1592 passed, 2 skipped.
 
+#### Capability extensibility — K8
+
+- **Local capabilities**: Users can define custom capabilities in
+  `.agent-skills/capabilities/`. The engine factory auto-detects the
+  directory and wires a `CompositeCapabilityLoader` (local > registry
+  priority), mirroring the existing `CompositeSkillLoader` pattern.
+- **`extends` field**: Capabilities can inherit a base contract via
+  `extends: <base_id>`. All base inputs/outputs are inherited;
+  extensions may add new fields or strengthen optional → required.
+  Weakening required → optional is rejected. Multi-level chains
+  (A → B → C) resolve recursively; cycles are detected with a depth
+  limit of 5.
+- **23 new tests** in `test_local_capabilities.py` covering loader,
+  composite, extends semantics, and engine factory integration.
+  Total suite: 1615 passed, 2 skipped.
+
 #### Skill authoring UX — M1 through M15
 
 - **`scaffold --wizard`** (M1): Interactive guided mode — asks for intent, channel,
