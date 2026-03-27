@@ -279,6 +279,105 @@ agent-skills discover --similar text.summarize
 
 See `docs/SKILL_AUTHORING.md` for the full authoring workflow guide.
 
+## Killer Features
+
+### Ask NL Autopilot (K1)
+
+Ask a question in natural language — the CLI discovers the best skill, auto-maps inputs, and executes:
+
+```bash
+# Dry-run: see what skill would be selected
+agent-skills ask "summarize this text" --dry-run --json
+
+# Execute against the best match
+agent-skills ask "translate this to French" --input '{"text":"Hello world"}'
+
+# Show top 5 candidates
+agent-skills ask "extract key points" --top 5 --dry-run
+```
+
+### Embedded Runtime (K2)
+
+Use skills directly in Python — no HTTP server needed:
+
+```python
+from sdk.embedded import execute, list_skills, as_langchain_tools
+
+# Execute a skill in-process
+result = execute("text.summarize", {"text": "...", "language": "en"})
+
+# List all available skills
+skills = list_skills()
+
+# Get LangChain-compatible tools (also: as_crewai_tools, as_autogen_tools, as_semantic_kernel_functions)
+tools = as_langchain_tools(capabilities=["text.content.summarize"])
+```
+
+### Dev Watch Mode (K3)
+
+Hot-reload skill development — watches files and re-validates on every change:
+
+```bash
+agent-skills dev text.summarize           # polls every 2s
+agent-skills dev text.summarize --interval 5 --no-test  # skip tests, 5s poll
+```
+
+### Skill Triggers (K4)
+
+Declarative event-driven skill execution. Define triggers in skill YAML:
+
+```yaml
+triggers:
+  - type: webhook
+    config:
+      path: /hooks/summarize
+  - type: event
+    config:
+      source_skill: text.extract
+      on_status: completed
+  - type: file_change
+    config:
+      pattern: "*.txt"
+```
+
+```bash
+agent-skills triggers list                       # show all registered triggers
+agent-skills triggers fire webhook /hooks/summarize '{"text":"..."}'
+agent-skills triggers status                     # recent trigger history
+```
+
+### Benchmark Lab (K5)
+
+Compare protocol bindings side-by-side:
+
+```bash
+# Run 10 iterations across all protocols
+agent-skills benchmark-lab text.content.summarize --runs 10
+
+# Filter to specific protocols and export
+agent-skills benchmark-lab text.content.summarize --protocols python_call,openapi --export bench.json
+```
+
+### Compose DSL (K6)
+
+Compact text syntax for multi-step workflows (`.compose` files):
+
+```
+@id my.pipeline
+@name My Pipeline
+
+extract = doc.content.chunk(source=$input.document)
+summarize = text.content.summarize(text=$extract.chunks)
+
+> summary = $summarize.summary
+```
+
+```bash
+agent-skills compose pipeline.compose              # compile to YAML
+agent-skills compose pipeline.compose --out skill.yaml  # write to file
+agent-skills compose pipeline.compose --run --input '{"document":"..."}'
+```
+
 ## JSON Schema Validation
 
 15 schemas in `docs/schemas/` (JSON Schema 2020-12) cover capabilities, skills, bindings, services, and runtime artifacts.

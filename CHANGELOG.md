@@ -7,6 +7,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+#### Killer features — K1 through K6
+
+- **`ask` NL autopilot** (K1): Natural-language skill dispatch — gateway discovers
+  matching skills, auto-maps question text to skill inputs (with language detection
+  for 12+ languages), and executes the best match. Flags: `--dry-run`, `--top`,
+  `--json`, `--input`. Logic in `cli/main.py :: _cmd_ask()`.
+- **Embedded runtime** (K2): In-process execution without HTTP server —
+  `sdk/embedded.py` provides `execute()`, `execute_capability()`, `list_capabilities()`,
+  `list_skills()`, plus framework adapters: `as_langchain_tools()`,
+  `as_crewai_tools()`, `as_autogen_tools()`, `as_semantic_kernel_functions()`.
+  Lazy singleton engine via `build_runtime_components()`.
+- **`dev` watch mode** (K3): Hot-reload development — polls skill directories for
+  changes (MD5 hash comparison), triggers validate → check-wiring → test pipeline
+  automatically. Flags: `--interval`, `--no-test`.
+- **Skill triggers** (K4): Declarative event-driven execution —
+  `runtime/triggers.py` with `TriggerRegistry` and `TriggerEngine`.
+  Supports 4 trigger types: `schedule`, `webhook`, `event` (chaining),
+  `file_change`. CLI: `triggers list`, `triggers fire`, `triggers status`.
+  Triggers defined in skill YAML under `triggers:` section.
+- **`benchmark-lab`** (K5): Multi-protocol performance comparison — discovers
+  all bindings for a capability, invokes each through `ProtocolRouter`, measures
+  per-binding latency and output consistency. Flags: `--runs`, `--protocols`,
+  `--export`. Pretty table output + JSON export.
+- **Compose DSL** (K6): Compact text syntax for multi-step workflows —
+  `tooling/compose_dsl.py` parses `.compose` files with directives (`@id`, `@name`,
+  `@description`), step definitions, and output references (`$input.field`,
+  `$step.field`). Compiles to standard skill YAML. CLI: `compose`, with
+  `--out`, `--run`, `--input`.
+- **65 new tests** across `test_phase_a_features.py` (26) and
+  `test_phase_bc_features.py` (39). Total suite: 1586 passed, 2 skipped.
+
 #### Skill authoring UX — M1 through M15
 
 - **`scaffold --wizard`** (M1): Interactive guided mode — asks for intent, channel,

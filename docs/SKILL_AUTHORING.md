@@ -221,6 +221,12 @@ skills to combine.
 | `rate <id> <1-5>` | Rate a skill locally |
 | `report <id> "<text>"` | Generate issue template |
 | `discover --similar <id>` | Find related skills |
+| `ask "<question>"` | NL autopilot — discover, map, execute |
+| `dev <id>` | Watch mode — hot-reload on change |
+| `benchmark-lab <cap_id>` | Compare protocol bindings |
+| `compose <file>` | Compile `.compose` DSL to skill YAML |
+| `triggers list` | Show registered skill triggers |
+| `triggers fire <type> ...` | Fire a trigger event manually |
 
 ---
 
