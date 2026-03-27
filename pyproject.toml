@@ -82,6 +82,7 @@ include = [
     "customization*",
     "official_services*",
     "official_mcp_servers*",
+    "sdk*",
 ]
 
 [tool.pytest.ini_options]
