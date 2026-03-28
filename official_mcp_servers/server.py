@@ -110,10 +110,17 @@ async def list_tools() -> list[Tool]:
     tools: list[Tool] = []
 
     for cap_info in caps:
+        desc = cap_info.get("description") or ""
+        # Append input hint so LLMs know what parameters are expected
+        input_names = list((cap_info.get("inputs") or {}).keys())
+        if input_names and not desc:
+            desc = f"Capability {cap_info['id']}. Inputs: {', '.join(input_names)}."
+        elif not desc:
+            desc = f"Execute capability {cap_info['id']}."
         tools.append(
             Tool(
                 name=cap_info["id"],
-                description=cap_info.get("description", cap_info["id"]),
+                description=desc,
                 inputSchema=_build_json_schema(cap_info),
             )
         )

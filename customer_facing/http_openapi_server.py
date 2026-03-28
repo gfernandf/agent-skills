@@ -1094,12 +1094,20 @@ def run_server(
     if not auth_mode:
         legacy_flag = os.environ.get("AGENT_SKILLS_RBAC", "").strip().lower()
         if legacy_flag in ("1", "true", "yes"):
+            logger.warning(
+                "AGENT_SKILLS_RBAC is deprecated — use AGENT_SKILLS_AUTH_MODE=enforced instead."
+            )
             auth_mode = "enforced"
         elif config.api_key:
             auth_mode = "enforced"
         else:
             auth_mode = "permissive"
     if auth_mode not in ("enforced", "permissive", "disabled"):
+        logger.warning(
+            "Invalid AGENT_SKILLS_AUTH_MODE='%s' — defaulting to 'enforced'. "
+            "Valid values: enforced, permissive, disabled.",
+            auth_mode,
+        )
         auth_mode = "enforced"
 
     if auth_mode == "disabled":

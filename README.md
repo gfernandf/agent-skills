@@ -226,6 +226,18 @@ result = execute_gemini_tool_call(fc.name, fc.args)
 
 Each `execute_*` helper maps the underscore tool name back to the dotted capability ID and returns a JSON string.
 
+### Choosing your integration mode
+
+| Mode | Best for | Latency | Requires server? |
+|------|----------|---------|:----------------:|
+| **Embedded SDK** (`sdk.embedded`) | Python apps, notebooks, scripts | Lowest (in-process) | No |
+| **Native LLM tools** (`as_anthropic_tools`, etc.) | Direct Anthropic/OpenAI/Gemini integration | Low (in-process) | No |
+| **LangChain / CrewAI / AutoGen** (`as_langchain_tools`, etc.) | Framework-based agents | Low (in-process) | No |
+| **MCP Server** (`python -m official_mcp_servers`) | Claude Desktop, VS Code Copilot, MCP hosts | Low (stdio/SSE) | MCP host |
+| **HTTP REST** (`agent-skills serve`) | Microservices, non-Python clients, multi-tenant | Medium (network) | Yes |
+
+**Start here:** If you're writing Python, use the embedded SDK — zero setup, lowest latency. Switch to HTTP only when you need network access or non-Python clients.
+
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
@@ -241,6 +253,12 @@ This repository provides the execution layer for:
 
 The registry source of truth (contracts and canonical definitions) lives in the companion repository `agent-skill-registry`.
 
+## Troubleshooting
+
+If a skill fails or returns an unexpected error, see the **[Error Taxonomy](docs/ERROR_TAXONOMY.md)** — it lists every frozen error code, its meaning, and suggested recovery actions.
+
+For configuration issues, check **[Environment Variables](docs/ENVIRONMENT_VARIABLES.md)** — the complete reference for all `AGENT_SKILLS_*` variables.
+
 ## Runtime Quality & Observability
 
 - Observability implementation details: `docs/OBSERVABILITY.md`
@@ -248,6 +266,7 @@ The registry source of truth (contracts and canonical definitions) lives in the 
 - DAG scheduler (parallel/sequential step execution): `docs/SCHEDULER.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
 - Error taxonomy (frozen error codes for all surfaces): `docs/ERROR_TAXONOMY.md`
+- Environment variables reference: `docs/ENVIRONMENT_VARIABLES.md`
 - Adapter authentication & secret handling: `docs/ADAPTER_AUTH_POLICY.md`
 - SLO/SLI per-capability targets: `docs/SLO_SLI.md`
 - Governance transition plan: `docs/GOVERNANCE_TRANSITION.md`

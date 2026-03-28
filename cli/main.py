@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -92,7 +93,10 @@ def main() -> None:
             ),
         )
 
-    run_cmd = sub.add_parser("run", help="Execute a skill")
+    run_cmd = sub.add_parser(
+        "run",
+        help="Execute a skill by ID (use 'ask' if you don't know the skill ID)",
+    )
     run_cmd.add_argument(
         "skill_id", help="Skill identifier (e.g. text.translate-summary)"
     )
@@ -124,7 +128,11 @@ def main() -> None:
     # --- K1: ask (NL autopilot) ---
     ask_cmd = sub.add_parser(
         "ask",
-        help="Natural language autopilot — describe what you need and let the runtime find and run the right skill",
+        help=(
+            "Natural language autopilot — describe what you need and the "
+            "runtime finds and runs the right skill. Use 'run' if you "
+            "already know the skill ID, or 'discover' to search without executing."
+        ),
     )
     ask_cmd.add_argument(
         "question",
@@ -170,7 +178,13 @@ def main() -> None:
     )
     add_root_args(describe_cmd)
 
-    discover_cmd = sub.add_parser("discover", help="Discover skills for an intent")
+    discover_cmd = sub.add_parser(
+        "discover",
+        help=(
+            "Search and rank skills for an intent (read-only — does not execute). "
+            "Use 'ask' to also execute the best match, or 'run' with a known skill ID."
+        ),
+    )
     discover_cmd.add_argument("intent", help="Natural language intent used for ranking")
     discover_cmd.add_argument("--domain", default=None, help="Optional domain filter")
     discover_cmd.add_argument(
@@ -360,6 +374,12 @@ def main() -> None:
 
     doctor_cmd = sub.add_parser("doctor", help="Run system health checks")
     add_root_args(doctor_cmd)
+
+    # --- inspect-plugins ---
+    sub.add_parser(
+        "inspect-plugins",
+        help="List all discovered plugins and their load status",
+    )
 
     scaffold_cmd = sub.add_parser(
         "scaffold",
@@ -701,6 +721,11 @@ def main() -> None:
         "skill_id", help="Skill identifier to test (e.g. text.translate-summary)"
     )
     test_cmd.add_argument(
+        "--input",
+        default=None,
+        help="Inline JSON object with test inputs (alternative to --input-file).",
+    )
+    test_cmd.add_argument(
         "--input-file",
         type=Path,
         default=None,
@@ -969,7 +994,23 @@ def main() -> None:
     triggers_status.add_argument("--json", action="store_true", help="JSON output")
     add_root_args(triggers_status)
 
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        default=False,
+        help="Enable verbose/debug output for troubleshooting.",
+    )
+
     args = parser.parse_args()
+
+    # Configure logging verbosity
+    if getattr(args, "verbose", False):
+        logging.basicConfig(
+            level=logging.DEBUG, format="%(name)s %(levelname)s %(message)s"
+        )
+    else:
+        logging.basicConfig(level=logging.WARNING)
 
     # Resolve roots with defaults
     runtime_root = args.runtime_root or Path.cwd()
@@ -1120,6 +1161,25 @@ def main() -> None:
 
     elif args.command == "doctor":
         _cmd_doctor(registry_root, runtime_root, host_root)
+
+    elif args.command == "inspect-plugins":
+        from runtime.plugins import discover_all, PLUGIN_GROUPS
+        from runtime.plugin_protocols import validate_plugin
+
+        print("Plugin groups:")
+        all_plugins = discover_all()
+        total = 0
+        for group in PLUGIN_GROUPS:
+            plugins = all_plugins.get(group, {})
+            print(f"\n  {group}:")
+            if not plugins:
+                print("    (none discovered)")
+            for name, obj in plugins.items():
+                total += 1
+                violations = validate_plugin(group, name, obj)
+                status = "OK" if not violations else f"INVALID: {'; '.join(violations)}"
+                print(f"    {name} → {obj}  [{status}]")
+        print(f"\nTotal plugins loaded: {total}")
 
     elif args.command == "audit-purge":
         _cmd_audit_purge(
@@ -3850,7 +3910,7 @@ def _cmd_dev(
 
     skill_path = Path(skill.source_file)
     watch_dir = skill_path.parent
-    list(watch_dir.glob("*.yaml")) + list(watch_dir.glob("*.json"))
+    _watch_files = list(watch_dir.glob("*.yaml")) + list(watch_dir.glob("*.json"))
 
     print(f"[dev] Watching skill: {skill_id}")
     print(f"[dev] Directory: {watch_dir}")

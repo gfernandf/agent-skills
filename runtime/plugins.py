@@ -41,9 +41,15 @@ def discover_plugins(group: str) -> dict[str, Any]:
         try:
             obj = ep.load()
             plugins[ep.name] = obj
-            logger.debug("Loaded plugin %s.%s → %s", group, ep.name, obj)
+            logger.info("Loaded plugin %s.%s → %s", group, ep.name, obj)
         except Exception as exc:
-            logger.warning("Failed to load plugin %s.%s: %s", group, ep.name, exc)
+            logger.warning(
+                "Failed to load plugin %s.%s: %s. "
+                "Verify the package is installed and the entry point target is importable.",
+                group,
+                ep.name,
+                exc,
+            )
     return plugins
 
 

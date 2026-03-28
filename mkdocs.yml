@@ -53,6 +53,7 @@ nav:
       - Project Status: PROJECT_STATUS.md
   - Reference:
       - Error Taxonomy: ERROR_TAXONOMY.md
+      - Environment Variables: ENVIRONMENT_VARIABLES.md
       - Plugins: PLUGINS.md
       - MCP Integration: MCP_INTEGRATION_SLICES.md
 
