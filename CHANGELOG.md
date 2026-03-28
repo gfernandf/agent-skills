@@ -146,7 +146,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Plugin entry points**: `pyproject.toml` entry-point groups (`agent_skills.auth`,
   `agent_skills.invoker`, `agent_skills.binding_source`). Discovery utility in
   `runtime/plugins.py`.
-- **JSON Schema exports**: 15 schemas in `docs/schemas/` covering all public-facing
+- **JSON Schema exports**: 16 schemas in `docs/schemas/` covering all public-facing
   dataclasses (ExecutionState, SkillSpec, CapabilitySpec, StepResult, etc.).
   Generator: `tooling/generate_json_schemas.py`.
 - **OpenAPI spec extended**: 16 endpoints (added webhook CRUD + schemas).

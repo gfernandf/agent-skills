@@ -107,8 +107,8 @@ def execute(
 ) -> dict[str, Any]:
     """Execute a skill in-process and return its outputs.
 
-    >>> result = execute("text.summarize-plain-input", {"text": "Hello", "max_length": 20})
-    >>> print(result["summary"])
+    >>> result = execute("text.summarize-plain-input", {"input_text": "Hello world"})
+    >>> print(result["result"])
     """
     from runtime.models import ExecutionRequest
 

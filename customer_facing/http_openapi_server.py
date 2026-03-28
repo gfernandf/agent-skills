@@ -303,9 +303,9 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     return
                 if not isinstance(body, dict):
                     raise ValueError("Request body must be a JSON object")
-                from uuid import uuid4 as _uuid4
+                from uuid import uuid4 as _uuid4  # noqa: E402 — deferred to avoid circular import at module level
                 from runtime.webhook import WebhookSubscription
-                import time as _time
+                import time as _time  # noqa: E402
 
                 url = body.get("url")
                 if not isinstance(url, str) or not url:

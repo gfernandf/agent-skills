@@ -50,12 +50,29 @@ nav:
   - Governance:
       - Skill Governance Manifesto: SKILL_GOVERNANCE_MANIFESTO.md
       - Cross-Repo Pin Policy: CROSS_REPO_PIN_POLICY.md
+      - Governance Transition: GOVERNANCE_TRANSITION.md
       - Project Status: PROJECT_STATUS.md
   - Reference:
       - Error Taxonomy: ERROR_TAXONOMY.md
       - Environment Variables: ENVIRONMENT_VARIABLES.md
+      - SLO / SLI: SLO_SLI.md
       - Plugins: PLUGINS.md
       - MCP Integration: MCP_INTEGRATION_SLICES.md
+      - Skill Authoring: SKILL_AUTHORING.md
+      - Adapter Auth Policy: ADAPTER_AUTH_POLICY.md
+  - Internal:
+      - ADR: ADR.md
+      - API Versioning: API_VERSIONING_CHANGELOG.md
+      - CoALA Mapping: COALA_MAPPING.md
+      - Gateway Go/No-Go: GATEWAY_RELEASE_GO_NO_GO.md
+      - Pending Backends: PENDING_BACKENDS.md
+      - Positioning: POSITIONING.md
+      - Tutorial Custom Capability: TUTORIAL_CUSTOM_CAPABILITY.md
+      - OpenAPI Packages: OPENAPI_CONSTRUCTION_PACKAGES.md
+      - OpenAPI Phase 0: OPENAPI_PHASE0_FOUNDATION.md
+      - OpenAPI Phase 1: OPENAPI_PHASE1_SMOKE_PLAN.md
+      - OpenAPI Population: OPENAPI_POPULATION_CHECKLIST.md
+      - OpenAPI Package 6: OPENAPI_PACKAGE6_CLOSURE.md
 
 docs_dir: docs
 

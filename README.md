@@ -511,7 +511,7 @@ outputs:
 
 ## JSON Schema Validation
 
-15 schemas in `docs/schemas/` (JSON Schema 2020-12) cover capabilities, skills, bindings, services, and runtime artifacts.
+16 schemas in `docs/schemas/` (JSON Schema 2020-12) cover capabilities, skills, bindings, services, and runtime artifacts.
 
 Validation tool:
 
