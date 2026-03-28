@@ -528,6 +528,37 @@ def main() -> None:
     )
     add_root_args(serve_cmd)
 
+    # ── MCP Server ──────────────────────────────────────────────────────
+    mcp_serve_cmd = sub.add_parser(
+        "mcp-serve",
+        help="Start the MCP server (Model Context Protocol) for Claude Desktop, Cursor, VS Code Copilot",
+        epilog=(
+            "Exposes all runtime capabilities as MCP tools via JSON-RPC 2.0.\n\n"
+            "  stdio (default): for integration with Claude Desktop, Cursor, etc.\n"
+            "  sse:             for browser-based or remote MCP clients.\n\n"
+            "Claude Desktop config example:\n"
+            '  {"mcpServers": {"agent-skills": {"command": "agent-skills", "args": ["mcp-serve"]}}}'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    mcp_serve_cmd.add_argument(
+        "--sse",
+        action="store_true",
+        default=False,
+        help="Use SSE transport instead of stdio (default: stdio).",
+    )
+    mcp_serve_cmd.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Bind address for SSE transport (default: 0.0.0.0).",
+    )
+    mcp_serve_cmd.add_argument(
+        "--port",
+        type=int,
+        default=8765,
+        help="Listen port for SSE transport (default: 8765).",
+    )
+
     validate_cmd = sub.add_parser(
         "validate",
         help="Validate a skill YAML: check capability references, input mappings, and DAG integrity",
@@ -1034,6 +1065,9 @@ def main() -> None:
     elif args.command == "serve":
         _cmd_serve(args, registry_root, runtime_root, host_root)
 
+    elif args.command == "mcp-serve":
+        _cmd_mcp_serve(args)
+
     elif args.command == "validate":
         _cmd_validate(
             registry_root,
@@ -1216,6 +1250,25 @@ def _cmd_serve(args, registry_root, runtime_root, host_root):
     )
 
     run_server(api=api, gateway=gateway, config=config)
+
+
+def _cmd_mcp_serve(args):
+    """Start the MCP server (Model Context Protocol).
+
+    Delegates to ``official_mcp_servers.server.main()`` which runs the MCP
+    protocol over stdio (default) or SSE transport.
+    """
+    try:
+        from official_mcp_servers.server import main as mcp_main
+    except ImportError as exc:
+        print(
+            "Error: MCP server requires the 'mcp' package.\n"
+            "Install with: pip install 'agent-skills[mcp]'"
+        )
+        raise SystemExit(1) from exc
+
+    transport = "sse" if args.sse else "stdio"
+    mcp_main(transport=transport, host=args.host, port=args.port)
 
 
 def _cmd_scaffold(

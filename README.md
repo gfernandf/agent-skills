@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-1521_passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-1615_passed-brightgreen.svg)]()
 [![Capabilities](https://img.shields.io/badge/Capabilities-122-blueviolet.svg)]()
 [![Skills](https://img.shields.io/badge/Skills-36-blueviolet.svg)]()
 
@@ -36,6 +36,8 @@ graph TB
         CLI["CLI<br/>agent-skills run / describe / scaffold / test"]
         HTTP["HTTP API<br/>REST + SSE streaming"]
         SDK["SDKs<br/>Python · TypeScript · LangChain · CrewAI · AutoGen · SemanticKernel"]
+        MCP_SERVER["MCP Server<br/>stdio + SSE transport"]
+        LLM_NATIVE["Native LLM Adapters<br/>Anthropic · OpenAI · Gemini"]
     end
 
     subgraph "Gateway Layer"
@@ -65,6 +67,8 @@ graph TB
     CLI --> GW
     HTTP --> GW
     SDK --> HTTP
+    MCP_SERVER --> GW
+    LLM_NATIVE --> GW
     GW --> SCHED
     SCHED --> POLICY
     POLICY --> BR
@@ -172,6 +176,53 @@ agent = create_react_agent(llm, tools)
 ```
 
 Adapters are also available for **CrewAI**, **AutoGen**, and **Semantic Kernel** — see the [sdk/](sdk/) directory.
+
+### Use as MCP Server
+
+Expose all 122 capabilities as MCP tools over stdio (or SSE) — any MCP-compatible host (Claude Desktop, VS Code Copilot, etc.) can discover and call them:
+
+```bash
+# stdio transport (default — for Claude Desktop / MCP hosts)
+python -m official_mcp_servers
+
+# SSE transport (for network clients)
+python -m official_mcp_servers --sse --host 0.0.0.0 --port 8765
+
+# Or via the CLI
+agent-skills mcp-serve
+agent-skills mcp-serve --sse --port 8765
+```
+
+Requires the `mcp` extra: `pip install -e ".[mcp]"`
+
+### Native LLM Tool Definitions
+
+Generate provider-native tool arrays for Anthropic, OpenAI, and Gemini — no HTTP server, no adapters, just the format each SDK expects:
+
+```python
+from sdk.embedded import (
+    as_anthropic_tools, execute_anthropic_tool_call,
+    as_openai_tools,    execute_openai_tool_call,
+    as_gemini_tools,    execute_gemini_tool_call,
+)
+
+# ── Anthropic ──────────────────────────────────
+tools = as_anthropic_tools(["text.content.summarize"])
+response = client.messages.create(model="claude-sonnet-4-20250514", tools=tools, ...)
+result = execute_anthropic_tool_call(block.name, block.input)
+
+# ── OpenAI ─────────────────────────────────────
+tools = as_openai_tools()  # all 122 capabilities
+response = openai.chat.completions.create(model="gpt-4o", tools=tools, ...)
+result = execute_openai_tool_call(call.function.name, call.function.arguments)
+
+# ── Gemini ─────────────────────────────────────
+tools = as_gemini_tools(["data.schema.validate"])
+response = model.generate_content(contents, tools=tools)
+result = execute_gemini_tool_call(fc.name, fc.args)
+```
+
+Each `execute_*` helper maps the underscore tool name back to the dotted capability ID and returns a JSON string.
 
 ## License
 
@@ -309,7 +360,7 @@ result = execute("text.summarize", {"text": "...", "language": "en"})
 # List all available skills
 skills = list_skills()
 
-# Get LangChain-compatible tools (also: as_crewai_tools, as_autogen_tools, as_semantic_kernel_functions)
+# Get LangChain-compatible tools (also: CrewAI, AutoGen, SemanticKernel, Anthropic, OpenAI, Gemini)
 tools = as_langchain_tools(capabilities=["text.content.summarize"])
 ```
 

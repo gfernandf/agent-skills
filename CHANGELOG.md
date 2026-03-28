@@ -7,6 +7,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+#### MCP Server & Native LLM Adapters
+
+- **MCP Server** (`official_mcp_servers/server.py`): Full MCP server exposing
+  all 122 capabilities as MCP tools. Dynamic `list_tools` / `call_tool` handlers
+  using JSON Schema generated from capability contracts. Transports: stdio
+  (default) and SSE. Entry point: `python -m official_mcp_servers`. CLI:
+  `agent-skills mcp-serve`. Optional dep: `pip install -e ".[mcp]"`.
+- **Native Anthropic adapter** (`sdk/embedded.py`): `as_anthropic_tools()` returns
+  `list[dict]` with `{name, description, input_schema}` — the exact format
+  `client.messages.create(tools=...)` expects. `execute_anthropic_tool_call()`
+  maps underscore names back to dotted capability IDs and returns JSON string.
+- **Native OpenAI adapter** (`sdk/embedded.py`): `as_openai_tools()` returns
+  `list[dict]` with `{type: "function", function: {name, description, parameters}}`.
+  `execute_openai_tool_call()` accepts JSON-string arguments (as OpenAI sends them)
+  and returns JSON string.
+- **Native Gemini adapter** (`sdk/embedded.py`): `as_gemini_tools()` returns
+  `[{function_declarations: [...]}]` with UPPERCASE types (STRING, INTEGER, etc.)
+  per Gemini API spec. `execute_gemini_tool_call()` returns JSON string.
+- **Schema helpers**: `_build_json_schema()` (standard JSON Schema for Anthropic /
+  OpenAI / MCP) and `_build_gemini_schema()` (UPPERCASE types, no `$schema`) in
+  `sdk/embedded.py`. Both handle all field types including array→items and
+  object→properties.
+- **68 new tests**: `sdk/test_schema_helpers.py` (19), `test_mcp_server.py` (15),
+  `sdk/test_llm_adapters.py` (34).
+
 #### Killer features — K1 through K6
 
 - **`ask` NL autopilot** (K1): Natural-language skill dispatch — gateway discovers
