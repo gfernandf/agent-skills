@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "agent-skills.fullname" . }}
+  labels:
+    {{- include "agent-skills.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "agent-skills.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "agent-skills.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "agent-skills.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.server.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: AGENT_SKILLS_PORT
+              value: {{ .Values.server.port | quote }}
+            - name: AGENT_SKILLS_SERVER_TYPE
+              value: {{ .Values.server.type | quote }}
+            - name: AGENT_SKILLS_REGISTRY_ROOT
+              value: {{ .Values.registry.path | quote }}
+            {{- if .Values.auth.enabled }}
+            - name: AGENT_SKILLS_RBAC
+              value: "1"
+            {{- end }}
+            {{- if .Values.auth.apiKeySecretName }}
+            - name: AGENT_SKILLS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.apiKeySecretName }}
+                  key: {{ .Values.auth.apiKeySecretKey }}
+            {{- end }}
+            {{- if .Values.auth.jwt.enabled }}
+            - name: AGENT_SKILLS_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.jwt.secretName }}
+                  key: {{ .Values.auth.jwt.secretKey }}
+            {{- if .Values.auth.jwt.issuer }}
+            - name: AGENT_SKILLS_JWT_ISSUER
+              value: {{ .Values.auth.jwt.issuer | quote }}
+            {{- end }}
+            {{- if .Values.auth.jwt.audience }}
+            - name: AGENT_SKILLS_JWT_AUDIENCE
+              value: {{ .Values.auth.jwt.audience | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if eq .Values.storage.backend "postgresql" }}
+            - name: AGENT_SKILLS_STORAGE_BACKEND
+              value: "postgresql"
+            {{- if .Values.storage.postgresql.dsnSecretName }}
+            - name: AGENT_SKILLS_PG_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.storage.postgresql.dsnSecretName }}
+                  key: {{ .Values.storage.postgresql.dsnSecretKey }}
+            {{- else }}
+            - name: AGENT_SKILLS_PG_DSN
+              value: {{ .Values.storage.postgresql.dsn | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if eq .Values.storage.backend "redis" }}
+            - name: AGENT_SKILLS_STORAGE_BACKEND
+              value: "redis"
+            {{- if .Values.storage.redis.dsnSecretName }}
+            - name: AGENT_SKILLS_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.storage.redis.dsnSecretName }}
+                  key: {{ .Values.storage.redis.dsnSecretKey }}
+            {{- else }}
+            - name: AGENT_SKILLS_REDIS_URL
+              value: {{ .Values.storage.redis.url | quote }}
+            {{- end }}
+            {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.registry.existingClaim }}
+            - name: registry
+              mountPath: {{ .Values.registry.path }}
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.registry.existingClaim }}
+        - name: registry
+          persistentVolumeClaim:
+            claimName: {{ .Values.registry.existingClaim }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -2,27 +2,24 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "agent-skills://schemas/FieldSpec",
   "title": "FieldSpec",
-  "description": "Declarative description of an input or output field.",
+  "description": "Declarative description of an input/output field.",
   "type": "object",
   "required": [
     "type"
   ],
   "properties": {
     "type": {
-      "type": "string",
-      "enum": ["string", "integer", "number", "boolean", "array", "object"],
-      "description": "Field data type."
+      "type": "string"
     },
     "required": {
-      "type": "boolean",
-      "description": "Whether this field is required (default: false)."
+      "type": "boolean"
     },
     "description": {
-      "type": ["string", "null"],
-      "description": "Human-readable field description."
+      "type": [
+        "string",
+        "null"
+      ]
     },
-    "default": {
-      "description": "Default value when not provided."
-    }
+    "default": {}
   }
 }

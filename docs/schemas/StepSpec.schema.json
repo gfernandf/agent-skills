@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "agent-skills://schemas/StepSpec",
   "title": "StepSpec",
-  "description": "A single execution step inside a skill. Each step invokes a capability or nested skill and wires dataflow via input/output mappings.",
+  "description": "Declarative execution step inside a skill.",
   "type": "object",
   "required": [
     "id",
@@ -10,53 +10,22 @@
   ],
   "properties": {
     "id": {
-      "type": "string",
-      "description": "Unique step identifier within the skill (snake_case recommended)."
+      "type": "string"
     },
     "uses": {
-      "type": "string",
-      "description": "Capability ID to invoke (e.g. text.content.summarize) or 'skill:<skill_id>' for nested skill."
-    },
-    "input": {
-      "type": "object",
-      "description": "Input mapping: capability_field → source. Sources: inputs.X (skill input), vars.X (previous step output)."
-    },
-    "output": {
-      "type": "object",
-      "description": "Output mapping: capability_field → target. Targets: vars.X (intermediate), outputs.X (skill output)."
+      "type": "string"
     },
     "input_mapping": {
-      "type": "object",
-      "description": "Alternative input mapping key (normalized at runtime)."
+      "type": "object"
     },
     "output_mapping": {
       "type": "object",
-      "description": "Alternative output mapping key (normalized at runtime).",
       "additionalProperties": {
         "type": "string"
       }
     },
     "config": {
-      "type": "object",
-      "description": "Step-level configuration (depends_on, retry, condition, etc.).",
-      "properties": {
-        "depends_on": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Explicit DAG dependencies. Omit for sequential, use [] for parallel root."
-        },
-        "retry": {
-          "type": "object",
-          "properties": {
-            "max_retries": { "type": "integer", "description": "Max retry attempts." },
-            "backoff_ms": { "type": "integer", "description": "Backoff between retries in ms." }
-          }
-        },
-        "condition": {
-          "type": "string",
-          "description": "Expression that must evaluate truthy for step to execute."
-        }
-      }
+      "type": "object"
     }
   }
 }

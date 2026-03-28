@@ -333,3 +333,56 @@ class AuthMiddleware:
             return False
         required = required_role_for(method, path)
         return identity.has_role(required)
+
+    def authorize_skill(
+        self,
+        identity: Identity | None,
+        skill_id: str,
+    ) -> bool:
+        """Check per-skill permission scoping.
+
+        If the identity carries an ``allowed_skills`` list in its metadata,
+        only those skill IDs (or glob patterns) are permitted.  An empty or
+        missing list means *all skills are allowed* (default open).
+
+        Glob rules:
+        - ``"*"`` matches everything (same as no restriction).
+        - ``"text.*"`` matches any skill whose ID starts with ``text.``.
+        - Exact match otherwise.
+        """
+        if identity is None:
+            return False
+        allowed: list[str] | None = identity.metadata.get("allowed_skills")
+        if not allowed:
+            return True  # no restriction
+        for pattern in allowed:
+            if pattern == "*":
+                return True
+            if pattern.endswith("*") and skill_id.startswith(pattern[:-1]):
+                return True
+            if skill_id == pattern:
+                return True
+        return False
+
+
+# ── Multi-tenancy ────────────────────────────────────────────────
+
+
+def extract_tenant(identity: Identity | None) -> str | None:
+    """Extract the tenant identifier from an authenticated identity.
+
+    Tenants are isolated via a ``tenant`` claim in the JWT payload (or
+    ``tenant`` key in the identity metadata).  Returns ``None`` when no
+    tenant claim is present (single-tenant mode).
+
+    Usage::
+
+        tenant = extract_tenant(identity)
+        if tenant:
+            # scope data access to this tenant
+            ...
+    """
+    if identity is None:
+        return None
+    jwt_claims = identity.metadata.get("jwt_claims", {})
+    return jwt_claims.get("tenant") or identity.metadata.get("tenant")

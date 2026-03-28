@@ -245,6 +245,11 @@ The registry source of truth (contracts and canonical definitions) lives in the 
 - CognitiveState v1 cognitive execution model: `docs/COGNITIVE_STATE_V1.md`
 - DAG scheduler (parallel/sequential step execution): `docs/SCHEDULER.md`
 - Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
+- Error taxonomy (frozen error codes for all surfaces): `docs/ERROR_TAXONOMY.md`
+- Adapter authentication & secret handling: `docs/ADAPTER_AUTH_POLICY.md`
+- SLO/SLI per-capability targets: `docs/SLO_SLI.md`
+- Governance transition plan: `docs/GOVERNANCE_TRANSITION.md`
+- JSON Schema reference (16 schemas): `docs/JSON_SCHEMAS.md`
 
 ## Authentication & RBAC
 

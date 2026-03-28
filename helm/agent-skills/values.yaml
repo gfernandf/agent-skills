@@ -1,0 +1,125 @@
+# Default values for agent-skills Helm chart.
+
+replicaCount: 1
+
+image:
+  repository: agent-skills
+  pullPolicy: IfNotPresent
+  tag: ""  # defaults to Chart.appVersion
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# ── Server configuration ─────────────────────────────────────────
+server:
+  # "stdlib" or "asgi"
+  type: stdlib
+  port: 8080
+  workers: 4
+
+# ── Auth configuration ───────────────────────────────────────────
+auth:
+  # Set to true to enable RBAC enforcement
+  enabled: false
+  # API key for basic auth (create a Secret and reference it)
+  apiKeySecretName: ""
+  apiKeySecretKey: "api-key"
+  # JWT configuration
+  jwt:
+    enabled: false
+    secretName: ""
+    secretKey: "jwt-secret"
+    issuer: ""
+    audience: ""
+
+# ── Storage backend ──────────────────────────────────────────────
+storage:
+  # "memory", "postgresql", or "redis"
+  backend: memory
+  postgresql:
+    dsn: ""
+    # Or reference a Secret
+    dsnSecretName: ""
+    dsnSecretKey: "dsn"
+  redis:
+    url: ""
+    dsnSecretName: ""
+    dsnSecretKey: "url"
+
+# ── Registry ─────────────────────────────────────────────────────
+registry:
+  # Path inside the container where agent-skill-registry is mounted
+  path: /app/agent-skill-registry
+  # If using a PVC or ConfigMap for the registry
+  existingClaim: ""
+
+# ── Service ──────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 8080
+
+# ── Ingress ──────────────────────────────────────────────────────
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: agent-skills.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# ── Resources ────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+# ── Probes ───────────────────────────────────────────────────────
+livenessProbe:
+  httpGet:
+    path: /v1/health/live
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /v1/health/ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+# ── Autoscaling ──────────────────────────────────────────────────
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+# ── Pod configuration ────────────────────────────────────────────
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podAnnotations: {}
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL

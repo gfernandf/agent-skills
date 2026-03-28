@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "agent-skills://schemas/SkillSpec",
   "title": "SkillSpec",
-  "description": "Declarative skill definition for the agent-skills framework. A skill composes one or more capabilities into a multi-step workflow with explicit dataflow.",
+  "description": "Runtime-normalized skill definition.",
   "type": "object",
   "required": [
     "id",
@@ -15,111 +15,49 @@
   ],
   "properties": {
     "id": {
-      "type": "string",
-      "description": "Unique skill identifier in domain.slug format (e.g. text.translate-summary).",
-      "pattern": "^[a-z][a-z0-9]*\\.[a-z][a-z0-9-]*$"
+      "type": "string"
     },
     "version": {
-      "type": "string",
-      "description": "Semver version string (e.g. 0.1.0).",
-      "pattern": "^\\d+\\.\\d+\\.\\d+"
+      "type": "string"
     },
     "name": {
-      "type": "string",
-      "description": "Human-readable skill name."
+      "type": "string"
     },
     "description": {
-      "type": "string",
-      "description": "One or two sentence description of what the skill does."
+      "type": "string"
     },
     "inputs": {
       "type": "object",
-      "description": "Skill input fields. Each key is a snake_case field name.",
       "additionalProperties": {
         "$ref": "FieldSpec.schema.json"
       }
     },
     "outputs": {
       "type": "object",
-      "description": "Skill output fields. Each key is a snake_case field name.",
       "additionalProperties": {
         "$ref": "FieldSpec.schema.json"
       }
     },
     "steps": {
       "type": "array",
-      "description": "Ordered list of execution steps. Each step invokes a capability or nested skill.",
-      "minItems": 1,
       "items": {
         "$ref": "StepSpec.schema.json"
       }
     },
     "metadata": {
-      "type": "object",
-      "description": "Metadata block for governance, discoverability, and lifecycle.",
-      "properties": {
-        "channel": {
-          "type": "string",
-          "enum": ["local", "experimental", "community", "official"],
-          "description": "Skill distribution channel."
-        },
-        "status": {
-          "type": "string",
-          "enum": ["draft", "experimental", "stable", "deprecated"],
-          "description": "Maturity status."
-        },
-        "classification": {
-          "type": "object",
-          "properties": {
-            "role": {
-              "type": "string",
-              "enum": ["procedure", "utility", "sidecar"],
-              "description": "Skill architectural role."
-            },
-            "invocation": {
-              "type": "string",
-              "enum": ["direct", "attach", "both"],
-              "description": "How the skill is invoked."
-            },
-            "effect_mode": {
-              "type": "string",
-              "enum": ["enrich", "transform", "generate", "validate", "route"],
-              "description": "Primary effect the skill produces."
-            }
-          }
-        },
-        "tags": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Discovery tags."
-        },
-        "use_cases": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Example use case descriptions."
-        },
-        "examples": {
-          "type": "array",
-          "description": "Worked examples with inputs and expected outputs.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "description": { "type": "string" },
-              "input": { "type": "object" },
-              "expected_output": { "type": "object" }
-            }
-          }
-        }
-      }
+      "type": "object"
     },
     "channel": {
-      "type": ["string", "null"],
-      "enum": ["local", "experimental", "community", "official", null],
-      "description": "Shorthand channel (prefer metadata.channel)."
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "domain": {
-      "type": ["string", "null"],
-      "description": "Domain prefix extracted from id."
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }

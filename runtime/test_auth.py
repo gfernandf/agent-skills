@@ -235,3 +235,98 @@ class TestJWTVerifier:
         assert identity is not None
         assert identity.subject == "alice"
         assert identity.role == "operator"
+
+
+class TestPerSkillPermissions:
+    def test_no_restriction_allows_all(self):
+        mw = AuthMiddleware()
+        user = Identity(subject="u1", role="executor")
+        assert mw.authorize_skill(user, "text.content.summarize")
+
+    def test_exact_match(self):
+        mw = AuthMiddleware()
+        user = Identity(
+            subject="u1",
+            role="executor",
+            metadata={"allowed_skills": ["text.content.summarize"]},
+        )
+        assert mw.authorize_skill(user, "text.content.summarize")
+        assert not mw.authorize_skill(user, "data.json.parse")
+
+    def test_glob_pattern(self):
+        mw = AuthMiddleware()
+        user = Identity(
+            subject="u1",
+            role="executor",
+            metadata={"allowed_skills": ["text.*"]},
+        )
+        assert mw.authorize_skill(user, "text.content.summarize")
+        assert mw.authorize_skill(user, "text.entity.extract")
+        assert not mw.authorize_skill(user, "data.json.parse")
+
+    def test_wildcard_allows_all(self):
+        mw = AuthMiddleware()
+        user = Identity(
+            subject="u1",
+            role="executor",
+            metadata={"allowed_skills": ["*"]},
+        )
+        assert mw.authorize_skill(user, "anything.at.all")
+
+    def test_none_identity_denied(self):
+        mw = AuthMiddleware()
+        assert not mw.authorize_skill(None, "text.content.summarize")
+
+    def test_multiple_patterns(self):
+        mw = AuthMiddleware()
+        user = Identity(
+            subject="u1",
+            role="executor",
+            metadata={"allowed_skills": ["text.*", "data.json.parse"]},
+        )
+        assert mw.authorize_skill(user, "text.content.summarize")
+        assert mw.authorize_skill(user, "data.json.parse")
+        assert not mw.authorize_skill(user, "data.schema.validate")
+
+
+class TestMultiTenancy:
+    def test_extract_tenant_from_jwt_claims(self):
+        from runtime.auth import extract_tenant
+
+        identity = Identity(
+            subject="u1",
+            role="executor",
+            metadata={"jwt_claims": {"tenant": "acme-corp"}},
+        )
+        assert extract_tenant(identity) == "acme-corp"
+
+    def test_extract_tenant_from_metadata(self):
+        from runtime.auth import extract_tenant
+
+        identity = Identity(
+            subject="u1", role="executor", metadata={"tenant": "beta-org"}
+        )
+        assert extract_tenant(identity) == "beta-org"
+
+    def test_no_tenant_returns_none(self):
+        from runtime.auth import extract_tenant
+
+        identity = Identity(subject="u1", role="executor")
+        assert extract_tenant(identity) is None
+
+    def test_none_identity_returns_none(self):
+        from runtime.auth import extract_tenant
+
+        assert extract_tenant(None) is None
+
+    def test_jwt_tenant_claim_in_verifier(self):
+        from runtime.auth import extract_tenant
+
+        secret = "test-secret-256"
+        verifier = JWTVerifier(secret)
+        token = _make_jwt(
+            {"sub": "alice", "role": "executor", "tenant": "acme-corp"}, secret
+        )
+        identity = verifier(token)
+        assert identity is not None
+        assert extract_tenant(identity) == "acme-corp"

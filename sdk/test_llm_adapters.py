@@ -141,6 +141,7 @@ class TestAnthropicAdapter:
         parsed = json.loads(result)
         assert "error" in parsed
         assert "Binding failed" in parsed["error"]
+        assert "code" in parsed
 
     @patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES)
     def test_tools_are_json_serializable(self, _mock):
@@ -240,6 +241,7 @@ class TestOpenAIAdapter:
         result = execute_openai_tool_call("text_content_summarize", '{"text": "Hi"}')
         parsed = json.loads(result)
         assert "error" in parsed
+        assert "code" in parsed
 
     def test_execute_tool_call_invalid_json(self):
         from sdk.embedded import execute_openai_tool_call
@@ -248,6 +250,7 @@ class TestOpenAIAdapter:
         parsed = json.loads(result)
         assert "error" in parsed
         assert "Invalid JSON" in parsed["error"]
+        assert parsed["code"] == "invalid_request"
 
     @patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES)
     def test_tools_are_json_serializable(self, _mock):
@@ -353,6 +356,7 @@ class TestGeminiAdapter:
         result = execute_gemini_tool_call("text_content_summarize", {"text": "Hi"})
         parsed = json.loads(result)
         assert "error" in parsed
+        assert "code" in parsed
 
     @patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES)
     def test_tools_are_json_serializable(self, _mock):

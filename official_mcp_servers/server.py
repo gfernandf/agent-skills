@@ -156,12 +156,14 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
         result = execute_capability(name, safe_args)
     except Exception as exc:
         logger.error("Tool '%s' execution failed: %s", name, exc)
+        code = _classify_error(exc)
         return [
             TextContent(
                 type="text",
                 text=json.dumps(
                     {
                         "error": str(exc),
+                        "code": code,
                         "tool": name,
                     }
                 ),
@@ -169,6 +171,20 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
         ]
 
     return [TextContent(type="text", text=json.dumps(result, default=str))]
+
+
+def _classify_error(exc: Exception) -> str:
+    """Map an exception to an error taxonomy code.
+
+    Uses the canonical mapping from ``runtime.openapi_error_contract``
+    when available, falls back to ``internal_error``.
+    """
+    try:
+        from runtime.openapi_error_contract import map_runtime_error_to_http
+
+        return map_runtime_error_to_http(exc).code
+    except Exception:
+        return "internal_error"
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/HttpErrorContract",
+  "title": "HttpErrorContract",
+  "description": "Canonical error response returned by all surfaces (HTTP, MCP, LLM adapters).",
+  "type": "object",
+  "required": [
+    "code",
+    "http_status",
+    "message"
+  ],
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Stable machine-readable error code.",
+      "enum": [
+        "capability_not_found",
+        "invalid_request",
+        "validation_error",
+        "binding_not_found",
+        "binding_execution_error",
+        "step_execution_error",
+        "step_timeout",
+        "wiring_error",
+        "dag_cycle",
+        "depth_limit",
+        "conformance_error",
+        "safety_blocked",
+        "auth_required",
+        "permission_denied",
+        "rate_limited",
+        "internal_error"
+      ]
+    },
+    "http_status": {
+      "type": "integer",
+      "description": "HTTP status code (used even in non-HTTP surfaces for classification)."
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error description (sanitized, no secrets)."
+    },
+    "remediation": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Suggested fix for the caller."
+    }
+  }
+}

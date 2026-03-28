@@ -1,0 +1,205 @@
+// agent-skills gRPC service definitions.
+//
+// These proto files define the gRPC surface for the agent-skills runtime.
+// Generate stubs with:
+//
+//   python -m grpc_tools.protoc -I proto/ --python_out=. --grpc_python_out=. proto/agent_skills.proto
+//
+// Or with buf:
+//
+//   buf generate proto/
+
+syntax = "proto3";
+
+package agent_skills.v1;
+
+option go_package = "github.com/gfernandf/agent-skills/proto/v1";
+
+// ── Common types ────────────────────────────────────────────────
+
+message FieldSpec {
+  string type = 1;
+  bool required = 2;
+  string description = 3;
+}
+
+message Struct {
+  map<string, string> fields = 1;
+}
+
+message ErrorDetail {
+  string code = 1;
+  string message = 2;
+  string type = 3;
+  int32 status = 4;
+}
+
+// ── Skill types ─────────────────────────────────────────────────
+
+message SkillSummary {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string domain = 4;
+  string channel = 5;
+}
+
+message SkillDescription {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string version = 4;
+  map<string, FieldSpec> inputs = 5;
+  map<string, FieldSpec> outputs = 6;
+  repeated StepSpec steps = 7;
+}
+
+message StepSpec {
+  string id = 1;
+  string uses = 2;
+  map<string, string> input_mapping = 3;
+  map<string, string> output_mapping = 4;
+}
+
+// ── Execution types ─────────────────────────────────────────────
+
+message ExecuteRequest {
+  string skill_id = 1;
+  map<string, string> inputs = 2;  // JSON-encoded values
+  string trace_id = 3;
+  bool include_trace = 4;
+  string required_conformance_profile = 5;
+  string audit_mode = 6;
+}
+
+message ExecuteResponse {
+  string skill_id = 1;
+  string status = 2;
+  map<string, string> outputs = 3;  // JSON-encoded values
+  string trace_id = 4;
+  repeated StepResult step_results = 5;
+  ErrorDetail error = 6;
+}
+
+message StepResult {
+  string step_id = 1;
+  string uses = 2;
+  string status = 3;
+  string binding_id = 4;
+  int64 latency_ms = 5;
+  string error_message = 6;
+}
+
+// ── Streaming types ─────────────────────────────────────────────
+
+message StreamEvent {
+  string event_type = 1;  // step_start, step_completed, done, error
+  string step_id = 2;
+  string message = 3;
+  string data_json = 4;   // JSON-encoded event payload
+  double timestamp = 5;
+}
+
+// ── Run types (async execution) ─────────────────────────────────
+
+message RunStatus {
+  string run_id = 1;
+  string skill_id = 2;
+  string status = 3;     // running, completed, failed
+  string created_at = 4;
+  string finished_at = 5;
+  string result_json = 6;
+  string error = 7;
+}
+
+// ── Discovery types ─────────────────────────────────────────────
+
+message DiscoverRequest {
+  string intent = 1;
+  string domain = 2;
+  string role = 3;
+  int32 limit = 4;
+}
+
+message DiscoverResponse {
+  string intent = 1;
+  repeated SkillSummary results = 2;
+}
+
+// ── Capability types ────────────────────────────────────────────
+
+message ExecuteCapabilityRequest {
+  string capability_id = 1;
+  map<string, string> inputs = 2;
+  string trace_id = 3;
+}
+
+message ExecuteCapabilityResponse {
+  map<string, string> outputs = 1;
+  ErrorDetail error = 2;
+}
+
+// ── Health ──────────────────────────────────────────────────────
+
+message HealthRequest {
+  bool deep = 1;
+}
+
+message HealthResponse {
+  string status = 1;
+  map<string, string> checks = 2;
+}
+
+// ── List types ──────────────────────────────────────────────────
+
+message ListSkillsRequest {
+  string domain = 1;
+  string role = 2;
+  string status = 3;
+  int32 offset = 4;
+  int32 limit = 5;
+}
+
+message ListSkillsResponse {
+  repeated SkillSummary skills = 1;
+  int32 total = 2;
+  bool has_more = 3;
+}
+
+message GetRunRequest {
+  string run_id = 1;
+}
+
+message ListRunsRequest {
+  int32 limit = 1;
+}
+
+message ListRunsResponse {
+  repeated RunStatus runs = 1;
+}
+
+message DescribeSkillRequest {
+  string skill_id = 1;
+}
+
+// ── Service definitions ─────────────────────────────────────────
+
+service AgentSkillsService {
+  // Health
+  rpc Health(HealthRequest) returns (HealthResponse);
+
+  // Skills
+  rpc ListSkills(ListSkillsRequest) returns (ListSkillsResponse);
+  rpc DescribeSkill(DescribeSkillRequest) returns (SkillDescription);
+  rpc ExecuteSkill(ExecuteRequest) returns (ExecuteResponse);
+  rpc ExecuteSkillStream(ExecuteRequest) returns (stream StreamEvent);
+  rpc DiscoverSkills(DiscoverRequest) returns (DiscoverResponse);
+
+  // Capabilities
+  rpc ExecuteCapability(ExecuteCapabilityRequest) returns (ExecuteCapabilityResponse);
+
+  // Async runs
+  rpc ExecuteSkillAsync(ExecuteRequest) returns (RunStatus);
+  rpc GetRun(GetRunRequest) returns (RunStatus);
+  rpc ListRuns(ListRunsRequest) returns (ListRunsResponse);
+}

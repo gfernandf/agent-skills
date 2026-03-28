@@ -190,6 +190,7 @@ class TestCallTool:
         parsed = json.loads(result[0].text)
         assert "error" in parsed
         assert "Binding not found" in parsed["error"]
+        assert "code" in parsed
 
     @pytest.mark.asyncio
     async def test_none_arguments_treated_as_empty(self):

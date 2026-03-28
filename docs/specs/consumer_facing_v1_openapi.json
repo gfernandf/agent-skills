@@ -989,6 +989,57 @@
             "type": "boolean"
           }
         }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Canonical error response (see docs/ERROR_TAXONOMY.md).",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message", "type", "status"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Stable machine-readable error code.",
+                "enum": [
+                  "capability_not_found",
+                  "invalid_request",
+                  "validation_error",
+                  "binding_not_found",
+                  "binding_execution_error",
+                  "step_execution_error",
+                  "step_timeout",
+                  "wiring_error",
+                  "dag_cycle",
+                  "depth_limit",
+                  "conformance_error",
+                  "safety_blocked",
+                  "auth_required",
+                  "permission_denied",
+                  "rate_limited",
+                  "internal_error"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error description."
+              },
+              "type": {
+                "type": "string",
+                "description": "Exception class name."
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code."
+              }
+            }
+          },
+          "trace_id": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       }
     }
   }

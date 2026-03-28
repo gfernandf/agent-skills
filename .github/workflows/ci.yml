@@ -123,7 +123,7 @@ jobs:
       - name: JSON schema validation
         run: |
           pip install jsonschema
-          python tooling/validate_json_schemas.py || true
+          python tooling/validate_json_schemas.py
 
       - name: Upload security artifacts
         if: always()

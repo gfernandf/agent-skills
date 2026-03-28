@@ -30,6 +30,7 @@ All schemas are in `docs/schemas/` and follow the
 | `TraceStep.schema.json` | Individual trace step |
 | `TraceMetrics.schema.json` | Aggregate execution metrics |
 | `WebhookSubscription.schema.json` | Webhook subscription model |
+| `HttpErrorContract.schema.json` | Canonical error response (all surfaces) |
 
 ## Validating skill files
 

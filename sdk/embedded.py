@@ -453,7 +453,7 @@ def execute_anthropic_tool_call(
         result = execute_capability(cap_id, tool_input)
         return json.dumps(result, default=str)
     except Exception as exc:
-        return json.dumps({"error": str(exc)})
+        return json.dumps({"error": str(exc), "code": _classify_error(exc)})
 
 
 def as_openai_tools(
@@ -554,13 +554,15 @@ def execute_openai_tool_call(
             else function_args_json
         )
     except json.JSONDecodeError as exc:
-        return json.dumps({"error": f"Invalid JSON arguments: {exc}"})
+        return json.dumps(
+            {"error": f"Invalid JSON arguments: {exc}", "code": "invalid_request"}
+        )
 
     try:
         result = execute_capability(cap_id, args)
         return json.dumps(result, default=str)
     except Exception as exc:
-        return json.dumps({"error": str(exc)})
+        return json.dumps({"error": str(exc), "code": _classify_error(exc)})
 
 
 def as_gemini_tools(
@@ -653,7 +655,21 @@ def execute_gemini_tool_call(
         result = execute_capability(cap_id, function_args)
         return json.dumps(result, default=str)
     except Exception as exc:
-        return json.dumps({"error": str(exc)})
+        return json.dumps({"error": str(exc), "code": _classify_error(exc)})
+
+
+def _classify_error(exc: Exception) -> str:
+    """Map an exception to an error taxonomy code.
+
+    Uses the canonical mapping from ``runtime.openapi_error_contract``
+    when available, falls back to ``internal_error``.
+    """
+    try:
+        from runtime.openapi_error_contract import map_runtime_error_to_http
+
+        return map_runtime_error_to_http(exc).code
+    except Exception:
+        return "internal_error"
 
 
 # ---------------------------------------------------------------------------

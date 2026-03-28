@@ -1,0 +1,15 @@
+apiVersion: v2
+name: agent-skills
+description: Helm chart for the agent-skills runtime
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - agent
+  - skills
+  - ai
+  - mcp
+  - llm
+maintainers:
+  - name: Guillermo Fernandez Alvarez
+    email: gfernandf+as@gmail.com
