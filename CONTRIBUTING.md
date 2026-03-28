@@ -93,6 +93,8 @@ agent-skill-registry/          ← Companion repo: canonical definitions
 ## Coding Standards
 
 - **Python ≥ 3.11** — use type hints on public APIs.
+- **Linting & formatting**: [ruff](https://docs.astral.sh/ruff/) — run `make lint` and `make format` (or `python -m ruff check .` / `python -m ruff format .`).
+- **Pre-commit hooks**: `pip install pre-commit && pre-commit install` — runs ruff + schema validation on every commit.
 - **No `eval()` / `exec()`** — safety-critical codebase.
 - **Test pattern**: `runtime/test_*.py` using `_test(label, condition)` + `main()`.
 - **Structured logging**: use `log_event()` from `runtime.observability`.

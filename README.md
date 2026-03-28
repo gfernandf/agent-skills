@@ -1,8 +1,9 @@
 # Agent Skills Runtime
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-1615_passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-1694_passed-brightgreen.svg)]()
 [![Capabilities](https://img.shields.io/badge/Capabilities-122-blueviolet.svg)]()
 [![Skills](https://img.shields.io/badge/Skills-36-blueviolet.svg)]()
 
@@ -241,6 +242,23 @@ Each `execute_*` helper maps the underscore tool name back to the dotted capabil
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
+
+## Citing
+
+If you use Agent Skills in your research, please cite:
+
+```bibtex
+@software{fernandez_agent_skills_2026,
+  author       = {Fernandez Alvarez, Guillermo},
+  title        = {Agent Skills Runtime},
+  year         = {2026},
+  url          = {https://github.com/gfernandf/agent-skills},
+  version      = {0.1.0},
+  license      = {Apache-2.0}
+}
+```
+
+GitHub also provides a "Cite this repository" button powered by [`CITATION.cff`](CITATION.cff).
 
 ---
 
