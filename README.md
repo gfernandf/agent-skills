@@ -99,9 +99,14 @@ graph TB
 
 ## Quick Start
 
+> **Prerequisite:** agent-skills requires its companion registry repo cloned alongside it.
+
 ```bash
-# Clone & install
+# Clone both repos side by side
 git clone https://github.com/gfernandf/agent-skills.git
+git clone https://github.com/gfernandf/agent-skill-registry.git
+
+# Install
 cd agent-skills
 pip install -e ".[all]"
 
@@ -164,13 +169,10 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md) for full setup instructions, op
 ### Use with LangChain / LangGraph
 
 ```python
-from sdk.langchain_adapter import build_langchain_tools
+from sdk.embedded import as_langchain_tools
 
-# Start the server first: agent-skills serve
-tools = build_langchain_tools(
-    base_url="http://localhost:8080",
-    capabilities=["text.content.summarize", "text.content.translate"],
-)
+# No server needed — runs in-process
+tools = as_langchain_tools(["text.content.summarize", "text.content.translate"])
 # Pass tools to any LangChain AgentExecutor or LangGraph node
 agent = create_react_agent(llm, tools)
 ```

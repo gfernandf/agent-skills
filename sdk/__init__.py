@@ -1,11 +1,36 @@
-"""Agent Skills SDK adapters.
+"""Agent Skills SDK — in-process execution and LLM-framework adapters.
 
-Provides framework-specific tool adapters for the agent-skills runtime.
+Recommended imports::
 
-Usage::
+    # Direct execution (no server needed)
+    from sdk.embedded import execute, execute_capability
+    from sdk.embedded import list_capabilities, list_skills
 
-    from sdk.langchain_adapter import build_langchain_tools
-    from sdk.crewai_adapter import build_crewai_tools
-    from sdk.semantic_kernel_adapter import build_semantic_kernel_functions
-    from sdk.autogen_adapter import build_autogen_tools
+    # Native LLM provider tools
+    from sdk.embedded import as_anthropic_tools, execute_anthropic_tool_call
+    from sdk.embedded import as_openai_tools,    execute_openai_tool_call
+    from sdk.embedded import as_gemini_tools,    execute_gemini_tool_call
+
+    # Framework adapters
+    from sdk.embedded import as_langchain_tools, as_crewai_tools
+    from sdk.embedded import as_autogen_tools, as_semantic_kernel_functions
 """
+
+# Re-export public API so users can write:
+#   from sdk import execute, as_openai_tools, ...
+from sdk.embedded import (  # noqa: F401
+    as_anthropic_tools,
+    as_autogen_tools,
+    as_crewai_tools,
+    as_gemini_tools,
+    as_langchain_tools,
+    as_openai_tools,
+    as_semantic_kernel_functions,
+    execute,
+    execute_anthropic_tool_call,
+    execute_capability,
+    execute_gemini_tool_call,
+    execute_openai_tool_call,
+    list_capabilities,
+    list_skills,
+)

@@ -6,21 +6,21 @@ plus a generic ``execute()`` function for direct use.
 
 Quick start::
 
-    from sdk.embedded import execute
+    from sdk import execute
 
     result = execute("text.summarize-plain-input", {"text": "Hello world.", "max_length": 20})
     print(result["summary"])
 
 Framework integration (no server required)::
 
-    from sdk.embedded import as_langchain_tools
+    from sdk import as_langchain_tools
 
     tools = as_langchain_tools(["text.content.summarize", "data.json.parse"])
     # Pass tools to any LangChain AgentExecutor or LangGraph node
 
 Native LLM provider integration::
 
-    from sdk.embedded import as_anthropic_tools, execute_anthropic_tool_call
+    from sdk import as_anthropic_tools, execute_anthropic_tool_call
 
     tools = as_anthropic_tools()  # ready for client.messages.create(tools=tools)
     # After receiving a tool_use block from Claude:
@@ -62,6 +62,13 @@ def _get_components():
             "AGENT_SKILLS_REGISTRY_ROOT", project_root.parent / "agent-skill-registry"
         )
     )
+    if not registry_root.exists():
+        raise RuntimeError(
+            f"agent-skill-registry not found at {registry_root}. "
+            "Clone it alongside agent-skills:\n"
+            "  git clone https://github.com/gfernandf/agent-skill-registry.git\n"
+            "Or set AGENT_SKILLS_REGISTRY_ROOT to the correct path."
+        )
     runtime_root = Path(os.environ.get("AGENT_SKILLS_RUNTIME_ROOT", project_root))
     host_root = Path(os.environ.get("AGENT_SKILLS_HOST_ROOT", project_root))
 
@@ -109,10 +116,18 @@ def execute(
     req = ExecutionRequest(
         skill_id=skill_id, inputs=inputs, trace_id=trace_id, channel=channel
     )
-    result = engine.execute(req)
+    try:
+        result = engine.execute(req)
+    except Exception as exc:
+        code = _classify_error(exc)
+        raise RuntimeError(
+            f"Skill '{skill_id}' execution failed [{code}]: {exc}"
+        ) from exc
     if result.status != "completed":
-        error = getattr(result, "error", None) or result.status
-        raise RuntimeError(f"Skill {skill_id} failed: {error}")
+        msg = getattr(result, "error_message", None) or result.status
+        raise RuntimeError(
+            f"Skill '{skill_id}' finished with status '{result.status}': {msg}"
+        )
     return dict(result.outputs) if result.outputs else {}
 
 

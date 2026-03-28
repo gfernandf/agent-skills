@@ -52,7 +52,7 @@ nav:
       - Cross-Repo Pin Policy: CROSS_REPO_PIN_POLICY.md
       - Project Status: PROJECT_STATUS.md
   - Reference:
-      - Error Catalog: ERROR_CATALOG.md
+      - Error Taxonomy: ERROR_TAXONOMY.md
       - Plugins: PLUGINS.md
       - MCP Integration: MCP_INTEGRATION_SLICES.md
 
