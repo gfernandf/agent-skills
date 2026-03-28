@@ -6,7 +6,12 @@ import tempfile
 import unittest
 from datetime import datetime, timezone
 
-from runtime.checkpoint import dict_to_state, load_checkpoint, save_checkpoint, state_to_dict
+from runtime.checkpoint import (
+    dict_to_state,
+    load_checkpoint,
+    save_checkpoint,
+    state_to_dict,
+)
 from runtime.models import (
     ExecutionState,
     FrameState,

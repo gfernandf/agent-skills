@@ -20,10 +20,8 @@ Requires: ``fastapi``, ``uvicorn`` (add to ``[project.optional-dependencies]``).
 
 from __future__ import annotations
 
-import json
 import logging
 import os
-import time
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -61,7 +59,7 @@ def create_app(
 
     from fastapi import FastAPI, HTTPException, Request
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
+    from fastapi.responses import PlainTextResponse
 
     app = FastAPI(
         title="agent-skills",
@@ -112,9 +110,15 @@ def create_app(
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-XSS-Protection"] = "0"
         response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), camera=(), microphone=()"
+        )
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; frame-ancestors 'none'"
+        )
         return response
 
     # ── Helper ──────────────────────────────────────────────────
@@ -163,14 +167,22 @@ def create_app(
     ) -> dict:
         gw = _get_gateway()
         all_skills = gw.list_skills(
-            domain=domain, role=role, status=status, invocation=invocation,
+            domain=domain,
+            role=role,
+            status=status,
+            invocation=invocation,
         )
         total = len(all_skills)
         page = all_skills[offset : offset + min(limit, 100)]
         has_more = (offset + len(page)) < total
         result: dict[str, Any] = {
             "skills": [s.to_dict() for s in page],
-            "pagination": {"offset": offset, "limit": limit, "total": total, "has_more": has_more},
+            "pagination": {
+                "offset": offset,
+                "limit": limit,
+                "total": total,
+                "has_more": has_more,
+            },
         }
         if has_more:
             result["pagination"]["next_offset"] = offset + len(page)

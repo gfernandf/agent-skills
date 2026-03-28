@@ -1043,7 +1043,10 @@ class _RequestHandler(BaseHTTPRequestHandler):
             checks["gateway"] = "unavailable"
             ready = False
         status_code = 200 if ready else 503
-        return status_code, {"status": "ready" if ready else "not_ready", "checks": checks}
+        return status_code, {
+            "status": "ready" if ready else "not_ready",
+            "checks": checks,
+        }
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
         return
@@ -1066,7 +1069,6 @@ def run_server(
 
     # Async execution infrastructure
     from runtime.run_store import RunStore
-    import os
 
     async_workers = int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
     run_store = RunStore(max_runs=int(os.environ.get("AGENT_SKILLS_MAX_RUNS", "100")))
@@ -1164,8 +1166,12 @@ def run_server(
 
     def _graceful_shutdown(signum: int, _frame: Any) -> None:
         sig_name = signal.Signals(signum).name
-        log_event("http.server.shutdown_signal", signal=sig_name, drain_seconds=_drain_seconds)
-        logger.info("Received %s — draining in-flight requests (%ds)…", sig_name, _drain_seconds)
+        log_event(
+            "http.server.shutdown_signal", signal=sig_name, drain_seconds=_drain_seconds
+        )
+        logger.info(
+            "Received %s — draining in-flight requests (%ds)…", sig_name, _drain_seconds
+        )
         _shutdown_event.set()
 
     # Install signal handlers (only on main thread; graceful on POSIX + Windows)

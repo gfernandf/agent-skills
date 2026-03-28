@@ -30,6 +30,7 @@ _ISO = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 # ── helpers ────────────────────────────────────────────────────
 
+
 def _dt_to_str(dt: datetime | None) -> str | None:
     if dt is None:
         return None
@@ -45,6 +46,7 @@ def _str_to_dt(s: str | None) -> datetime | None:
 
 
 # ── serialize ──────────────────────────────────────────────────
+
 
 def _serialize_step_result(sr: StepResult) -> dict[str, Any]:
     return {
@@ -176,6 +178,7 @@ def state_to_dict(state: ExecutionState) -> dict[str, Any]:
 
 # ── deserialize ────────────────────────────────────────────────
 
+
 def _restore_step_result(d: dict[str, Any]) -> StepResult:
     return StepResult(
         step_id=d["step_id"],
@@ -281,8 +284,7 @@ def dict_to_state(d: dict[str, Any]) -> ExecutionState:
         vars=d.get("vars", {}),
         outputs=d.get("outputs", {}),
         step_results={
-            k: _restore_step_result(v)
-            for k, v in d.get("step_results", {}).items()
+            k: _restore_step_result(v) for k, v in d.get("step_results", {}).items()
         },
         written_targets=set(d.get("written_targets", [])),
         events=[_restore_event(e) for e in d.get("events", [])],
@@ -306,12 +308,15 @@ def dict_to_state(d: dict[str, Any]) -> ExecutionState:
 
 # ── convenience I/O ────────────────────────────────────────────
 
+
 def save_checkpoint(state: ExecutionState, path: str) -> None:
     """Serialize an ExecutionState to a JSON file."""
     import pathlib
 
     data = state_to_dict(state)
-    pathlib.Path(path).write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    pathlib.Path(path).write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def load_checkpoint(path: str) -> ExecutionState:

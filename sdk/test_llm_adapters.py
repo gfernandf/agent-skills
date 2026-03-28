@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
-import pytest
 
 # ────────────────────────────────────────────────────────────────
 # Shared fixtures
@@ -23,8 +22,16 @@ _MOCK_CAPABILITIES = [
         "id": "text.content.summarize",
         "description": "Produce a condensed version of text preserving key ideas.",
         "inputs": {
-            "text": {"type": "string", "required": True, "description": "The input text."},
-            "max_length": {"type": "integer", "required": False, "description": "Maximum summary length."},
+            "text": {
+                "type": "string",
+                "required": True,
+                "description": "The input text.",
+            },
+            "max_length": {
+                "type": "integer",
+                "required": False,
+                "description": "Maximum summary length.",
+            },
         },
         "outputs": {"summary": {"type": "string"}},
     },
@@ -32,8 +39,16 @@ _MOCK_CAPABILITIES = [
         "id": "data.schema.validate",
         "description": "Validate structured data against a schema.",
         "inputs": {
-            "data": {"type": "object", "required": True, "description": "Structured data."},
-            "schema": {"type": "object", "required": True, "description": "Validation schema."},
+            "data": {
+                "type": "object",
+                "required": True,
+                "description": "Structured data.",
+            },
+            "schema": {
+                "type": "object",
+                "required": True,
+                "description": "Validation schema.",
+            },
         },
         "outputs": {"valid": {"type": "boolean"}, "errors": {"type": "array"}},
     },
@@ -106,17 +121,23 @@ class TestAnthropicAdapter:
     def test_execute_tool_call_success(self, mock_exec):
         from sdk.embedded import execute_anthropic_tool_call
 
-        result = execute_anthropic_tool_call("text_content_summarize", {"text": "Hello"})
+        result = execute_anthropic_tool_call(
+            "text_content_summarize", {"text": "Hello"}
+        )
         assert isinstance(result, str)
         parsed = json.loads(result)
         assert parsed["summary"] == "Short version."
         mock_exec.assert_called_once_with("text.content.summarize", {"text": "Hello"})
 
-    @patch("sdk.embedded.execute_capability", side_effect=RuntimeError("Binding failed"))
+    @patch(
+        "sdk.embedded.execute_capability", side_effect=RuntimeError("Binding failed")
+    )
     def test_execute_tool_call_error(self, _mock):
         from sdk.embedded import execute_anthropic_tool_call
 
-        result = execute_anthropic_tool_call("text_content_summarize", {"text": "Hello"})
+        result = execute_anthropic_tool_call(
+            "text_content_summarize", {"text": "Hello"}
+        )
         parsed = json.loads(result)
         assert "error" in parsed
         assert "Binding failed" in parsed["error"]
@@ -210,7 +231,9 @@ class TestOpenAIAdapter:
             "text.content.summarize", {"text": "Hello", "max_length": 20}
         )
 
-    @patch("sdk.embedded.execute_capability", side_effect=RuntimeError("Binding failed"))
+    @patch(
+        "sdk.embedded.execute_capability", side_effect=RuntimeError("Binding failed")
+    )
     def test_execute_tool_call_error(self, _mock):
         from sdk.embedded import execute_openai_tool_call
 
@@ -321,7 +344,9 @@ class TestGeminiAdapter:
         assert parsed["summary"] == "Short version."
         mock_exec.assert_called_once_with("text.content.summarize", {"text": "Hello"})
 
-    @patch("sdk.embedded.execute_capability", side_effect=RuntimeError("Binding failed"))
+    @patch(
+        "sdk.embedded.execute_capability", side_effect=RuntimeError("Binding failed")
+    )
     def test_execute_tool_call_error(self, _mock):
         from sdk.embedded import execute_gemini_tool_call
 

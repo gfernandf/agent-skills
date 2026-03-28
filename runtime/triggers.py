@@ -32,7 +32,6 @@ Usage from CLI::
 
 from __future__ import annotations
 
-import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -44,6 +43,7 @@ import yaml
 @dataclass(frozen=True)
 class TriggerSpec:
     """Parsed trigger definition from a skill YAML."""
+
     trigger_type: str  # schedule | event | webhook | file_change
     skill_id: str
     config: dict[str, Any]
@@ -72,6 +72,7 @@ class TriggerSpec:
 @dataclass
 class TriggerEvent:
     """An event that can activate triggers."""
+
     event_type: str  # schedule | event | webhook | file_change
     payload: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.monotonic)
@@ -96,6 +97,7 @@ class TriggerEvent:
 @dataclass
 class TriggerMatch:
     """Result of matching an event to a trigger."""
+
     trigger: TriggerSpec
     event: TriggerEvent
     matched_at: float = field(default_factory=time.monotonic)
@@ -252,6 +254,7 @@ class TriggerRegistry:
 def _any_file_matches(files: list[str], patterns: list[str]) -> bool:
     """Check if any file matches any of the glob-style patterns."""
     import fnmatch
+
     for f in files:
         for pat in patterns:
             if fnmatch.fnmatch(f, pat):

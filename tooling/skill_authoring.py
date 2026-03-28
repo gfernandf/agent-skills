@@ -7,12 +7,9 @@ test, check-wiring, export, import, contribute, rate, report, discover --similar
 from __future__ import annotations
 
 import json
-import shutil
 import tarfile
-import tempfile
 import textwrap
 from datetime import datetime, timezone
-from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +19,7 @@ import yaml
 # ---------------------------------------------------------------------------
 # M2 — Skill Test Runner
 # ---------------------------------------------------------------------------
+
 
 def generate_test_fixture(
     skill_doc: dict[str, Any],
@@ -64,7 +62,9 @@ def run_skill_test(
     expected_outputs = list(skill_doc.get("outputs", {}).keys())
     tid = trace_id or f"test-{skill_id.replace('.', '-')}-{int(time.time())}"
 
-    req = ExecutionRequest(skill_id=skill_id, inputs=inputs, trace_id=tid, channel="test")
+    req = ExecutionRequest(
+        skill_id=skill_id, inputs=inputs, trace_id=tid, channel="test"
+    )
 
     start = time.perf_counter()
     try:
@@ -100,7 +100,11 @@ def run_skill_test(
     if result.outputs:
         report["outputs"] = result.outputs
 
-    steps_done = len(result.state.step_results) if hasattr(result, "state") and result.state else 0
+    steps_done = (
+        len(result.state.step_results)
+        if hasattr(result, "state") and result.state
+        else 0
+    )
     report["steps_executed"] = steps_done
 
     return report
@@ -109,6 +113,7 @@ def run_skill_test(
 # ---------------------------------------------------------------------------
 # M8 — Wiring Compatibility Check
 # ---------------------------------------------------------------------------
+
 
 def check_wiring(
     skill_doc: dict[str, Any],
@@ -152,22 +157,30 @@ def check_wiring(
                 if source.startswith("inputs.") or source.startswith("vars."):
                     source_type = var_types.get(source)
                     if source_type is None:
-                        issues.append({
-                            "level": "warning",
-                            "step": step_id,
-                            "message": f"Source '{source}' not produced by any prior step",
-                        })
-                    elif cap and cap_field in cap_inputs:
-                        expected_type = cap_inputs[cap_field].get("type") if isinstance(cap_inputs[cap_field], dict) else None
-                        if expected_type and source_type != expected_type:
-                            issues.append({
+                        issues.append(
+                            {
                                 "level": "warning",
                                 "step": step_id,
-                                "message": (
-                                    f"Type mismatch: '{source}' is {source_type} "
-                                    f"but {uses}.{cap_field} expects {expected_type}"
-                                ),
-                            })
+                                "message": f"Source '{source}' not produced by any prior step",
+                            }
+                        )
+                    elif cap and cap_field in cap_inputs:
+                        expected_type = (
+                            cap_inputs[cap_field].get("type")
+                            if isinstance(cap_inputs[cap_field], dict)
+                            else None
+                        )
+                        if expected_type and source_type != expected_type:
+                            issues.append(
+                                {
+                                    "level": "warning",
+                                    "step": step_id,
+                                    "message": (
+                                        f"Type mismatch: '{source}' is {source_type} "
+                                        f"but {uses}.{cap_field} expects {expected_type}"
+                                    ),
+                                }
+                            )
 
         # Register outputs from this step
         output_map = step.get("output") or step.get("output_mapping") or {}
@@ -178,7 +191,11 @@ def check_wiring(
                 out_type = "string"
                 if cap and cap_field in cap_outputs:
                     out_spec = cap_outputs[cap_field]
-                    out_type = out_spec.get("type", "string") if isinstance(out_spec, dict) else "string"
+                    out_type = (
+                        out_spec.get("type", "string")
+                        if isinstance(out_spec, dict)
+                        else "string"
+                    )
                 var_types[target] = out_type
 
     return issues
@@ -187,6 +204,7 @@ def check_wiring(
 # ---------------------------------------------------------------------------
 # M7 — Capability type filtering
 # ---------------------------------------------------------------------------
+
 
 def filter_capabilities_by_type(
     capabilities: dict[str, Any],
@@ -223,6 +241,7 @@ def filter_capabilities_by_type(
 # M6 — Mermaid DAG Generation
 # ---------------------------------------------------------------------------
 
+
 def generate_mermaid_dag(skill_doc: dict[str, Any]) -> str:
     """Generate a Mermaid flowchart from a skill's step DAG."""
     steps = skill_doc.get("steps", [])
@@ -252,10 +271,10 @@ def generate_mermaid_dag(skill_doc: dict[str, Any]) -> str:
                 if dep in step_ids:
                     lines.append(f"  {dep} --> {sid}")
         elif i > 0:
-            lines.append(f"  {step_ids[i-1]} --> {sid}")
+            lines.append(f"  {step_ids[i - 1]} --> {sid}")
 
     # Mark inputs/outputs
-    skill_name = skill_doc.get("name", skill_doc.get("id", "Skill"))
+    skill_doc.get("name", skill_doc.get("id", "Skill"))
     input_fields = list(skill_doc.get("inputs", {}).keys())
     output_fields = list(skill_doc.get("outputs", {}).keys())
 
@@ -274,6 +293,7 @@ def generate_mermaid_dag(skill_doc: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # M4 — Export / Import
 # ---------------------------------------------------------------------------
+
 
 def export_skill_bundle(
     skill_file: Path,
@@ -303,6 +323,7 @@ def export_skill_bundle(
             data = json.dumps(fixture, indent=2, ensure_ascii=False).encode("utf-8")
             import io
             import tarfile as _tf
+
             info = _tf.TarInfo(name="test_input.json")
             info.size = len(data)
             tar.addfile(info, io.BytesIO(data))
@@ -313,15 +334,15 @@ def export_skill_bundle(
             tar.add(str(readme), arcname="README.md")
         else:
             readme_content = textwrap.dedent(f"""\
-                # {skill_doc.get('name', skill_id)}
+                # {skill_doc.get("name", skill_id)}
 
-                {skill_doc.get('description', 'No description.')}
+                {skill_doc.get("description", "No description.")}
 
                 ## Inputs
-                {_format_fields(skill_doc.get('inputs', {}))}
+                {_format_fields(skill_doc.get("inputs", {}))}
 
                 ## Outputs
-                {_format_fields(skill_doc.get('outputs', {}))}
+                {_format_fields(skill_doc.get("outputs", {}))}
 
                 ## Quick Start
 
@@ -333,6 +354,7 @@ def export_skill_bundle(
             """).encode("utf-8")
             import io
             import tarfile as _tf
+
             info = _tf.TarInfo(name="README.md")
             info.size = len(readme_content)
             tar.addfile(info, io.BytesIO(readme_content))
@@ -343,13 +365,17 @@ def export_skill_bundle(
             "version": skill_doc.get("version", "0.1.0"),
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "capabilities_used": [
-                s.get("uses") for s in skill_doc.get("steps", [])
+                s.get("uses")
+                for s in skill_doc.get("steps", [])
                 if isinstance(s, dict) and s.get("uses")
             ],
         }
-        manifest_data = json.dumps(manifest, indent=2, ensure_ascii=False).encode("utf-8")
+        manifest_data = json.dumps(manifest, indent=2, ensure_ascii=False).encode(
+            "utf-8"
+        )
         import io
         import tarfile as _tf
+
         info = _tf.TarInfo(name="bundle_manifest.json")
         info.size = len(manifest_data)
         tar.addfile(info, io.BytesIO(manifest_data))
@@ -387,7 +413,10 @@ def import_skill_bundle(
 
         skill_id = skill_doc["id"]
         if "." not in skill_id:
-            return {"ok": False, "error": f"Invalid skill id '{skill_id}' (expected domain.slug)"}
+            return {
+                "ok": False,
+                "error": f"Invalid skill id '{skill_id}' (expected domain.slug)",
+            }
 
         domain, slug = skill_id.split(".", 1)
         target_dir = local_skills_root / domain / slug
@@ -422,7 +451,8 @@ def import_skill_bundle(
     }
     if missing_caps:
         report["warnings"] = [
-            f"Missing capability: {c} — skill may not be executable" for c in missing_caps
+            f"Missing capability: {c} — skill may not be executable"
+            for c in missing_caps
         ]
 
     return report
@@ -446,6 +476,7 @@ def _format_fields(fields: dict) -> str:
 # ---------------------------------------------------------------------------
 # M10 — Similar Skills Discovery
 # ---------------------------------------------------------------------------
+
 
 def find_similar_skills(
     skill_id: str,
@@ -489,16 +520,24 @@ def find_similar_skills(
         # Domain match bonus
         domain_bonus = 0.15 if sid.split(".")[0] == skill_id.split(".")[0] else 0
 
-        total = (cap_score * 0.50) + (tag_score * 0.25) + (word_score * 0.10) + domain_bonus
+        total = (
+            (cap_score * 0.50) + (tag_score * 0.25) + (word_score * 0.10) + domain_bonus
+        )
 
         if total > 0.05:
-            scored.append((total, sid, {
-                "skill_id": sid,
-                "similarity": round(total, 3),
-                "shared_capabilities": sorted(cap_inter),
-                "shared_tags": sorted(tag_inter),
-                "name": _get_name(skill),
-            }))
+            scored.append(
+                (
+                    total,
+                    sid,
+                    {
+                        "skill_id": sid,
+                        "similarity": round(total, 3),
+                        "shared_capabilities": sorted(cap_inter),
+                        "shared_tags": sorted(tag_inter),
+                        "name": _get_name(skill),
+                    },
+                )
+            )
 
     scored.sort(key=lambda x: -x[0])
     return [item[2] for item in scored[:top_n]]
@@ -513,7 +552,8 @@ def _extract_capability_ids(skill: Any) -> set[str]:
     return {
         s.get("uses") if isinstance(s, dict) else getattr(s, "uses", "")
         for s in steps
-        if (isinstance(s, dict) and s.get("uses")) or (hasattr(s, "uses") and getattr(s, "uses", ""))
+        if (isinstance(s, dict) and s.get("uses"))
+        or (hasattr(s, "uses") and getattr(s, "uses", ""))
     }
 
 
@@ -545,6 +585,7 @@ def _extract_words(skill: Any) -> set[str]:
 # ---------------------------------------------------------------------------
 # M11 — Skill Rating
 # ---------------------------------------------------------------------------
+
 
 def rate_skill(
     skill_id: str,
@@ -605,6 +646,7 @@ def rate_skill(
 # M12 — Skill Issue Report
 # ---------------------------------------------------------------------------
 
+
 def generate_issue_report(
     skill_id: str,
     issue_text: str,
@@ -627,15 +669,17 @@ def generate_issue_report(
         body_parts.append(json.dumps(execution_context, indent=2, ensure_ascii=False))
         body_parts.append("\n```\n")
 
-    body_parts.extend([
-        "## Expected Behavior\n",
-        "<!-- Describe what you expected -->\n",
-        "## Actual Behavior\n",
-        "<!-- Describe what actually happened -->\n",
-        "## Environment\n",
-        "- agent-skills version: <!-- e.g. 0.1.0 -->\n",
-        "- Python version: <!-- e.g. 3.14.3 -->\n",
-    ])
+    body_parts.extend(
+        [
+            "## Expected Behavior\n",
+            "<!-- Describe what you expected -->\n",
+            "## Actual Behavior\n",
+            "<!-- Describe what actually happened -->\n",
+            "## Environment\n",
+            "- agent-skills version: <!-- e.g. 0.1.0 -->\n",
+            "- Python version: <!-- e.g. 3.14.3 -->\n",
+        ]
+    )
 
     return {
         "title": title,
@@ -647,6 +691,7 @@ def generate_issue_report(
 # ---------------------------------------------------------------------------
 # M14 — Auto-wiring Suggestions
 # ---------------------------------------------------------------------------
+
 
 def suggest_wiring(
     capabilities_sequence: list[str],
@@ -674,7 +719,11 @@ def suggest_wiring(
         # Suggest input mapping
         input_suggestion: dict[str, str] = {}
         for field_name, field_spec in cap_inputs.items():
-            expected_type = field_spec.get("type", "string") if isinstance(field_spec, dict) else "string"
+            expected_type = (
+                field_spec.get("type", "string")
+                if isinstance(field_spec, dict)
+                else "string"
+            )
             # Find best match from available vars
             best = _find_best_source(field_name, expected_type, available_vars)
             if best:
@@ -686,16 +735,22 @@ def suggest_wiring(
             step_id = f"step_{i}_{step_id}"
         output_suggestion: dict[str, str] = {}
         for field_name, field_spec in cap_outputs.items():
-            out_type = field_spec.get("type", "string") if isinstance(field_spec, dict) else "string"
+            out_type = (
+                field_spec.get("type", "string")
+                if isinstance(field_spec, dict)
+                else "string"
+            )
             var_name = f"vars.{step_id}_{field_name}"
             output_suggestion[field_name] = var_name
             available_vars[var_name] = out_type
 
-        suggestions.append({
-            "capability": cap_id,
-            "suggested_input": input_suggestion,
-            "suggested_output": output_suggestion,
-        })
+        suggestions.append(
+            {
+                "capability": cap_id,
+                "suggested_input": input_suggestion,
+                "suggested_output": output_suggestion,
+            }
+        )
 
     return suggestions
 
@@ -715,11 +770,15 @@ def _find_best_source(
     # Partial name match with correct type
     for var, vtype in available_vars.items():
         var_field = var.split(".")[-1]
-        if vtype == expected_type and (field_name in var_field or var_field in field_name):
+        if vtype == expected_type and (
+            field_name in var_field or var_field in field_name
+        ):
             return var
 
     # Type match only — prefer most recent (last registered)
-    type_matches = [var for var, vtype in available_vars.items() if vtype == expected_type]
+    type_matches = [
+        var for var, vtype in available_vars.items() if vtype == expected_type
+    ]
     if type_matches:
         return type_matches[-1]
 

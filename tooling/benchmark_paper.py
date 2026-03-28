@@ -27,7 +27,6 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from runtime.capability_loader import YamlCapabilityLoader
 from runtime.engine_factory import build_runtime_components
 from runtime.models import ExecutionOptions, ExecutionRequest
 from runtime.skill_loader import YamlSkillLoader
@@ -76,6 +75,7 @@ def run_benchmark(
 
     # Discover all skills
     import yaml
+
     skills_root = registry_root / "skills"
     skill_ids = []
     for skill_file in sorted(skills_root.glob("**/skill.yaml")):
@@ -100,11 +100,13 @@ def run_benchmark(
         try:
             skill = skill_loader.get_skill(skill_id)
         except Exception:
-            results.append({
-                "skill_id": skill_id,
-                "status": "load_error",
-                "runs": 0,
-            })
+            results.append(
+                {
+                    "skill_id": skill_id,
+                    "status": "load_error",
+                    "runs": 0,
+                }
+            )
             continue
 
         inputs = _default_inputs_for_skill(skill)
@@ -120,7 +122,7 @@ def run_benchmark(
             )
             t0 = time.perf_counter()
             try:
-                result = engine.execute(request)
+                engine.execute(request)
                 elapsed = (time.perf_counter() - t0) * 1000
                 timings.append(elapsed)
             except Exception as exc:
@@ -138,10 +140,16 @@ def run_benchmark(
         if timings:
             entry["mean_ms"] = round(statistics.mean(timings), 2)
             entry["median_ms"] = round(statistics.median(timings), 2)
-            entry["stdev_ms"] = round(statistics.stdev(timings), 2) if len(timings) > 1 else 0.0
+            entry["stdev_ms"] = (
+                round(statistics.stdev(timings), 2) if len(timings) > 1 else 0.0
+            )
             entry["min_ms"] = round(min(timings), 2)
             entry["max_ms"] = round(max(timings), 2)
-            entry["p95_ms"] = round(sorted(timings)[int(len(timings) * 0.95)], 2) if len(timings) >= 5 else entry["max_ms"]
+            entry["p95_ms"] = (
+                round(sorted(timings)[int(len(timings) * 0.95)], 2)
+                if len(timings) >= 5
+                else entry["max_ms"]
+            )
 
         results.append(entry)
 
@@ -174,8 +182,12 @@ def format_markdown(data: dict) -> str:
     lines.append(f"- **Skills benchmarked**: {data['total_skills']}")
     lines.append("")
 
-    lines.append("| Skill | Steps | Mean (ms) | Median (ms) | p95 (ms) | Min (ms) | Max (ms) | Status |")
-    lines.append("|-------|------:|----------:|------------:|---------:|---------:|---------:|--------|")
+    lines.append(
+        "| Skill | Steps | Mean (ms) | Median (ms) | p95 (ms) | Min (ms) | Max (ms) | Status |"
+    )
+    lines.append(
+        "|-------|------:|----------:|------------:|---------:|---------:|---------:|--------|"
+    )
 
     for r in sorted(data["results"], key=lambda x: x.get("mean_ms", 9999)):
         if "mean_ms" in r:
@@ -193,10 +205,12 @@ def format_markdown(data: dict) -> str:
     ok_results = [r for r in data["results"] if "mean_ms" in r and r["status"] == "ok"]
     if ok_results:
         means = [r["mean_ms"] for r in ok_results]
-        lines.append(f"**Summary**: {len(ok_results)} skills executed successfully. "
-                      f"Mean across all: {statistics.mean(means):.1f} ms, "
-                      f"fastest: {min(means):.1f} ms, "
-                      f"slowest: {max(means):.1f} ms.")
+        lines.append(
+            f"**Summary**: {len(ok_results)} skills executed successfully. "
+            f"Mean across all: {statistics.mean(means):.1f} ms, "
+            f"fastest: {min(means):.1f} ms, "
+            f"slowest: {max(means):.1f} ms."
+        )
     return "\n".join(lines)
 
 

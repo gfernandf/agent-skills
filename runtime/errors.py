@@ -3,7 +3,9 @@ from __future__ import annotations
 import difflib
 
 
-def suggest_similar(unknown: str, known: list[str], n: int = 3, cutoff: float = 0.5) -> list[str]:
+def suggest_similar(
+    unknown: str, known: list[str], n: int = 3, cutoff: float = 0.5
+) -> list[str]:
     """Return up to *n* close matches from *known* for *unknown*."""
     return difflib.get_close_matches(unknown, known, n=n, cutoff=cutoff)
 

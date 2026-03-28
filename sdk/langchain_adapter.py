@@ -56,13 +56,23 @@ def _build_args_schema(cap_id: str, inputs_spec: dict) -> type | None:
             if required:
                 fields[name] = (py_type, Field(description=desc))
             else:
-                fields[name] = (Optional[py_type], Field(default=None, description=desc))
+                fields[name] = (
+                    Optional[py_type],
+                    Field(default=None, description=desc),
+                )
         else:
             fields[name] = (str, Field(default=None))
 
     # Create a dynamic Pydantic model
     model_name = cap_id.replace(".", "_") + "_Input"
-    model = type(model_name, (BaseModel,), {"__annotations__": {k: v[0] for k, v in fields.items()}, **{k: v[1] for k, v in fields.items()}})
+    model = type(
+        model_name,
+        (BaseModel,),
+        {
+            "__annotations__": {k: v[0] for k, v in fields.items()},
+            **{k: v[1] for k, v in fields.items()},
+        },
+    )
     return model
 
 

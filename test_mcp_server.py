@@ -22,8 +22,16 @@ _MOCK_CAPABILITIES = [
         "id": "text.content.summarize",
         "description": "Produce a condensed version of text preserving key ideas.",
         "inputs": {
-            "text": {"type": "string", "required": True, "description": "The input text."},
-            "max_length": {"type": "integer", "required": False, "description": "Maximum summary length."},
+            "text": {
+                "type": "string",
+                "required": True,
+                "description": "The input text.",
+            },
+            "max_length": {
+                "type": "integer",
+                "required": False,
+                "description": "Maximum summary length.",
+            },
         },
         "outputs": {
             "summary": {"type": "string"},
@@ -33,8 +41,16 @@ _MOCK_CAPABILITIES = [
         "id": "data.schema.validate",
         "description": "Validate structured data against a schema.",
         "inputs": {
-            "data": {"type": "object", "required": True, "description": "Structured data."},
-            "schema": {"type": "object", "required": True, "description": "Validation schema."},
+            "data": {
+                "type": "object",
+                "required": True,
+                "description": "Structured data.",
+            },
+            "schema": {
+                "type": "object",
+                "required": True,
+                "description": "Validation schema.",
+            },
         },
         "outputs": {
             "valid": {"type": "boolean"},
@@ -130,16 +146,24 @@ class TestCallTool:
     @pytest.mark.asyncio
     async def test_executes_capability(self):
         mock_result = {"summary": "Short version."}
-        with patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES), \
-             patch("sdk.embedded.execute_capability", return_value=mock_result) as mock_exec:
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch(
+                "sdk.embedded.execute_capability", return_value=mock_result
+            ) as mock_exec,
+        ):
             from official_mcp_servers.server import call_tool
 
-            result = await call_tool("text.content.summarize", {"text": "Hello world", "max_length": 20})
+            result = await call_tool(
+                "text.content.summarize", {"text": "Hello world", "max_length": 20}
+            )
 
         assert len(result) == 1
         parsed = json.loads(result[0].text)
         assert parsed["summary"] == "Short version."
-        mock_exec.assert_called_once_with("text.content.summarize", {"text": "Hello world", "max_length": 20})
+        mock_exec.assert_called_once_with(
+            "text.content.summarize", {"text": "Hello world", "max_length": 20}
+        )
 
     @pytest.mark.asyncio
     async def test_unknown_tool_raises_error(self):
@@ -152,8 +176,13 @@ class TestCallTool:
     @pytest.mark.asyncio
     async def test_execution_error_returns_error_json(self):
         """Execution errors should be returned as JSON, not raised."""
-        with patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES), \
-             patch("sdk.embedded.execute_capability", side_effect=RuntimeError("Binding not found")):
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch(
+                "sdk.embedded.execute_capability",
+                side_effect=RuntimeError("Binding not found"),
+            ),
+        ):
             from official_mcp_servers.server import call_tool
 
             result = await call_tool("text.content.summarize", {"text": "test"})
@@ -165,8 +194,10 @@ class TestCallTool:
     @pytest.mark.asyncio
     async def test_none_arguments_treated_as_empty(self):
         mock_result = {"valid": True, "errors": []}
-        with patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES), \
-             patch("sdk.embedded.execute_capability", return_value=mock_result):
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.execute_capability", return_value=mock_result),
+        ):
             from official_mcp_servers.server import call_tool
 
             result = await call_tool("data.schema.validate", None)
@@ -215,6 +246,7 @@ class TestServerInstantiation:
 
     def test_server_exists(self):
         from official_mcp_servers.server import server
+
         assert server.name == "agent-skills"
 
     def test_cache_reset(self):

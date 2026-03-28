@@ -6,7 +6,6 @@ Run: python -m pytest test_local_capabilities.py -v
 from __future__ import annotations
 
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -19,7 +18,7 @@ if str(_ROOT) not in sys.path:
 from runtime.capability_loader import YamlCapabilityLoader
 from runtime.composite_capability_loader import CompositeCapabilityLoader
 from runtime.errors import CapabilityNotFoundError, InvalidCapabilitySpecError
-from runtime.models import CapabilitySpec, FieldSpec
+from runtime.models import FieldSpec
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -297,10 +296,12 @@ class TestCapabilityExtends:
         }
         _write_cap(local, ext)
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "local"),
-            YamlCapabilityLoader(tmp_path / "registry"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "local"),
+                YamlCapabilityLoader(tmp_path / "registry"),
+            ]
+        )
         resolved = composite.get_capability("local.alias")
 
         assert resolved.id == "local.alias"
@@ -328,10 +329,12 @@ class TestCapabilityExtends:
         }
         _write_cap(local, ext)
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "local"),
-            YamlCapabilityLoader(tmp_path / "registry"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "local"),
+                YamlCapabilityLoader(tmp_path / "registry"),
+            ]
+        )
 
         with pytest.raises(InvalidCapabilitySpecError, match="cannot weaken"):
             composite.get_capability("local.weakened")
@@ -356,10 +359,12 @@ class TestCapabilityExtends:
         }
         _write_cap(local, ext)
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "local"),
-            YamlCapabilityLoader(tmp_path / "registry"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "local"),
+                YamlCapabilityLoader(tmp_path / "registry"),
+            ]
+        )
         resolved = composite.get_capability("local.stronger")
 
         assert resolved.inputs["max_length"].required is True
@@ -373,59 +378,75 @@ class TestCapabilityExtends:
         # C (base)
         _write_cap(caps, _base_cap("level.c"))
         # B extends C — adds 'language'
-        _write_cap(caps, {
-            "id": "level.b",
-            "version": "1.0.0",
-            "description": "Level B extends C",
-            "extends": "level.c",
-            "inputs": {"language": {"type": "string", "required": False}},
-        })
+        _write_cap(
+            caps,
+            {
+                "id": "level.b",
+                "version": "1.0.0",
+                "description": "Level B extends C",
+                "extends": "level.c",
+                "inputs": {"language": {"type": "string", "required": False}},
+            },
+        )
         # A extends B — adds 'style'
-        _write_cap(caps, {
-            "id": "level.a",
-            "version": "1.0.0",
-            "description": "Level A extends B",
-            "extends": "level.b",
-            "inputs": {"style": {"type": "string", "required": False}},
-        })
+        _write_cap(
+            caps,
+            {
+                "id": "level.a",
+                "version": "1.0.0",
+                "description": "Level A extends B",
+                "extends": "level.b",
+                "inputs": {"style": {"type": "string", "required": False}},
+            },
+        )
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "all"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "all"),
+            ]
+        )
         resolved = composite.get_capability("level.a")
 
         # Has C's inputs + B's + A's
-        assert "text" in resolved.inputs       # from C
+        assert "text" in resolved.inputs  # from C
         assert "max_length" in resolved.inputs  # from C
-        assert "language" in resolved.inputs    # from B
-        assert "style" in resolved.inputs       # from A
-        assert "result" in resolved.outputs     # from C
+        assert "language" in resolved.inputs  # from B
+        assert "style" in resolved.inputs  # from A
+        assert "result" in resolved.outputs  # from C
 
     def test_extends_cycle_detected(self, tmp_path):
         """Circular extends chain raises an error."""
         caps = tmp_path / "cycle" / "capabilities"
         caps.mkdir(parents=True)
 
-        _write_cap(caps, {
-            "id": "cycle.a",
-            "version": "1.0.0",
-            "description": "A extends B",
-            "extends": "cycle.b",
-            "inputs": {"x": {"type": "string", "required": False}},
-            "outputs": {"y": {"type": "string"}},
-        })
-        _write_cap(caps, {
-            "id": "cycle.b",
-            "version": "1.0.0",
-            "description": "B extends A",
-            "extends": "cycle.a",
-            "inputs": {"x": {"type": "string", "required": False}},
-            "outputs": {"y": {"type": "string"}},
-        })
+        _write_cap(
+            caps,
+            {
+                "id": "cycle.a",
+                "version": "1.0.0",
+                "description": "A extends B",
+                "extends": "cycle.b",
+                "inputs": {"x": {"type": "string", "required": False}},
+                "outputs": {"y": {"type": "string"}},
+            },
+        )
+        _write_cap(
+            caps,
+            {
+                "id": "cycle.b",
+                "version": "1.0.0",
+                "description": "B extends A",
+                "extends": "cycle.a",
+                "inputs": {"x": {"type": "string", "required": False}},
+                "outputs": {"y": {"type": "string"}},
+            },
+        )
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "cycle"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "cycle"),
+            ]
+        )
 
         with pytest.raises(InvalidCapabilitySpecError, match="depth"):
             composite.get_capability("cycle.a")
@@ -449,15 +470,17 @@ class TestCapabilityExtends:
         }
         _write_cap(local, ext)
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "local"),
-            YamlCapabilityLoader(tmp_path / "registry"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "local"),
+                YamlCapabilityLoader(tmp_path / "registry"),
+            ]
+        )
         resolved = composite.get_capability("prop.ext")
 
-        assert resolved.properties["deterministic"] is True   # inherited
-        assert resolved.properties["side_effects"] is True     # overridden
-        assert resolved.properties["idempotent"] is True       # added
+        assert resolved.properties["deterministic"] is True  # inherited
+        assert resolved.properties["side_effects"] is True  # overridden
+        assert resolved.properties["idempotent"] is True  # added
 
     def test_extends_inherits_cognitive_hints(self, tmp_path):
         reg = tmp_path / "registry" / "capabilities"
@@ -477,10 +500,12 @@ class TestCapabilityExtends:
         }
         _write_cap(local, ext)
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "local"),
-            YamlCapabilityLoader(tmp_path / "registry"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "local"),
+                YamlCapabilityLoader(tmp_path / "registry"),
+            ]
+        )
         resolved = composite.get_capability("cog.ext")
 
         assert resolved.cognitive_hints is not None
@@ -498,9 +523,11 @@ class TestCapabilityExtends:
         }
         _write_cap(local, ext)
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "local"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "local"),
+            ]
+        )
 
         with pytest.raises(CapabilityNotFoundError, match="ghost.base"):
             composite.get_capability("orphan.ext")
@@ -522,14 +549,16 @@ class TestCapabilityExtends:
         }
         _write_cap(local, ext)
 
-        composite = CompositeCapabilityLoader([
-            YamlCapabilityLoader(tmp_path / "local"),
-            YamlCapabilityLoader(tmp_path / "registry"),
-        ])
+        composite = CompositeCapabilityLoader(
+            [
+                YamlCapabilityLoader(tmp_path / "local"),
+                YamlCapabilityLoader(tmp_path / "registry"),
+            ]
+        )
         resolved = composite.get_capability("local.extended_from_registry")
 
-        assert "text" in resolved.inputs      # from registry base
-        assert "extra" in resolved.inputs     # from local extension
+        assert "text" in resolved.inputs  # from registry base
+        assert "extra" in resolved.inputs  # from local extension
         assert resolved.extends == "registry.base"
 
 

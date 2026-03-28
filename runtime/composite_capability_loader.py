@@ -100,9 +100,7 @@ class CompositeCapabilityLoader:
             msg, capability_id=capability_id, cause=last_exc
         ) from last_exc
 
-    def _resolve_extends(
-        self, spec: CapabilitySpec, depth: int
-    ) -> CapabilitySpec:
+    def _resolve_extends(self, spec: CapabilitySpec, depth: int) -> CapabilitySpec:
         if depth >= self._MAX_EXTENDS_DEPTH:
             raise InvalidCapabilitySpecError(
                 f"Capability '{spec.id}' exceeds maximum extends depth "
@@ -126,7 +124,9 @@ class CompositeCapabilityLoader:
         merged_properties = {**base.properties, **spec.properties}
 
         # Cognitive hints: extension wins entirely if provided, else base.
-        merged_cognitive = spec.cognitive_hints if spec.cognitive_hints else base.cognitive_hints
+        merged_cognitive = (
+            spec.cognitive_hints if spec.cognitive_hints else base.cognitive_hints
+        )
 
         # Safety: extension wins entirely if provided, else base.
         merged_safety = spec.safety if spec.safety else base.safety
@@ -169,7 +169,11 @@ class CompositeCapabilityLoader:
 
         for name, ext_field in ext_fields.items():
             base_field = merged.get(name)
-            if base_field is not None and base_field.required and not ext_field.required:
+            if (
+                base_field is not None
+                and base_field.required
+                and not ext_field.required
+            ):
                 raise InvalidCapabilitySpecError(
                     f"Capability '{ext_id}' extends '{base_id}' but tries to make "
                     f"required {section} field '{name}' optional. "

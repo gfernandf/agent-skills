@@ -6,7 +6,6 @@ types and edge cases that matter for MCP, Anthropic, OpenAI, and Gemini.
 
 from __future__ import annotations
 
-import pytest
 
 from sdk.embedded import _build_json_schema, _build_gemini_schema
 

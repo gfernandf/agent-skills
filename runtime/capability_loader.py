@@ -5,7 +5,11 @@ from typing import Any, Protocol
 
 import yaml
 
-from runtime.errors import CapabilityNotFoundError, InvalidCapabilitySpecError, suggest_similar
+from runtime.errors import (
+    CapabilityNotFoundError,
+    InvalidCapabilitySpecError,
+    suggest_similar,
+)
 from runtime.models import CapabilitySpec, FieldSpec
 
 
@@ -78,7 +82,9 @@ class YamlCapabilityLoader:
         path = self._capability_index.get(capability_id)
         if path is None:
             msg = f"Capability '{capability_id}' not found."
-            similar = suggest_similar(capability_id, list(self._capability_index.keys()))
+            similar = suggest_similar(
+                capability_id, list(self._capability_index.keys())
+            )
             if similar:
                 msg += f" Did you mean: {', '.join(similar)}?"
             raise CapabilityNotFoundError(msg, capability_id=capability_id)
@@ -166,16 +172,22 @@ class YamlCapabilityLoader:
             raw.get("cognitive_hints"), path
         )
         safety = self._normalize_safety(raw.get("safety"), path)
-        extends = self._normalize_optional_string(
-            raw.get("extends"), "extends", path
-        )
+        extends = self._normalize_optional_string(raw.get("extends"), "extends", path)
 
         # When extending, inputs/outputs are optional (inherited from base).
         if extends:
             raw_inputs = raw.get("inputs")
-            inputs = self._normalize_fields(raw_inputs, "inputs", path) if raw_inputs is not None else {}
+            inputs = (
+                self._normalize_fields(raw_inputs, "inputs", path)
+                if raw_inputs is not None
+                else {}
+            )
             raw_outputs = raw.get("outputs")
-            outputs = self._normalize_fields(raw_outputs, "outputs", path) if raw_outputs is not None else {}
+            outputs = (
+                self._normalize_fields(raw_outputs, "outputs", path)
+                if raw_outputs is not None
+                else {}
+            )
         else:
             inputs = self._normalize_fields(raw.get("inputs"), "inputs", path)
             outputs = self._normalize_fields(raw.get("outputs"), "outputs", path)

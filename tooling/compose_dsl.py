@@ -49,7 +49,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 import yaml
@@ -88,13 +87,13 @@ class ComposeParseError(Exception):
 
 # ── Regex patterns ──────────────────────────────────────────────────────
 
-_RE_DIRECTIVE = re.compile(r'^@(\w+)\s+(.+)$')
-_RE_STEP = re.compile(r'^(\w+)\s*=\s*([a-zA-Z0-9_.]+)\s*\((.+)\)\s*$')
-_RE_OUTPUT = re.compile(r'^>\s*(\w+)\s*=\s*(.+)$')
-_RE_PARAM = re.compile(r'(\w+)\s*=\s*(.+)')
-_RE_REF = re.compile(r'^\$(\w+)\.(\w+)$')
+_RE_DIRECTIVE = re.compile(r"^@(\w+)\s+(.+)$")
+_RE_STEP = re.compile(r"^(\w+)\s*=\s*([a-zA-Z0-9_.]+)\s*\((.+)\)\s*$")
+_RE_OUTPUT = re.compile(r"^>\s*(\w+)\s*=\s*(.+)$")
+_RE_PARAM = re.compile(r"(\w+)\s*=\s*(.+)")
+_RE_REF = re.compile(r"^\$(\w+)\.(\w+)$")
 _RE_STRING = re.compile(r'^"([^"]*)"$')
-_RE_NUMBER = re.compile(r'^-?\d+(\.\d+)?$')
+_RE_NUMBER = re.compile(r"^-?\d+(\.\d+)?$")
 
 
 def parse_compose(source: str, *, source_path: str = "<string>") -> ComposeSpec:
@@ -128,7 +127,9 @@ def parse_compose(source: str, *, source_path: str = "<string>") -> ComposeSpec:
             elif key == "description":
                 description = value
             else:
-                raise ComposeParseError(f"Unknown directive '@{key}'", line_num, raw_line)
+                raise ComposeParseError(
+                    f"Unknown directive '@{key}'", line_num, raw_line
+                )
             continue
 
         # Output mapping: > output_name = $step.field
@@ -147,18 +148,22 @@ def parse_compose(source: str, *, source_path: str = "<string>") -> ComposeSpec:
             params_str = m.group(3)
 
             if step_id in step_ids:
-                raise ComposeParseError(f"Duplicate step id '{step_id}'", line_num, raw_line)
+                raise ComposeParseError(
+                    f"Duplicate step id '{step_id}'", line_num, raw_line
+                )
             step_ids.add(step_id)
 
             params = _parse_params(params_str, line_num, raw_line)
             deps = _extract_deps(params, step_ids)
 
-            steps.append(ComposeStep(
-                id=step_id,
-                capability=capability,
-                params=params,
-                depends_on=deps,
-            ))
+            steps.append(
+                ComposeStep(
+                    id=step_id,
+                    capability=capability,
+                    params=params,
+                    depends_on=deps,
+                )
+            )
             continue
 
         raise ComposeParseError(f"Unrecognized syntax: {line}", line_num, raw_line)
@@ -203,7 +208,7 @@ def _split_params(s: str) -> list[str]:
         if ch == '"':
             in_quotes = not in_quotes
             current += ch
-        elif ch == ',' and not in_quotes:
+        elif ch == "," and not in_quotes:
             parts.append(current)
             current = ""
         else:
@@ -243,7 +248,7 @@ def _resolve_param_value(expr: str) -> dict[str, Any]:
     # Number literal
     m = _RE_NUMBER.match(expr)
     if m:
-        return {"value": float(expr) if '.' in expr else int(expr)}
+        return {"value": float(expr) if "." in expr else int(expr)}
 
     # Boolean
     if expr.lower() == "true":
@@ -296,7 +301,11 @@ def compile_to_yaml(spec: ComposeSpec) -> dict[str, Any]:
             if source == "input":
                 outputs_yaml[out.name] = {"from_input": field_name, "type": "string"}
             else:
-                outputs_yaml[out.name] = {"from_step": source, "field": field_name, "type": "string"}
+                outputs_yaml[out.name] = {
+                    "from_step": source,
+                    "field": field_name,
+                    "type": "string",
+                }
         else:
             outputs_yaml[out.name] = {"value": out.expression, "type": "string"}
 

@@ -6,10 +6,7 @@ Run: python -m pytest test_new_skills.py -k "PhaseA" -v
 
 from __future__ import annotations
 
-import json
 import sys
-import time
-from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -31,6 +28,7 @@ class TestK2EmbeddedRuntime:
 
     def test_module_importable(self):
         from sdk import embedded
+
         assert hasattr(embedded, "execute")
         assert hasattr(embedded, "execute_capability")
         assert hasattr(embedded, "list_capabilities")
@@ -43,12 +41,14 @@ class TestK2EmbeddedRuntime:
 
     def test_reset_clears_cache(self):
         from sdk import embedded
+
         embedded._engine = "sentinel"
         embedded.reset()
         assert embedded._engine is None
 
     def test_execute_calls_engine(self):
         from sdk import embedded
+
         embedded.reset()
 
         mock_engine = MagicMock()
@@ -59,7 +59,11 @@ class TestK2EmbeddedRuntime:
         mock_cap_loader = MagicMock()
         mock_cap_executor = MagicMock()
 
-        with patch.object(embedded, "_get_components", return_value=(mock_engine, mock_cap_loader, mock_cap_executor)):
+        with patch.object(
+            embedded,
+            "_get_components",
+            return_value=(mock_engine, mock_cap_loader, mock_cap_executor),
+        ):
             result = embedded.execute("test.skill", {"text": "hello"})
 
         assert result == {"summary": "ok"}
@@ -67,6 +71,7 @@ class TestK2EmbeddedRuntime:
 
     def test_execute_raises_on_failure(self):
         from sdk import embedded
+
         embedded.reset()
 
         mock_engine = MagicMock()
@@ -78,12 +83,17 @@ class TestK2EmbeddedRuntime:
         mock_cap_loader = MagicMock()
         mock_cap_executor = MagicMock()
 
-        with patch.object(embedded, "_get_components", return_value=(mock_engine, mock_cap_loader, mock_cap_executor)):
+        with patch.object(
+            embedded,
+            "_get_components",
+            return_value=(mock_engine, mock_cap_loader, mock_cap_executor),
+        ):
             with pytest.raises(RuntimeError, match="failed"):
                 embedded.execute("test.skill", {"text": "hello"})
 
     def test_execute_capability_direct(self):
         from sdk import embedded
+
         embedded.reset()
 
         mock_cap = MagicMock()
@@ -93,29 +103,51 @@ class TestK2EmbeddedRuntime:
         mock_cap_loader = MagicMock()
         mock_cap_loader.get_capability.return_value = mock_cap
         mock_cap_executor = MagicMock()
-        mock_cap_executor.execute.return_value = ({"summary": "short"}, {"binding_id": "b1"})
+        mock_cap_executor.execute.return_value = (
+            {"summary": "short"},
+            {"binding_id": "b1"},
+        )
 
-        with patch.object(embedded, "_get_components", return_value=(mock_engine, mock_cap_loader, mock_cap_executor)):
-            result = embedded.execute_capability("text.content.summarize", {"text": "hello"})
+        with patch.object(
+            embedded,
+            "_get_components",
+            return_value=(mock_engine, mock_cap_loader, mock_cap_executor),
+        ):
+            result = embedded.execute_capability(
+                "text.content.summarize", {"text": "hello"}
+            )
 
         assert result == {"summary": "short"}
         mock_cap_executor.execute.assert_called_once_with(mock_cap, {"text": "hello"})
 
     def test_list_capabilities(self):
         from sdk import embedded
+
         embedded.reset()
 
         mock_cap = MagicMock()
         mock_cap.description = "Summarize text"
-        mock_cap.inputs = {"text": SimpleNamespace(type="string", required=True, description="Input")}
-        mock_cap.outputs = {"summary": SimpleNamespace(type="string", required=True, description="Output")}
+        mock_cap.inputs = {
+            "text": SimpleNamespace(type="string", required=True, description="Input")
+        }
+        mock_cap.outputs = {
+            "summary": SimpleNamespace(
+                type="string", required=True, description="Output"
+            )
+        }
 
         mock_engine = MagicMock()
         mock_cap_loader = MagicMock()
-        mock_cap_loader.get_all_capabilities.return_value = {"text.content.summarize": mock_cap}
+        mock_cap_loader.get_all_capabilities.return_value = {
+            "text.content.summarize": mock_cap
+        }
         mock_cap_executor = MagicMock()
 
-        with patch.object(embedded, "_get_components", return_value=(mock_engine, mock_cap_loader, mock_cap_executor)):
+        with patch.object(
+            embedded,
+            "_get_components",
+            return_value=(mock_engine, mock_cap_loader, mock_cap_executor),
+        ):
             caps = embedded.list_capabilities()
 
         assert len(caps) == 1
@@ -124,19 +156,32 @@ class TestK2EmbeddedRuntime:
 
     def test_as_autogen_tools(self):
         from sdk import embedded
+
         embedded.reset()
 
         mock_cap = MagicMock()
         mock_cap.description = "Summarize text"
-        mock_cap.inputs = {"text": SimpleNamespace(type="string", required=True, description="Input")}
-        mock_cap.outputs = {"summary": SimpleNamespace(type="string", required=True, description="Output")}
+        mock_cap.inputs = {
+            "text": SimpleNamespace(type="string", required=True, description="Input")
+        }
+        mock_cap.outputs = {
+            "summary": SimpleNamespace(
+                type="string", required=True, description="Output"
+            )
+        }
 
         mock_engine = MagicMock()
         mock_cap_loader = MagicMock()
-        mock_cap_loader.get_all_capabilities.return_value = {"text.content.summarize": mock_cap}
+        mock_cap_loader.get_all_capabilities.return_value = {
+            "text.content.summarize": mock_cap
+        }
         mock_cap_executor = MagicMock()
 
-        with patch.object(embedded, "_get_components", return_value=(mock_engine, mock_cap_loader, mock_cap_executor)):
+        with patch.object(
+            embedded,
+            "_get_components",
+            return_value=(mock_engine, mock_cap_loader, mock_cap_executor),
+        ):
             tools = embedded.as_autogen_tools(["text.content.summarize"])
 
         assert len(tools) == 1
@@ -145,6 +190,7 @@ class TestK2EmbeddedRuntime:
 
     def test_as_autogen_tools_all_capabilities(self):
         from sdk import embedded
+
         embedded.reset()
 
         mock_cap = MagicMock()
@@ -154,24 +200,38 @@ class TestK2EmbeddedRuntime:
 
         mock_engine = MagicMock()
         mock_cap_loader = MagicMock()
-        mock_cap_loader.get_all_capabilities.return_value = {"a.b.c": mock_cap, "d.e.f": mock_cap}
+        mock_cap_loader.get_all_capabilities.return_value = {
+            "a.b.c": mock_cap,
+            "d.e.f": mock_cap,
+        }
         mock_cap_executor = MagicMock()
 
-        with patch.object(embedded, "_get_components", return_value=(mock_engine, mock_cap_loader, mock_cap_executor)):
+        with patch.object(
+            embedded,
+            "_get_components",
+            return_value=(mock_engine, mock_cap_loader, mock_cap_executor),
+        ):
             tools = embedded.as_autogen_tools()
 
         assert len(tools) == 2
 
     def test_list_skills(self):
         from sdk import embedded
+
         embedded.reset()
 
         mock_skill = MagicMock()
         mock_skill.name = "Translate & Summarize"
         mock_skill.description = "Translates and summarizes"
 
-        mock_loader = MagicMock(spec=["get_skill", "_skill_index", "_build_skill_index"])
-        mock_loader._skill_index = {"text.translate-summary": Path("skills/official/text/translate-summary/skill.yaml")}
+        mock_loader = MagicMock(
+            spec=["get_skill", "_skill_index", "_build_skill_index"]
+        )
+        mock_loader._skill_index = {
+            "text.translate-summary": Path(
+                "skills/official/text/translate-summary/skill.yaml"
+            )
+        }
         mock_loader.get_skill.return_value = mock_skill
 
         mock_engine = MagicMock()
@@ -180,7 +240,11 @@ class TestK2EmbeddedRuntime:
         mock_cap_loader = MagicMock()
         mock_cap_executor = MagicMock()
 
-        with patch.object(embedded, "_get_components", return_value=(mock_engine, mock_cap_loader, mock_cap_executor)):
+        with patch.object(
+            embedded,
+            "_get_components",
+            return_value=(mock_engine, mock_cap_loader, mock_cap_executor),
+        ):
             skills = embedded.list_skills()
 
         assert len(skills) == 1
@@ -188,10 +252,12 @@ class TestK2EmbeddedRuntime:
 
     def test_field_to_dict_with_dict(self):
         from sdk.embedded import _field_to_dict
+
         assert _field_to_dict({"type": "string"}) == {"type": "string"}
 
     def test_field_to_dict_with_object(self):
         from sdk.embedded import _field_to_dict
+
         field = SimpleNamespace(type="integer", required=True, description="count")
         result = _field_to_dict(field)
         assert result["type"] == "integer"
@@ -199,10 +265,18 @@ class TestK2EmbeddedRuntime:
 
     def test_try_build_pydantic_schema(self):
         from sdk.embedded import _try_build_pydantic_schema
-        schema = _try_build_pydantic_schema("test.cap", {
-            "text": {"type": "string", "required": True, "description": "Input text"},
-            "count": {"type": "integer", "required": False, "description": "Count"},
-        })
+
+        schema = _try_build_pydantic_schema(
+            "test.cap",
+            {
+                "text": {
+                    "type": "string",
+                    "required": True,
+                    "description": "Input text",
+                },
+                "count": {"type": "integer", "required": False, "description": "Count"},
+            },
+        )
         # Should return a Pydantic model class or None if pydantic unavailable
         if schema is not None:
             # It's a model class
@@ -241,24 +315,27 @@ class TestK5BenchmarkLab:
 
     def test_benchmark_lab_outputs_match_same_keys(self):
         from cli.main import _benchmark_lab_outputs_match
+
         assert _benchmark_lab_outputs_match({"a": 1, "b": 2}, {"a": 3, "b": 4}) is True
 
     def test_benchmark_lab_outputs_match_different_keys(self):
         from cli.main import _benchmark_lab_outputs_match
+
         assert _benchmark_lab_outputs_match({"a": 1}, {"b": 2}) is False
 
     def test_benchmark_lab_outputs_match_both_none(self):
         from cli.main import _benchmark_lab_outputs_match
+
         assert _benchmark_lab_outputs_match(None, None) is True
 
     def test_benchmark_lab_subparser_registered(self):
         """Ensure 'benchmark-lab' is a recognized subcommand."""
-        import argparse
 
         # Parse with benchmark-lab to verify it exists
         from cli.main import main
         import io
         from contextlib import redirect_stderr
+
         buf = io.StringIO()
         try:
             with redirect_stderr(buf):
@@ -282,11 +359,13 @@ class TestK3DevWatchMode:
         """Ensure 'dev' is a recognized subcommand."""
         import io
         from contextlib import redirect_stderr
+
         buf = io.StringIO()
         try:
             with redirect_stderr(buf):
                 sys.argv = ["agent-skills", "dev", "--help"]
                 from cli.main import main
+
                 main()
         except SystemExit:
             pass
@@ -299,6 +378,7 @@ class TestK3DevWatchMode:
 
     def test_dev_cmd_function_exists(self):
         from cli.main import _cmd_dev
+
         assert callable(_cmd_dev)
 
     def test_dev_cmd_rejects_unknown_skill(self):
@@ -327,6 +407,7 @@ class TestEmbeddedRealEngine:
     def test_real_engine_initialization(self):
         """Verify the embedded runtime can build a real engine."""
         from sdk.embedded import _get_components, reset
+
         reset()
 
         engine, cap_loader, cap_executor = _get_components()
@@ -337,6 +418,7 @@ class TestEmbeddedRealEngine:
     def test_real_list_capabilities(self):
         """List capabilities from the real registry."""
         from sdk.embedded import list_capabilities, reset
+
         reset()
 
         caps = list_capabilities()
@@ -346,6 +428,7 @@ class TestEmbeddedRealEngine:
     def test_real_list_skills(self):
         """List skills from the real registry."""
         from sdk.embedded import list_skills, reset
+
         reset()
 
         skills = list_skills()
@@ -355,6 +438,7 @@ class TestEmbeddedRealEngine:
     def test_real_execute_skill(self):
         """Execute a skill through the embedded runtime."""
         from sdk.embedded import execute, reset
+
         reset()
 
         result = execute(
@@ -367,6 +451,7 @@ class TestEmbeddedRealEngine:
     def test_real_execute_capability(self):
         """Execute a capability directly through the embedded runtime."""
         from sdk.embedded import execute_capability, reset
+
         reset()
 
         result = execute_capability(

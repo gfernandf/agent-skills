@@ -41,7 +41,6 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.types import (
-    CallToolResult,
     TextContent,
     Tool,
 )
@@ -80,7 +79,9 @@ def _get_capabilities() -> list[dict[str, Any]]:
         from sdk.embedded import list_capabilities
 
         _capabilities_cache = list_capabilities()
-        logger.info("Discovered %d capabilities for MCP exposure.", len(_capabilities_cache))
+        logger.info(
+            "Discovered %d capabilities for MCP exposure.", len(_capabilities_cache)
+        )
     return _capabilities_cache
 
 
@@ -155,10 +156,17 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
         result = execute_capability(name, safe_args)
     except Exception as exc:
         logger.error("Tool '%s' execution failed: %s", name, exc)
-        return [TextContent(type="text", text=json.dumps({
-            "error": str(exc),
-            "tool": name,
-        }))]
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": str(exc),
+                        "tool": name,
+                    }
+                ),
+            )
+        ]
 
     return [TextContent(type="text", text=json.dumps(result, default=str))]
 
@@ -212,7 +220,8 @@ async def run_sse(host: str = "0.0.0.0", port: int = 8765) -> None:
             request.scope, request.receive, request._send
         ) as streams:
             await server.run(
-                streams[0], streams[1],
+                streams[0],
+                streams[1],
                 server.create_initialization_options(),
             )
 

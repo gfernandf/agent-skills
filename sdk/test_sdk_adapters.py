@@ -6,7 +6,6 @@ Validates the HTTP contract and tool-building logic of each adapter.
 
 from __future__ import annotations
 
-import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -45,13 +44,20 @@ class TestLangChainAdapter:
     def test_build_tools_with_explicit_capabilities(self, mock_requests: MagicMock):
         """Build tools for a given list of capability ids."""
         # Stub the BaseTool import via a fake class
-        fake_base_tool = type("BaseTool", (), {
-            "__init_subclass__": classmethod(lambda cls, **kw: None),
-            "name": "",
-            "description": "",
-        })
+        fake_base_tool = type(
+            "BaseTool",
+            (),
+            {
+                "__init_subclass__": classmethod(lambda cls, **kw: None),
+                "name": "",
+                "description": "",
+            },
+        )
         fake_module = SimpleNamespace(BaseTool=fake_base_tool)
-        with patch.dict("sys.modules", {"langchain_core": MagicMock(), "langchain_core.tools": fake_module}):
+        with patch.dict(
+            "sys.modules",
+            {"langchain_core": MagicMock(), "langchain_core.tools": fake_module},
+        ):
             mock_requests.get.return_value = _fake_response(_MOCK_CAP_DESC)
             mock_requests.post.return_value = _fake_response(_MOCK_EXEC_RESULT)
 
@@ -70,13 +76,20 @@ class TestLangChainAdapter:
     @patch("sdk.langchain_adapter.requests")
     def test_auto_discover_capabilities(self, mock_requests: MagicMock):
         """When capabilities=None, adapter auto-discovers from server."""
-        fake_base_tool = type("BaseTool", (), {
-            "__init_subclass__": classmethod(lambda cls, **kw: None),
-            "name": "",
-            "description": "",
-        })
+        fake_base_tool = type(
+            "BaseTool",
+            (),
+            {
+                "__init_subclass__": classmethod(lambda cls, **kw: None),
+                "name": "",
+                "description": "",
+            },
+        )
         fake_module = SimpleNamespace(BaseTool=fake_base_tool)
-        with patch.dict("sys.modules", {"langchain_core": MagicMock(), "langchain_core.tools": fake_module}):
+        with patch.dict(
+            "sys.modules",
+            {"langchain_core": MagicMock(), "langchain_core.tools": fake_module},
+        ):
             # First call: list capabilities; second: describe
             mock_requests.get.side_effect = [
                 _fake_response(_MOCK_LIST_RESULT),
@@ -95,6 +108,7 @@ class TestLangChainAdapter:
     def test_import_error_without_langchain(self):
         """Adapter raises ImportError if langchain-core is not installed."""
         import sys
+
         saved = sys.modules.get("langchain_core")
         saved_tools = sys.modules.get("langchain_core.tools")
         sys.modules["langchain_core"] = None  # type: ignore
@@ -103,6 +117,7 @@ class TestLangChainAdapter:
             # Re-import to trigger the check
             with pytest.raises(ImportError, match="langchain-core"):
                 from sdk.langchain_adapter import build_langchain_tools
+
                 build_langchain_tools(capabilities=[CAP_ID])
         finally:
             if saved is not None:
@@ -125,13 +140,19 @@ class TestCrewAIAdapter:
 
     @patch("sdk.crewai_adapter.requests")
     def test_build_tools(self, mock_requests: MagicMock):
-        fake_base_tool = type("BaseTool", (), {
-            "__init_subclass__": classmethod(lambda cls, **kw: None),
-            "name": "",
-            "description": "",
-        })
+        fake_base_tool = type(
+            "BaseTool",
+            (),
+            {
+                "__init_subclass__": classmethod(lambda cls, **kw: None),
+                "name": "",
+                "description": "",
+            },
+        )
         fake_module = SimpleNamespace(BaseTool=fake_base_tool)
-        with patch.dict("sys.modules", {"crewai": MagicMock(), "crewai.tools": fake_module}):
+        with patch.dict(
+            "sys.modules", {"crewai": MagicMock(), "crewai.tools": fake_module}
+        ):
             mock_requests.get.return_value = _fake_response(_MOCK_CAP_DESC)
 
             from sdk.crewai_adapter import build_crewai_tools
@@ -145,6 +166,7 @@ class TestCrewAIAdapter:
 
     def test_import_error_without_crewai(self):
         import sys
+
         saved = sys.modules.get("crewai")
         saved_tools = sys.modules.get("crewai.tools")
         sys.modules["crewai"] = None  # type: ignore
@@ -152,6 +174,7 @@ class TestCrewAIAdapter:
         try:
             with pytest.raises(ImportError, match="crewai"):
                 from sdk.crewai_adapter import build_crewai_tools
+
                 build_crewai_tools(capabilities=[CAP_ID])
         finally:
             if saved is not None:
@@ -233,21 +256,27 @@ class TestSemanticKernelAdapter:
                 fn._sk_name = kwargs.get("name", fn.__name__)
                 fn._sk_desc = kwargs.get("description", "")
                 return fn
+
             return decorator
 
         fake_kf_mod = SimpleNamespace(KernelFunction=type("KernelFunction", (), {}))
         fake_decorator_mod = SimpleNamespace(kernel_function=fake_kernel_function)
         fake_plugin_mod = SimpleNamespace(
             KernelFunction=fake_kf_mod.KernelFunction,
-            KernelPlugin=type("KernelPlugin", (), {"__init__": lambda self, **kw: None}),
+            KernelPlugin=type(
+                "KernelPlugin", (), {"__init__": lambda self, **kw: None}
+            ),
             kernel_function_decorator=fake_decorator_mod,
         )
 
-        with patch.dict("sys.modules", {
-            "semantic_kernel": MagicMock(),
-            "semantic_kernel.functions": fake_plugin_mod,
-            "semantic_kernel.functions.kernel_function_decorator": fake_decorator_mod,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "semantic_kernel": MagicMock(),
+                "semantic_kernel.functions": fake_plugin_mod,
+                "semantic_kernel.functions.kernel_function_decorator": fake_decorator_mod,
+            },
+        ):
             mock_requests.get.return_value = _fake_response(_MOCK_CAP_DESC)
 
             from sdk.semantic_kernel_adapter import build_sk_functions
@@ -262,6 +291,7 @@ class TestSemanticKernelAdapter:
             def decorator(fn):
                 fn._sk_name = kwargs.get("name", fn.__name__)
                 return fn
+
             return decorator
 
         fake_kf_mod = SimpleNamespace(KernelFunction=type("KernelFunction", (), {}))
@@ -281,11 +311,14 @@ class TestSemanticKernelAdapter:
             kernel_function_decorator=fake_decorator_mod,
         )
 
-        with patch.dict("sys.modules", {
-            "semantic_kernel": MagicMock(),
-            "semantic_kernel.functions": fake_plugin_mod,
-            "semantic_kernel.functions.kernel_function_decorator": fake_decorator_mod,
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "semantic_kernel": MagicMock(),
+                "semantic_kernel.functions": fake_plugin_mod,
+                "semantic_kernel.functions.kernel_function_decorator": fake_decorator_mod,
+            },
+        ):
             mock_requests.get.return_value = _fake_response(_MOCK_CAP_DESC)
 
             from sdk.semantic_kernel_adapter import build_sk_plugin

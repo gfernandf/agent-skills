@@ -93,9 +93,17 @@ def main() -> None:
         )
 
     run_cmd = sub.add_parser("run", help="Execute a skill")
-    run_cmd.add_argument("skill_id", help="Skill identifier (e.g. text.translate-summary)")
-    run_cmd.add_argument("--input", default=None, help="Inline JSON object with skill inputs (e.g. '{\"text\": \"hello\"}')")
-    run_cmd.add_argument("--input-file", default=None, help="Path to a JSON file with skill inputs")
+    run_cmd.add_argument(
+        "skill_id", help="Skill identifier (e.g. text.translate-summary)"
+    )
+    run_cmd.add_argument(
+        "--input",
+        default=None,
+        help='Inline JSON object with skill inputs (e.g. \'{"text": "hello"}\')',
+    )
+    run_cmd.add_argument(
+        "--input-file", default=None, help="Path to a JSON file with skill inputs"
+    )
     run_cmd.add_argument(
         "--trace-id", default=None, help="Optional trace id for correlation"
     )
@@ -123,29 +131,41 @@ def main() -> None:
         help="Natural language description of what you want (e.g. 'summarize this text in Spanish')",
     )
     ask_cmd.add_argument(
-        "--input", default=None,
+        "--input",
+        default=None,
         help="Inline JSON with extra inputs (merged with auto-detected inputs)",
     )
     ask_cmd.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Show the selected skill and input mapping without executing",
     )
     ask_cmd.add_argument(
-        "--top", type=int, default=1,
+        "--top",
+        type=int,
+        default=1,
         help="Number of candidate skills to show (default: 1, run top match)",
     )
     ask_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output",
     )
     add_root_args(ask_cmd)
 
-    describe_cmd = sub.add_parser("describe", help="Describe a skill (inputs, outputs, steps, capabilities)")
-    describe_cmd.add_argument("skill_id", help="Skill identifier (e.g. text.translate-summary)")
+    describe_cmd = sub.add_parser(
+        "describe", help="Describe a skill (inputs, outputs, steps, capabilities)"
+    )
+    describe_cmd.add_argument(
+        "skill_id", help="Skill identifier (e.g. text.translate-summary)"
+    )
     describe_cmd.add_argument(
         "--json", action="store_true", help="Emit machine-readable JSON output"
     )
     describe_cmd.add_argument(
-        "--verbose", "-v", action="store_true",
+        "--verbose",
+        "-v",
+        action="store_true",
         help="Show full detail: capabilities used, dependencies, DAG edges, and raw YAML",
     )
     add_root_args(describe_cmd)
@@ -276,9 +296,15 @@ def main() -> None:
         "trace",
         help="Execute a skill with step-by-step event tracing (like 'run' but prints each step's lifecycle)",
     )
-    trace_cmd.add_argument("skill_id", help="Skill identifier (e.g. text.translate-summary)")
-    trace_cmd.add_argument("--input", default=None, help="Inline JSON object with skill inputs")
-    trace_cmd.add_argument("--input-file", default=None, help="Path to a JSON file with skill inputs")
+    trace_cmd.add_argument(
+        "skill_id", help="Skill identifier (e.g. text.translate-summary)"
+    )
+    trace_cmd.add_argument(
+        "--input", default=None, help="Inline JSON object with skill inputs"
+    )
+    trace_cmd.add_argument(
+        "--input-file", default=None, help="Path to a JSON file with skill inputs"
+    )
     trace_cmd.add_argument(
         "--trace-id", default=None, help="Optional trace id for correlation"
     )
@@ -346,7 +372,8 @@ def main() -> None:
         help="Plain-language description of the workflow to create. Omit to use --wizard mode.",
     )
     scaffold_cmd.add_argument(
-        "--wizard", action="store_true",
+        "--wizard",
+        action="store_true",
         help="Interactive guided mode: answer questions to define inputs, outputs, and capabilities.",
     )
     scaffold_cmd.add_argument(
@@ -565,15 +592,20 @@ def main() -> None:
     )
     validate_grp = validate_cmd.add_mutually_exclusive_group()
     validate_grp.add_argument(
-        "--skill", default=None,
+        "--skill",
+        default=None,
         help="Validate a single skill by id (e.g. text.translate-summary).",
     )
     validate_grp.add_argument(
-        "--file", type=Path, default=None,
+        "--file",
+        type=Path,
+        default=None,
         help="Validate a single skill.yaml file path.",
     )
     validate_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output",
     )
     add_root_args(validate_cmd)
 
@@ -582,15 +614,20 @@ def main() -> None:
         help="Run reproducible execution benchmarks and print paper-ready results",
     )
     benchmark_cmd.add_argument(
-        "--skill", default=None,
+        "--skill",
+        default=None,
         help="Benchmark a single skill (default: text.translate-summary).",
     )
     benchmark_cmd.add_argument(
-        "--iterations", type=int, default=5,
+        "--iterations",
+        type=int,
+        default=5,
         help="Number of iterations per skill (default: 5).",
     )
     benchmark_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output",
     )
     add_root_args(benchmark_cmd)
 
@@ -604,23 +641,32 @@ def main() -> None:
         help="Capability identifier (e.g. text.content.summarize)",
     )
     benchmark_lab_cmd.add_argument(
-        "--runs", type=int, default=10,
+        "--runs",
+        type=int,
+        default=10,
         help="Number of runs per protocol (default: 10).",
     )
     benchmark_lab_cmd.add_argument(
-        "--protocols", default=None,
+        "--protocols",
+        default=None,
         help="Comma-separated protocols to compare (default: all available). E.g. pythoncall,openapi,mcp",
     )
     benchmark_lab_cmd.add_argument(
-        "--export", type=Path, default=None,
+        "--export",
+        type=Path,
+        default=None,
         help="Export results to a JSON file.",
     )
     benchmark_lab_cmd.add_argument(
-        "--format", default="table", choices=["table", "markdown"],
+        "--format",
+        default="table",
+        choices=["table", "markdown"],
         help="Output format: 'table' (default) or 'markdown' for copy-paste.",
     )
     benchmark_lab_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output",
     )
     add_root_args(benchmark_lab_cmd)
 
@@ -634,11 +680,14 @@ def main() -> None:
         help="Skill identifier to watch (e.g. text.translate-summary)",
     )
     dev_cmd.add_argument(
-        "--interval", type=float, default=1.0,
+        "--interval",
+        type=float,
+        default=1.0,
         help="Polling interval in seconds (default: 1.0).",
     )
     dev_cmd.add_argument(
-        "--no-test", action="store_true",
+        "--no-test",
+        action="store_true",
         help="Skip test execution, only validate and check-wiring.",
     )
     add_root_args(dev_cmd)
@@ -648,17 +697,24 @@ def main() -> None:
         "test",
         help="Test a skill: execute with fixture inputs, verify expected outputs",
     )
-    test_cmd.add_argument("skill_id", help="Skill identifier to test (e.g. text.translate-summary)")
     test_cmd.add_argument(
-        "--input-file", type=Path, default=None,
+        "skill_id", help="Skill identifier to test (e.g. text.translate-summary)"
+    )
+    test_cmd.add_argument(
+        "--input-file",
+        type=Path,
+        default=None,
         help="JSON file with test inputs. Default: test_input.json next to skill.yaml.",
     )
     test_cmd.add_argument(
-        "--generate-fixture", action="store_true",
+        "--generate-fixture",
+        action="store_true",
         help="Generate a test_input.json stub from the skill's input schema and exit.",
     )
     test_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON report.",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON report.",
     )
     add_root_args(test_cmd)
 
@@ -669,24 +725,29 @@ def main() -> None:
     )
     check_wiring_cmd.add_argument("skill_id", help="Skill identifier to check")
     check_wiring_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output.",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
     )
     add_root_args(check_wiring_cmd)
 
     # --- M6: describe --mermaid is added to existing describe_cmd ---
     describe_cmd.add_argument(
-        "--mermaid", action="store_true",
+        "--mermaid",
+        action="store_true",
         help="Output a Mermaid diagram of the skill's step DAG.",
     )
 
     # --- M7: capabilities type filters ---
     capabilities_cmd.add_argument(
-        "--input-type", default=None,
+        "--input-type",
+        default=None,
         choices=["string", "integer", "number", "boolean", "array", "object"],
         help="Filter capabilities that accept this input type.",
     )
     capabilities_cmd.add_argument(
-        "--output-type", default=None,
+        "--output-type",
+        default=None,
         choices=["string", "integer", "number", "boolean", "array", "object"],
         help="Filter capabilities that produce this output type.",
     )
@@ -698,7 +759,9 @@ def main() -> None:
     )
     export_cmd.add_argument("skill_id", help="Skill identifier to export")
     export_cmd.add_argument(
-        "--out", type=Path, default=None,
+        "--out",
+        type=Path,
+        default=None,
         help="Output file path. Default: <skill_dir>/<skill_id>.skill-bundle.tar.gz",
     )
     add_root_args(export_cmd)
@@ -710,7 +773,9 @@ def main() -> None:
     )
     import_cmd.add_argument("source", help="Path to .skill-bundle.tar.gz file")
     import_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output.",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
     )
     add_root_args(import_cmd)
 
@@ -727,20 +792,26 @@ def main() -> None:
         help="Target channel (default: experimental).",
     )
     contribute_cmd.add_argument(
-        "--draft", action="store_true", help="Create PR as draft.",
+        "--draft",
+        action="store_true",
+        help="Create PR as draft.",
     )
     contribute_cmd.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Run prepare + validate only, skip PR creation.",
     )
     contribute_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output.",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
     )
     add_root_args(contribute_cmd)
 
     # --- M10: discover --similar ---
     discover_cmd.add_argument(
-        "--similar", default=None,
+        "--similar",
+        default=None,
         help="Find skills similar to this skill ID (ignores intent).",
     )
 
@@ -750,10 +821,20 @@ def main() -> None:
         help="Rate a skill (1-5 stars) with optional comment",
     )
     rate_cmd.add_argument("skill_id", help="Skill identifier to rate")
-    rate_cmd.add_argument("--score", type=int, required=True, choices=[1, 2, 3, 4, 5], help="Rating score (1-5)")
-    rate_cmd.add_argument("--comment", default=None, help="Optional comment about the skill")
     rate_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output.",
+        "--score",
+        type=int,
+        required=True,
+        choices=[1, 2, 3, 4, 5],
+        help="Rating score (1-5)",
+    )
+    rate_cmd.add_argument(
+        "--comment", default=None, help="Optional comment about the skill"
+    )
+    rate_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
     )
     add_root_args(rate_cmd)
 
@@ -765,12 +846,14 @@ def main() -> None:
     report_cmd.add_argument("skill_id", help="Skill identifier to report")
     report_cmd.add_argument("--issue", required=True, help="Description of the issue")
     report_cmd.add_argument(
-        "--severity", default="medium",
+        "--severity",
+        default="medium",
         choices=["low", "medium", "high", "critical"],
         help="Issue severity (default: medium).",
     )
     report_cmd.add_argument(
-        "--open-browser", action="store_true",
+        "--open-browser",
+        action="store_true",
         help="Open the GitHub new-issue URL in the default browser.",
     )
     add_root_args(report_cmd)
@@ -785,19 +868,25 @@ def main() -> None:
         help="Skill identifier to showcase (e.g. text.summarize-plain-input)",
     )
     showcase_cmd.add_argument(
-        "--no-run", action="store_true",
+        "--no-run",
+        action="store_true",
         help="Skip real execution — only emit metadata + diagram.",
     )
     showcase_cmd.add_argument(
-        "--benchmark", action="store_true",
+        "--benchmark",
+        action="store_true",
         help="Include a performance comparison table (runs benchmark-lab internally).",
     )
     showcase_cmd.add_argument(
-        "--runs", type=int, default=5,
+        "--runs",
+        type=int,
+        default=5,
         help="Number of benchmark runs per binding (default: 5, requires --benchmark).",
     )
     showcase_cmd.add_argument(
-        "--file", type=Path, default=None,
+        "--file",
+        type=Path,
+        default=None,
         help="Write the markdown to a file instead of stdout.",
     )
     add_root_args(showcase_cmd)
@@ -812,19 +901,25 @@ def main() -> None:
         help="Path to a .compose file",
     )
     compose_cmd.add_argument(
-        "--out", type=Path, default=None,
+        "--out",
+        type=Path,
+        default=None,
         help="Write compiled skill.yaml to this path (default: print to stdout)",
     )
     compose_cmd.add_argument(
-        "--run", action="store_true",
+        "--run",
+        action="store_true",
         help="Compile and immediately execute the composed skill",
     )
     compose_cmd.add_argument(
-        "--input", default=None,
+        "--input",
+        default=None,
         help="Inline JSON inputs for --run mode",
     )
     compose_cmd.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output",
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output",
     )
     add_root_args(compose_cmd)
 
@@ -836,21 +931,41 @@ def main() -> None:
     triggers_sub = triggers_cmd.add_subparsers(dest="triggers_action", required=True)
 
     triggers_list = triggers_sub.add_parser("list", help="List all registered triggers")
-    triggers_list.add_argument("--type", default=None, choices=["schedule", "event", "webhook", "file_change"], help="Filter by type")
+    triggers_list.add_argument(
+        "--type",
+        default=None,
+        choices=["schedule", "event", "webhook", "file_change"],
+        help="Filter by type",
+    )
     triggers_list.add_argument("--json", action="store_true", help="JSON output")
     add_root_args(triggers_list)
 
-    triggers_fire = triggers_sub.add_parser("fire", help="Manually fire a trigger event")
-    triggers_fire.add_argument("--event-type", default="webhook", choices=["webhook", "event", "file_change", "schedule"], help="Event type")
+    triggers_fire = triggers_sub.add_parser(
+        "fire", help="Manually fire a trigger event"
+    )
+    triggers_fire.add_argument(
+        "--event-type",
+        default="webhook",
+        choices=["webhook", "event", "file_change", "schedule"],
+        help="Event type",
+    )
     triggers_fire.add_argument("--webhook", default=None, help="Webhook name to fire")
-    triggers_fire.add_argument("--source-skill", default=None, help="Source skill for event chaining")
-    triggers_fire.add_argument("--status", default="completed", help="Status for event chaining")
-    triggers_fire.add_argument("--files", default=None, help="Comma-separated file paths for file_change")
+    triggers_fire.add_argument(
+        "--source-skill", default=None, help="Source skill for event chaining"
+    )
+    triggers_fire.add_argument(
+        "--status", default="completed", help="Status for event chaining"
+    )
+    triggers_fire.add_argument(
+        "--files", default=None, help="Comma-separated file paths for file_change"
+    )
     triggers_fire.add_argument("--payload", default=None, help="Extra JSON payload")
     triggers_fire.add_argument("--json", action="store_true", help="JSON output")
     add_root_args(triggers_fire)
 
-    triggers_status = triggers_sub.add_parser("status", help="Show trigger registration summary")
+    triggers_status = triggers_sub.add_parser(
+        "status", help="Show trigger registration summary"
+    )
     triggers_status.add_argument("--json", action="store_true", help="JSON output")
     add_root_args(triggers_status)
 
@@ -890,7 +1005,9 @@ def main() -> None:
         )
 
     elif args.command == "describe":
-        _cmd_describe(registry_root, args.skill_id, args.json, args.verbose, args.mermaid)
+        _cmd_describe(
+            registry_root, args.skill_id, args.json, args.verbose, args.mermaid
+        )
 
     elif args.command == "discover":
         _cmd_discover(
@@ -1284,12 +1401,13 @@ def _cmd_scaffold(
     wizard: bool = False,
 ) -> None:
     import os
-    from tooling.skill_authoring import generate_test_fixture, suggest_wiring
+    from tooling.skill_authoring import generate_test_fixture
 
     # --- M1: Wizard mode ---
     if wizard or not intent:
         intent, channel, wizard_inputs, wizard_outputs, wizard_caps = _scaffold_wizard(
-            registry_root, channel,
+            registry_root,
+            channel,
         )
 
     from official_services.scaffold_service import generate_skill_from_prompt
@@ -1298,11 +1416,15 @@ def _cmd_scaffold(
         f"[scaffold] Generating skill for: {intent[:80]}{'...' if len(intent) > 80 else ''}"
     )
     has_key = bool(os.environ.get("OPENAI_API_KEY"))
-    scaffolder_env = os.environ.get("AGENT_SKILLS_SCAFFOLDER_MODE", "binding-first").strip().lower()
+    scaffolder_env = (
+        os.environ.get("AGENT_SKILLS_SCAFFOLDER_MODE", "binding-first").strip().lower()
+    )
     if scaffolder_env == "direct-openai" and has_key:
         mode_label = "LLM (direct OpenAI)"
     elif has_key:
-        mode_label = "binding-first (planner uses available bindings; OPENAI_API_KEY detected)"
+        mode_label = (
+            "binding-first (planner uses available bindings; OPENAI_API_KEY detected)"
+        )
     else:
         mode_label = "template (no OPENAI_API_KEY — offline deterministic generation)"
     print(f"[scaffold] Mode: {mode_label}")
@@ -1388,6 +1510,7 @@ def _cmd_scaffold(
     print("[scaffold] Running validation...")
     try:
         from tooling.validate_skill_schema import validate_skill_yaml
+
         schema_errs = validate_skill_yaml(target_file)
         if schema_errs:
             print("[scaffold] Schema issues:")
@@ -1416,7 +1539,9 @@ def _scaffold_wizard(
     print()
 
     # Step 1: Intent
-    intent = input("What should this skill do? (describe in plain language)\n> ").strip()
+    intent = input(
+        "What should this skill do? (describe in plain language)\n> "
+    ).strip()
     if not intent:
         print("Intent cannot be empty.")
         raise SystemExit(1)
@@ -1427,7 +1552,9 @@ def _scaffold_wizard(
     channel = ch if ch in ("local", "experimental", "community") else default_channel
 
     # Step 3: Inputs
-    print("\nDefine skill inputs (one per line, format: name:type — e.g. 'text:string')")
+    print(
+        "\nDefine skill inputs (one per line, format: name:type — e.g. 'text:string')"
+    )
     print("  Available types: string, integer, number, boolean, array, object")
     print("  Press Enter on empty line when done.")
     inputs: dict[str, dict] = {}
@@ -1486,9 +1613,13 @@ def _scaffold_wizard(
             short = (desc[:60] + "...") if len(desc) > 60 else desc
             print(f"  {i:2}. {cid:<45} {short}")
     else:
-        print(f"\nNo capabilities matched your intent. The scaffolder will select automatically.")
+        print(
+            "\nNo capabilities matched your intent. The scaffolder will select automatically."
+        )
 
-    print("\nWhich capabilities to use? (comma-separated numbers, or Enter for auto-select)")
+    print(
+        "\nWhich capabilities to use? (comma-separated numbers, or Enter for auto-select)"
+    )
     selection = input("> ").strip()
     selected_caps: list[str] = []
     if selection:
@@ -1507,7 +1638,7 @@ def _scaffold_wizard(
         # Enhance intent with selection info
         intent += f" [capabilities: {', '.join(selected_caps)}]"
 
-    print(f"\nGenerating skill...\n")
+    print("\nGenerating skill...\n")
     return intent, channel, inputs, outputs, selected_caps
 
 
@@ -2131,14 +2262,28 @@ def _cmd_describe(
     # --- M6: Mermaid DAG output ---
     if mermaid:
         from tooling.skill_authoring import generate_mermaid_dag
-        raw = yaml.safe_load(Path(skill.source_file).read_text(encoding="utf-8")) if skill.source_file else {}
+
+        raw = (
+            yaml.safe_load(Path(skill.source_file).read_text(encoding="utf-8"))
+            if skill.source_file
+            else {}
+        )
         if not raw:
-            raw = {"id": skill.id, "name": skill.name, "steps": [], "inputs": {}, "outputs": {}}
+            raw = {
+                "id": skill.id,
+                "name": skill.name,
+                "steps": [],
+                "inputs": {},
+                "outputs": {},
+            }
             for s in skill.steps:
-                raw.setdefault("steps", []).append({
-                    "id": s.id, "uses": s.uses,
-                    "config": s.config if s.config else {},
-                })
+                raw.setdefault("steps", []).append(
+                    {
+                        "id": s.id,
+                        "uses": s.uses,
+                        "config": s.config if s.config else {},
+                    }
+                )
             raw["inputs"] = {k: {"type": "string"} for k in skill.inputs}
             raw["outputs"] = {k: {"type": "string"} for k in skill.outputs}
         print(generate_mermaid_dag(raw))
@@ -2173,7 +2318,7 @@ def _cmd_describe(
     print(f"  Outputs:     {', '.join(skill.outputs.keys())}")
     print(f"  Steps ({len(skill.steps)}):")
     for si in steps_detail:
-        deps_str = ', '.join(si.get('depends_on', []))
+        deps_str = ", ".join(si.get("depends_on", []))
         print(f"    {si['id']:<25} uses: {si['uses']}")
         if deps_str:
             print(f"    {'':<25} depends_on: [{deps_str}]")
@@ -2184,6 +2329,7 @@ def _cmd_describe(
 # ---------------------------------------------------------------------------
 # K1 — Ask (NL Autopilot)
 # ---------------------------------------------------------------------------
+
 
 def _cmd_ask(
     registry_root: Path,
@@ -2209,7 +2355,11 @@ def _cmd_ask(
 
     if not results:
         if json_output:
-            print(json.dumps({"ok": False, "error": "No skills match the question."}, indent=2))
+            print(
+                json.dumps(
+                    {"ok": False, "error": "No skills match the question."}, indent=2
+                )
+            )
         else:
             print("[ask] No skills found for your question.")
         raise SystemExit(1)
@@ -2227,10 +2377,12 @@ def _cmd_ask(
             for r in results[:top]
         ]
         if not json_output:
-            print(f"[ask] Question: \"{question}\"\n")
+            print(f'[ask] Question: "{question}"\n')
             print(f"[ask] Top {min(top, len(results))} candidate(s):")
             for i, c in enumerate(candidates):
-                print(f"  {i+1}. {c['skill_id']:<40} score={c['score']:.4f}  {c['name']}")
+                print(
+                    f"  {i + 1}. {c['skill_id']:<40} score={c['score']:.4f}  {c['name']}"
+                )
             print()
 
     # Select the best match
@@ -2247,7 +2399,10 @@ def _cmd_ask(
             "score": best.score,
             "mapped_inputs": mapped_inputs,
             "skill_inputs": {
-                k: {"type": getattr(v, "type", "string"), "required": getattr(v, "required", False)}
+                k: {
+                    "type": getattr(v, "type", "string"),
+                    "required": getattr(v, "required", False),
+                }
                 for k, v in skill_spec.inputs.items()
             },
         }
@@ -2256,19 +2411,21 @@ def _cmd_ask(
             print(json.dumps(payload, indent=2, ensure_ascii=False))
         else:
             print(f"[ask] Selected: {skill_id} (score={best.score:.4f})")
-            print(f"[ask] Mapped inputs:")
+            print("[ask] Mapped inputs:")
             for k, v in mapped_inputs.items():
                 val_str = str(v)
                 if len(val_str) > 80:
                     val_str = val_str[:77] + "..."
                 print(f"  {k}: {val_str}")
-            print(f"\n[ask] Use --no-dry-run to execute, or: agent-skills run {skill_id} --input '...'")
+            print(
+                f"\n[ask] Use --no-dry-run to execute, or: agent-skills run {skill_id} --input '...'"
+            )
         return
 
     # 4. Execute
     if not json_output:
         print(f"[ask] Selected: {skill_id} (score={best.score:.4f})")
-        print(f"[ask] Executing...\n")
+        print("[ask] Executing...\n")
 
     engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
     request = ExecutionRequest(
@@ -2318,7 +2475,16 @@ def _ask_map_inputs(
     inputs: dict = {}
 
     # Well-known string field names that should receive the question text
-    text_field_names = {"text", "content", "query", "input", "prompt", "message", "source_text", "body"}
+    text_field_names = {
+        "text",
+        "content",
+        "query",
+        "input",
+        "prompt",
+        "message",
+        "source_text",
+        "body",
+    }
     lang_field_names = {"target_language", "language", "lang", "locale"}
 
     for name, field in skill_spec.inputs.items():
@@ -2366,12 +2532,21 @@ def _ask_map_inputs(
 
 
 _LANG_HINTS: dict[str, str] = {
-    "spanish": "es", "español": "es", "espanol": "es",
-    "french": "fr", "français": "fr", "francais": "fr",
-    "german": "de", "deutsch": "de",
-    "italian": "it", "italiano": "it",
-    "portuguese": "pt", "português": "pt", "portugues": "pt",
-    "chinese": "zh", "mandarin": "zh",
+    "spanish": "es",
+    "español": "es",
+    "espanol": "es",
+    "french": "fr",
+    "français": "fr",
+    "francais": "fr",
+    "german": "de",
+    "deutsch": "de",
+    "italian": "it",
+    "italiano": "it",
+    "portuguese": "pt",
+    "português": "pt",
+    "portugues": "pt",
+    "chinese": "zh",
+    "mandarin": "zh",
     "japanese": "ja",
     "korean": "ko",
     "russian": "ru",
@@ -2437,7 +2612,13 @@ def _cmd_discover(
         results = find_similar_skills(similar, all_skills, top_n=limit)
 
         if json_output:
-            print(json.dumps({"query_skill": similar, "similar": results}, indent=2, ensure_ascii=False))
+            print(
+                json.dumps(
+                    {"query_skill": similar, "similar": results},
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
             return
 
         if not results:
@@ -2531,7 +2712,9 @@ def _cmd_list_skills(
     by_domain: dict[str, list] = {}
     for s in skills:
         d = s.to_dict()
-        dom = d.get("domain") or (d["id"].split(".")[0] if "." in d["id"] else "(other)")
+        dom = d.get("domain") or (
+            d["id"].split(".")[0] if "." in d["id"] else "(other)"
+        )
         by_domain.setdefault(dom, []).append(d)
 
     print(f"Skills: {len(skills)} total ({len(by_domain)} domains)\n")
@@ -2558,6 +2741,7 @@ def _cmd_capabilities(
     # --- M7: Type-based filtering ---
     if input_type or output_type:
         from tooling.skill_authoring import filter_capabilities_by_type
+
         type_filtered = filter_capabilities_by_type(all_caps, input_type, output_type)
         type_filtered_ids = {c.id for c in type_filtered}
     else:
@@ -2585,7 +2769,9 @@ def _cmd_capabilities(
                     "description": getattr(c, "description", ""),
                     "inputs": list(getattr(c, "inputs", {}).keys()),
                     "outputs": list(getattr(c, "outputs", {}).keys()),
-                    "status": (getattr(c, "metadata", None) or {}).get("status", "unknown")
+                    "status": (getattr(c, "metadata", None) or {}).get(
+                        "status", "unknown"
+                    )
                     if isinstance(getattr(c, "metadata", None), dict)
                     else "unknown",
                 }
@@ -3073,17 +3259,23 @@ def _cmd_validate(
         ]
     else:
         skills_root = registry_root / "skills"
-        schema_files = sorted(skills_root.glob("**/skill.yaml")) if skills_root.exists() else []
+        schema_files = (
+            sorted(skills_root.glob("**/skill.yaml")) if skills_root.exists() else []
+        )
 
     for sf in schema_files:
         errs = validate_skill_yaml(sf)
         for e in errs:
-            schema_issues.append({
-                "level": "error",
-                "skill": str(sf.relative_to(registry_root)) if sf.is_relative_to(registry_root) else str(sf),
-                "message": f"[schema] {e}",
-                "phase": "schema",
-            })
+            schema_issues.append(
+                {
+                    "level": "error",
+                    "skill": str(sf.relative_to(registry_root))
+                    if sf.is_relative_to(registry_root)
+                    else str(sf),
+                    "message": f"[schema] {e}",
+                    "phase": "schema",
+                }
+            )
 
     # --- Phase 2: Deep validation (uses, wiring, DAG) ---
     deep_issues = validate_all(registry_root, skill_filter=skill_filter)
@@ -3109,7 +3301,9 @@ def _cmd_validate(
         )
     else:
         if not all_issues:
-            print("[OK] All validations passed (schema + capability refs + DAG integrity)")
+            print(
+                "[OK] All validations passed (schema + capability refs + DAG integrity)"
+            )
         else:
             for issue in all_issues:
                 tag = "ERROR" if issue["level"] == "error" else "WARN"
@@ -3118,7 +3312,7 @@ def _cmd_validate(
         print()
         print(f"Validation complete: {len(errors)} errors, {len(warnings)} warnings")
         print(f"  Schema checks: {len(schema_files)} files")
-        print(f"  Deep checks:   uses refs, input mappings, DAG integrity")
+        print("  Deep checks:   uses refs, input mappings, DAG integrity")
 
     if errors:
         raise SystemExit(1)
@@ -3150,7 +3344,10 @@ def _cmd_benchmark(
     engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
 
     # Simple default input
-    inputs = {"text": "Agent Skills Runtime is a deterministic execution engine.", "target_language": "es"}
+    inputs = {
+        "text": "Agent Skills Runtime is a deterministic execution engine.",
+        "target_language": "es",
+    }
 
     timings: list[float] = []
     for i in range(iterations):
@@ -3170,7 +3367,9 @@ def _cmd_benchmark(
         "iterations": iterations,
         "mean_ms": round(statistics.mean(timings), 1),
         "median_ms": round(statistics.median(timings), 1),
-        "p95_ms": round(sorted(timings)[int(len(timings) * 0.95)], 1) if len(timings) >= 2 else round(timings[0], 1),
+        "p95_ms": round(sorted(timings)[int(len(timings) * 0.95)], 1)
+        if len(timings) >= 2
+        else round(timings[0], 1),
         "cold_start_ms": round(timings[0], 1),
         "timings_ms": [round(t, 1) for t in timings],
     }
@@ -3188,6 +3387,7 @@ def _cmd_benchmark(
 # ---------------------------------------------------------------------------
 # K5 — Benchmark Lab (multi-protocol comparison)
 # ---------------------------------------------------------------------------
+
 
 def _cmd_benchmark_lab(
     registry_root: Path,
@@ -3230,7 +3430,17 @@ def _cmd_benchmark_lab(
     response_mapper = ResponseMapper()
 
     mcp_client_registry = DefaultMCPClientRegistry(
-        fallback_registry=type("_", (), {"get_client": staticmethod(lambda s: (_ for _ in ()).throw(RuntimeError(f"MCP unavailable for {s}")))})()
+        fallback_registry=type(
+            "_",
+            (),
+            {
+                "get_client": staticmethod(
+                    lambda s: (_ for _ in ()).throw(
+                        RuntimeError(f"MCP unavailable for {s}")
+                    )
+                )
+            },
+        )()
     )
     protocol_router = ProtocolRouter(
         openapi_invoker=OpenAPIInvoker(),
@@ -3271,13 +3481,15 @@ def _cmd_benchmark_lab(
         try:
             service = service_resolver.resolve(binding.service_id)
         except Exception as exc:
-            results.append({
-                "binding_id": binding_id,
-                "protocol": protocol,
-                "service_id": binding.service_id,
-                "status": "error",
-                "error": f"Service resolution failed: {exc}",
-            })
+            results.append(
+                {
+                    "binding_id": binding_id,
+                    "protocol": protocol,
+                    "service_id": binding.service_id,
+                    "status": "error",
+                    "error": f"Service resolution failed: {exc}",
+                }
+            )
             continue
 
         timings: list[float] = []
@@ -3304,18 +3516,22 @@ def _cmd_benchmark_lab(
                 elapsed = (time.perf_counter() - t0) * 1000
                 timings.append(elapsed)
 
-                last_output = response_mapper.map(binding=binding, invocation_response=response)
+                last_output = response_mapper.map(
+                    binding=binding, invocation_response=response
+                )
             except Exception:
                 errors += 1
 
         if not timings:
-            results.append({
-                "binding_id": binding_id,
-                "protocol": protocol,
-                "service_id": binding.service_id,
-                "status": "all_failed",
-                "errors": errors,
-            })
+            results.append(
+                {
+                    "binding_id": binding_id,
+                    "protocol": protocol,
+                    "service_id": binding.service_id,
+                    "status": "all_failed",
+                    "errors": errors,
+                }
+            )
             continue
 
         # Compare outputs
@@ -3334,7 +3550,9 @@ def _cmd_benchmark_lab(
             "errors": errors,
             "mean_ms": round(statistics.mean(timings), 2),
             "median_ms": round(statistics.median(timings), 2),
-            "p95_ms": round(sorted(timings)[int(len(timings) * 0.95)], 2) if len(timings) >= 2 else round(timings[0], 2),
+            "p95_ms": round(sorted(timings)[int(len(timings) * 0.95)], 2)
+            if len(timings) >= 2
+            else round(timings[0], 2),
             "min_ms": round(min(timings), 2),
             "max_ms": round(max(timings), 2),
             "cold_start_ms": round(timings[0], 2),
@@ -3351,7 +3569,9 @@ def _cmd_benchmark_lab(
 
     if export_path:
         export_path.parent.mkdir(parents=True, exist_ok=True)
-        export_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        export_path.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
 
     if json_output:
         print(json.dumps(report, indent=2, ensure_ascii=False))
@@ -3364,7 +3584,9 @@ def _cmd_benchmark_lab(
         print("─" * len(header))
         for r in results:
             if r["status"] != "ok":
-                print(f"{r['binding_id']:<40} {r['protocol']:<12} {'FAILED':>8} {'—':>8} {'—':>8} {'—':>6} {r.get('errors', '?'):>4}")
+                print(
+                    f"{r['binding_id']:<40} {r['protocol']:<12} {'FAILED':>8} {'—':>8} {'—':>8} {'—':>6} {r.get('errors', '?'):>4}"
+                )
             else:
                 match_str = "✓" if r["output_match"] else "✗"
                 print(
@@ -3418,7 +3640,9 @@ def _format_benchmark_markdown(capability_id: str, results: list[dict]) -> str:
     ]
     for r in results:
         if r["status"] != "ok":
-            lines.append(f"| {r['binding_id']} | {r['protocol']} | FAILED | — | — | — |")
+            lines.append(
+                f"| {r['binding_id']} | {r['protocol']} | FAILED | — | — | — |"
+            )
         else:
             match_str = "✓" if r["output_match"] else "✗"
             lines.append(
@@ -3432,6 +3656,7 @@ def _format_benchmark_markdown(capability_id: str, results: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 # K7 — Showcase
 # ---------------------------------------------------------------------------
+
 
 def _cmd_showcase(
     registry_root: Path,
@@ -3470,12 +3695,21 @@ def _cmd_showcase(
     if skill.source_file:
         raw = yaml.safe_load(Path(skill.source_file).read_text(encoding="utf-8"))
     if not raw:
-        raw = {"id": skill.id, "name": skill.name, "steps": [], "inputs": {}, "outputs": {}}
+        raw = {
+            "id": skill.id,
+            "name": skill.name,
+            "steps": [],
+            "inputs": {},
+            "outputs": {},
+        }
         for s in skill.steps:
-            raw.setdefault("steps", []).append({
-                "id": s.id, "uses": s.uses,
-                "config": s.config if s.config else {},
-            })
+            raw.setdefault("steps", []).append(
+                {
+                    "id": s.id,
+                    "uses": s.uses,
+                    "config": s.config if s.config else {},
+                }
+            )
         raw["inputs"] = {k: {"type": "string"} for k in skill.inputs}
         raw["outputs"] = {k: {"type": "string"} for k in skill.outputs}
 
@@ -3525,10 +3759,14 @@ def _cmd_showcase(
 
         md.write("### Example\n\n")
         md.write("**Input:**\n\n")
-        md.write(f"```json\n{json.dumps(inputs, indent=2, ensure_ascii=False)}\n```\n\n")
+        md.write(
+            f"```json\n{json.dumps(inputs, indent=2, ensure_ascii=False)}\n```\n\n"
+        )
         md.write("**Output:**\n\n")
         outputs = dict(result.outputs) if result.outputs else {}
-        md.write(f"```json\n{json.dumps(outputs, indent=2, ensure_ascii=False)}\n```\n\n")
+        md.write(
+            f"```json\n{json.dumps(outputs, indent=2, ensure_ascii=False)}\n```\n\n"
+        )
 
     # ----- Benchmark -----
     if include_benchmark:
@@ -3538,8 +3776,11 @@ def _cmd_showcase(
             bench_buf = io.StringIO()
             with redirect_stdout(bench_buf):
                 report = _cmd_benchmark_lab(
-                    registry_root, runtime_root, host_root,
-                    cap_id, benchmark_runs,
+                    registry_root,
+                    runtime_root,
+                    host_root,
+                    cap_id,
+                    benchmark_runs,
                     protocols_filter=None,
                     export_path=None,
                     json_output=True,
@@ -3559,7 +3800,7 @@ def _cmd_showcase(
 
     md.write("### Try it\n\n")
     md.write("```bash\n")
-    md.write("pip install -e \".[all]\"\n")
+    md.write('pip install -e ".[all]"\n')
     md.write(f"agent-skills run {skill_id} --input '{input_example}'\n")
     md.write("```\n")
 
@@ -3571,6 +3812,7 @@ def _cmd_showcase(
         print(f"[showcase] Written to {out_file}")
     else:
         print(content)
+
 
 def _cmd_dev(
     registry_root: Path,
@@ -3588,7 +3830,11 @@ def _cmd_dev(
     from runtime.skill_loader import YamlSkillLoader
     from runtime.capability_loader import YamlCapabilityLoader
     from tooling.validate_skill_schema import validate_skill_yaml
-    from tooling.skill_authoring import check_wiring, generate_test_fixture, run_skill_test
+    from tooling.skill_authoring import (
+        check_wiring,
+        generate_test_fixture,
+        run_skill_test,
+    )
 
     # Locate the skill file
     loader = YamlSkillLoader(registry_root)
@@ -3604,12 +3850,12 @@ def _cmd_dev(
 
     skill_path = Path(skill.source_file)
     watch_dir = skill_path.parent
-    watch_files = list(watch_dir.glob("*.yaml")) + list(watch_dir.glob("*.json"))
+    list(watch_dir.glob("*.yaml")) + list(watch_dir.glob("*.json"))
 
     print(f"[dev] Watching skill: {skill_id}")
     print(f"[dev] Directory: {watch_dir}")
     print(f"[dev] Interval: {interval}s | Tests: {'off' if no_test else 'on'}")
-    print(f"[dev] Press Ctrl+C to stop\n")
+    print("[dev] Press Ctrl+C to stop\n")
 
     def _file_hash(path: Path) -> str:
         try:
@@ -3667,18 +3913,26 @@ def _cmd_dev(
         # Phase 3: Test execution (optional)
         if not no_test:
             try:
-                engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
+                engine = _build_engine(
+                    registry_root, runtime_root, host_root, local_skills_root
+                )
 
                 # Load or generate test input
                 test_input_file = watch_dir / "test_input.json"
                 if test_input_file.exists():
-                    test_inputs = json.loads(test_input_file.read_text(encoding="utf-8"))
+                    test_inputs = json.loads(
+                        test_input_file.read_text(encoding="utf-8")
+                    )
                 else:
                     test_inputs = generate_test_fixture(skill_doc)
 
-                report = run_skill_test(engine=engine, skill_doc=skill_doc, inputs=test_inputs)
+                report = run_skill_test(
+                    engine=engine, skill_doc=skill_doc, inputs=test_inputs
+                )
                 if report["ok"]:
-                    print(f"  ✓ Test PASS ({report['duration_ms']}ms, {report.get('steps_executed', '?')} steps)")
+                    print(
+                        f"  ✓ Test PASS ({report['duration_ms']}ms, {report.get('steps_executed', '?')} steps)"
+                    )
                 else:
                     err = report.get("error", "unknown")
                     print(f"  ✗ Test FAIL: {err} ({report['duration_ms']}ms)")
@@ -3713,6 +3967,7 @@ def _cmd_dev(
 # M2 — Test a skill
 # ---------------------------------------------------------------------------
 
+
 def _cmd_test(
     registry_root: Path,
     runtime_root: Path,
@@ -3731,7 +3986,10 @@ def _cmd_test(
     skill = skill_loader.get_skill(skill_id)
     skill_doc = {"id": skill.id, "inputs": {}, "outputs": {}, "steps": []}
     for k, v in skill.inputs.items():
-        skill_doc["inputs"][k] = {"type": getattr(v, "type", "string"), "required": getattr(v, "required", False)}
+        skill_doc["inputs"][k] = {
+            "type": getattr(v, "type", "string"),
+            "required": getattr(v, "required", False),
+        }
     for k, v in skill.outputs.items():
         skill_doc["outputs"][k] = {"type": getattr(v, "type", "string")}
 
@@ -3744,9 +4002,13 @@ def _cmd_test(
         else:
             out = runtime_root / "test_inputs" / f"{skill_id.replace('.', '_')}.json"
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(fixture, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        out.write_text(
+            json.dumps(fixture, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
         if json_output:
-            print(json.dumps({"ok": True, "file": str(out), "fixture": fixture}, indent=2))
+            print(
+                json.dumps({"ok": True, "file": str(out), "fixture": fixture}, indent=2)
+            )
         else:
             print(f"[test] Generated test fixture: {out}")
             print(json.dumps(fixture, indent=2, ensure_ascii=False))
@@ -3795,6 +4057,7 @@ def _cmd_test(
 # M8 — Check wiring
 # ---------------------------------------------------------------------------
 
+
 def _cmd_check_wiring(
     registry_root: Path,
     skill_id: str,
@@ -3825,11 +4088,17 @@ def _cmd_check_wiring(
     issues = check_wiring(skill_doc, capabilities)
 
     if json_output:
-        print(json.dumps({
-            "ok": len(issues) == 0,
-            "skill_id": skill_id,
-            "issues": issues,
-        }, indent=2, ensure_ascii=False))
+        print(
+            json.dumps(
+                {
+                    "ok": len(issues) == 0,
+                    "skill_id": skill_id,
+                    "issues": issues,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
     else:
         if not issues:
             print(f"[OK] {skill_id}: all step wiring looks consistent")
@@ -3843,6 +4112,7 @@ def _cmd_check_wiring(
 # ---------------------------------------------------------------------------
 # M4 — Export / Import
 # ---------------------------------------------------------------------------
+
 
 def _cmd_export(
     registry_root: Path,
@@ -3866,17 +4136,24 @@ def _cmd_export(
             if candidate.exists():
                 skill_file = candidate
             else:
-                print(f"[export] Cannot locate source file for '{skill_id}'", file=sys.stderr)
+                print(
+                    f"[export] Cannot locate source file for '{skill_id}'",
+                    file=sys.stderr,
+                )
                 raise SystemExit(1)
         else:
-            print(f"[export] Cannot locate source file for '{skill_id}'", file=sys.stderr)
+            print(
+                f"[export] Cannot locate source file for '{skill_id}'", file=sys.stderr
+            )
             raise SystemExit(1)
     else:
         skill_file = Path(skill.source_file)
 
     result = export_skill_bundle(skill_file, out)
     print(f"[export] Bundle created: {result}")
-    print(f"[export] Share this file — recipient imports with: agent-skills import {result.name}")
+    print(
+        f"[export] Share this file — recipient imports with: agent-skills import {result.name}"
+    )
 
 
 def _cmd_import(
@@ -3901,14 +4178,23 @@ def _cmd_import(
             raise SystemExit(1)
         sid = raw["id"]
         if "." not in sid:
-            print(f"[import] Invalid skill id '{sid}' (expected domain.slug)", file=sys.stderr)
+            print(
+                f"[import] Invalid skill id '{sid}' (expected domain.slug)",
+                file=sys.stderr,
+            )
             raise SystemExit(1)
         domain, slug = sid.split(".", 1)
         target_dir = local_root / domain / slug
         target_dir.mkdir(parents=True, exist_ok=True)
         import shutil
+
         shutil.copy2(str(source_path), str(target_dir / "skill.yaml"))
-        report = {"ok": True, "skill_id": sid, "imported_to": str(target_dir), "files": ["skill.yaml"]}
+        report = {
+            "ok": True,
+            "skill_id": sid,
+            "imported_to": str(target_dir),
+            "files": ["skill.yaml"],
+        }
     else:
         # Bundle import
         capability_loader = YamlCapabilityLoader(registry_root)
@@ -3919,20 +4205,26 @@ def _cmd_import(
         print(json.dumps(report, indent=2, ensure_ascii=False))
     else:
         if report["ok"]:
-            print(f"[import] Imported '{report['skill_id']}' to {report['imported_to']}")
+            print(
+                f"[import] Imported '{report['skill_id']}' to {report['imported_to']}"
+            )
             print(f"[import] Files: {', '.join(report.get('files', []))}")
             if report.get("warnings"):
                 for w in report["warnings"]:
                     print(f"[import] WARNING: {w}")
             print(f"[import] Next: agent-skills test {report['skill_id']}")
         else:
-            print(f"[import] FAILED: {report.get('error', 'unknown error')}", file=sys.stderr)
+            print(
+                f"[import] FAILED: {report.get('error', 'unknown error')}",
+                file=sys.stderr,
+            )
             raise SystemExit(1)
 
 
 # ---------------------------------------------------------------------------
 # M9 — Contribute one-liner
 # ---------------------------------------------------------------------------
+
 
 def _cmd_contribute(
     registry_root: Path,
@@ -3952,7 +4244,7 @@ def _cmd_contribute(
     steps_done: list[str] = []
 
     # Step 1: Check for similar skills
-    print(f"[contribute] Step 1/4: Checking for similar skills...")
+    print("[contribute] Step 1/4: Checking for similar skills...")
     skills_root = registry_root / "skills"
     all_skills: dict[str, dict] = {}
     if skills_root.exists():
@@ -3976,7 +4268,7 @@ def _cmd_contribute(
     steps_done.append("similar_check")
 
     # Step 2: Prepare package
-    print(f"[contribute] Step 2/4: Preparing promotion package...")
+    print("[contribute] Step 2/4: Preparing promotion package...")
     package_out_root = runtime_root / "artifacts" / "promotion_packages"
     package_out_root.mkdir(parents=True, exist_ok=True)
 
@@ -3996,7 +4288,7 @@ def _cmd_contribute(
     steps_done.append("prepare")
 
     # Step 3: Validate
-    print(f"\n[contribute] Step 3/4: Validating package...")
+    print("\n[contribute] Step 3/4: Validating package...")
     validation = validate_promotion_package(
         package_root=result.package_root,
         registry_root=registry_root,
@@ -4006,23 +4298,31 @@ def _cmd_contribute(
         for w in validation.warnings:
             print(f"  [WARN] {w}")
     if validation.errors:
-        print(f"\n[contribute] Validation FAILED with {len(validation.errors)} error(s):")
+        print(
+            f"\n[contribute] Validation FAILED with {len(validation.errors)} error(s):"
+        )
         for e in validation.errors:
             print(f"  [ERROR] {e}")
-        print(f"\n[contribute] Fix the issues in: {result.package_root / 'evidence' / 'admission_answers.yaml'}")
-        print(f"[contribute] Then re-run: agent-skills package-validate {result.package_root}")
+        print(
+            f"\n[contribute] Fix the issues in: {result.package_root / 'evidence' / 'admission_answers.yaml'}"
+        )
+        print(
+            f"[contribute] Then re-run: agent-skills package-validate {result.package_root}"
+        )
         raise SystemExit(1)
-    print(f"[contribute] Validation passed.")
+    print("[contribute] Validation passed.")
     steps_done.append("validate")
 
     # Step 4: PR
     if dry_run:
-        print(f"\n[contribute] Step 4/4: (dry-run) Skipping PR creation.")
+        print("\n[contribute] Step 4/4: (dry-run) Skipping PR creation.")
         print(f"[contribute] Package ready at: {result.package_root}")
-        print(f"[contribute] To create PR: agent-skills package-pr {result.package_root}")
+        print(
+            f"[contribute] To create PR: agent-skills package-pr {result.package_root}"
+        )
         steps_done.append("dry_run")
     else:
-        print(f"\n[contribute] Step 4/4: Creating PR...")
+        print("\n[contribute] Step 4/4: Creating PR...")
         _cmd_package_pr(
             registry_root,
             None,  # registry_repo_root
@@ -4036,19 +4336,26 @@ def _cmd_contribute(
         steps_done.append("pr")
 
     if json_output:
-        print(json.dumps({
-            "ok": True,
-            "skill_id": skill_id,
-            "channel": channel,
-            "steps": steps_done,
-            "package": str(result.package_root),
-            "similar_skills": similar,
-        }, indent=2, ensure_ascii=False))
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "skill_id": skill_id,
+                    "channel": channel,
+                    "steps": steps_done,
+                    "package": str(result.package_root),
+                    "similar_skills": similar,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
 
 
 # ---------------------------------------------------------------------------
 # M11 — Rate a skill
 # ---------------------------------------------------------------------------
+
 
 def _cmd_rate(
     runtime_root: Path,
@@ -4069,7 +4376,9 @@ def _cmd_rate(
         if result["ok"]:
             stars = "★" * score + "☆" * (5 - score)
             print(f"[rate] {skill_id}: {stars} ({score}/5)")
-            print(f"  Average: {result['new_average']}/5 ({result['total_ratings']} ratings)")
+            print(
+                f"  Average: {result['new_average']}/5 ({result['total_ratings']} ratings)"
+            )
             if comment:
                 print(f"  Comment: {comment}")
             print(f"  Saved to: {feedback_file}")
@@ -4081,6 +4390,7 @@ def _cmd_rate(
 # ---------------------------------------------------------------------------
 # M12 — Report an issue
 # ---------------------------------------------------------------------------
+
 
 def _cmd_report(
     skill_id: str,
@@ -4098,22 +4408,25 @@ def _cmd_report(
     print(f"Title: {report['title']}")
     print(f"Labels: {report['labels']}")
     print(f"\n{'─' * 60}")
-    print(report['body'])
+    print(report["body"])
     print(f"{'─' * 60}")
 
     # Build GitHub URL
     repo_url = "https://github.com/gfernandf/agent-skills"
-    params = urllib.parse.urlencode({
-        "title": report["title"],
-        "body": report["body"],
-        "labels": report["labels"],
-    })
+    params = urllib.parse.urlencode(
+        {
+            "title": report["title"],
+            "body": report["body"],
+            "labels": report["labels"],
+        }
+    )
     issue_url = f"{repo_url}/issues/new?{params}"
 
     print(f"\nCreate issue: {issue_url}")
 
     if open_browser:
         import webbrowser
+
         webbrowser.open(issue_url)
         print("[report] Opened in browser.")
 
@@ -4121,6 +4434,7 @@ def _cmd_report(
 # ---------------------------------------------------------------------------
 # K4 — Skill Triggers
 # ---------------------------------------------------------------------------
+
 
 def _cmd_triggers(
     registry_root: Path,
@@ -4149,22 +4463,36 @@ def _cmd_triggers(
         triggers = reg.list_by_type(type_filter) if type_filter else reg.list_all()
 
         if json_output:
-            print(json.dumps({
-                "triggers": [
-                    {"skill_id": t.skill_id, "type": t.trigger_type, "config": t.config}
-                    for t in triggers
-                ],
-                "count": len(triggers),
-            }, indent=2, ensure_ascii=False))
+            print(
+                json.dumps(
+                    {
+                        "triggers": [
+                            {
+                                "skill_id": t.skill_id,
+                                "type": t.trigger_type,
+                                "config": t.config,
+                            }
+                            for t in triggers
+                        ],
+                        "count": len(triggers),
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
         else:
             if not triggers:
                 print("[triggers] No triggers registered.")
-                print("[triggers] Add a 'triggers:' section to your skill.yaml to define triggers.")
+                print(
+                    "[triggers] Add a 'triggers:' section to your skill.yaml to define triggers."
+                )
                 return
 
             print(f"[triggers] {len(triggers)} trigger(s) registered:\n")
             for t in triggers:
-                print(f"  {t.skill_id:<40} type={t.trigger_type:<14} {_trigger_summary(t)}")
+                print(
+                    f"  {t.skill_id:<40} type={t.trigger_type:<14} {_trigger_summary(t)}"
+                )
 
     elif action == "fire":
         event_type = getattr(args, "event_type", "webhook")
@@ -4199,10 +4527,14 @@ def _cmd_triggers(
         event = TriggerEvent(event_type=event_type, payload=payload)
 
         # Build engine for execution
-        engine = _build_engine(registry_root, runtime_root, host_root, local_skills_root)
+        engine = _build_engine(
+            registry_root, runtime_root, host_root, local_skills_root
+        )
 
         def _execute_skill(skill_id: str, inputs: dict) -> dict:
-            request = ExecutionRequest(skill_id=skill_id, inputs=inputs, channel="trigger")
+            request = ExecutionRequest(
+                skill_id=skill_id, inputs=inputs, channel="trigger"
+            )
             result = engine.execute(request)
             return {
                 "status": result.status,
@@ -4213,12 +4545,18 @@ def _cmd_triggers(
         results = trigger_engine.fire(event)
 
         if json_output:
-            print(json.dumps({
-                "event_type": event_type,
-                "payload": payload,
-                "results": results,
-                "matched": len(results),
-            }, indent=2, ensure_ascii=False))
+            print(
+                json.dumps(
+                    {
+                        "event_type": event_type,
+                        "payload": payload,
+                        "results": results,
+                        "matched": len(results),
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
         else:
             if not results:
                 print(f"[triggers] No triggers matched event: {event_type}")
@@ -4234,18 +4572,18 @@ def _cmd_triggers(
         if json_output:
             print(json.dumps(summary, indent=2, ensure_ascii=False))
         else:
-            print(f"[triggers] Trigger Summary:")
+            print("[triggers] Trigger Summary:")
             print(f"  Total: {summary['total_triggers']}")
             for ttype, count in summary.get("by_type", {}).items():
                 print(f"  {ttype}: {count}")
             webhooks = summary.get("webhooks", {})
             if webhooks:
-                print(f"\n  Webhooks:")
+                print("\n  Webhooks:")
                 for name, skills in webhooks.items():
                     print(f"    {name}: {', '.join(skills)}")
             chains = summary.get("event_chains", {})
             if chains:
-                print(f"\n  Event chains:")
+                print("\n  Event chains:")
                 for source, targets in chains.items():
                     print(f"    {source} → {', '.join(targets)}")
 
@@ -4268,6 +4606,7 @@ def _trigger_summary(t) -> str:
 # K6 — Compose DSL
 # ---------------------------------------------------------------------------
 
+
 def _cmd_compose(
     registry_root: Path,
     runtime_root: Path,
@@ -4280,7 +4619,7 @@ def _cmd_compose(
     local_skills_root: Path | None = None,
 ) -> None:
     """Compile a .compose file to skill.yaml, optionally execute."""
-    from tooling.compose_dsl import parse_compose, compile_to_yaml, compile_to_yaml_string, ComposeParseError
+    from tooling.compose_dsl import parse_compose, compile_to_yaml, ComposeParseError
 
     source_file = Path(source_path)
     if not source_file.exists():
@@ -4293,13 +4632,19 @@ def _cmd_compose(
         spec = parse_compose(source_text, source_path=str(source_file))
     except ComposeParseError as exc:
         if json_output:
-            print(json.dumps({"ok": False, "error": str(exc), "line": exc.line_num}, indent=2))
+            print(
+                json.dumps(
+                    {"ok": False, "error": str(exc), "line": exc.line_num}, indent=2
+                )
+            )
         else:
             print(f"[compose] Parse error: {exc}")
         raise SystemExit(1)
 
     skill_doc = compile_to_yaml(spec)
-    yaml_str = yaml.dump(skill_doc, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    yaml_str = yaml.dump(
+        skill_doc, default_flow_style=False, sort_keys=False, allow_unicode=True
+    )
 
     # Write to file if requested
     if out_path:
@@ -4316,7 +4661,13 @@ def _cmd_compose(
 
         # Write the compiled YAML to a temporary skill directory
         with tempfile.TemporaryDirectory() as tmpdir:
-            skill_dir = Path(tmpdir) / "skills" / "local" / "composed" / spec.skill_id.replace(".", "-")
+            skill_dir = (
+                Path(tmpdir)
+                / "skills"
+                / "local"
+                / "composed"
+                / spec.skill_id.replace(".", "-")
+            )
             skill_dir.mkdir(parents=True)
             (skill_dir / "skill.yaml").write_text(yaml_str, encoding="utf-8")
 
@@ -4343,7 +4694,9 @@ def _cmd_compose(
 
             # Build engine with the temporary local skills directory
             engine = _build_engine(
-                registry_root, runtime_root, host_root,
+                registry_root,
+                runtime_root,
+                host_root,
                 local_skills_root=Path(tmpdir),
             )
 
@@ -4380,7 +4733,13 @@ def _cmd_compose(
     # Default: print compiled YAML
     if not out_path:
         if json_output:
-            print(json.dumps({"ok": True, "skill_id": spec.skill_id, "compiled": skill_doc}, indent=2, ensure_ascii=False))
+            print(
+                json.dumps(
+                    {"ok": True, "skill_id": spec.skill_id, "compiled": skill_doc},
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
         else:
             print(f"# Compiled from: {source_file}")
             print(f"# Steps: {len(spec.steps)}, Outputs: {len(spec.outputs)}")

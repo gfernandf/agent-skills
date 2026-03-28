@@ -9,12 +9,9 @@ from __future__ import annotations
 import json
 import sys
 import tarfile
-import tempfile
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
-import pytest
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -219,10 +216,16 @@ class TestFilterCapabilitiesByType:
 
     def test_filter_by_both(self):
         caps = {
-            "a": _make_cap("a", {"text": {"type": "string"}}, {"result": {"type": "string"}}),
-            "b": _make_cap("b", {"text": {"type": "string"}}, {"count": {"type": "integer"}}),
+            "a": _make_cap(
+                "a", {"text": {"type": "string"}}, {"result": {"type": "string"}}
+            ),
+            "b": _make_cap(
+                "b", {"text": {"type": "string"}}, {"count": {"type": "integer"}}
+            ),
         }
-        results = filter_capabilities_by_type(caps, input_type="string", output_type="string")
+        results = filter_capabilities_by_type(
+            caps, input_type="string", output_type="string"
+        )
         assert len(results) == 1
         assert results[0].id == "a"
 
@@ -273,6 +276,7 @@ class TestExportImport:
         skill_dir.mkdir(parents=True)
         skill_file = skill_dir / "skill.yaml"
         import yaml
+
         skill_file.write_text(yaml.dump(_MINIMAL_SKILL), encoding="utf-8")
 
         bundle = export_skill_bundle(skill_file)
@@ -292,6 +296,7 @@ class TestExportImport:
         skill_dir.mkdir()
         skill_file = skill_dir / "skill.yaml"
         import yaml
+
         skill_file.write_text(yaml.dump(_MINIMAL_SKILL), encoding="utf-8")
         bundle = export_skill_bundle(skill_file)
 
@@ -318,6 +323,7 @@ class TestExportImport:
         skill_dir.mkdir()
         skill_file = skill_dir / "skill.yaml"
         import yaml
+
         skill_file.write_text(yaml.dump(_MINIMAL_SKILL), encoding="utf-8")
         bundle = export_skill_bundle(skill_file)
 
@@ -346,7 +352,10 @@ class TestFindSimilarSkills:
             "text.analyze": {
                 "name": "Analyze",
                 "description": "Analyze text",
-                "steps": [{"uses": "text.content.summarize"}, {"uses": "text.content.analyze"}],
+                "steps": [
+                    {"uses": "text.content.summarize"},
+                    {"uses": "text.content.analyze"},
+                ],
                 "metadata": {"tags": ["text", "nlp"]},
             },
             "code.format": {
@@ -365,8 +374,18 @@ class TestFindSimilarSkills:
 
     def test_no_similar_found(self):
         skills = {
-            "a": {"name": "A", "description": "a", "steps": [{"uses": "x"}], "metadata": {}},
-            "b": {"name": "B", "description": "b", "steps": [{"uses": "y"}], "metadata": {}},
+            "a": {
+                "name": "A",
+                "description": "a",
+                "steps": [{"uses": "x"}],
+                "metadata": {},
+            },
+            "b": {
+                "name": "B",
+                "description": "b",
+                "steps": [{"uses": "y"}],
+                "metadata": {},
+            },
         }
         similar = find_similar_skills("a", skills)
         # They share no capabilities, tags, or words — all scores should be low

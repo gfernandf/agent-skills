@@ -32,7 +32,6 @@ No HTTP overhead, no server to manage.
 
 from __future__ import annotations
 
-import functools
 import json
 from pathlib import Path
 from typing import Any
@@ -59,7 +58,9 @@ def _get_components():
     # Auto-detect paths from environment or project layout
     project_root = Path(__file__).resolve().parent.parent
     registry_root = Path(
-        os.environ.get("AGENT_SKILLS_REGISTRY_ROOT", project_root.parent / "agent-skill-registry")
+        os.environ.get(
+            "AGENT_SKILLS_REGISTRY_ROOT", project_root.parent / "agent-skill-registry"
+        )
     )
     runtime_root = Path(os.environ.get("AGENT_SKILLS_RUNTIME_ROOT", project_root))
     host_root = Path(os.environ.get("AGENT_SKILLS_HOST_ROOT", project_root))
@@ -89,6 +90,7 @@ def reset():
 # Direct execution API
 # ---------------------------------------------------------------------------
 
+
 def execute(
     skill_id: str,
     inputs: dict[str, Any],
@@ -104,7 +106,9 @@ def execute(
     from runtime.models import ExecutionRequest
 
     engine, _, _ = _get_components()
-    req = ExecutionRequest(skill_id=skill_id, inputs=inputs, trace_id=trace_id, channel=channel)
+    req = ExecutionRequest(
+        skill_id=skill_id, inputs=inputs, trace_id=trace_id, channel=channel
+    )
     result = engine.execute(req)
     if result.status != "completed":
         error = getattr(result, "error", None) or result.status
@@ -134,12 +138,20 @@ def list_capabilities() -> list[dict[str, Any]]:
     caps = cap_loader.get_all_capabilities()
     result = []
     for cap_id, cap in sorted(caps.items()):
-        result.append({
-            "id": cap_id,
-            "description": getattr(cap, "description", ""),
-            "inputs": {k: _field_to_dict(v) for k, v in (getattr(cap, "inputs", {}) or {}).items()},
-            "outputs": {k: _field_to_dict(v) for k, v in (getattr(cap, "outputs", {}) or {}).items()},
-        })
+        result.append(
+            {
+                "id": cap_id,
+                "description": getattr(cap, "description", ""),
+                "inputs": {
+                    k: _field_to_dict(v)
+                    for k, v in (getattr(cap, "inputs", {}) or {}).items()
+                },
+                "outputs": {
+                    k: _field_to_dict(v)
+                    for k, v in (getattr(cap, "outputs", {}) or {}).items()
+                },
+            }
+        )
     return result
 
 
@@ -163,11 +175,13 @@ def list_skills() -> list[dict[str, str]]:
     for sid in sorted(set(skill_ids)):
         try:
             skill = loader.get_skill(sid)
-            result.append({
-                "id": sid,
-                "name": getattr(skill, "name", ""),
-                "description": getattr(skill, "description", ""),
-            })
+            result.append(
+                {
+                    "id": sid,
+                    "name": getattr(skill, "name", ""),
+                    "description": getattr(skill, "description", ""),
+                }
+            )
         except Exception:
             result.append({"id": sid, "name": "", "description": ""})
     return result
@@ -187,10 +201,13 @@ def _field_to_dict(field: Any) -> dict[str, Any]:
 # Framework adapters — in-process (no HTTP)
 # ---------------------------------------------------------------------------
 
+
 def _make_capability_fn(cap_id: str) -> callable:
     """Create a callable that executes a capability in-process."""
+
     def _execute(**kwargs: Any) -> dict[str, Any]:
         return execute_capability(cap_id, kwargs)
+
     _execute.__name__ = cap_id.replace(".", "_")
     _execute.__doc__ = f"Execute capability {cap_id} via agent-skills embedded runtime."
     return _execute
@@ -266,9 +283,7 @@ def as_crewai_tools(
     try:
         from crewai.tools import BaseTool as CrewBaseTool
     except ImportError as exc:
-        raise ImportError(
-            "crewai is required. Install: pip install crewai"
-        ) from exc
+        raise ImportError("crewai is required. Install: pip install crewai") from exc
 
     caps = _resolve_capabilities(capabilities)
     tools = []
@@ -310,11 +325,13 @@ def as_autogen_tools(
     for cap_info in caps:
         cap_id = cap_info["id"]
         fn = _make_capability_fn(cap_id)
-        tools.append({
-            "name": cap_id.replace(".", "_"),
-            "description": cap_info.get("description", cap_id),
-            "function": fn,
-        })
+        tools.append(
+            {
+                "name": cap_id.replace(".", "_"),
+                "description": cap_info.get("description", cap_id),
+                "function": fn,
+            }
+        )
 
     return tools
 
@@ -328,7 +345,6 @@ def as_semantic_kernel_functions(
     """
     try:
         from semantic_kernel.functions import KernelFunction
-        from semantic_kernel import KernelPlugin
     except ImportError as exc:
         raise ImportError(
             "semantic-kernel is required. Install: pip install semantic-kernel"
@@ -398,11 +414,13 @@ def as_anthropic_tools(
     tools: list[dict[str, Any]] = []
 
     for cap_info in caps:
-        tools.append({
-            "name": cap_info["id"].replace(".", "_"),
-            "description": cap_info.get("description", cap_info["id"]),
-            "input_schema": _build_json_schema(cap_info),
-        })
+        tools.append(
+            {
+                "name": cap_info["id"].replace(".", "_"),
+                "description": cap_info.get("description", cap_info["id"]),
+                "input_schema": _build_json_schema(cap_info),
+            }
+        )
 
     return tools
 
@@ -489,14 +507,16 @@ def as_openai_tools(
     tools: list[dict[str, Any]] = []
 
     for cap_info in caps:
-        tools.append({
-            "type": "function",
-            "function": {
-                "name": cap_info["id"].replace(".", "_"),
-                "description": cap_info.get("description", cap_info["id"]),
-                "parameters": _build_json_schema(cap_info),
-            },
-        })
+        tools.append(
+            {
+                "type": "function",
+                "function": {
+                    "name": cap_info["id"].replace(".", "_"),
+                    "description": cap_info.get("description", cap_info["id"]),
+                    "parameters": _build_json_schema(cap_info),
+                },
+            }
+        )
 
     return tools
 
@@ -528,7 +548,11 @@ def execute_openai_tool_call(
     """
     cap_id = function_name.replace("_", ".")
     try:
-        args = json.loads(function_args_json) if isinstance(function_args_json, str) else function_args_json
+        args = (
+            json.loads(function_args_json)
+            if isinstance(function_args_json, str)
+            else function_args_json
+        )
     except json.JSONDecodeError as exc:
         return json.dumps({"error": f"Invalid JSON arguments: {exc}"})
 
@@ -592,11 +616,13 @@ def as_gemini_tools(
     declarations: list[dict[str, Any]] = []
 
     for cap_info in caps:
-        declarations.append({
-            "name": cap_info["id"].replace(".", "_"),
-            "description": cap_info.get("description", cap_info["id"]),
-            "parameters": _build_gemini_schema(cap_info),
-        })
+        declarations.append(
+            {
+                "name": cap_info["id"].replace(".", "_"),
+                "description": cap_info.get("description", cap_info["id"]),
+                "parameters": _build_gemini_schema(cap_info),
+            }
+        )
 
     return [{"function_declarations": declarations}]
 

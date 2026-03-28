@@ -29,7 +29,7 @@ def validate_all(
     skill_filter: str | None = None,
 ) -> list[dict]:
     capability_loader = YamlCapabilityLoader(registry_root)
-    skill_loader = YamlSkillLoader(registry_root)
+    YamlSkillLoader(registry_root)
 
     all_caps = capability_loader.get_all_capabilities()
     cap_ids = set(all_caps.keys())
@@ -39,19 +39,24 @@ def validate_all(
 
     skill_files = list(skills_root.glob("**/skill.yaml"))
     if not skill_files:
-        issues.append({"level": "error", "message": "No skill files found", "skill": None})
+        issues.append(
+            {"level": "error", "message": "No skill files found", "skill": None}
+        )
         return issues
 
     for skill_file in sorted(skill_files):
         try:
             import yaml
+
             raw = yaml.safe_load(skill_file.read_text(encoding="utf-8"))
         except Exception as exc:
-            issues.append({
-                "level": "error",
-                "skill": str(skill_file.relative_to(registry_root)),
-                "message": f"YAML parse error: {exc}",
-            })
+            issues.append(
+                {
+                    "level": "error",
+                    "skill": str(skill_file.relative_to(registry_root)),
+                    "message": f"YAML parse error: {exc}",
+                }
+            )
             continue
 
         skill_id = raw.get("id", "(unknown)")
@@ -60,11 +65,13 @@ def validate_all(
 
         steps = raw.get("steps", [])
         if not steps:
-            issues.append({
-                "level": "warning",
-                "skill": skill_id,
-                "message": "Skill has no steps",
-            })
+            issues.append(
+                {
+                    "level": "warning",
+                    "skill": skill_id,
+                    "message": "Skill has no steps",
+                }
+            )
             continue
 
         step_ids = {s.get("id") for s in steps if s.get("id")}
@@ -78,13 +85,15 @@ def validate_all(
                 # Nested skill reference — valid syntax, not validated here
                 pass
             elif uses not in cap_ids:
-                issues.append({
-                    "level": "error",
-                    "skill": skill_id,
-                    "step": step_id,
-                    "uses": uses,
-                    "message": f"Capability '{uses}' not found in registry ({len(cap_ids)} known)",
-                })
+                issues.append(
+                    {
+                        "level": "error",
+                        "skill": skill_id,
+                        "step": step_id,
+                        "uses": uses,
+                        "message": f"Capability '{uses}' not found in registry ({len(cap_ids)} known)",
+                    }
+                )
             else:
                 # Validate input mapping keys against capability inputs
                 cap = all_caps[uses]
@@ -93,13 +102,15 @@ def validate_all(
                 if isinstance(step_input, dict) and cap_inputs:
                     for key in step_input:
                         if key not in cap_inputs:
-                            issues.append({
-                                "level": "warning",
-                                "skill": skill_id,
-                                "step": step_id,
-                                "uses": uses,
-                                "message": f"Input key '{key}' not in capability inputs: {sorted(cap_inputs)}",
-                            })
+                            issues.append(
+                                {
+                                    "level": "warning",
+                                    "skill": skill_id,
+                                    "step": step_id,
+                                    "uses": uses,
+                                    "message": f"Input key '{key}' not in capability inputs: {sorted(cap_inputs)}",
+                                }
+                            )
 
             # Validate depends_on references
             config = step.get("config", {}) or {}
@@ -107,12 +118,14 @@ def validate_all(
             if isinstance(depends_on, list):
                 for dep in depends_on:
                     if dep not in step_ids:
-                        issues.append({
-                            "level": "error",
-                            "skill": skill_id,
-                            "step": step_id,
-                            "message": f"depends_on '{dep}' references unknown step (known: {sorted(step_ids)})",
-                        })
+                        issues.append(
+                            {
+                                "level": "error",
+                                "skill": skill_id,
+                                "step": step_id,
+                                "message": f"depends_on '{dep}' references unknown step (known: {sorted(step_ids)})",
+                            }
+                        )
 
     return issues
 
@@ -131,14 +144,22 @@ def main() -> int:
     warnings = [i for i in issues if i["level"] == "warning"]
 
     if args.json:
-        print(json.dumps({
-            "errors": len(errors),
-            "warnings": len(warnings),
-            "issues": issues,
-        }, indent=2, ensure_ascii=False))
+        print(
+            json.dumps(
+                {
+                    "errors": len(errors),
+                    "warnings": len(warnings),
+                    "issues": issues,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
     else:
         if not issues:
-            print("[OK] All skills validated — every uses: reference resolves to a known capability.")
+            print(
+                "[OK] All skills validated — every uses: reference resolves to a known capability."
+            )
             return 0
 
         for issue in issues:

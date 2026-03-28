@@ -32,6 +32,7 @@ from runtime.policy_engine import DefaultPolicyEngine
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_capability(
     cap_id: str = "test.cap",
     safety: dict | None = None,
@@ -70,6 +71,7 @@ def policy():
 # ---------------------------------------------------------------------------
 # 1. Trust-level enforcement
 # ---------------------------------------------------------------------------
+
 
 class TestTrustLevelEnforcement:
     """Capabilities requiring elevated trust MUST reject lower-trust contexts."""
@@ -124,6 +126,7 @@ class TestTrustLevelEnforcement:
 # 2. Human confirmation requirement
 # ---------------------------------------------------------------------------
 
+
 class TestConfirmationRequired:
     """Capabilities requiring human confirmation MUST block without explicit confirmation."""
 
@@ -164,6 +167,7 @@ class TestConfirmationRequired:
 # ---------------------------------------------------------------------------
 # 3. Pre-execution safety gates
 # ---------------------------------------------------------------------------
+
 
 class TestPreExecutionGates:
     """Mandatory pre-execution gates that block/degrade based on gate output."""
@@ -213,7 +217,7 @@ class TestPreExecutionGates:
         )
         ctx = _make_context()
 
-        result = policy.enforce_pre(cap, _make_step(), ctx, {"text": "input"})
+        policy.enforce_pre(cap, _make_step(), ctx, {"text": "input"})
         # degrade returns a reason string instead of raising
         # (exact behavior depends on gate result shape)
         # The key assertion: it does NOT raise SafetyGateFailedError
@@ -230,6 +234,7 @@ class TestPreExecutionGates:
 # ---------------------------------------------------------------------------
 # 4. Combined attack scenarios
 # ---------------------------------------------------------------------------
+
 
 class TestCombinedAdversarial:
     """Complex adversarial scenarios combining multiple safety mechanisms."""
@@ -285,6 +290,7 @@ class TestCombinedAdversarial:
 # ---------------------------------------------------------------------------
 # 5. Edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases:
     """Boundary conditions and unusual inputs."""
