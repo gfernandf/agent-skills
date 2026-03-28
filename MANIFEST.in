@@ -1,0 +1,17 @@
+include LICENSE
+include README.md
+include CHANGELOG.md
+include CITATION.cff
+include SECURITY.md
+include pyproject.toml
+include requirements-lock.txt
+
+recursive-include bindings *.yaml *.yml
+recursive-include services *.yaml *.yml
+recursive-include skills *.yaml *.yml *.md
+recursive-include docs *.md *.json
+recursive-include examples *.py *.json
+
+recursive-exclude test_results *
+recursive-exclude artifacts *
+recursive-exclude __pycache__ *

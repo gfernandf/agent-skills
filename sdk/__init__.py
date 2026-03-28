@@ -16,6 +16,13 @@ Recommended imports::
     from sdk.embedded import as_autogen_tools, as_semantic_kernel_functions
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("agent-skills")
+except PackageNotFoundError:
+    __version__ = "0.1.0+dev"
+
 # Re-export public API so users can write:
 #   from sdk import execute, as_openai_tools, ...
 from sdk.embedded import (  # noqa: F401

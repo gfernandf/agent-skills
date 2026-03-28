@@ -1,5 +1,6 @@
 # Agent Skills Runtime
 
+[![PyPI](https://img.shields.io/pypi/v/agent-skills.svg)](https://pypi.org/project/agent-skills/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
@@ -12,7 +13,25 @@
 Agent Skills Runtime lets you define agent capabilities as abstract contracts, wire them to any backend (Python, OpenAPI, MCP, OpenRPC), and execute multi-step workflows as declarative DAGs — with built-in safety gates, cognitive state tracking, and full observability.
 
 > **No API keys required.** 122 capabilities ship with deterministic Python baselines.
-> Clone, install, run your first skill in under 3 minutes.
+> Install, run your first skill in under 3 minutes.
+
+---
+
+## Table of Contents
+
+- [Why Agent Skills?](#why-agent-skills)
+- [Architecture](#architecture)
+- [How it compares](#how-it-compares)
+- [Quick Start](#quick-start)
+  - [Install from PyPI](#install-from-pypi)
+  - [Install from source](#install-from-source)
+  - [Run your first skill](#run-your-first-skill)
+  - [Integration modes](#choosing-your-integration-mode)
+- [Advanced Features](#advanced-features)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+- [Citing](#citing)
 
 ---
 
@@ -30,6 +49,8 @@ Agent Skills Runtime lets you define agent capabilities as abstract contracts, w
 ---
 
 ## Architecture
+
+> **Note:** The diagram below uses [Mermaid](https://mermaid.js.org/). It renders natively on GitHub. If viewing on PyPI or another platform, see the [architecture diagram on GitHub](https://github.com/gfernandf/agent-skills#architecture).
 
 ```mermaid
 graph TB
@@ -100,19 +121,32 @@ graph TB
 
 ## Quick Start
 
+### Install from PyPI
+
 ```bash
-# One-command setup: clones the registry + installs everything
+pip install agent-skills          # core
+pip install agent-skills[all]     # + PDF, web, OTel extras
+pip install agent-skills[mcp]     # + MCP server/client
+pip install agent-skills[dev]     # + pytest, ruff, benchmarks
+```
+
+The PyPI package includes the execution engine and CLI. You'll also need the companion **[agent-skill-registry](https://github.com/gfernandf/agent-skill-registry)** (capability contracts, skills, vocabulary):
+
+```bash
+git clone https://github.com/gfernandf/agent-skill-registry.git
+agent-skills doctor   # verifies registry is found
+```
+
+### Install from source
+
+```bash
 git clone https://github.com/gfernandf/agent-skills.git
 cd agent-skills
 make bootstrap       # clones registry alongside, installs deps
-
-# Verify
 agent-skills doctor   # all checks should pass
 ```
 
-> **What `make bootstrap` does:** clones the companion [agent-skill-registry](https://github.com/gfernandf/agent-skill-registry) (capability contracts, skills, vocabulary) into `../agent-skill-registry/`, then runs `pip install -e ".[all,dev]"`. If you prefer manual setup, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
->
-> **Already have the registry?** Just run `pip install -e ".[all]"` and `agent-skills doctor` to verify.
+> **What `make bootstrap` does:** clones the registry into `../agent-skill-registry/`, then runs `pip install -e ".[all,dev]"`. If you prefer manual setup, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ### Run your first skill
 
@@ -261,594 +295,76 @@ GitHub also provides a "Cite this repository" button powered by [`CITATION.cff`]
 
 ---
 
-This repository provides the execution layer for:
+## Advanced Features
 
-- primitive **capabilities**
-- composable **skills (workflows)**
-- shared **vocabulary**
-- machine-readable **runtime artifacts**
-
-The registry source of truth (contracts and canonical definitions) lives in the companion repository `agent-skill-registry`.
-
-## Troubleshooting
-
-If a skill fails or returns an unexpected error, see the **[Error Taxonomy](docs/ERROR_TAXONOMY.md)** — it lists every frozen error code, its meaning, and suggested recovery actions.
-
-For configuration issues, check **[Environment Variables](docs/ENVIRONMENT_VARIABLES.md)** — the complete reference for all `AGENT_SKILLS_*` variables.
-
-## Runtime Quality & Observability
-
-- Observability implementation details: `docs/OBSERVABILITY.md`
-- CognitiveState v1 cognitive execution model: `docs/COGNITIVE_STATE_V1.md`
-- DAG scheduler (parallel/sequential step execution): `docs/SCHEDULER.md`
-- Pre-MCP/OpenAPI readiness and consistency snapshot: `docs/PRE_MCP_OPENAPI_READINESS.md`
-- Error taxonomy (frozen error codes for all surfaces): `docs/ERROR_TAXONOMY.md`
-- Environment variables reference: `docs/ENVIRONMENT_VARIABLES.md`
-- Adapter authentication & secret handling: `docs/ADAPTER_AUTH_POLICY.md`
-- SLO/SLI per-capability targets: `docs/SLO_SLI.md`
-- Governance transition plan: `docs/GOVERNANCE_TRANSITION.md`
-- JSON Schema reference (16 schemas): `docs/JSON_SCHEMAS.md`
-
-## Authentication & RBAC
-
-The runtime includes a pluggable authentication and role-based access control layer.
-
-- **Roles**: `reader` → `executor` → `operator` → `admin` (hierarchical)
-- **Auth methods**: API key (`X-API-Key` header) and JWT HS256 (`Authorization: Bearer <token>`)
-- **Opt-in**: Set `AGENT_SKILLS_RBAC=1` to enable; without it the legacy flat API key check applies
-- **Route protection**: HTTP method + path prefix → minimum required role
-
-The JWT verifier is stdlib-only (no external dependencies).
-
-See `docs/AUTH.md` for configuration, role mapping, and plugin extension.
-
-## Webhooks
-
-The runtime supports an event-driven webhook system for observability and integration.
-
-- **Events**: `skill.execution.started`, `skill.execution.completed`, `skill.execution.failed`, `binding.resolved`, `audit.record.created`
-- **CRUD**: `POST /v1/webhooks` (register), `GET /v1/webhooks` (list), `DELETE /v1/webhooks/{id}` (remove)
-- **Security**: Payloads signed with HMAC-SHA256 (`X-Signature-256` header)
-- **Reliability**: Automatic retries with exponential backoff
-
-See `docs/WEBHOOKS.md` for payload format, verification examples, and limits.
-
-## Plugin System
-
-The runtime supports plugin discovery via Python entry points.
-
-Three extension groups:
-
-- `agent_skills.auth` — custom authentication providers
-- `agent_skills.invoker` — custom step invokers
-- `agent_skills.binding_source` — additional binding sources
-
-Plugins are discovered at engine startup. Failures are logged as warnings but do not block initialization.
-
-See `docs/PLUGINS.md` for registration, discovery API, and authoring guides.
-
-## Runtime Metrics
-
-The `/v1/metrics` endpoint exposes operational counters and histograms:
-
-- Execution counts (total, success, failure)
-- Latency histograms per capability
-- Active execution gauge
-
-Reset via `skill.metrics.reset` or `POST /v1/skills/diagnostics/reset`.
+| Feature | Description | Docs |
+|---------|-------------|------|
+| **NL Autopilot** | `agent-skills ask "summarize this"` — discovers, maps, executes | [SKILL_AUTHORING.md](docs/SKILL_AUTHORING.md) |
+| **Dev Watch** | Hot-reload skill development with `agent-skills dev` | [SKILL_AUTHORING.md](docs/SKILL_AUTHORING.md) |
+| **Skill Triggers** | Declarative webhook / event / file-change triggers | [WEBHOOKS.md](docs/WEBHOOKS.md) |
+| **Benchmark Lab** | Compare binding protocols side-by-side | CLI: `agent-skills benchmark-lab` |
+| **Compose DSL** | Compact `.compose` text syntax for workflows | CLI: `agent-skills compose` |
+| **Showcase** | One-command shareable markdown for any skill | CLI: `agent-skills showcase` |
+| **Local Capabilities** | Custom capabilities via `.agent-skills/capabilities/` with `extends` | [SKILL_AUTHORING.md](docs/SKILL_AUTHORING.md) |
+| **Auth & RBAC** | 4 hierarchical roles, API key + JWT, pluggable | [AUTH.md](docs/AUTH.md) |
+| **Webhooks** | HMAC-signed event payloads with auto-retry | [WEBHOOKS.md](docs/WEBHOOKS.md) |
+| **Plugin System** | Entry-point based auth, invoker, and binding-source plugins | [PLUGINS.md](docs/PLUGINS.md) |
+| **Audit Trail** | Hash-chain audit with `off`/`standard`/`full` modes | [OBSERVABILITY.md](docs/OBSERVABILITY.md) |
+| **CognitiveState v1** | Typed Frame/Working/Output/Trace aligned with CoALA | [COGNITIVE_STATE_V1.md](docs/COGNITIVE_STATE_V1.md) |
+| **JSON Schemas** | 16 schemas (2020-12) for capabilities, skills, bindings | [JSON_SCHEMAS.md](docs/JSON_SCHEMAS.md) |
+| **Governance Catalog** | Skill lifecycle: draft → validated → trusted → recommended | [SKILL_GOVERNANCE_MANIFESTO.md](docs/SKILL_GOVERNANCE_MANIFESTO.md) |
+| **Binding Conformance** | `strict`/`standard`/`experimental` profiles per binding | [CONSUMER_FACING_NEUTRAL_API.md](docs/CONSUMER_FACING_NEUTRAL_API.md) |
+| **Binding Fallback** | Deterministic fallback chain with terminal baseline | [RUNNER_GUIDE.md](docs/RUNNER_GUIDE.md) |
 
 ## Skill Authoring
 
-The CLI includes a complete authoring workflow for creating, testing, and sharing skills:
+```bash
+agent-skills scaffold --wizard               # interactive wizard
+agent-skills scaffold "Summarize a PDF"      # one-line from intent
+agent-skills test text.summarize              # auto-fixture tests
+agent-skills describe text.summarize --mermaid  # DAG diagram
+agent-skills export text.summarize            # portable bundle
+agent-skills contribute text.summarize        # promotion pipeline
+```
+
+See [docs/SKILL_AUTHORING.md](docs/SKILL_AUTHORING.md) for the full workflow guide.
+
+## Documentation
+
+| Topic | Link |
+|-------|------|
+| 10-minute onboarding | [ONBOARDING_10_MIN.md](docs/ONBOARDING_10_MIN.md) |
+| Installation & setup | [INSTALLATION.md](docs/INSTALLATION.md) |
+| Environment variables | [ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) |
+| Error taxonomy | [ERROR_TAXONOMY.md](docs/ERROR_TAXONOMY.md) |
+| Runner architecture | [RUNNER_GUIDE.md](docs/RUNNER_GUIDE.md) |
+| DAG scheduler | [SCHEDULER.md](docs/SCHEDULER.md) |
+| Step control flow | [STEP_CONTROL_FLOW.md](docs/STEP_CONTROL_FLOW.md) |
+| Streaming SSE | [STREAMING.md](docs/STREAMING.md) |
+| Async execution | [ASYNC_EXECUTION.md](docs/ASYNC_EXECUTION.md) |
+| Deployment & Docker | [DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| Observability & OTel | [OBSERVABILITY.md](docs/OBSERVABILITY.md) |
+| Authentication & RBAC | [AUTH.md](docs/AUTH.md) |
+| Security | [SECURITY.md](SECURITY.md) |
+| OpenAPI foundation | [OPENAPI_PHASE0_FOUNDATION.md](docs/OPENAPI_PHASE0_FOUNDATION.md) |
+| MCP integration | [MCP_INTEGRATION_SLICES.md](docs/MCP_INTEGRATION_SLICES.md) |
+| Governance manifesto | [SKILL_GOVERNANCE_MANIFESTO.md](docs/SKILL_GOVERNANCE_MANIFESTO.md) |
+| Project status | [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) |
+
+Full documentation is served with MkDocs: `make serve` → http://localhost:8000
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
-# Interactive wizard — guided step-by-step
-agent-skills scaffold --wizard
-
-# One-line generation from intent
-agent-skills scaffold "Summarize a PDF and extract key points"
-
-# Test with auto-discovered fixture
-agent-skills test text.summarize
-
-# Check type compatibility between steps
-agent-skills check-wiring text.summarize
-
-# Visualize the step DAG
-agent-skills describe text.summarize --mermaid
-
-# Export as portable bundle
-agent-skills export text.summarize
-
-# One-command contribution pipeline
-agent-skills contribute text.summarize
-
-# Rate and report
-agent-skills rate text.summarize 5 --comment "Fast and accurate"
-agent-skills report text.summarize "Empty output on large input" --severity high
-
-# Find similar skills
-agent-skills discover --similar text.summarize
+make check   # lint + format + tests in one command
 ```
 
-See `docs/SKILL_AUTHORING.md` for the full authoring workflow guide.
-
-## Killer Features
-
-### Ask NL Autopilot (K1)
-
-Ask a question in natural language — the CLI discovers the best skill, auto-maps inputs, and executes:
-
-```bash
-# Dry-run: see what skill would be selected
-agent-skills ask "summarize this text" --dry-run --json
-
-# Execute against the best match
-agent-skills ask "translate this to French" --input '{"text":"Hello world"}'
-
-# Show top 5 candidates
-agent-skills ask "extract key points" --top 5 --dry-run
-```
-
-### Embedded Runtime (K2)
-
-Use skills directly in Python — no HTTP server needed:
-
-```python
-from sdk.embedded import execute, list_skills, as_langchain_tools
-
-# Execute a skill in-process
-result = execute("text.summarize", {"text": "...", "language": "en"})
-
-# List all available skills
-skills = list_skills()
-
-# Get LangChain-compatible tools (also: CrewAI, AutoGen, SemanticKernel, Anthropic, OpenAI, Gemini)
-tools = as_langchain_tools(capabilities=["text.content.summarize"])
-```
-
-### Dev Watch Mode (K3)
-
-Hot-reload skill development — watches files and re-validates on every change:
-
-```bash
-agent-skills dev text.summarize           # polls every 2s
-agent-skills dev text.summarize --interval 5 --no-test  # skip tests, 5s poll
-```
-
-### Skill Triggers (K4)
-
-Declarative event-driven skill execution. Define triggers in skill YAML:
-
-```yaml
-triggers:
-  - type: webhook
-    config:
-      path: /hooks/summarize
-  - type: event
-    config:
-      source_skill: text.extract
-      on_status: completed
-  - type: file_change
-    config:
-      pattern: "*.txt"
-```
-
-```bash
-agent-skills triggers list                       # show all registered triggers
-agent-skills triggers fire webhook /hooks/summarize '{"text":"..."}'
-agent-skills triggers status                     # recent trigger history
-```
-
-### Benchmark Lab (K5)
-
-Compare protocol bindings side-by-side:
-
-```bash
-# Run 10 iterations across all protocols
-agent-skills benchmark-lab text.content.summarize --runs 10
-
-# Filter to specific protocols and export
-agent-skills benchmark-lab text.content.summarize --protocols python_call,openapi --export bench.json
-```
-
-### Compose DSL (K6)
-
-Compact text syntax for multi-step workflows (`.compose` files):
-
-```
-@id my.pipeline
-@name My Pipeline
-
-extract = doc.content.chunk(source=$input.document)
-summarize = text.content.summarize(text=$extract.chunks)
-
-> summary = $summarize.summary
-```
-
-```bash
-agent-skills compose pipeline.compose              # compile to YAML
-agent-skills compose pipeline.compose --out skill.yaml  # write to file
-agent-skills compose pipeline.compose --run --input '{"document":"..."}'
-```
-
-### Showcase (K7)
-
-Generate a shareable markdown document for any skill — one command:
-
-```bash
-# Metadata + diagram (no execution)
-agent-skills showcase text.summarize-plain-input --no-run
-
-# Full showcase with live example
-agent-skills showcase text.summarize-plain-input
-
-# Include benchmark table and write to file
-agent-skills showcase text.summarize-plain-input --benchmark --runs 5 --file showcase.md
-```
-
-Also: `benchmark-lab --format markdown` exports tables ready for PRs and blog posts.
-
-### Local Capabilities & Extends (K8)
-
-Define custom capabilities locally without modifying the registry:
-
-```bash
-# Create your local capabilities directory
-mkdir -p .agent-skills/capabilities/
-```
-
-```yaml
-# .agent-skills/capabilities/local.text.summarize_v2.yaml
-id: local.text.summarize_v2
-version: 1.0.0
-extends: text.content.summarize          # inherit base contract
-description: Summarization with format control
-
-inputs:                                    # additional fields only
-  format:
-    type: string
-    required: false
-  language:
-    type: string
-    required: false
-
-outputs:
-  keywords:
-    type: string
-    required: false
-```
-
-**Extends rules:**
-- Base inputs/outputs are inherited automatically.
-- Extensions can add new fields or strengthen optional → required.
-- Extensions **cannot** weaken required → optional.
-- Multi-level chains (A → B → C) resolve recursively.
-- Standalone local capabilities (without `extends`) are also supported.
-
-## JSON Schema Validation
-
-16 schemas in `docs/schemas/` (JSON Schema 2020-12) cover capabilities, skills, bindings, services, and runtime artifacts.
-
-Validation tool:
-
-```bash
-python tooling/validate_skill_schema.py examples/
-python tooling/validate_skill_schema.py path/to/skill.yaml
-```
-
-See `docs/JSON_SCHEMAS.md` for the full schema inventory, regeneration, and editor integration.
-
-## Agent Gateway Operation Model
-
-The runtime exposes a gateway-oriented execution model for agents that need to
-discover and orchestrate skills without coupling to internal binding mechanics.
-
-### Execution Model
-
-Steps within a skill are scheduled by a DAG-based scheduler (`runtime/scheduler.py`).
-By default, steps execute sequentially (backward-compatible). Steps that declare
-`config.depends_on: []` may execute in parallel. See `docs/SCHEDULER.md`.
-
-### CognitiveState v1
-
-`ExecutionState` now includes structured cognitive blocks for multi-step reasoning:
-
-- **FrameState**: immutable reasoning context (goal, constraints, success_criteria)
-- **WorkingState**: mutable working memory with 10 typed cognitive slots
-- **OutputState**: structured result metadata (result_type, summary, status_reason)
-- **TraceState**: per-step data lineage (reads/writes) and live aggregate metrics
-- **extensions**: open namespace for plugins
-
-Reference resolution supports 7 namespaces (`inputs`, `vars`, `outputs`, `frame`,
-`working`, `output`, `extensions`) with path traversal through dataclass attributes,
-dict keys, and list indices.
-
-Output mapping supports 4 merge strategies (`overwrite`, `append`, `deep_merge`,
-`replace`) across 5 writable namespaces.
-
-All features are backward-compatible — existing skills are unaffected.
-See `docs/COGNITIVE_STATE_V1.md` for the full reference.
-
-### Validated Skills
-
-- `agent.trace` v0.1.0: 3-step sidecar for incremental execution control.
-- `research.synthesize` v0.2.0: 2-step fast-path research synthesis (1 LLM call).
-  Resolves PDF/URL/text sources transparently via `research.source.retrieve`.
-
-Canonical operations across CLI/HTTP/MCP:
-
-- `skill.list`: enumerate available skills with classification filters.
-- `skill.discover`: rank skills for a user intent.
-- `skill.execute`: execute a selected skill directly.
-- `skill.attach`: execute a skill against an existing target (`task|run|output|transcript|artifact`).
-- `skill.diagnostics` / `skill.metrics.reset`: operational visibility and reset controls.
-
-Recommended orchestration pattern for product-facing agents:
-
-1. Discover candidate skills for the primary user objective.
-2. Select primary skill using policy (not only top-1 ranking score).
-3. Execute primary skill.
-4. Optionally attach sidecar skills for monitoring/control/reporting.
-5. Return user-facing result plus operational trace summary.
-
-This pattern is skill-agnostic: sidecar behavior is not hard-coded to one
-specific skill and applies to any skill classified as `invocation: attach|both`.
-
-## Skill Execution Audit Layer
-
-The runtime supports persisted execution audit records per skill run.
-
-- Modes: `off`, `standard`, `full`
-- Default mode: `standard` (configurable via `AGENT_SKILLS_AUDIT_DEFAULT_MODE`)
-- Default output: `artifacts/runtime_skill_audit.jsonl`
-
-`standard` mode stores lightweight audit metadata and payload hashes.
-
-`full` mode additionally stores redacted payload snapshots.
-
-Surface controls:
-
-- CLI `run` / `trace`: `--audit-mode off|standard|full`
-- HTTP `/v1/skills/{id}/execute`: body field `audit_mode`
-- MCP `skill.execute`: argument `audit_mode`
-
-User-managed deletion is available via:
-
-- `python cli/main.py audit-purge --trace-id <trace-id>`
-- `python cli/main.py audit-purge --skill-id <skill-id>`
-- `python cli/main.py audit-purge --older-than-days 30`
-- `python cli/main.py audit-purge --all`
-
-## MCP Integration Slice
-
-The runtime now includes initial MCP-backed capability slices without changing
-the official default binding selection.
-
-- `text.content.summarize`
-	- Service: `services/official/text_mcp_inprocess.yaml`
-	- Binding: `bindings/official/text.content.summarize/mcp_text_summarize_inprocess.yaml`
-- `data.schema.validate`
-	- Service: `services/official/data_mcp_inprocess.yaml`
-	- Binding: `bindings/official/data.schema.validate/mcp_data_schema_validate_inprocess.yaml`
-- `web.page.fetch`
-	- Service: `services/official/web_mcp_inprocess.yaml`
-	- Binding: `bindings/official/web.page.fetch/mcp_web_fetch_inprocess.yaml`
-
-Verifications:
-
-- `python tooling/verify_mcp_text_summarize.py`
-- `python tooling/verify_mcp_data_web_slices.py`
-
-This uses an in-process MCP server adapter to validate the runtime MCP path end to end
-before broader external MCP service rollout.
-
-## OpenAI Access (Local Runtime)
-
-An experimental official OpenAPI service/binding is available for `text.content.summarize`
-using OpenAI Chat Completions.
-
-- Service: `services/official/text_openai_chat.yaml`
-- Binding: `bindings/official/text.content.summarize/openapi_text_summarize_openai_chat.yaml`
-- Verifier: `python tooling/verify_openai_text_summarize.py`
-
-Credentials are resolved from the local environment at runtime:
-
-- `OPENAI_API_KEY`
-
-PowerShell example:
-
-```powershell
-$env:OPENAI_API_KEY = "<your-key>"
-python tooling/verify_openai_text_summarize.py
-```
-
-This flow does not change official default selection yet; it validates access and
-binding behavior before capability-by-capability default promotion.
-
-## Binding Fallback Policy (Runtime)
-
-Execution now applies a deterministic fallback chain per capability:
-
-1. Resolved primary binding (user override or official default).
-2. Optional `metadata.fallback_binding_id` chain declared by bindings.
-3. Mandatory terminal fallback to the official default binding.
-
-Verifier:
-
-- `python tooling/verify_binding_fallback_policy.py`
-
-## Binding Conformance Layer
-
-Bindings may declare metadata profile:
-
-- `conformance_profile: strict|standard|experimental`
-
-Behavior:
-
-- Missing profile defaults to `standard`.
-- Invalid profile values are rejected at binding load time.
-- Effective profile is exposed in execution metadata for tracing/explainability.
-- Optional enforcement is available at execution time using required profile
-	(`strict|standard|experimental`).
-
-CLI explain surface:
-
-- `python cli/main.py explain-capability text.content.summarize`
-- `python cli/main.py explain-capability text.content.summarize --required-conformance-profile strict`
-
-Consumer-facing explain endpoints:
-
-- `POST /v1/capabilities/{capability_id}/explain`
-- MCP tool: `capability.explain`
-
-Verifier:
-
-- `python tooling/verify_binding_conformance_layer.py`
-- `python tooling/verify_conformance_enforcement.py`
-- `python tooling/verify_binding_conformance_suite.py`
-
-Governance discovery surfaces:
-
-- CLI: `python cli/main.py skill-governance --min-state trusted --limit 20`
-- HTTP: `GET /v1/skills/governance?min_state=trusted&limit=20`
-- MCP tool: `skill.governance.list`
-
-Usage ingestion for governance wiring:
-
-- `python tooling/ingest_skill_usage_from_logs.py --log-file <runtime.jsonl>`
-
-## Skill Governance Catalog (Cold Start + Field Maturity)
-
-The runtime now supports an operational quality catalog that is separate from the
-registry source definitions.
-
-- Builder: `python tooling/build_skill_quality_catalog.py`
-- Output: `artifacts/skill_quality.json`
-
-Optional evidence inputs (if present):
-
-- `artifacts/skill_lab_validation.json`
-- `artifacts/skill_usage_30d.json`
-- `artifacts/skill_feedback_30d.json`
-
-Example templates are provided:
-
-- `tooling/examples/skill_lab_validation.example.json`
-- `tooling/examples/skill_usage_30d.example.json`
-- `tooling/examples/skill_feedback_30d.example.json`
-
-Lifecycle states:
-
-- `draft`
-- `validated`
-- `lab-verified`
-- `trusted`
-- `recommended`
-
-Cold-start behavior is explicit: without field usage data, skills can still be
-classified using internal evidence and readiness scoring.
-
-## Local-to-Registry Workflow (User UX)
-
-The platform now supports a complete local-first workflow so users can iterate
-privately and only request shared-registry promotion when they are ready.
-
-1. Generate a local skill from plain language:
-
-```powershell
-python skills.py scaffold "summarize incoming support email and store summary in memory"
-```
-
-Scaffolder defaults to `binding-first` mode:
-
-- It asks capability `agent.plan.generate` through the runtime/binding stack,
-  so user binding overrides apply automatically.
-- Direct OpenAI mode is optional for experimentation only:
-
-```powershell
-$env:AGENT_SKILLS_SCAFFOLDER_MODE = "direct-openai"
-```
-
-2. Prepare a promotion package:
-
-```powershell
-python skills.py package-prepare --skill-id text.summarize-incoming-support --target-channel experimental
-```
-
-Typical targets are:
-
-- `experimental` for early shared review with light gate requirements
-- `community` when the admission checklist is already complete
-- `official` only for maintainer-led final promotion
-
-3. Validate package quality and governance readiness:
-
-```powershell
-python skills.py package-validate "<package_path>" --print-pr-command
-```
-
-4. Launch a PR in one command (after validation):
-
-```powershell
-python skills.py package-pr "<package_path>"
-```
-
-`package-pr` prepares the branch and opens the PR, but it does not auto-merge,
-auto-approve, or bypass channel governance.
-
-All package workflow commands support machine-readable output for UI/backend orchestration:
-
-- `python skills.py package-prepare ... --json`
-- `python skills.py package-validate ... --json`
-- `python skills.py package-pr ... --json`
-
-## Documentation Index
-
-- Current project closure snapshot: `docs/PROJECT_STATUS.md`
-- 10-minute onboarding for new contributors: `docs/ONBOARDING_10_MIN.md`
-- Runtime runner architecture and operations: `docs/RUNNER_GUIDE.md`
-- Observability, tracing, and OpenTelemetry: `docs/OBSERVABILITY.md`
-- **Step control flow (condition, retry, foreach, while, router, scatter)**: `docs/STEP_CONTROL_FLOW.md`
-- **Streaming SSE execution**: `docs/STREAMING.md`
-- **Async execution and Run ID tracking**: `docs/ASYNC_EXECUTION.md`
-- **Deployment, Docker, and CLI serve**: `docs/DEPLOYMENT.md`
-- Canonical registry metrics source (counts and generation): `../agent-skill-registry/docs/CANONICAL_METRICS.md`
-- Pre-MCP/OpenAPI readiness baseline: `docs/PRE_MCP_OPENAPI_READINESS.md`
-- OpenAPI v1 phase-0 governance and technical foundation: `docs/OPENAPI_PHASE0_FOUNDATION.md`
-- OpenAPI v1 phase-1 smoke rollout plan: `docs/OPENAPI_PHASE1_SMOKE_PLAN.md`
-- OpenAPI construction packages and commit strategy: `docs/OPENAPI_CONSTRUCTION_PACKAGES.md`
-- Cross-repo registry pin policy (compatibility drift control): `docs/CROSS_REPO_PIN_POLICY.md`
-- **OpenAPI construction guide (copy-paste templates)**: `docs/OPENAPI_CONSTRUCTION_GUIDE.md`
-- **OpenAPI population checklist (gate criteria + regression tests)**: `docs/OPENAPI_POPULATION_CHECKLIST.md`
-- **OpenAPI construction phase closure (Package 6 summary)**: `docs/OPENAPI_PACKAGE6_CLOSURE.md`
-- OpenAPI error and security baseline: `docs/OPENAPI_ERROR_SECURITY_BASELINE.md`
-- **Consumer-facing neutral API (HTTP + MCP adapters)**: `docs/CONSUMER_FACING_NEUTRAL_API.md`
-- **MCP integration rollout slices and verification**: `docs/MCP_INTEGRATION_SLICES.md`
-- **Skill governance manifesto (trust model + architecture changes)**: `docs/SKILL_GOVERNANCE_MANIFESTO.md`
-- **Agent trace dry-run guide (cycles, baselines, npm scenarios)**: `docs/AGENT_TRACE_DRY_RUN_GUIDE.md`
-- **Gateway release go/no-go checklist (product gates)**: `docs/GATEWAY_RELEASE_GO_NO_GO.md`
-- **Authentication & RBAC (roles, JWT, API keys)**: `docs/AUTH.md`
-- **Webhook event system**: `docs/WEBHOOKS.md`
-- **Plugin system (entry points, extension groups)**: `docs/PLUGINS.md`
-- **JSON Schema inventory and validation**: `docs/JSON_SCHEMAS.md`
-- **Skill authoring workflow guide (create → test → share)**: `docs/SKILL_AUTHORING.md`
-
----
-
-# Core Concepts
-
-The runtime executes two fundamental building blocks defined in the registry.
-
-## Capabilities
-
-Capabilities represent **primitive operations**.
-
-They define a **contract** describing what an operation does, including:
-
-- inputs
-- outputs
-- execution properties
-- optional metadata
-
-Examples:
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `RegistryNotFound` | Run `agent-skills doctor --fix` to auto-clone the registry |
+| Skill returns unexpected error | See [Error Taxonomy](docs/ERROR_TAXONOMY.md) for frozen error codes |
+| Environment config issues | Check [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) |
