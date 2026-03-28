@@ -100,20 +100,19 @@ graph TB
 
 ## Quick Start
 
-> **Prerequisite:** agent-skills requires its companion registry repo cloned alongside it.
-
 ```bash
-# Clone both repos side by side
+# One-command setup: clones the registry + installs everything
 git clone https://github.com/gfernandf/agent-skills.git
-git clone https://github.com/gfernandf/agent-skill-registry.git
-
-# Install
 cd agent-skills
-pip install -e ".[all]"
+make bootstrap       # clones registry alongside, installs deps
 
-# Verify environment
-agent-skills doctor
+# Verify
+agent-skills doctor   # all checks should pass
 ```
+
+> **What `make bootstrap` does:** clones the companion [agent-skill-registry](https://github.com/gfernandf/agent-skill-registry) (capability contracts, skills, vocabulary) into `../agent-skill-registry/`, then runs `pip install -e ".[all,dev]"`. If you prefer manual setup, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
+>
+> **Already have the registry?** Just run `pip install -e ".[all]"` and `agent-skills doctor` to verify.
 
 ### Run your first skill
 

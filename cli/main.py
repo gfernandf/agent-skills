@@ -372,7 +372,15 @@ def main() -> None:
     gov_cmd.add_argument("--limit", type=int, default=20)
     add_root_args(gov_cmd)
 
-    doctor_cmd = sub.add_parser("doctor", help="Run system health checks")
+    doctor_cmd = sub.add_parser(
+        "doctor",
+        help="Run system health checks (use --fix to auto-clone missing registry)",
+    )
+    doctor_cmd.add_argument(
+        "--fix",
+        action="store_true",
+        help="Auto-fix problems (e.g. clone missing registry)",
+    )
     add_root_args(doctor_cmd)
 
     # --- inspect-plugins ---
@@ -1160,7 +1168,9 @@ def main() -> None:
         )
 
     elif args.command == "doctor":
-        _cmd_doctor(registry_root, runtime_root, host_root)
+        _cmd_doctor(
+            registry_root, runtime_root, host_root, fix=getattr(args, "fix", False)
+        )
 
     elif args.command == "inspect-plugins":
         from runtime.plugins import discover_all, PLUGIN_GROUPS
@@ -3066,7 +3076,9 @@ def _cmd_activate(runtime_root: Path, host_root: Path, capability: str | None) -
         print(json.dumps(active, indent=2, ensure_ascii=False))
 
 
-def _cmd_doctor(registry_root: Path, runtime_root: Path, host_root: Path) -> None:
+def _cmd_doctor(
+    registry_root: Path, runtime_root: Path, host_root: Path, *, fix: bool = False
+) -> None:
 
     errors = 0
     warnings = 0
@@ -3088,7 +3100,30 @@ def _cmd_doctor(registry_root: Path, runtime_root: Path, host_root: Path) -> Non
     if registry_root.exists():
         ok(f"registry root found: {registry_root}")
     else:
-        error(f"registry root not found: {registry_root}")
+        if fix:
+            print(f"[FIX] Cloning agent-skill-registry into {registry_root}...")
+            import subprocess
+
+            result = subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "https://github.com/gfernandf/agent-skill-registry.git",
+                    str(registry_root),
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                ok(f"registry cloned to {registry_root}")
+            else:
+                error(f"failed to clone registry: {result.stderr.strip()}")
+        else:
+            error(
+                f"registry root not found: {registry_root}\n"
+                f"       Run 'agent-skills doctor --fix' to clone it automatically,\n"
+                f"       or: git clone https://github.com/gfernandf/agent-skill-registry.git {registry_root}"
+            )
 
     if runtime_root.exists():
         ok(f"runtime root found: {runtime_root}")

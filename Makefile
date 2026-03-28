@@ -1,7 +1,20 @@
-.PHONY: install test lint format check serve mcp clean help
+.PHONY: install bootstrap test lint format check serve mcp clean help
+
+REGISTRY_DIR ?= ../agent-skill-registry
+REGISTRY_URL ?= https://github.com/gfernandf/agent-skill-registry.git
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+bootstrap: ## Clone registry + install (one-command setup)
+	@if [ ! -d "$(REGISTRY_DIR)" ]; then \
+		echo "Cloning agent-skill-registry..."; \
+		git clone $(REGISTRY_URL) $(REGISTRY_DIR); \
+	else \
+		echo "Registry already present at $(REGISTRY_DIR)"; \
+	fi
+	python -m pip install -e ".[all,dev]"
+	@echo "\n✓ Ready — run 'make test' or 'agent-skills doctor' to verify."
 
 install: ## Install in dev mode with all extras
 	python -m pip install -e ".[all,dev]"
