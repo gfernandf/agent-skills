@@ -1055,7 +1055,8 @@ def main() -> None:
 
     elif args.command == "describe":
         _cmd_describe(
-            registry_root, args.skill_id, args.json, args.verbose, args.mermaid
+            registry_root, args.skill_id, args.json, args.verbose, args.mermaid,
+            runtime_root=runtime_root,
         )
 
     elif args.command == "discover":
@@ -2305,9 +2306,20 @@ def _cmd_describe(
     json_output: bool = False,
     verbose: bool = False,
     mermaid: bool = False,
+    *,
+    runtime_root: Path | None = None,
 ) -> None:
 
-    skill_loader = YamlSkillLoader(registry_root)
+    registry_loader = YamlSkillLoader(registry_root)
+    skill_loader = registry_loader
+    if runtime_root is not None:
+        local_dir = runtime_root / "skills" / "local"
+        if local_dir.exists() and any(local_dir.iterdir()):
+            from runtime.composite_skill_loader import CompositeSkillLoader
+
+            skill_loader = CompositeSkillLoader(
+                [YamlSkillLoader(runtime_root), registry_loader]
+            )
     skill = skill_loader.get_skill(skill_id)
 
     # Build step details with capability references and dependencies
