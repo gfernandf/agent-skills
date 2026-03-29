@@ -70,7 +70,7 @@ conformance_profile: baseline
 request_template:
   # Map capability inputs to MCP tool arguments
   # TODO: Map each required input from the capability spec
-  input_text: "{{{{ inputs.text }}}}"
+  text: "{{{{ inputs.text }}}}"
 
 response_template:
   # Map MCP tool results to capability outputs

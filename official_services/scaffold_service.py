@@ -360,7 +360,7 @@ def _build_template_skill(
     )
 
     steps = []
-    prev_ref = "inputs.input_text"
+    prev_ref = "inputs.text"
     last_output_type = desired_output_type
     for i, cap in enumerate(selected_caps):
         cap_id = cap.get("id", "unknown")
@@ -419,7 +419,7 @@ def _build_template_skill(
         "name": name,
         "description": f"TODO: {intent[:120]}",
         "inputs": {
-            "input_text": {
+            "text": {
                 "type": "string",
                 "required": True,
                 "description": "Primary input for the workflow.",
