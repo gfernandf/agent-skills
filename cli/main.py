@@ -36,6 +36,16 @@ from tooling.promotion_package import (
 
 def main() -> None:
 
+    # Ensure Unicode output on Windows (cp1252 cannot encode ✓✗→ etc.)
+    if sys.stdout.encoding and sys.stdout.encoding.lower().replace("-", "") != "utf8":
+        import io
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True
+        )
+        sys.stderr = io.TextIOWrapper(
+            sys.stderr.buffer, encoding="utf-8", errors="replace", line_buffering=True
+        )
+
     parser = argparse.ArgumentParser(
         prog="skills",
         description="Agent Skills Runtime — declarative AI agent skill execution engine.",
