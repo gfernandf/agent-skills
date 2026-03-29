@@ -82,9 +82,15 @@ def run_skill_test(
     elapsed = round((time.perf_counter() - start) * 1000)
     output_keys = sorted(result.outputs.keys()) if result.outputs else []
     missing = [k for k in expected_outputs if k not in (result.outputs or {})]
+    # Only required outputs block the test pass
+    outputs_meta = skill_doc.get("outputs", {})
+    required_missing = [
+        k for k in missing
+        if outputs_meta.get(k, {}).get("required", False)
+    ]
 
     report: dict[str, Any] = {
-        "ok": result.status == "completed" and not missing,
+        "ok": result.status == "completed" and not required_missing,
         "skill_id": skill_id,
         "status": result.status,
         "duration_ms": elapsed,

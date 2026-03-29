@@ -4,7 +4,7 @@ service: message_baseline
 protocol: pythoncall
 operation: send_message
 request:
-  recipient: input.recipient
+  channel: input.recipient
   message: input.message
 response:
   sent: response.sent

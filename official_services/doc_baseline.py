@@ -111,6 +111,7 @@ def chunk_document(text, chunk_size):
     Returns:
         dict: {"chunks": list}
     """
+    chunk_size = int(chunk_size)
     chunks = [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
     return {"chunks": chunks}
 

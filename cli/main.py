@@ -4088,8 +4088,16 @@ def _cmd_test(
     """Test a skill: execute with fixture, verify expected outputs."""
     from tooling.skill_authoring import generate_test_fixture, run_skill_test
 
-    # Load skill document
-    skill_loader = YamlSkillLoader(registry_root)
+    # Load skill document (registry + local skills)
+    registry_loader = YamlSkillLoader(registry_root)
+    skill_loader = registry_loader
+    local_dir = runtime_root / "skills" / "local"
+    if local_dir.exists() and any(local_dir.iterdir()):
+        from runtime.composite_skill_loader import CompositeSkillLoader
+
+        skill_loader = CompositeSkillLoader(
+            [YamlSkillLoader(runtime_root), registry_loader]
+        )
     skill = skill_loader.get_skill(skill_id)
     skill_doc = {"id": skill.id, "inputs": {}, "outputs": {}, "steps": []}
     for k, v in skill.inputs.items():
@@ -4098,7 +4106,10 @@ def _cmd_test(
             "required": getattr(v, "required", False),
         }
     for k, v in skill.outputs.items():
-        skill_doc["outputs"][k] = {"type": getattr(v, "type", "string")}
+        skill_doc["outputs"][k] = {
+            "type": getattr(v, "type", "string"),
+            "required": getattr(v, "required", False),
+        }
 
     # Generate fixture mode
     if generate_fixture:
