@@ -128,6 +128,46 @@ _STOP_WORDS = {
     "via",
     "into",
     "out",
+    # Common intent verbs that shouldn't appear in skill IDs
+    "i",
+    "me",
+    "my",
+    "want",
+    "need",
+    "would",
+    "like",
+    "should",
+    "could",
+    "can",
+    "will",
+    "do",
+    "does",
+    "did",
+    "get",
+    "give",
+    "given",
+    "make",
+    "create",
+    "build",
+    "have",
+    "has",
+    "be",
+    "am",
+    "are",
+    "was",
+    "were",
+    "been",
+    "being",
+    "able",
+    "also",
+    "use",
+    "using",
+    "please",
+    "just",
+    "some",
+    "workflow",
+    "input",
+    "output",
 }
 
 # Maps intent keywords → capability domains (for template mode)
@@ -1147,6 +1187,7 @@ def generate_skill_from_prompt(
     host_root: str | None = None,
     planning_capability_id: str = "agent.plan.generate",
     required_conformance_profile: str | None = None,
+    wizard_capability_ids: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     Generate a skill YAML from a natural-language intent description.
@@ -1188,6 +1229,12 @@ def generate_skill_from_prompt(
         preferred_capability_ids, planning_text = _extract_capability_hints_from_plan(
             plan_obj, known_ids
         )
+
+    # Wizard selections take highest priority
+    if wizard_capability_ids:
+        for wc in reversed(wizard_capability_ids):
+            if wc in known_ids and wc not in preferred_capability_ids:
+                preferred_capability_ids.insert(0, wc)
 
     for goal_capability_id in reversed(goal_capability_ids):
         if (

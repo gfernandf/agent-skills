@@ -1485,6 +1485,7 @@ def _cmd_scaffold(
     from tooling.skill_authoring import generate_test_fixture
 
     # --- M1: Wizard mode ---
+    wizard_caps: list[str] = []
     if wizard or not intent:
         intent, channel, wizard_inputs, wizard_outputs, wizard_caps = _scaffold_wizard(
             registry_root,
@@ -1510,14 +1511,23 @@ def _cmd_scaffold(
         mode_label = "template (no OPENAI_API_KEY — offline deterministic generation)"
     print(f"[scaffold] Mode: {mode_label}")
 
-    result = generate_skill_from_prompt(
-        intent_description=intent,
-        registry_root=str(registry_root),
-        target_channel=channel,
-        model=model,
-        runtime_root=str(runtime_root),
-        host_root=str(host_root),
-    )
+    # Suppress planner log noise during scaffold
+    import logging as _logging
+    _scaffold_logger = _logging.getLogger("agent_skills")
+    _prev_level = _scaffold_logger.level
+    _scaffold_logger.setLevel(_logging.WARNING)
+    try:
+        result = generate_skill_from_prompt(
+            intent_description=intent,
+            registry_root=str(registry_root),
+            target_channel=channel,
+            model=model,
+            runtime_root=str(runtime_root),
+            host_root=str(host_root),
+            wizard_capability_ids=wizard_caps or None,
+        )
+    finally:
+        _scaffold_logger.setLevel(_prev_level)
 
     skill_yaml: str = result["skill_yaml"]
     suggested_id: str = result["suggested_id"]
@@ -1716,8 +1726,6 @@ def _scaffold_wizard(
 
     if selected_caps:
         print(f"\nSelected: {', '.join(selected_caps)}")
-        # Enhance intent with selection info
-        intent += f" [capabilities: {', '.join(selected_caps)}]"
 
     print("\nGenerating skill...\n")
     return intent, channel, inputs, outputs, selected_caps
