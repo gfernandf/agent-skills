@@ -150,6 +150,10 @@ agent-skills doctor   # all checks should pass
 
 ### Run your first skill
 
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Agent Skills CLI demo — doctor + summarize" width="800">
+</p>
+
 ```bash
 agent-skills run text.summarize-plain-input \
   --input '{"text": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills. It supports four binding protocols and ships with 122 Python baselines.", "max_length": 50}'
@@ -158,10 +162,8 @@ agent-skills run text.summarize-plain-input \
 Expected output:
 ```json
 {
-  "status": "success",
-  "outputs": {
-    "summary": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills..."
-  }
+  "summary": "Agent Skills Runtime is a deterministic execution engine...",
+  "sentiment": "positive"
 }
 ```
 
