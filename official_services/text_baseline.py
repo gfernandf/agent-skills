@@ -416,3 +416,44 @@ def answer_question(question, context):
     sentences = re.split(r"(?<=[.!?])\s+", context.strip())
     answer = sentences[0] if sentences else context[:200]
     return {"answer": answer, "confidence": 0.5, "_fallback": True}
+
+
+def compare_texts(text_a, text_b, dimensions=None):
+    """Compare two texts and return a semantic diff (baseline: word-level)."""
+    words_a = set(text_a.lower().split())
+    words_b = set(text_b.lower().split())
+    common = words_a & words_b
+    only_a = words_a - words_b
+    only_b = words_b - words_a
+    total = len(words_a | words_b)
+    similarity = len(common) / total if total else 1.0
+    return {
+        "similarity": round(similarity, 3),
+        "differences": {
+            "only_in_a": sorted(only_a)[:20],
+            "only_in_b": sorted(only_b)[:20],
+        },
+        "_fallback": True,
+    }
+
+
+def analyze_sentiment(text, dimensions=None):
+    """Analyze sentiment polarity (baseline: keyword heuristic)."""
+    positive = ["love", "great", "amazing", "excellent", "wonderful", "fantastic",
+                "happy", "good", "best", "awesome", "easier", "perfect", "enjoy"]
+    negative = ["hate", "terrible", "awful", "worst", "bad", "horrible", "angry",
+                "poor", "fail", "broken", "frustrat", "disappoint"]
+    text_lower = text.lower()
+    pos = sum(1 for w in positive if w in text_lower)
+    neg = sum(1 for w in negative if w in text_lower)
+    total = pos + neg
+    if total == 0:
+        polarity = "neutral"
+        score = 0.0
+    elif pos > neg:
+        polarity = "positive"
+        score = round(pos / total, 3)
+    else:
+        polarity = "negative"
+        score = round(-neg / total, 3)
+    return {"polarity": polarity, "score": score, "_fallback": True}

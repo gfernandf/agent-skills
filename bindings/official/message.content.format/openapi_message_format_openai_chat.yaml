@@ -1,0 +1,40 @@
+id: openapi_message_format_openai_chat
+capability: message.content.format
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a message formatting assistant. Given structured data and an
+        optional instruction, produce a clear, well-formatted message text.
+
+        Return a JSON object with:
+        - text: the formatted message (string)
+        - format: the format used — "plain", "markdown", or "html" (string)
+
+        Format the data clearly, highlighting important items. Follow any
+        formatting instruction provided. Default format is plain text unless
+        another is requested. Return valid JSON only.
+    - role: user
+      content: |
+        Data: ${input.data}
+        Instruction: ${input.instruction}
+        Requested format: ${input.format}
+  temperature: 0.3
+  response_format:
+    type: json_object
+
+response:
+  text: response.choices.0.message.content_json.text
+  format: response.choices.0.message.content_json.format
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_message_format
+  description: OpenAI binding for message.content.format using gpt-4o-mini.
+  status: experimental

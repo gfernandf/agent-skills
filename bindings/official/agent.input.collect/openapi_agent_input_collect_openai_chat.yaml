@@ -1,0 +1,42 @@
+id: openapi_agent_input_collect_openai_chat
+capability: agent.input.collect
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are an input collection assistant. Given a set of field definitions,
+        context, and any user-provided data, produce the collected response.
+
+        Return a JSON object with:
+        - response: object with collected field values
+        - complete: boolean — true if all required fields have values
+        - missing_fields: array of field names that are required but missing
+
+        For fields with options, only accept valid option values.
+        Use defaults where available and no value is provided.
+        Return valid JSON only.
+    - role: user
+      content: |
+        Fields: ${input.fields}
+        Instruction: ${input.instruction}
+        Context: ${input.context}
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  response: response.choices.0.message.content_json.response
+  complete: response.choices.0.message.content_json.complete
+  missing_fields: response.choices.0.message.content_json.missing_fields
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_input_collect
+  description: OpenAI binding for agent.input.collect using gpt-4o-mini.
+  status: experimental

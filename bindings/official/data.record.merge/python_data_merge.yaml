@@ -1,0 +1,18 @@
+id: python_data_merge
+capability: data.record.merge
+service: data_baseline
+protocol: pythoncall
+operation: merge_records
+
+request:
+  records: input.records
+  strategy: input.strategy
+
+response:
+  record: response.record
+  field_count: response.field_count
+  conflicts: response.conflicts
+
+metadata:
+  description: Official baseline binding for data.record.merge.
+  status: stable

@@ -1,0 +1,42 @@
+id: openapi_text_compare_openai_chat
+capability: text.content.compare
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a text comparison analyst. Compare two text blocks and report
+        their similarity and differences.
+
+        Return a JSON object with:
+        - similarity: number 0.0–1.0 (semantic similarity)
+        - differences: array of objects, each with dimension, description, severity
+        - summary: one-paragraph narrative summary
+
+        Severity levels: "minor", "moderate", "major".
+        If dimensions are specified, focus on those. Otherwise evaluate all.
+        Return valid JSON only.
+    - role: user
+      content: |
+        Text A: ${input.text_a}
+        Text B: ${input.text_b}
+        Dimensions: ${input.dimensions}
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  similarity: response.choices.0.message.content_json.similarity
+  differences: response.choices.0.message.content_json.differences
+  summary: response.choices.0.message.content_json.summary
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_text_compare
+  description: OpenAI binding for text.content.compare using gpt-4o-mini.
+  status: experimental

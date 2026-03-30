@@ -65,3 +65,18 @@ def classify_priority(message, sender=None, context=None):
         "confidence": round(confidence, 3),
         "rationale": rationale,
     }
+
+
+def format_message(data, instruction=None, format=None):
+    """Format structured data into a human-readable notification."""
+    fmt = format or "text"
+    parts = []
+    if instruction:
+        parts.append(instruction)
+    if isinstance(data, dict):
+        for k, v in data.items():
+            parts.append(f"- **{k}**: {v}" if fmt == "markdown" else f"{k}: {v}")
+    else:
+        parts.append(str(data))
+    text = "\n".join(parts)
+    return {"text": text, "format": fmt}

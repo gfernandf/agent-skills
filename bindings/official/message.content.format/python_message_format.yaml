@@ -1,0 +1,18 @@
+id: python_message_format
+capability: message.content.format
+service: message_baseline
+protocol: pythoncall
+operation: format_message
+
+request:
+  data: input.data
+  instruction: input.instruction
+  format: input.format
+
+response:
+  text: response.text
+  format: response.format
+
+metadata:
+  description: Official baseline binding for message.content.format.
+  status: stable

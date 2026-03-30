@@ -562,6 +562,116 @@ TEST_DATA = {
         "task_id": "CASE-1",
         "target_state": "in_progress",
     },
+    # ── 19 new capabilities — composability & coverage wave ──
+    "agent.flow.branch": {
+        "condition": "priority == 'critical'",
+        "context": {"priority": "critical", "source": "monitoring"},
+        "branches": [
+            {"label": "escalate", "match": "priority == 'critical'"},
+            {"label": "log", "match": "priority == 'low'"},
+        ],
+        "default_branch": "log",
+    },
+    "agent.flow.iterate": {
+        "items": [
+            {"id": "doc-1", "text": "First document."},
+            {"id": "doc-2", "text": "Second document."},
+        ],
+        "capability": "text.content.summarize",
+        "input_mapping": {"text": "$.text"},
+    },
+    "agent.flow.wait": {
+        "condition": "approval_received",
+        "timeout_seconds": 5,
+    },
+    "agent.flow.catch": {
+        "error": {"type": "TimeoutError", "message": "Service unavailable"},
+        "fallback_strategy": "default_value",
+        "default_value": {"status": "degraded", "result": None},
+    },
+    "data.array.map": {
+        "items": [
+            {"name": "Alice", "age": 30},
+            {"name": "Bob", "age": 25},
+        ],
+        "expression": "item.name.upper()",
+    },
+    "data.field.map": {
+        "record": {"first_name": "Alice", "last_name": "Smith", "age": 30},
+        "mapping": {"first_name": "name", "last_name": "surname"},
+        "drop_unmapped": False,
+    },
+    "data.record.join": {
+        "records_a": [
+            {"id": 1, "name": "Alice"},
+            {"id": 2, "name": "Bob"},
+        ],
+        "records_b": [
+            {"id": 1, "dept": "Engineering"},
+            {"id": 3, "dept": "Sales"},
+        ],
+        "key_field": "id",
+        "join_type": "inner",
+    },
+    "data.record.merge": {
+        "records": [
+            {"name": "Alice", "role": "engineer"},
+            {"name": "Alice", "dept": "platform", "level": "senior"},
+        ],
+        "strategy": "deep",
+    },
+    "message.content.format": {
+        "data": {"user": "Alice", "action": "deployed", "service": "api-gateway"},
+        "instruction": "Format a Slack notification summarizing the deployment.",
+        "format": "markdown",
+    },
+    "web.request.send": {
+        "url": "https://httpbin.org/get",
+        "method": "GET",
+    },
+    "doc.content.generate": {
+        "instruction": "Write a short project kickoff summary.",
+        "context": "Project Alpha aims to migrate legacy services to Kubernetes.",
+        "format": "markdown",
+    },
+    "task.event.schedule": {
+        "title": "Weekly standup",
+        "scheduled_time": "2026-04-01T09:00:00Z",
+        "recurrence": "weekly",
+    },
+    "image.content.generate": {
+        "prompt": "A simple blue rectangle on white background",
+        "style": "minimal",
+        "size": "256x256",
+    },
+    "table.sheet.read": {
+        "path": "artifacts/sample.csv",
+    },
+    "table.sheet.write": {
+        "path": "test_results/test_sheet_output.csv",
+        "table": [
+            {"name": "Alice", "score": 95},
+            {"name": "Bob", "score": 87},
+        ],
+    },
+    "agent.input.collect": {
+        "fields": [
+            {"name": "project_name", "type": "string", "required": True},
+            {"name": "priority", "type": "string", "required": False},
+        ],
+        "instruction": "Collect project intake information.",
+    },
+    "text.content.compare": {
+        "text_a": "The system is operational and running normally.",
+        "text_b": "The system is functioning within expected parameters.",
+    },
+    "text.sentiment.analyze": {
+        "text": "I absolutely love this new feature! It makes everything so much easier.",
+    },
+    "audio.speaker.diarize": {
+        "audio": "artifacts/sample_audio.wav",
+        "max_speakers": 3,
+    },
 }
 
 

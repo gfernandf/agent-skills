@@ -99,3 +99,48 @@ def aggregate_table(table_data, aggregations, group_by=None):
         results.append(entry)
 
     return {"results": results, "row_count": len(table_data)}
+
+
+def read_sheet(path, sheet_name=None, range=None):
+    """Read a CSV/Excel file into rows (baseline: CSV only)."""
+    import csv
+    from pathlib import Path as _Path
+
+    p = _Path(path)
+    if not p.exists():
+        return {"rows": [], "row_count": 0, "error": f"File not found: {path}"}
+
+    rows = []
+    try:
+        with open(p, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rows.append(dict(row))
+    except Exception as e:
+        return {"rows": [], "row_count": 0, "error": str(e)}
+
+    return {"rows": rows, "row_count": len(rows), "headers": list(rows[0].keys()) if rows else []}
+
+
+def write_sheet(path, table, headers=None, sheet_name=None):
+    """Write rows to a CSV file (baseline: CSV only)."""
+    import csv
+    from pathlib import Path as _Path
+
+    p = _Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+
+    if not table:
+        return {"rows_written": 0, "path": str(p)}
+
+    cols = headers or list(table[0].keys()) if table else []
+    try:
+        with open(p, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=cols)
+            writer.writeheader()
+            for row in table:
+                writer.writerow({k: row.get(k, "") for k in cols})
+    except Exception as e:
+        return {"rows_written": 0, "path": str(p), "error": str(e)}
+
+    return {"rows_written": len(table), "path": str(p)}

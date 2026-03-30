@@ -153,3 +153,13 @@ def synthesize_speech(text, language=None, voice=None):
             "word_count": word_count,
         },
     }
+
+
+def diarize_speakers(audio, max_speakers=None):
+    """Segment audio by speaker (baseline: returns placeholder)."""
+    return {
+        "segments": [],
+        "speaker_count": 0,
+        "_fallback": True,
+        "message": "Baseline speaker diarization requires a production binding (pyannote, AWS Transcribe, etc.).",
+    }

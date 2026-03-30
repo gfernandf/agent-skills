@@ -153,3 +153,77 @@ def transform_records(records, mapping):
             "fields_dropped": fields_dropped,
         },
     }
+
+
+def map_array(items, expression, context=None):
+    """Apply an expression to each element in an array (baseline: identity)."""
+    results = []
+    for item in (items or []):
+        results.append(item)
+    return {"items": results, "item_count": len(results)}
+
+
+def map_fields(record, mapping, drop_unmapped=False):
+    """Rename/alias fields in a record."""
+    if not isinstance(record, dict):
+        return {"record": record, "fields_mapped": 0}
+    result = {}
+    mapped = 0
+    for old_key, new_key in (mapping or {}).items():
+        if old_key in record:
+            result[new_key] = record[old_key]
+            mapped += 1
+    if not drop_unmapped:
+        for k, v in record.items():
+            if k not in (mapping or {}):
+                result[k] = v
+    return {"record": result, "fields_mapped": mapped}
+
+
+def join_records(records_a, records_b, key_field, join_type=None):
+    """Join two record sets on a key field."""
+    jtype = (join_type or "inner").lower()
+    index_b = {}
+    for rec in (records_b or []):
+        key = rec.get(key_field)
+        if key is not None:
+            index_b.setdefault(key, []).append(rec)
+
+    joined = []
+    matched_keys = set()
+    for rec_a in (records_a or []):
+        key = rec_a.get(key_field)
+        matches = index_b.get(key, [])
+        if matches:
+            matched_keys.add(key)
+            for rec_b in matches:
+                merged = {**rec_a, **rec_b}
+                joined.append(merged)
+        elif jtype in ("left", "outer"):
+            joined.append(dict(rec_a))
+
+    if jtype in ("right", "outer"):
+        for rec_b in (records_b or []):
+            key = rec_b.get(key_field)
+            if key not in matched_keys:
+                joined.append(dict(rec_b))
+
+    return {"records": joined, "record_count": len(joined), "join_type": jtype}
+
+
+def merge_records(records, strategy=None):
+    """Deep-merge a list of records into one."""
+    strat = strategy or "shallow"
+    result = {}
+    for rec in (records or []):
+        if not isinstance(rec, dict):
+            continue
+        if strat == "deep":
+            for k, v in rec.items():
+                if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+                    result[k] = {**result[k], **v}
+                else:
+                    result[k] = v
+        else:
+            result.update(rec)
+    return {"record": result, "strategy": strat}

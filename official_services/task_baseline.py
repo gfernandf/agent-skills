@@ -315,3 +315,15 @@ def transition_state(task_id, target_state):
             "current_state": current,
             "reason": f"Transition from '{current}' to '{target_state}' not allowed. Allowed: {allowed}.",
         }
+
+
+def schedule_event(title, scheduled_time, description=None, recurrence=None, attendees=None, context=None):
+    """Schedule a future event or recurring timer."""
+    event_id = _next_id("evt")
+    return {
+        "event_id": event_id,
+        "title": title,
+        "scheduled_time": scheduled_time,
+        "recurrence": recurrence,
+        "created": _now(),
+    }

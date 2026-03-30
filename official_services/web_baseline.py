@@ -485,3 +485,42 @@ def normalize_search_results(results, mode=None):
         items.append(item)
 
     return {"items": items}
+
+
+def send_request(url, method, headers=None, body=None, timeout_seconds=None):
+    """Send an HTTP request (baseline: validates URL, performs GET/POST)."""
+    import urllib.request
+    import urllib.error
+
+    method = (method or "GET").upper()
+    timeout = timeout_seconds or 30
+
+    ok, err = _validate_url(url)
+    if not ok:
+        return {"status_code": 0, "headers": {}, "body": "", "error": err}
+
+    try:
+        data = None
+        if body and method in ("POST", "PUT", "PATCH"):
+            import json as _json
+            data = _json.dumps(body).encode("utf-8") if isinstance(body, dict) else str(body).encode("utf-8")
+
+        req = urllib.request.Request(url, data=data, method=method)
+        for k, v in (headers or {}).items():
+            req.add_header(k, v)
+        if data and "Content-Type" not in (headers or {}):
+            req.add_header("Content-Type", "application/json")
+
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            resp_body = resp.read().decode("utf-8", errors="replace")[:50000]
+            resp_headers = dict(resp.headers)
+            return {
+                "status_code": resp.status,
+                "headers": resp_headers,
+                "body": resp_body,
+                "error": None,
+            }
+    except urllib.error.HTTPError as e:
+        return {"status_code": e.code, "headers": dict(e.headers), "body": str(e.reason), "error": str(e)}
+    except Exception as e:
+        return {"status_code": 0, "headers": {}, "body": "", "error": str(e)}

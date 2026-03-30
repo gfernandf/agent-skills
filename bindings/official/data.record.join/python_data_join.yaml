@@ -1,0 +1,20 @@
+id: python_data_join
+capability: data.record.join
+service: data_baseline
+protocol: pythoncall
+operation: join_records
+
+request:
+  records_a: input.records_a
+  records_b: input.records_b
+  key_field: input.key_field
+  join_type: input.join_type
+
+response:
+  records: response.records
+  matched_count: response.matched_count
+  unmatched_count: response.unmatched_count
+
+metadata:
+  description: Official baseline binding for data.record.join.
+  status: stable

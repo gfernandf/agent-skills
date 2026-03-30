@@ -1,0 +1,43 @@
+id: openapi_doc_generate_openai_chat
+capability: doc.content.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a document generation assistant. Given an instruction,
+        optional context, and optional section structure, produce a
+        well-organized document.
+
+        Return a JSON object with:
+        - document: the full document text in the requested format (string)
+        - format: "markdown", "html", or "plain" (string)
+        - word_count: approximate word count (number)
+
+        If sections are provided, use them as the document structure.
+        Write clear, professional prose. Return valid JSON only.
+    - role: user
+      content: |
+        Instruction: ${input.instruction}
+        Context: ${input.context}
+        Sections: ${input.sections}
+        Format: ${input.format}
+  temperature: 0.4
+  response_format:
+    type: json_object
+
+response:
+  document: response.choices.0.message.content_json.document
+  format: response.choices.0.message.content_json.format
+  word_count: response.choices.0.message.content_json.word_count
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_doc_generate
+  description: OpenAI binding for doc.content.generate using gpt-4o-mini.
+  status: experimental

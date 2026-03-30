@@ -1,0 +1,18 @@
+id: python_image_generate
+capability: image.content.generate
+service: image_baseline
+protocol: pythoncall
+operation: generate_image
+
+request:
+  prompt: input.prompt
+  style: input.style
+  size: input.size
+
+response:
+  image: response.image
+  format: response.format
+
+metadata:
+  description: Official baseline binding for image.content.generate.
+  status: stable

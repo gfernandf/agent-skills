@@ -7,6 +7,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+#### Bindings for 19 new capabilities (composability & coverage wave)
+
+- **26 binding files** for 19 new capabilities: 7 OpenAI (`protocol: openapi`,
+  `model: gpt-4o-mini`, `response_format: json_object`) + 19 Python fallback
+  (`protocol: pythoncall`). All use `model_openai_chat` or `text_openai_chat`
+  as the OpenAI service, with domain-specific `*_baseline` for Python fallback.
+- **Test data** added to `test_capabilities_batch.py` for all 19 new capabilities.
+- Capabilities covered: `agent.flow.branch`, `agent.flow.iterate`,
+  `agent.flow.wait`, `agent.flow.catch`, `agent.input.collect`,
+  `data.array.map`, `data.field.map`, `data.record.join`, `data.record.merge`,
+  `message.content.format`, `doc.content.generate`, `web.request.send`,
+  `task.event.schedule`, `text.content.compare`, `text.sentiment.analyze`,
+  `audio.speaker.diarize`, `image.content.generate`, `table.sheet.read`,
+  `table.sheet.write`.
+
+#### LLM-Powered Scaffold Wizard
+
+- **`scaffold --wizard` LLM mode**: When `OPENAI_API_KEY` is set, the wizard
+  only asks for the user's goal and target channel — the LLM analyzes 120+
+  registered capabilities and generates a complete `skill.yaml` with inputs,
+  outputs, and chained steps. No `openai` package required (uses `urllib`
+  directly). Falls back to manual interactive mode without the key.
+- **`skills/wizard/skill.py`**: Standalone utility for LLM-powered skill
+  generation (same urllib-based approach, usable outside the CLI).
+
 #### MCP Server & Native LLM Adapters
 
 - **MCP Server** (`official_mcp_servers/server.py`): Full MCP server exposing

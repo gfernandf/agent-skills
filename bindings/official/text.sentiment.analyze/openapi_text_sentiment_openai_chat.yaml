@@ -1,0 +1,42 @@
+id: openapi_text_sentiment_openai_chat
+capability: text.sentiment.analyze
+service: text_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a sentiment analysis expert. Analyze the sentiment of the
+        provided text.
+
+        Return a JSON object with:
+        - sentiment: "positive", "negative", "neutral", or "mixed"
+        - score: number from -1.0 (most negative) to 1.0 (most positive)
+        - dimensions: object with per-dimension analysis (if requested)
+        - rationale: brief explanation with evidence from the text
+
+        Be specific about which words or phrases drive the assessment.
+        Return valid JSON only.
+    - role: user
+      content: |
+        Text: ${input.text}
+        Dimensions: ${input.dimensions}
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  sentiment: response.choices.0.message.content_json.sentiment
+  score: response.choices.0.message.content_json.score
+  dimensions: response.choices.0.message.content_json.dimensions
+  rationale: response.choices.0.message.content_json.rationale
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_text_sentiment_analyze
+  description: OpenAI binding for text.sentiment.analyze using gpt-4o-mini.
+  status: experimental

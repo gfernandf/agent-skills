@@ -114,3 +114,15 @@ def extract_text(image_data, language=None):
         "confidence": 0.0,
         "regions": [],
     }
+
+
+def generate_image(prompt, style=None, size=None):
+    """Generate an image from a text prompt (baseline: returns placeholder)."""
+    return {
+        "image": None,
+        "prompt": prompt,
+        "style": style or "default",
+        "size": size or "512x512",
+        "_fallback": True,
+        "message": "Baseline image generation requires a production binding (DALL-E, Stable Diffusion, etc.).",
+    }

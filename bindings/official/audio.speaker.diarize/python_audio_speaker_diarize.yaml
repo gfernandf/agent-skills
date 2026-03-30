@@ -1,0 +1,17 @@
+id: python_audio_speaker_diarize
+capability: audio.speaker.diarize
+service: audio_baseline
+protocol: pythoncall
+operation: diarize_speakers
+
+request:
+  audio: input.audio
+  max_speakers: input.max_speakers
+
+response:
+  segments: response.segments
+  speaker_count: response.speaker_count
+
+metadata:
+  description: Official baseline binding for audio.speaker.diarize.
+  status: stable

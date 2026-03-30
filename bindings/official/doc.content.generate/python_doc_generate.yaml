@@ -1,0 +1,20 @@
+id: python_doc_generate
+capability: doc.content.generate
+service: doc_baseline
+protocol: pythoncall
+operation: generate_document
+
+request:
+  instruction: input.instruction
+  context: input.context
+  sections: input.sections
+  format: input.format
+
+response:
+  document: response.document
+  format: response.format
+  word_count: response.word_count
+
+metadata:
+  description: Official baseline binding for doc.content.generate.
+  status: stable

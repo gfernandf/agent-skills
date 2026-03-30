@@ -1,0 +1,22 @@
+id: python_agent_flow_iterate
+capability: agent.flow.iterate
+service: agent_baseline
+protocol: pythoncall
+operation: iterate_collection
+
+request:
+  items: input.items
+  capability: input.capability
+  input_mapping: input.input_mapping
+  mode: input.mode
+  max_concurrency: input.max_concurrency
+
+response:
+  results: response.results
+  item_count: response.item_count
+  error_count: response.error_count
+  errors: response.errors
+
+metadata:
+  description: Official baseline binding for agent.flow.iterate.
+  status: stable

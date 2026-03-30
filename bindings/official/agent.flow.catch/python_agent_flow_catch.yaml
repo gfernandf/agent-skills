@@ -1,0 +1,22 @@
+id: python_agent_flow_catch
+capability: agent.flow.catch
+service: agent_baseline
+protocol: pythoncall
+operation: handle_error
+
+request:
+  error: input.error
+  fallback_strategy: input.fallback_strategy
+  default_value: input.default_value
+  max_retries: input.max_retries
+  context: input.context
+
+response:
+  result: response.result
+  strategy_applied: response.strategy_applied
+  recovered: response.recovered
+  escalation_id: response.escalation_id
+
+metadata:
+  description: Official baseline binding for agent.flow.catch.
+  status: stable

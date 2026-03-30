@@ -1,0 +1,19 @@
+id: python_table_sheet_read
+capability: table.sheet.read
+service: table_baseline
+protocol: pythoncall
+operation: read_sheet
+
+request:
+  path: input.path
+  sheet_name: input.sheet_name
+  range: input.range
+
+response:
+  table: response.table
+  headers: response.headers
+  row_count: response.row_count
+
+metadata:
+  description: Official baseline binding for table.sheet.read.
+  status: stable

@@ -1,0 +1,22 @@
+id: python_web_request_send
+capability: web.request.send
+service: web_baseline
+protocol: pythoncall
+operation: send_request
+
+request:
+  url: input.url
+  method: input.method
+  headers: input.headers
+  body: input.body
+  timeout_seconds: input.timeout_seconds
+
+response:
+  status_code: response.status_code
+  headers: response.headers
+  body: response.body
+  success: response.success
+
+metadata:
+  description: Official baseline binding for web.request.send.
+  status: stable

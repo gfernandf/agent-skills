@@ -1,0 +1,20 @@
+id: python_table_sheet_write
+capability: table.sheet.write
+service: table_baseline
+protocol: pythoncall
+operation: write_sheet
+
+request:
+  path: input.path
+  table: input.table
+  headers: input.headers
+  sheet_name: input.sheet_name
+
+response:
+  written: response.written
+  row_count: response.row_count
+  path: response.path
+
+metadata:
+  description: Official baseline binding for table.sheet.write.
+  status: stable

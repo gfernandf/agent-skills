@@ -1,0 +1,19 @@
+id: python_text_compare
+capability: text.content.compare
+service: text_baseline
+protocol: pythoncall
+operation: compare_texts
+
+request:
+  text_a: input.text_a
+  text_b: input.text_b
+  dimensions: input.dimensions
+
+response:
+  similarity: response.similarity
+  differences: response.differences
+  summary: response.summary
+
+metadata:
+  description: Official baseline binding for text.content.compare.
+  status: stable

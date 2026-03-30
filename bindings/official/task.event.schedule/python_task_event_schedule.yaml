@@ -1,0 +1,22 @@
+id: python_task_event_schedule
+capability: task.event.schedule
+service: task_baseline
+protocol: pythoncall
+operation: schedule_event
+
+request:
+  title: input.title
+  description: input.description
+  scheduled_time: input.scheduled_time
+  recurrence: input.recurrence
+  attendees: input.attendees
+  context: input.context
+
+response:
+  event_id: response.event_id
+  scheduled: response.scheduled
+  scheduled_time: response.scheduled_time
+
+metadata:
+  description: Official baseline binding for task.event.schedule.
+  status: stable

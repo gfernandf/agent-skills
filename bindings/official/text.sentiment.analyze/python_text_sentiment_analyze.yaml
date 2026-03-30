@@ -1,0 +1,19 @@
+id: python_text_sentiment_analyze
+capability: text.sentiment.analyze
+service: text_baseline
+protocol: pythoncall
+operation: analyze_sentiment
+
+request:
+  text: input.text
+  dimensions: input.dimensions
+
+response:
+  sentiment: response.sentiment
+  score: response.score
+  dimensions: response.dimensions
+  rationale: response.rationale
+
+metadata:
+  description: Official baseline binding for text.sentiment.analyze.
+  status: stable

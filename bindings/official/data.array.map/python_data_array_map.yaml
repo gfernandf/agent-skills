@@ -1,0 +1,18 @@
+id: python_data_array_map
+capability: data.array.map
+service: data_baseline
+protocol: pythoncall
+operation: map_array
+
+request:
+  items: input.items
+  expression: input.expression
+  context: input.context
+
+response:
+  items: response.items
+  item_count: response.item_count
+
+metadata:
+  description: Official baseline binding for data.array.map.
+  status: stable

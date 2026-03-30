@@ -129,3 +129,68 @@ def generate_options(goal, context=None, constraints=None, max_options=None):
         "options": options,
         "generation_notes": f"Baseline generation: {len(options)} options from goal text.",
     }
+
+
+def evaluate_branch(condition, context, branches, default_branch=None):
+    """Select a branch based on a condition string evaluated against context."""
+    condition_lower = str(condition).lower()
+    for branch in (branches or []):
+        match_expr = str(branch.get("match", "")).lower()
+        label = branch.get("label", "")
+        # Simple keyword containment heuristic
+        keywords = [w.strip("'\" ") for w in match_expr.replace("==", " ").split() if len(w.strip("'\" ")) > 2]
+        if any(kw in condition_lower or kw in str(context).lower() for kw in keywords if kw):
+            return {"selected_branch": label, "rationale": f"Matched branch '{label}' via keyword heuristic."}
+    fallback = default_branch or (branches[0]["label"] if branches else "default")
+    return {"selected_branch": fallback, "rationale": "No branch matched; using default."}
+
+
+def iterate_collection(items, capability, input_mapping=None, mode=None, max_concurrency=None):
+    """Iterate over items invoking a capability per element (baseline: returns stubs)."""
+    results = []
+    for i, item in enumerate(items or []):
+        results.append({"index": i, "status": "completed", "output": item})
+    return {"results": results, "item_count": len(results), "mode": mode or "sequential"}
+
+
+def wait_condition(condition, timeout_seconds=None, poll_interval_seconds=None):
+    """Wait for a condition (baseline: immediate resolution)."""
+    return {
+        "resolved": True,
+        "elapsed_seconds": 0,
+        "condition": condition,
+        "timed_out": False,
+    }
+
+
+def handle_error(error, fallback_strategy, default_value=None, max_retries=None, context=None):
+    """Handle an error with a fallback strategy."""
+    strategy = fallback_strategy or "default_value"
+    if strategy == "default_value":
+        return {
+            "handled": True,
+            "strategy_used": "default_value",
+            "result": default_value or {},
+            "original_error": error,
+        }
+    return {
+        "handled": True,
+        "strategy_used": strategy,
+        "result": None,
+        "original_error": error,
+    }
+
+
+def collect_input(fields, instruction=None, context=None):
+    """Collect structured input fields (baseline: returns defaults per type)."""
+    collected = {}
+    for field in (fields or []):
+        name = field.get("name", "")
+        ftype = field.get("type", "string")
+        if ftype == "number":
+            collected[name] = 0
+        elif ftype == "boolean":
+            collected[name] = False
+        else:
+            collected[name] = f"[placeholder for {name}]"
+    return {"collected": collected, "field_count": len(collected)}

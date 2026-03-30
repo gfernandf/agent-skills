@@ -1,0 +1,48 @@
+id: openapi_agent_flow_catch_openai_chat
+capability: agent.flow.catch
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are an error recovery assistant. Given an error from a workflow step,
+        a fallback strategy, and optional context, determine the recovery result.
+
+        Return a JSON object with:
+        - result: the recovery value to pass downstream (object)
+        - strategy_applied: which strategy was used (string)
+        - recovered: whether the error was recovered (boolean)
+        - escalation_id: only if strategy is "escalate" (string or null)
+
+        For "default" strategy, return the default_value as result.
+        For "skip", return an empty object.
+        For "retry", indicate recovered: false (runtime handles actual retry).
+        For "escalate", generate an escalation_id and set recovered: false.
+        Return valid JSON only.
+    - role: user
+      content: |
+        Error: ${input.error}
+        Fallback strategy: ${input.fallback_strategy}
+        Default value: ${input.default_value}
+        Max retries: ${input.max_retries}
+        Context: ${input.context}
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  result: response.choices.0.message.content_json.result
+  strategy_applied: response.choices.0.message.content_json.strategy_applied
+  recovered: response.choices.0.message.content_json.recovered
+  escalation_id: response.choices.0.message.content_json.escalation_id
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_flow_catch
+  description: OpenAI binding for agent.flow.catch using gpt-4o-mini.
+  status: experimental

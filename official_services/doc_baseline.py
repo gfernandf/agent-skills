@@ -208,3 +208,22 @@ def read_pdf(path):
             "failed",
             type(e).__name__,
         )
+
+
+def generate_document(instruction, context=None, sections=None, format=None):
+    """Generate a document from an instruction (baseline: template-based)."""
+    fmt = format or "markdown"
+    parts = []
+    parts.append(f"# {instruction[:80]}")
+    if context:
+        parts.append(f"\n{context}\n")
+    if sections:
+        for sec in sections:
+            if isinstance(sec, dict):
+                parts.append(f"## {sec.get('title', 'Section')}\n{sec.get('content', '')}")
+            else:
+                parts.append(f"## {sec}")
+    if not context and not sections:
+        parts.append(f"\n[Baseline] Document content for: {instruction}")
+    text = "\n\n".join(parts)
+    return {"document": text, "format": fmt, "_fallback": True}

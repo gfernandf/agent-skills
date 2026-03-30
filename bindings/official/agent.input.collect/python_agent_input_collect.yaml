@@ -1,0 +1,19 @@
+id: python_agent_input_collect
+capability: agent.input.collect
+service: agent_baseline
+protocol: pythoncall
+operation: collect_input
+
+request:
+  fields: input.fields
+  instruction: input.instruction
+  context: input.context
+
+response:
+  response: response.response
+  complete: response.complete
+  missing_fields: response.missing_fields
+
+metadata:
+  description: Official baseline binding for agent.input.collect.
+  status: stable

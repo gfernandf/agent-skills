@@ -1,0 +1,43 @@
+id: openapi_agent_flow_branch_openai_chat
+capability: agent.flow.branch
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a condition evaluator. Given a condition, execution context,
+        and available branches, select the branch that best matches.
+
+        Return a JSON object with:
+        - selected_branch: the id of the chosen branch
+        - rationale: one-sentence explanation of why
+        - confidence: number 0.0–1.0
+
+        Evaluate the condition strictly against the context data. If no branch
+        matches well, use the default_branch if provided, otherwise the first.
+        Return valid JSON only.
+    - role: user
+      content: |
+        Condition: ${input.condition}
+        Context: ${input.context}
+        Branches: ${input.branches}
+        Default branch: ${input.default_branch}
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  selected_branch: response.choices.0.message.content_json.selected_branch
+  rationale: response.choices.0.message.content_json.rationale
+  confidence: response.choices.0.message.content_json.confidence
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_flow_branch
+  description: OpenAI binding for agent.flow.branch using gpt-4o-mini.
+  status: experimental
