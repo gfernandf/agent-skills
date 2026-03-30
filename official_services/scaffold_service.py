@@ -919,6 +919,34 @@ def _build_capability_list(capabilities: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def _fix_llm_refs(yaml_text: str) -> str:
+    """Post-process LLM-generated YAML to normalise ref syntax.
+
+    Common LLM mistakes and their fixes:
+      ${inputs.X}           → inputs.X
+      ${steps.A.output.B}   → vars.A_B
+      ${outputs.X}          → outputs.X
+      ${output.X}           → outputs.X
+      {{X}}                 → inputs.X   (Jinja-style)
+    """
+    import re as _re
+
+    # ${inputs.X} → inputs.X
+    yaml_text = _re.sub(r"\$\{inputs\.([^}]+)\}", r"inputs.\1", yaml_text)
+    # ${outputs.X} and ${output.X} → outputs.X
+    yaml_text = _re.sub(r"\$\{outputs?\.([^}]+)\}", r"outputs.\1", yaml_text)
+    # ${steps.STEP_ID.output.FIELD} → vars.STEP_ID_FIELD
+    yaml_text = _re.sub(
+        r"\$\{steps\.([a-z_][a-z0-9_]*)\.outputs?\.([^}]+)\}",
+        lambda m: f"vars.{m.group(1)}_{m.group(2)}",
+        yaml_text,
+    )
+    # {{var_name}} → inputs.var_name
+    yaml_text = _re.sub(r"\{\{(\w+)\}\}", r"inputs.\1", yaml_text)
+
+    return yaml_text
+
+
 def _call_openai(
     prompt: str,
     system: str,
@@ -1210,6 +1238,109 @@ def generate_skill_from_prompt(
         os.environ.get("AGENT_SKILLS_SCAFFOLDER_MODE", "binding-first").strip().lower()
     )
     goal_capability_ids = _infer_goal_capability_ids(intent_description)
+
+    # --- LLM-driven wizard: call OpenAI directly via _call_openai ---
+    if api_key:
+        import re as _re
+        import yaml as _yaml
+
+        # 1) Semantic capability filtering: score by keyword overlap with intent
+        _intent_tokens = set(
+            _re.findall(r"[a-z]{3,}", intent_description.lower())
+        )
+        _scored: list[tuple[int, dict[str, Any]]] = []
+        for _c in capabilities:
+            _cid = _c.get("id", "")
+            _cdesc = (_c.get("description") or "").lower()
+            _cid_tokens = set(_re.findall(r"[a-z]{3,}", _cid.replace(".", " ")))
+            _cdesc_tokens = set(_re.findall(r"[a-z]{3,}", _cdesc))
+            _pool = _cid_tokens | _cdesc_tokens
+            _overlap = len(_intent_tokens & _pool)
+            _scored.append((_overlap, _c))
+        _scored.sort(key=lambda x: x[0], reverse=True)
+        _top_caps = [c for _, c in _scored[:60]]
+
+        # 2) Build rich capability summary (id + description + inputs/outputs)
+        cap_list_text = _build_capability_list(_top_caps)
+
+        # 3) Use the production schema example and system prompt
+        system_msg = _SYSTEM_PROMPT.format(
+            schema_example=_SKILL_SCHEMA_EXAMPLE,
+            capability_list=cap_list_text,
+            target_channel=target_channel,
+        )
+        user_msg = (
+            f"Goal: {intent_description}\n\n"
+            "Generate a skill.yaml that accomplishes the goal using ONLY "
+            "capability ids from the system prompt. Chain steps logically.\n"
+            "Reply ONLY with the YAML content, nothing else."
+        )
+
+        try:
+            raw_llm = _call_openai(
+                prompt=user_msg,
+                system=system_msg,
+                model=model,
+                api_key=api_key,
+            )
+            # Strip markdown fences if the LLM wraps them anyway
+            cleaned = _re.sub(r"^```(?:yaml)?\s*", "", raw_llm.strip())
+            cleaned = _re.sub(r"\s*```$", "", cleaned).strip()
+
+            # 4) Post-process: fix common LLM ref syntax errors
+            cleaned = _fix_llm_refs(cleaned)
+
+            # Parse and validate
+            doc = _yaml.safe_load(cleaned)
+            if not isinstance(doc, dict):
+                raise ValueError(
+                    f"LLM returned non-mapping YAML (got {type(doc).__name__})"
+                )
+
+            used_caps: list[str] = []
+            if isinstance(doc.get("steps"), list):
+                used_caps = [
+                    s.get("uses") for s in doc["steps"] if s.get("uses")
+                ]
+            llm_id = doc.get("id", suggested_id)
+
+            # Re-serialize after post-processing to ensure clean output
+            cleaned = _yaml.dump(doc, default_flow_style=False, sort_keys=False).strip()
+
+            # Validate against schema
+            validation_errors = _validate_skill_yaml(doc, known_ids)
+
+            return {
+                "skill_yaml": cleaned,
+                "suggested_id": llm_id,
+                "capabilities_used": used_caps,
+                "validation_errors": validation_errors,
+                "planning_source": "wizard-llm",
+                "planning_capability_id": "wizard.llm",
+                "scaffolder_mode": "llm-wizard",
+            }
+        except Exception as exc:
+            # Fallback: return error as valid YAML so file is never empty
+            fallback_yaml = (
+                f"id: {suggested_id}\n"
+                f"version: 0.1.0\n"
+                f"name: '{intent_description[:60]}'\n"
+                f"description: 'Auto-generated (LLM error — edit manually)'\n"
+                f"# LLM_ERROR: {str(exc)[:200]}\n"
+                f"inputs:\n  text:\n    type: string\n    required: true\n"
+                f"outputs:\n  result:\n    type: string\n"
+                f"steps: []\n"
+            )
+            return {
+                "skill_yaml": fallback_yaml,
+                "suggested_id": suggested_id,
+                "capabilities_used": [],
+                "validation_errors": [f"LLM wizard error: {exc}"],
+                "planning_source": "wizard-llm",
+                "planning_capability_id": "wizard.llm",
+                "scaffolder_mode": "llm-wizard",
+            }
+    # --- END LLM wizard ---
 
     plan_obj, plan_source = (None, None)
     preferred_capability_ids: list[str] = []

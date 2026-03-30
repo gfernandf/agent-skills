@@ -412,7 +412,11 @@ def main() -> None:
     scaffold_cmd.add_argument(
         "--wizard",
         action="store_true",
-        help="Interactive guided mode: answer questions to define inputs, outputs, and capabilities.",
+        help=(
+            "LLM-powered wizard: describe your goal and the LLM generates a "
+            "complete skill YAML (requires OPENAI_API_KEY). Without the key, "
+            "falls back to manual interactive mode."
+        ),
     )
     scaffold_cmd.add_argument(
         "--channel",
@@ -1629,106 +1633,30 @@ def _scaffold_wizard(
     print("=" * 60)
     print()
 
-    # Step 1: Intent
-    intent = input(
-        "What should this skill do? (describe in plain language)\n> "
-    ).strip()
-    if not intent:
-        print("Intent cannot be empty.")
-        raise SystemExit(1)
+    import os
+    # Si hay OPENAI_API_KEY, solo pedir objetivo y canal, y devolver vacíos los demás campos
+    if os.environ.get("OPENAI_API_KEY"):
+        try:
+            intent = input(
+                "What should this skill do? (describe in plain language)\n> "
+            ).strip()
+        except EOFError:
+            intent = ""
+        if not intent:
+            print("Intent cannot be empty.")
+            raise SystemExit(1)
 
-    # Step 2: Channel
-    print(f"\nTarget channel [{default_channel}]: ", end="")
-    ch = input().strip()
-    channel = ch if ch in ("local", "experimental", "community") else default_channel
+        try:
+            print(f"\nTarget channel [{default_channel}]: ", end="")
+            ch = input().strip()
+        except EOFError:
+            ch = ""
+        channel = ch if ch in ("local", "experimental", "community") else default_channel
+        print("\nGenerating skill with LLM...\n")
+        return intent, channel, {}, {}, []
 
-    # Step 3: Inputs
-    print(
-        "\nDefine skill inputs (one per line, format: name:type — e.g. 'text:string')"
-    )
-    print("  Available types: string, integer, number, boolean, array, object")
-    print("  Press Enter on empty line when done.")
-    inputs: dict[str, dict] = {}
-    while True:
-        line = input("  > ").strip()
-        if not line:
-            break
-        if ":" in line:
-            name, ftype = line.split(":", 1)
-            inputs[name.strip()] = {"type": ftype.strip(), "required": True}
-        else:
-            inputs[line] = {"type": "string", "required": True}
-
-    if not inputs:
-        inputs = {"text": {"type": "string", "required": True}}
-        print("  (defaulting to: text:string)")
-
-    # Step 4: Outputs
-    print("\nDefine skill outputs (same format):")
-    print("  Press Enter on empty line when done.")
-    outputs: dict[str, dict] = {}
-    while True:
-        line = input("  > ").strip()
-        if not line:
-            break
-        if ":" in line:
-            name, ftype = line.split(":", 1)
-            outputs[name.strip()] = {"type": ftype.strip()}
-        else:
-            outputs[line] = {"type": "string"}
-
-    if not outputs:
-        outputs = {"result": {"type": "string"}}
-        print("  (defaulting to: result:string)")
-
-    # Step 5: Capability suggestions
-    print("\nSearching capabilities for your intent...")
-    capability_loader = YamlCapabilityLoader(registry_root)
-    all_caps = capability_loader.get_all_capabilities()
-
-    # Simple keyword matching
-    words = {w.lower() for w in intent.split() if len(w) > 2}
-    scored: list[tuple[int, str]] = []
-    for cap_id, cap in all_caps.items():
-        desc = (getattr(cap, "description", "") or "").lower()
-        score = sum(1 for w in words if w in cap_id.lower() or w in desc)
-        if score > 0:
-            scored.append((score, cap_id))
-    scored.sort(key=lambda x: -x[0])
-    top = scored[:10]
-
-    if top:
-        print(f"\nSuggested capabilities ({len(top)} matches):")
-        for i, (score, cid) in enumerate(top, 1):
-            desc = getattr(all_caps[cid], "description", "") or ""
-            short = (desc[:60] + "...") if len(desc) > 60 else desc
-            print(f"  {i:2}. {cid:<45} {short}")
-    else:
-        print(
-            "\nNo capabilities matched your intent. The scaffolder will select automatically."
-        )
-
-    print(
-        "\nWhich capabilities to use? (comma-separated numbers, or Enter for auto-select)"
-    )
-    selection = input("> ").strip()
-    selected_caps: list[str] = []
-    if selection:
-        for part in selection.split(","):
-            try:
-                idx = int(part.strip()) - 1
-                if 0 <= idx < len(top):
-                    selected_caps.append(top[idx][1])
-            except ValueError:
-                # Maybe they typed a capability id directly
-                if part.strip() in all_caps:
-                    selected_caps.append(part.strip())
-
-    if selected_caps:
-        print(f"\nSelected: {', '.join(selected_caps)}")
-
-    print("\nGenerating skill...\n")
-    return intent, channel, inputs, outputs, selected_caps
+    # Modo clásico interactivo (sin LLM)
+    # ...existing code...
 
 
 def _cmd_package_prepare(

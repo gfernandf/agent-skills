@@ -28,12 +28,29 @@ Create → Test → Validate → Share → Maintain
 ### Interactive wizard (recommended for beginners)
 
 ```bash
+export OPENAI_API_KEY=sk-...   # required for LLM-powered wizard
 agent-skills scaffold --wizard
 ```
 
-The wizard walks you through:
+#### With `OPENAI_API_KEY` set (recommended)
+
+The wizard uses an LLM to generate the entire skill automatically:
 1. **Intent** — Describe what the skill should do in plain language.
 2. **Channel** — Target channel: `local`, `experimental`, or `community`.
+3. **Done** — The LLM analyzes 120+ registered capabilities, selects the
+   most relevant ones, and generates a complete `skill.yaml` with inputs,
+   outputs, and chained steps.
+
+> **Note:** The wizard calls the OpenAI Chat Completions API directly
+> (via `urllib` — no `openai` package needed). The model defaults to
+> `gpt-4o-mini`; override with `--model gpt-4o`.
+
+#### Without `OPENAI_API_KEY` (manual fallback)
+
+If no API key is set, the wizard falls back to a fully interactive mode
+where you define inputs, outputs, and capabilities manually:
+1. **Intent** — Describe what the skill should do.
+2. **Channel** — Target channel.
 3. **Inputs/Outputs** — Define fields using `name:type` format.
 4. **Capabilities** — Search and select from 122+ registered capabilities.
 

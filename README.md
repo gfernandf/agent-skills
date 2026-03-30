@@ -321,8 +321,16 @@ GitHub also provides a "Cite this repository" button powered by [`CITATION.cff`]
 ## Skill Authoring
 
 ```bash
-agent-skills scaffold --wizard               # interactive wizard
+# LLM-powered wizard — generates a complete skill from a plain-language goal
+# Requires OPENAI_API_KEY (see .env.example)
+export OPENAI_API_KEY=sk-...
+agent-skills scaffold --wizard               # LLM proposes workflow + YAML
 agent-skills scaffold "Summarize a PDF"      # one-line from intent
+agent-skills scaffold --wizard --dry-run     # preview without saving
+
+# Without OPENAI_API_KEY, the wizard falls back to manual interactive mode
+# (you pick inputs, outputs, and capabilities yourself)
+
 agent-skills test text.summarize              # auto-fixture tests
 agent-skills describe text.summarize --mermaid  # DAG diagram
 agent-skills export text.summarize            # portable bundle

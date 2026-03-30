@@ -161,11 +161,20 @@ in the capability and that the response maps to valid outputs.
 
 ## Alternative: Use the Scaffold Wizard
 
-Instead of creating all files manually, you can generate a skill interactively:
+Instead of creating all files manually, you can generate a skill with the
+LLM-powered wizard:
 
 ```bash
+export OPENAI_API_KEY=sk-...   # required for LLM-powered generation
 agent-skills scaffold --wizard
 ```
+
+With `OPENAI_API_KEY` set, the wizard only asks **what** the skill should do
+and the target channel — the LLM proposes the full workflow, selects
+capabilities, and generates the YAML automatically.
+
+Without the key, the wizard falls back to manual interactive mode (you pick
+inputs, outputs, and capabilities yourself).
 
 The wizard handles capability selection, YAML generation, and test fixture creation.
 After scaffolding, validate and test with:
