@@ -7,6 +7,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+#### Audit fixes
+
+- `agent_baseline.py`: `evaluate_branch()` now returns `confidence` (0.0–1.0)
+  matching the optional output declared in `agent.flow.branch` capability
+  contract. Matched branches return 0.7; default fallback returns 0.3.
+- `official_default_selection.yaml`: added default binding entries for all 19
+  new capabilities — coverage raised from 122/141 → 141/141.
+
 #### Bindings for 19 new capabilities (composability & coverage wave)
 
 - **26 binding files** for 19 new capabilities: 7 OpenAI (`protocol: openapi`,
