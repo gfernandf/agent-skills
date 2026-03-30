@@ -1,12 +1,22 @@
-# Agent Skills Runtime
+<p align="center">
+  <img src="orca.png" alt="Agent Skills" width="200">
+</p>
 
-[![PyPI](https://img.shields.io/pypi/v/agent-skills.svg)](https://pypi.org/project/agent-skills/)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![CI](https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-1694_passed-brightgreen.svg)]()
-[![Capabilities](https://img.shields.io/badge/Capabilities-122-blueviolet.svg)]()
-[![Skills](https://img.shields.io/badge/Skills-36-blueviolet.svg)]()
+<h1 align="center">Agent Skills Runtime</h1>
+
+<p align="center">
+  <em>Agents should execute whenever possible.</em>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/agent-skills/"><img src="https://img.shields.io/pypi/v/agent-skills.svg" alt="PyPI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
+  <a href="https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml"><img src="https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11%2B-blue.svg" alt="Python"></a>
+  <img src="https://img.shields.io/badge/Tests-1694_passed-brightgreen.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Capabilities-122-blueviolet.svg" alt="Capabilities">
+  <img src="https://img.shields.io/badge/Skills-36-blueviolet.svg" alt="Skills">
+</p>
 
 **A deterministic, binding-driven execution engine for composable AI agent skills.**
 
