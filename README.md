@@ -19,6 +19,7 @@ Agent Skills Runtime lets you define agent capabilities as abstract contracts, w
 
 ## Table of Contents
 
+- [Introducing ORCA](#-introducing-orca)
 - [Why Agent Skills?](#why-agent-skills)
 - [Architecture](#architecture)
 - [How it compares](#how-it-compares)
@@ -32,6 +33,44 @@ Agent Skills Runtime lets you define agent capabilities as abstract contracts, w
 - [Contributing](#contributing)
 - [License](#license)
 - [Citing](#citing)
+
+---
+
+## 🧠 Introducing ORCA
+
+**Agent Skills Runtime is a reference implementation of ORCA — an emerging standard for structured agent execution.**
+
+> ORCA (Open Cognitive Runtime Architecture) defines a **Cognitive Execution Layer** where agents do not act through prompts, but through **composable, contract-driven processes**.
+
+Unlike traditional agent frameworks that rely on implicit reasoning inside LLMs, ORCA externalizes cognition into:
+
+- **Structured state (CognitiveState)** — explicit, inspectable reasoning  
+- **Capabilities (contracts)** — reusable, binding-agnostic operations  
+- **Skills (execution graphs)** — deterministic, composable workflows  
+- **Built-in safety** — enforced execution constraints and validation  
+
+This shifts agent systems from:
+
+- prompt-driven behavior  
+→ to  
+- **execution-driven systems**
+
+---
+
+### 🔹 Core Principles of ORCA
+
+- **Execution over prompting**  
+- **Explicit state over implicit context**  
+- **Contracts over conventions**  
+- **Separation of intent and execution**  
+- **Safety as a first-class concern**
+
+---
+
+### 🔹 Learn more
+
+See the full ORCA specification:  
+👉 [`ORCA.md`](ORCA.md)
 
 ---
 
