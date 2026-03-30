@@ -1,6 +1,6 @@
 site_name: Agent Skills
-site_description: Runtime for composable AI agent skills
-repo_url: https://github.com/your-org/agent-skills
+site_description: "Agents should execute whenever possible — runtime for composable AI agent skills"
+repo_url: https://github.com/gfernandf/agent-skills
 
 theme:
   name: material
