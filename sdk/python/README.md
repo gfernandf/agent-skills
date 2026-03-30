@@ -7,7 +7,7 @@ Lightweight, zero-dependency Python client for the agent-skills HTTP API.
 Copy `agent_skills_client.py` into your project, or install agent-skills:
 
 ```bash
-pip install agent-skills
+pip install orca-agent-skills
 ```
 
 ## Quick Start

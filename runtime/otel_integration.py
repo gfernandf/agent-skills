@@ -25,7 +25,7 @@ except ImportError:  # pragma: no cover – tested via mock
     _otel_trace = None  # type: ignore[assignment]
     _StatusCode = None  # type: ignore[assignment]
 
-_TRACER_NAME = "agent-skills"
+_TRACER_NAME = "orca-agent-skills"
 
 
 # ---------------------------------------------------------------------------

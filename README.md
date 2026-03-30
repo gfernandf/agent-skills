@@ -205,10 +205,10 @@ graph TB
 ### Install from PyPI
 
 ```bash
-pip install agent-skills          # core
-pip install agent-skills[all]     # + PDF, web, OTel extras
-pip install agent-skills[mcp]     # + MCP server/client
-pip install agent-skills[dev]     # + pytest, ruff, benchmarks
+pip install orca-agent-skills          # core
+pip install orca-agent-skills[all]     # + PDF, web, OTel extras
+pip install orca-agent-skills[mcp]     # + MCP server/client
+pip install orca-agent-skills[dev]     # + pytest, ruff, benchmarks
 ```
 
 The PyPI package includes the execution engine and CLI. You'll also need the companion **[agent-skill-registry](https://github.com/gfernandf/agent-skill-registry)** (capability contracts, skills, vocabulary):

@@ -54,7 +54,7 @@ result, err := client.ExecuteSkill("text.content.summarize", map[string]any{
 
 ## Python SDK
 
-Already available via `pip install agent-skills`:
+Already available via `pip install orca-agent-skills`:
 
 ```python
 from sdk.python.client import AgentSkillsClient
