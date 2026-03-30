@@ -1465,7 +1465,7 @@ def _cmd_mcp_serve(args):
     except ImportError as exc:
         print(
             "Error: MCP server requires the 'mcp' package.\n"
-            "Install with: pip install 'agent-skills[mcp]'"
+            "Install with: pip install 'orca-agent-skills[mcp]'"
         )
         raise SystemExit(1) from exc
 

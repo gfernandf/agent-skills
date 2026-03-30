@@ -69,7 +69,7 @@ Runs on push to `main`/`master` and on PRs. 7 jobs:
 | Job | What it checks |
 |-----|----------------|
 | **pin-drift** | Registry submodule / pin hasn't drifted from expected commit |
-| **smoke** | `pip install -e ".[all]"` + `agent-skills doctor` + basic execution |
+| **smoke** | `pip install -e ".[all]"` + `orca-agent-skills doctor` + basic execution |
 | **contracts** | Capability contract schema validation |
 | **registry-consistency** | Binding ↔ capability cross-reference integrity |
 | **openapi-verify** | OpenAPI service descriptor health |

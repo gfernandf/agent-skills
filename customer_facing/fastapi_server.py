@@ -7,7 +7,7 @@ OpenAPI auto-docs, and middleware-based auth/CORS/rate-limiting.
 
 Usage (development)::
 
-    pip install "agent-skills[asgi]"
+    pip install "orca-agent-skills[asgi]"
     agent-skills serve --server asgi
 
 Usage (production)::

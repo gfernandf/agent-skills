@@ -173,7 +173,7 @@ tracing spans without requiring a hard dependency on the SDK.
 ### Installation
 
 ```bash
-pip install "agent-skills[otel]"
+pip install "orca-agent-skills[otel]"
 # or individually:
 pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp
 ```

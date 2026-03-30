@@ -233,7 +233,7 @@ async def run_sse(host: str = "0.0.0.0", port: int = 8765) -> None:
     except ImportError as exc:
         raise ImportError(
             "SSE transport requires additional dependencies. "
-            "Install with: pip install 'agent-skills[mcp,asgi]'"
+            "Install with: pip install 'orca-agent-skills[mcp,asgi]'"
         ) from exc
 
     sse = SseServerTransport("/messages/")
