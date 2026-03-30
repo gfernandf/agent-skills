@@ -128,3 +128,24 @@ defaults:
   task.priority.classify: python_task_priority_classify
   task.sla.monitor: python_task_sla_monitor
   task.state.transition: python_task_state_transition
+
+  # --- new capabilities (batch 19) ---
+  agent.flow.branch: openapi_agent_flow_branch_openai_chat
+  agent.flow.catch: openapi_agent_flow_catch_openai_chat
+  agent.flow.iterate: python_agent_flow_iterate
+  agent.flow.wait: python_agent_flow_wait
+  agent.input.collect: openapi_agent_input_collect_openai_chat
+  audio.speaker.diarize: python_audio_speaker_diarize
+  data.array.map: python_data_array_map
+  data.field.map: python_data_field_map
+  data.record.join: python_data_join
+  data.record.merge: python_data_merge
+  doc.content.generate: openapi_doc_generate_openai_chat
+  image.content.generate: python_image_generate
+  message.content.format: openapi_message_format_openai_chat
+  table.sheet.read: python_table_sheet_read
+  table.sheet.write: python_table_sheet_write
+  task.event.schedule: python_task_event_schedule
+  text.content.compare: openapi_text_compare_openai_chat
+  text.sentiment.analyze: openapi_text_sentiment_openai_chat
+  web.request.send: python_web_request_send

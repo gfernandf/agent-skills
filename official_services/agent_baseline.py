@@ -140,9 +140,9 @@ def evaluate_branch(condition, context, branches, default_branch=None):
         # Simple keyword containment heuristic
         keywords = [w.strip("'\" ") for w in match_expr.replace("==", " ").split() if len(w.strip("'\" ")) > 2]
         if any(kw in condition_lower or kw in str(context).lower() for kw in keywords if kw):
-            return {"selected_branch": label, "rationale": f"Matched branch '{label}' via keyword heuristic."}
+            return {"selected_branch": label, "rationale": f"Matched branch '{label}' via keyword heuristic.", "confidence": 0.7}
     fallback = default_branch or (branches[0]["label"] if branches else "default")
-    return {"selected_branch": fallback, "rationale": "No branch matched; using default."}
+    return {"selected_branch": fallback, "rationale": "No branch matched; using default.", "confidence": 0.3}
 
 
 def iterate_collection(items, capability, input_mapping=None, mode=None, max_concurrency=None):
