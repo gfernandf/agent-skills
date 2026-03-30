@@ -25,7 +25,7 @@ All environment variables use the `AGENT_SKILLS_` prefix.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AGENT_SKILLS_AUTH_MODE` | `permissive` | Auth enforcement: `enforced` (reject unauthenticated), `permissive` (allow anonymous as reader), `disabled` |
+| `AGENT_SKILLS_AUTH_MODE` | `enforced` | Auth enforcement: `enforced` (reject unauthenticated — **default since v0.2.0**), `permissive` (allow anonymous as reader), `disabled` |
 | `AGENT_SKILLS_API_KEY` | _(none)_ | API key for `X-API-Key` header authentication |
 | `AGENT_SKILLS_RBAC` | _(deprecated)_ | **Deprecated** — use `AGENT_SKILLS_AUTH_MODE=enforced` instead. Setting `1`/`true`/`yes` enables enforced mode. |
 | `AGENT_SKILLS_TRUSTED_PROXIES` | _(empty)_ | Comma-separated trusted proxy CIDRs for `X-Forwarded-For` parsing |

@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Agent Skills Consumer-Facing API",
-    "version": "1.0.0",
-    "description": "Protocol-neutral customer-facing API over the runtime engine."
+    "version": "1.1.0",
+    "description": "Protocol-neutral customer-facing API over the runtime engine. Authentication (x-api-key) is enforced by default since v0.2.0; TLS is REQUIRED for network-exposed deployments."
   },
   "servers": [
     {
@@ -17,6 +17,31 @@
         "responses": {
           "200": {
             "description": "Health response"
+          }
+        }
+      }
+    },
+    "/v1/health/live": {
+      "get": {
+        "operationId": "healthLive",
+        "summary": "Kubernetes liveness probe.",
+        "responses": {
+          "200": {
+            "description": "Server is alive"
+          }
+        }
+      }
+    },
+    "/v1/health/ready": {
+      "get": {
+        "operationId": "healthReady",
+        "summary": "Kubernetes readiness probe.",
+        "responses": {
+          "200": {
+            "description": "Server is ready to accept requests"
+          },
+          "503": {
+            "description": "Server is not ready"
           }
         }
       }
@@ -516,6 +541,63 @@
         "responses": {
           "200": {
             "description": "Governance catalog entries"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "403": {
+            "description": "Invalid API key"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/v1/metrics": {
+      "get": {
+        "operationId": "getMetrics",
+        "summary": "Runtime metrics snapshot (JSON).",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metrics snapshot with counters and histograms"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "403": {
+            "description": "Invalid API key"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/v1/metrics/prometheus": {
+      "get": {
+        "operationId": "getMetricsPrometheus",
+        "summary": "Runtime metrics in Prometheus text exposition format.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prometheus text format metrics",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing API key"

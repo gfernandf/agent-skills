@@ -64,12 +64,14 @@ CMD ["agent-skills", "serve"]
 | `AGENT_SKILLS_PORT` | No | `8080` | Bind port |
 | `AGENT_SKILLS_DEBUG` | No | unset | Enable debug logging |
 
-### 2c. Reverse proxy (recommended)
+### 2c. Reverse proxy (**REQUIRED** for network-exposed deployments)
 
-The built-in HTTP server is single-process. For production:
+> **⚠️ The built-in HTTP server does not terminate TLS.** You **MUST** place a
+> TLS-terminating reverse proxy in front of any instance accessible beyond
+> `localhost`. Running without TLS exposes credentials and payloads in plaintext.
 
 ```
-Client  →  nginx / Caddy (TLS, CORS, auth)  →  agent-skills serve (:8080)
+Client  →  nginx / Caddy (TLS termination)  →  agent-skills serve (:8080)
 ```
 
 Nginx example:
@@ -209,9 +211,11 @@ curl http://127.0.0.1:8080/health
 
 Before exposing to a network:
 
-- [ ] Set `AGENT_SKILLS_API_KEY` to a strong random value.
+- [ ] **[REQUIRED]** Place a TLS-terminating reverse proxy (nginx/Caddy) in front — the server does **not** support HTTPS natively.
+- [ ] **[REQUIRED]** Set `AGENT_SKILLS_API_KEY` to a strong random value (≥ 32 chars).
+- [ ] Set `AGENT_SKILLS_AUTH_MODE=enforced` (default since v0.2.0).
 - [ ] Set `AGENT_SKILLS_FS_ROOT` to a dedicated read-only directory.
-- [ ] Put a TLS-terminating reverse proxy in front.
 - [ ] Review `docs/SECURITY.md` for SSRF, LFI, rate limiting details.
 - [ ] Set `AGENT_SKILLS_AUDIT_DEFAULT_MODE=full` for regulated environments.
 - [ ] Restrict `allow_private_networks` to `False` (default) unless on-prem.
+- [ ] Review the [OpenAPI spec](specs/consumer_facing_v1_openapi.json) for API contract reference.

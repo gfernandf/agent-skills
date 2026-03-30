@@ -1101,7 +1101,7 @@ def run_server(
         elif config.api_key:
             auth_mode = "enforced"
         else:
-            auth_mode = "permissive"
+            auth_mode = "enforced"
     if auth_mode not in ("enforced", "permissive", "disabled"):
         logger.warning(
             "Invalid AGENT_SKILLS_AUTH_MODE='%s' — defaulting to 'enforced'. "

@@ -42,6 +42,7 @@ nav:
       - Neutral API: CONSUMER_FACING_NEUTRAL_API.md
       - Async Execution: ASYNC_EXECUTION.md
       - JSON Schemas: JSON_SCHEMAS.md
+      - OpenAPI Spec (JSON): specs/consumer_facing_v1_openapi.json
   - Operations:
       - Deployment: DEPLOYMENT.md
       - Reliability: RELIABILITY.md

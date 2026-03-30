@@ -20,8 +20,8 @@ server:
 
 # ── Auth configuration ───────────────────────────────────────────
 auth:
-  # Set to true to enable RBAC enforcement
-  enabled: false
+  # RBAC enforcement (enabled by default for production safety)
+  enabled: true
   # API key for basic auth (create a Secret and reference it)
   apiKeySecretName: ""
   apiKeySecretKey: "api-key"
