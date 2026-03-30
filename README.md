@@ -17,10 +17,26 @@ Agent Skills Runtime lets you define agent capabilities as abstract contracts, w
 
 ---
 
+## 🧩 Mental Model
+
+Think of Agent Skills as:
+
+- **APIs** → turned into reusable “capabilities”  
+- **Workflows (Zapier / Airflow)** → turned into “skills”  
+- **Agent reasoning** → made explicit via structured state  
+
+In short:
+
+> Agent Skills lets agents execute **structured workflows over tools**, instead of guessing what to do via prompts.
+
+---
+
 ## Table of Contents
 
+- [Mental Model](#-mental-model)
 - [Introducing ORCA](#-introducing-orca)
 - [Why Agent Skills?](#why-agent-skills)
+- [When should you use Agent Skills?](#-when-should-you-use-agent-skills)
 - [Architecture](#architecture)
 - [How it compares](#how-it-compares)
 - [Quick Start](#quick-start)
@@ -84,6 +100,22 @@ See the full ORCA specification:
 | No structured reasoning state | **CognitiveState v1** — typed Frame/Working/Output/Trace aligned with CoALA |
 | Inconsistent naming | **Controlled vocabulary** — 122 capabilities across 27 domains with governed naming |
 | Hard to observe | **OTel + metrics + audit** — hash-chain audit trail, Prometheus metrics, SSE streaming |
+
+---
+
+## 🤔 When should you use Agent Skills?
+
+Use it if you need:
+
+- Deterministic and reproducible agent behavior  
+- Safe interaction with real systems (APIs, databases, etc.)  
+- Reusable workflows instead of prompt engineering  
+- Observability and auditability of agent execution  
+
+Avoid it if:
+
+- You just need a quick prompt-based prototype  
+- You don’t need control over execution or safety  
 
 ---
 
