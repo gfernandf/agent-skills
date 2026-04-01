@@ -1,0 +1,59 @@
+id: experiment.text-processing-pipeline
+version: 0.1.0
+name: Multi-step Text Processing Pipeline
+description: >
+  Process a paragraph through three stages:
+  Step 1: Extract key entities and facts.
+  Step 2: Summarize the text.
+  Step 3: Classify the text into a category.
+
+inputs:
+  text:
+    type: string
+    required: true
+    description: The paragraph to process
+  labels:
+    type: array
+    required: false
+    description: Classification labels
+
+outputs:
+  key_information:
+    type: array
+    required: true
+  summary:
+    type: string
+    required: true
+  classification:
+    type: string
+    required: true
+
+steps:
+  - id: extract_entities
+    uses: text.entity.extract
+    input:
+      text: inputs.text
+    output:
+      entities: outputs.key_information
+
+  - id: summarize
+    uses: text.content.summarize
+    input:
+      text: inputs.text
+    output:
+      summary: outputs.summary
+
+  - id: classify
+    uses: text.content.classify
+    input:
+      text: inputs.text
+      labels: inputs.labels
+    output:
+      label: outputs.classification
+
+metadata:
+  classification:
+    role: procedure
+    invocation: direct
+    effect_mode: read_only
+  tags: [experiment, text-processing, benchmark]

@@ -1,0 +1,50 @@
+{
+  "decision_prompt_d01": {
+    "variability_score": 0.0,
+    "repetitions": 3
+  },
+  "decision_orca_d01": {
+    "variability_score": 0.5717,
+    "repetitions": 3
+  },
+  "decision_prompt_d02": {
+    "variability_score": 0.1893,
+    "repetitions": 3
+  },
+  "decision_orca_d02": {
+    "variability_score": 0.5258,
+    "repetitions": 3
+  },
+  "decision_prompt_d03": {
+    "variability_score": 0.2417,
+    "repetitions": 3
+  },
+  "decision_orca_d03": {
+    "variability_score": 0.7039,
+    "repetitions": 3
+  },
+  "text_prompt_t01": {
+    "variability_score": 0.1026,
+    "repetitions": 3
+  },
+  "text_orca_t01": {
+    "variability_score": 0.165,
+    "repetitions": 3
+  },
+  "text_prompt_t02": {
+    "variability_score": 0.0188,
+    "repetitions": 3
+  },
+  "text_orca_t02": {
+    "variability_score": 0.0814,
+    "repetitions": 3
+  },
+  "text_prompt_t03": {
+    "variability_score": 0.1205,
+    "repetitions": 3
+  },
+  "text_orca_t03": {
+    "variability_score": 0.1543,
+    "repetitions": 3
+  }
+}

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "d01",
+    "problem": "A mid-size software company needs to choose a strategy for migrating its monolithic application to the cloud.",
+    "options": [
+      {"label": "Lift-and-shift", "description": "Move the monolith as-is to cloud VMs with minimal code changes."},
+      {"label": "Re-architect to microservices", "description": "Decompose into microservices deployed on Kubernetes."},
+      {"label": "Hybrid strangler-fig", "description": "Incrementally extract services while keeping the monolith running."}
+    ],
+    "criteria": ["cost", "risk", "time-to-value", "long-term maintainability"]
+  },
+  {
+    "id": "d02",
+    "problem": "A hospital must select a system for managing electronic health records (EHR) across 12 departments.",
+    "options": [
+      {"label": "Commercial off-the-shelf EHR", "description": "License a leading vendor solution (e.g., Epic or Cerner)."},
+      {"label": "Open-source EHR with in-house customization", "description": "Deploy OpenMRS and customize with internal IT team."},
+      {"label": "Cloud-native SaaS EHR", "description": "Subscribe to a cloud-only EHR service with API integrations."}
+    ],
+    "criteria": ["interoperability", "total cost of ownership", "regulatory compliance", "user adoption"]
+  },
+  {
+    "id": "d03",
+    "problem": "A logistics company wants to reduce last-mile delivery costs in urban areas.",
+    "options": [
+      {"label": "Crowdsourced delivery network", "description": "Use gig-economy drivers for on-demand delivery."},
+      {"label": "Micro-fulfillment centers", "description": "Deploy small automated warehouses within city limits."},
+      {"label": "Electric cargo bike fleet", "description": "Replace vans with e-cargo bikes for short-distance urban routes."}
+    ],
+    "criteria": ["cost reduction", "delivery speed", "environmental impact", "scalability"]
+  },
+  {
+    "id": "d04",
+    "problem": "A university must decide how to deliver a new data science master's program.",
+    "options": [
+      {"label": "Fully online asynchronous", "description": "Pre-recorded lectures with flexible deadlines and online exams."},
+      {"label": "Hybrid cohort model", "description": "Bi-weekly in-person intensives combined with online coursework."},
+      {"label": "Traditional on-campus", "description": "Full-time residential program with lab access and face-to-face instruction."}
+    ],
+    "criteria": ["student reach", "learning outcomes", "operational cost", "employer perception"]
+  },
+  {
+    "id": "d05",
+    "problem": "A fintech startup needs to choose a primary database technology for its real-time payments platform.",
+    "options": [
+      {"label": "PostgreSQL with Citus extension", "description": "Relational database with horizontal sharding for distributed queries."},
+      {"label": "Apache Cassandra", "description": "Wide-column NoSQL store optimized for write-heavy workloads."},
+      {"label": "CockroachDB", "description": "Distributed SQL database with strong consistency and geo-partitioning."}
+    ],
+    "criteria": ["transaction consistency", "write throughput", "operational complexity", "cost at scale"]
+  },
+  {
+    "id": "d06",
+    "problem": "A retail chain must choose a strategy for its brick-and-mortar stores given declining foot traffic.",
+    "options": [
+      {"label": "Convert to experience centers", "description": "Redesign stores as showrooms with immersive product demos and events."},
+      {"label": "Downsize and optimize", "description": "Close underperforming locations, invest in omnichannel fulfillment."},
+      {"label": "Franchise model", "description": "License the brand to local operators to reduce corporate overhead."}
+    ],
+    "criteria": ["revenue impact", "brand equity", "capital expenditure", "employee retention"]
+  },
+  {
+    "id": "d07",
+    "problem": "A government agency needs to select an approach for digitizing 30 years of paper archives.",
+    "options": [
+      {"label": "In-house scanning center", "description": "Build a dedicated facility with industrial scanners and trained staff."},
+      {"label": "Outsource to a digitization vendor", "description": "Contract a specialized firm to handle scanning, OCR, and indexing."},
+      {"label": "Phased community partnership", "description": "Partner with universities and volunteers for gradual digitization."}
+    ],
+    "criteria": ["accuracy", "security and confidentiality", "timeline", "budget"]
+  },
+  {
+    "id": "d08",
+    "problem": "An energy company must decide how to meet a 40% carbon reduction target by 2030.",
+    "options": [
+      {"label": "Invest in solar and wind farms", "description": "Build utility-scale renewable generation assets."},
+      {"label": "Carbon capture and storage (CCS)", "description": "Retrofit existing fossil-fuel plants with CCS technology."},
+      {"label": "Power purchase agreements (PPAs)", "description": "Buy renewable energy from third-party producers via long-term contracts."}
+    ],
+    "criteria": ["emission reduction certainty", "capital investment", "regulatory risk", "public perception"]
+  },
+  {
+    "id": "d09",
+    "problem": "A pharma company needs to choose a clinical trial design for a new oncology drug.",
+    "options": [
+      {"label": "Traditional randomized controlled trial (RCT)", "description": "Standard two-arm parallel RCT with fixed sample size."},
+      {"label": "Adaptive platform trial", "description": "Multi-arm trial that can add/drop arms based on interim analyses."},
+      {"label": "Decentralized virtual trial", "description": "Remote patient enrollment with wearable monitoring and telemedicine visits."}
+    ],
+    "criteria": ["statistical power", "patient recruitment speed", "cost", "regulatory acceptance"]
+  },
+  {
+    "id": "d10",
+    "problem": "A city government must choose a public transit expansion strategy for a growing metropolitan area.",
+    "options": [
+      {"label": "Light rail extension", "description": "Extend existing light-rail lines into suburban corridors."},
+      {"label": "Bus rapid transit (BRT)", "description": "Dedicate lanes and stations for high-frequency express buses."},
+      {"label": "On-demand micro-transit", "description": "Deploy AI-routed shared shuttle vans covering underserved zones."}
+    ],
+    "criteria": ["ridership capacity", "construction cost", "implementation speed", "equity of access"]
+  }
+]

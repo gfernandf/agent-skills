@@ -1,0 +1,73 @@
+id: experiment.structured-decision
+version: 0.1.0
+name: Structured Decision Making
+description: >
+  Evaluate a problem with multiple options against criteria and select the best one.
+  Step 1: Generate structured option evaluations.
+  Step 2: Branch to select the best option with justification.
+
+inputs:
+  problem:
+    type: string
+    required: true
+    description: Description of the decision problem
+  options:
+    type: array
+    required: true
+    description: List of options with label and description
+  criteria:
+    type: array
+    required: true
+    description: List of evaluation criteria
+
+outputs:
+  selected_option:
+    type: string
+    required: true
+  justification:
+    type: string
+    required: true
+  evaluation:
+    type: object
+    required: false
+  options_detail:
+    type: array
+    required: false
+
+steps:
+  - id: generate_options
+    uses: agent.option.generate
+    input:
+      goal: inputs.problem
+      constraints:
+        fixed_options: inputs.options
+        criteria: inputs.criteria
+    output:
+      options: outputs.options_detail
+      generation_notes: vars.generation_notes
+
+  - id: select_best
+    uses: agent.flow.branch
+    input:
+      condition: "select_best_option"
+      context:
+        problem: inputs.problem
+        options: outputs.options_detail
+        criteria: inputs.criteria
+      branches:
+        - id: option_1
+          label: "First option"
+        - id: option_2
+          label: "Second option"
+        - id: option_3
+          label: "Third option"
+    output:
+      selected_branch: outputs.selected_option
+      rationale: outputs.justification
+
+metadata:
+  classification:
+    role: procedure
+    invocation: direct
+    effect_mode: read_only
+  tags: [experiment, decision-making, benchmark]

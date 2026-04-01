@@ -1,0 +1,2232 @@
+{
+  "metadata": {
+    "timestamp": "20260331T183950Z",
+    "model": "gpt-4o-mini",
+    "seed": 42,
+    "task1_inputs": 10,
+    "task2_inputs": 10,
+    "orca_available": true
+  },
+  "runs": [
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d01",
+      "output": {
+        "selected_option": "Hybrid strangler-fig",
+        "justification": "The hybrid strangler-fig approach allows for gradual migration, reducing risk by maintaining the existing system while incrementally modernizing it. This strategy balances cost and time-to-value effectively, as it avoids the high upfront costs and risks associated with a complete overhaul while ensuring long-term maintainability through gradual improvements.",
+        "evaluation": {
+          "cost": {
+            "Lift-and-shift": "Low",
+            "Re-architect to microservices": "High",
+            "Hybrid strangler-fig": "Medium"
+          },
+          "risk": {
+            "Lift-and-shift": "Medium",
+            "Re-architect to microservices": "High",
+            "Hybrid strangler-fig": "Low"
+          },
+          "time-to-value": {
+            "Lift-and-shift": "High",
+            "Re-architect to microservices": "Low",
+            "Hybrid strangler-fig": "Medium"
+          },
+          "long-term maintainability": {
+            "Lift-and-shift": "Low",
+            "Re-architect to microservices": "High",
+            "Hybrid strangler-fig": "Medium"
+          }
+        }
+      },
+      "latency_s": 10.722,
+      "prompt_tokens": 281,
+      "completion_tokens": 252,
+      "total_tokens": 533,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d01",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-lift-and-shift",
+            "label": "Lift and Shift",
+            "description": "Migrate the existing monolithic application to the cloud with minimal changes, using Infrastructure as a Service (IaaS) to replicate the current environment. This approach allows for quick migration but may not fully leverage cloud-native benefits.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Low",
+              "speed": "Fast",
+              "timeline": "3-6 months"
+            }
+          },
+          {
+            "id": "opt-replatform",
+            "label": "Replatforming",
+            "description": "Modify the application to take advantage of cloud services, such as using managed databases or container orchestration, while still keeping much of the existing codebase. This balances speed and cloud optimization.",
+            "key_attributes": {
+              "cost": "Medium-High",
+              "risk": "Medium",
+              "speed": "Moderate",
+              "timeline": "6-12 months"
+            }
+          },
+          {
+            "id": "opt-rearchitect",
+            "label": "Microservices Rearchitecture",
+            "description": "Completely redesign the application as a set of microservices, allowing for greater scalability and flexibility in the cloud. While this approach maximizes cloud benefits, it requires significant time and investment.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "High",
+              "speed": "Slow",
+              "timeline": "12-24 months"
+            }
+          },
+          {
+            "id": "opt-hybrid",
+            "label": "Hybrid Cloud Strategy",
+            "description": "Maintain part of the application on-premises while migrating other components to the cloud, allowing for a phased approach that can reduce risk and manage costs effectively.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "Moderate",
+              "timeline": "6-18 months"
+            }
+          },
+          {
+            "id": "opt-saas-adoption",
+            "label": "Adopt SaaS Alternatives",
+            "description": "Evaluate and transition to Software as a Service (SaaS) solutions that can replace the functionality of the monolithic application, reducing the need for migration altogether.",
+            "key_attributes": {
+              "cost": "Variable",
+              "risk": "Low",
+              "speed": "Fast",
+              "timeline": "3-6 months"
+            }
+          }
+        ],
+        "selected_option": "option_1",
+        "justification": "The 'Lift and Shift' option provides a quick migration with low risk, aligning well with the company's need for a fast and cost-effective strategy."
+      },
+      "latency_s": 11.368,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 8250.148
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 2131.125
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d02",
+      "output": {
+        "selected_option": "Commercial off-the-shelf EHR",
+        "justification": "The Commercial off-the-shelf EHR offers the highest level of interoperability and regulatory compliance, which are critical for a hospital managing sensitive health records. Additionally, established vendors typically have strong user adoption rates due to their familiarity and support services.",
+        "evaluation": {
+          "interoperability": {
+            "Commercial off-the-shelf EHR": "High",
+            "Open-source EHR with in-house customization": "Medium",
+            "Cloud-native SaaS EHR": "Medium"
+          },
+          "total cost of ownership": {
+            "Commercial off-the-shelf EHR": "High",
+            "Open-source EHR with in-house customization": "Low",
+            "Cloud-native SaaS EHR": "Medium"
+          },
+          "regulatory compliance": {
+            "Commercial off-the-shelf EHR": "High",
+            "Open-source EHR with in-house customization": "Medium",
+            "Cloud-native SaaS EHR": "Medium"
+          },
+          "user adoption": {
+            "Commercial off-the-shelf EHR": "High",
+            "Open-source EHR with in-house customization": "Low",
+            "Cloud-native SaaS EHR": "Medium"
+          }
+        }
+      },
+      "latency_s": 7.662,
+      "prompt_tokens": 291,
+      "completion_tokens": 268,
+      "total_tokens": 559,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d02",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-cloud-based",
+            "label": "Cloud-Based EHR System",
+            "description": "Implement a cloud-based EHR system that allows for easy access and collaboration across all departments. This option offers scalability and remote access, making it suitable for a growing hospital environment.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Low",
+              "speed": "Fast",
+              "timeline": "3-6 months"
+            }
+          },
+          {
+            "id": "opt-on-premise",
+            "label": "On-Premise EHR System",
+            "description": "Choose an on-premise EHR solution that provides complete control over data and security. This option may involve higher upfront costs but can be tailored to the specific needs of the hospital's departments.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "6-12 months"
+            }
+          },
+          {
+            "id": "opt-integrated-solution",
+            "label": "Integrated EHR and Practice Management System",
+            "description": "Select an integrated EHR and practice management system that streamlines both clinical and administrative tasks. This comprehensive solution can improve efficiency and reduce the need for multiple systems.",
+            "key_attributes": {
+              "cost": "Medium-High",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "4-8 months"
+            }
+          },
+          {
+            "id": "opt-modular-system",
+            "label": "Modular EHR System",
+            "description": "Adopt a modular EHR system that allows departments to select and implement only the functionalities they need. This approach provides flexibility and can be phased in over time to minimize disruption.",
+            "key_attributes": {
+              "cost": "Variable",
+              "risk": "Low",
+              "speed": "Slow",
+              "timeline": "1-2 years"
+            }
+          },
+          {
+            "id": "opt-custom-solution",
+            "label": "Custom-Built EHR System",
+            "description": "Develop a custom EHR system tailored specifically to the hospital's unique requirements and workflows. While this option can be costly and time-consuming, it ensures that all departments' needs are met precisely.",
+            "key_attributes": {
+              "cost": "Very High",
+              "risk": "High",
+              "speed": "Very Slow",
+              "timeline": "1-2 years"
+            }
+          }
+        ],
+        "selected_option": "option_1",
+        "justification": "The cloud-based EHR system offers scalability, low risk, and fast implementation, making it the best fit for managing EHR across multiple departments in a growing hospital environment."
+      },
+      "latency_s": 12.12,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 10295.386
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 1765.817
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d03",
+      "output": {
+        "selected_option": "Electric cargo bike fleet",
+        "justification": "The electric cargo bike fleet offers significant cost reductions by lowering fuel and maintenance expenses compared to vans. Additionally, it enhances delivery speed in congested urban areas and has a positive environmental impact due to reduced emissions. This option is also scalable as it can be expanded with more bikes as demand grows.",
+        "evaluation": {
+          "cost reduction": {
+            "Crowdsourced delivery network": "Moderate savings",
+            "Micro-fulfillment centers": "High initial costs",
+            "Electric cargo bike fleet": "High savings"
+          },
+          "delivery speed": {
+            "Crowdsourced delivery network": "Fast",
+            "Micro-fulfillment centers": "Moderate",
+            "Electric cargo bike fleet": "Very fast"
+          },
+          "environmental impact": {
+            "Crowdsourced delivery network": "Low",
+            "Micro-fulfillment centers": "Moderate",
+            "Electric cargo bike fleet": "High"
+          },
+          "scalability": {
+            "Crowdsourced delivery network": "High",
+            "Micro-fulfillment centers": "Moderate",
+            "Electric cargo bike fleet": "High"
+          }
+        }
+      },
+      "latency_s": 8.313,
+      "prompt_tokens": 269,
+      "completion_tokens": 255,
+      "total_tokens": 524,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d03",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-001",
+            "label": "Implement Micro-Distribution Centers",
+            "description": "Establish small distribution centers within urban areas to facilitate faster and more efficient last-mile deliveries. This would reduce transportation costs and delivery times by minimizing the distance between the warehouse and the customer.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "Fast",
+              "timeline": "6-12 months"
+            }
+          },
+          {
+            "id": "opt-002",
+            "label": "Utilize Electric Cargo Bikes",
+            "description": "Adopt electric cargo bikes for last-mile deliveries to reduce fuel costs and environmental impact. This option can navigate urban traffic more easily and access areas that larger vehicles cannot.",
+            "key_attributes": {
+              "cost": "Low",
+              "risk": "Low",
+              "speed": "Medium",
+              "timeline": "3-6 months"
+            }
+          },
+          {
+            "id": "opt-003",
+            "label": "Partner with Local Delivery Services",
+            "description": "Collaborate with local courier services to leverage their existing networks and local knowledge. This can enhance delivery efficiency and reduce costs by sharing resources and optimizing routes.",
+            "key_attributes": {
+              "cost": "Low",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "1-3 months"
+            }
+          },
+          {
+            "id": "opt-004",
+            "label": "Implement Route Optimization Software",
+            "description": "Invest in advanced route optimization software to improve delivery efficiency by calculating the best routes in real-time. This can significantly reduce fuel consumption and delivery times.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Low",
+              "speed": "Fast",
+              "timeline": "1-2 months"
+            }
+          },
+          {
+            "id": "opt-005",
+            "label": "Introduce Package Lockers",
+            "description": "Install secure package lockers in strategic urban locations where customers can pick up their deliveries at their convenience. This reduces the need for multiple delivery attempts and associated costs.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "6-9 months"
+            }
+          }
+        ],
+        "selected_option": "option_4",
+        "justification": "Implementing Route Optimization Software offers a good balance of medium cost, low risk, and fast delivery speed, aligning well with the company's goals of reducing costs and improving efficiency in last-mile delivery."
+      },
+      "latency_s": 11.73,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 9219.608
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 2475.098
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d04",
+      "output": {
+        "selected_option": "Hybrid cohort model",
+        "justification": "The hybrid cohort model balances flexibility with in-person engagement, enhancing learning outcomes through direct interaction while still reaching a broader student base. It also maintains a reasonable operational cost compared to a fully traditional model and is likely to be viewed favorably by employers who value both online and hands-on experience.",
+        "evaluation": {
+          "student reach": {
+            "Fully online asynchronous": "High",
+            "Hybrid cohort model": "Medium-High",
+            "Traditional on-campus": "Low"
+          },
+          "learning outcomes": {
+            "Fully online asynchronous": "Medium",
+            "Hybrid cohort model": "High",
+            "Traditional on-campus": "High"
+          },
+          "operational cost": {
+            "Fully online asynchronous": "Low",
+            "Hybrid cohort model": "Medium",
+            "Traditional on-campus": "High"
+          },
+          "employer perception": {
+            "Fully online asynchronous": "Medium",
+            "Hybrid cohort model": "High",
+            "Traditional on-campus": "High"
+          }
+        }
+      },
+      "latency_s": 4.961,
+      "prompt_tokens": 269,
+      "completion_tokens": 226,
+      "total_tokens": 495,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d04",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-online",
+            "label": "Fully Online Program",
+            "description": "Deliver the master's program entirely online, allowing students to access coursework from anywhere. This option maximizes flexibility for working professionals and can attract a broader audience.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Low",
+              "speed": "Fast",
+              "timeline": "1 year to launch"
+            }
+          },
+          {
+            "id": "opt-hybrid",
+            "label": "Hybrid Program",
+            "description": "Combine online coursework with in-person sessions, providing a balanced approach that caters to both local and remote students. This option enhances engagement through face-to-face interactions while retaining online convenience.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "1.5 years to launch"
+            }
+          },
+          {
+            "id": "opt-campus",
+            "label": "On-Campus Program",
+            "description": "Offer the master's program exclusively on campus, focusing on traditional classroom learning and hands-on experiences. This option may appeal to students seeking direct mentorship and networking opportunities.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Slow",
+              "timeline": "2 years to launch"
+            }
+          },
+          {
+            "id": "opt-partnership",
+            "label": "Partnership with Industry",
+            "description": "Collaborate with tech companies to co-develop the curriculum and provide internship opportunities. This option enhances the program's relevance and employability for graduates while sharing resources.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "1.5 years to launch"
+            }
+          },
+          {
+            "id": "opt-modular",
+            "label": "Modular Course Offerings",
+            "description": "Implement a modular approach where students can select specific courses to build their degree over time. This flexibility allows students to tailor their education to their career goals and schedules.",
+            "key_attributes": {
+              "cost": "Low",
+              "risk": "Low",
+              "speed": "Fast",
+              "timeline": "1 year to launch"
+            }
+          }
+        ],
+        "selected_option": "option_1",
+        "justification": "The Fully Online Program maximizes student reach and flexibility, aligning well with the criteria of student reach and operational cost while being quick to launch."
+      },
+      "latency_s": 12.35,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 10204.39
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 2055.971
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d05",
+      "output": {
+        "selected_option": "CockroachDB",
+        "justification": "CockroachDB offers strong consistency and geo-partitioning, which are critical for a real-time payments platform. Its distributed nature ensures high availability and scalability while maintaining operational simplicity compared to the other options.",
+        "evaluation": {
+          "transaction consistency": {
+            "PostgreSQL with Citus extension": "Moderate",
+            "Apache Cassandra": "Low",
+            "CockroachDB": "High"
+          },
+          "write throughput": {
+            "PostgreSQL with Citus extension": "Moderate",
+            "Apache Cassandra": "High",
+            "CockroachDB": "Moderate"
+          },
+          "operational complexity": {
+            "PostgreSQL with Citus extension": "Moderate",
+            "Apache Cassandra": "High",
+            "CockroachDB": "Low"
+          },
+          "cost at scale": {
+            "PostgreSQL with Citus extension": "Moderate",
+            "Apache Cassandra": "Low",
+            "CockroachDB": "High"
+          }
+        }
+      },
+      "latency_s": 3.852,
+      "prompt_tokens": 274,
+      "completion_tokens": 224,
+      "total_tokens": 498,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d05",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-relational-db",
+            "label": "Relational Database (PostgreSQL)",
+            "description": "Utilize PostgreSQL for its robust ACID compliance and support for complex queries. This option is ideal for structured data and can handle transactions efficiently, making it suitable for real-time payments.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Low",
+              "speed": "Moderate",
+              "timeline": "1-3 months"
+            }
+          },
+          {
+            "id": "opt-nosql-db",
+            "label": "NoSQL Database (MongoDB)",
+            "description": "Implement MongoDB to leverage its flexibility and scalability for unstructured data. This option allows for rapid development and can handle high volumes of transactions, making it suitable for real-time applications.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "High",
+              "timeline": "2-4 months"
+            }
+          },
+          {
+            "id": "opt-in-memory-db",
+            "label": "In-Memory Database (Redis)",
+            "description": "Choose Redis for its exceptional speed and performance in handling real-time data processing. This option is particularly effective for caching and quick data retrieval, essential for a payments platform.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Very High",
+              "timeline": "1-2 months"
+            }
+          },
+          {
+            "id": "opt-distributed-db",
+            "label": "Distributed Database (Cassandra)",
+            "description": "Adopt Apache Cassandra for its high availability and scalability across multiple nodes. This option is designed to handle large amounts of data with minimal latency, making it suitable for a global payments platform.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "High",
+              "timeline": "3-6 months"
+            }
+          }
+        ],
+        "selected_option": "option_3",
+        "justification": "The In-Memory Database (Redis) is the best option due to its exceptional speed and performance, which are critical for real-time payments processing."
+      },
+      "latency_s": 9.1,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 7694.474
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 1364.187
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d06",
+      "output": {
+        "selected_option": "Convert to experience centers",
+        "justification": "Transforming stores into experience centers can significantly enhance customer engagement and brand loyalty, which is crucial in a declining foot traffic environment. This option also has the potential for higher revenue through immersive experiences and events, while maintaining brand equity.",
+        "evaluation": {
+          "revenue impact": {
+            "Convert to experience centers": "High",
+            "Downsize and optimize": "Medium",
+            "Franchise model": "Low"
+          },
+          "brand equity": {
+            "Convert to experience centers": "High",
+            "Downsize and optimize": "Medium",
+            "Franchise model": "Low"
+          },
+          "capital expenditure": {
+            "Convert to experience centers": "High",
+            "Downsize and optimize": "Medium",
+            "Franchise model": "Low"
+          },
+          "employee retention": {
+            "Convert to experience centers": "Medium",
+            "Downsize and optimize": "Low",
+            "Franchise model": "Medium"
+          }
+        }
+      },
+      "latency_s": 3.962,
+      "prompt_tokens": 277,
+      "completion_tokens": 220,
+      "total_tokens": 497,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d06",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-instore-experience",
+            "label": "Enhance In-Store Experience",
+            "description": "Invest in creating a unique in-store experience through interactive displays, personalized customer service, and events. This strategy aims to attract customers by making shopping more enjoyable and engaging.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "6-12 months"
+            }
+          },
+          {
+            "id": "opt-omnichannel-integration",
+            "label": "Implement Omnichannel Shopping",
+            "description": "Develop a seamless integration between online and offline shopping experiences, allowing customers to order online and pick up in-store. This approach caters to changing shopping habits and enhances convenience.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "Fast",
+              "timeline": "3-6 months"
+            }
+          },
+          {
+            "id": "opt-store-reduction",
+            "label": "Reduce Store Footprint",
+            "description": "Consolidate physical locations by closing underperforming stores and focusing on high-traffic areas. This strategy aims to reduce overhead costs while maintaining a presence in key markets.",
+            "key_attributes": {
+              "cost": "Low",
+              "risk": "High",
+              "speed": "Medium",
+              "timeline": "6-12 months"
+            }
+          },
+          {
+            "id": "opt-community-engagement",
+            "label": "Strengthen Community Engagement",
+            "description": "Create partnerships with local organizations and host community events to drive foot traffic. This strategy focuses on building relationships and increasing brand loyalty within the community.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Low",
+              "speed": "Medium",
+              "timeline": "3-6 months"
+            }
+          },
+          {
+            "id": "opt-technology-integration",
+            "label": "Leverage Technology in Stores",
+            "description": "Incorporate technology such as mobile apps, augmented reality, and smart checkout systems to enhance the shopping experience. This strategy aims to attract tech-savvy customers and streamline operations.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Slow",
+              "timeline": "12+ months"
+            }
+          }
+        ],
+        "selected_option": "option_2",
+        "justification": "Implementing omnichannel shopping directly addresses the need for convenience and adapts to changing shopping habits, which is crucial given the decline in foot traffic."
+      },
+      "latency_s": 12.289,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 10636.333
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 1626.912
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d07",
+      "output": {
+        "selected_option": "Outsource to a digitization vendor",
+        "justification": "Outsourcing to a specialized vendor ensures high accuracy and efficiency due to their expertise and advanced technology. This option also addresses security and confidentiality concerns effectively, while providing a quicker turnaround time compared to building an in-house facility or relying on community partnerships.",
+        "evaluation": {
+          "accuracy": {
+            "In-house scanning center": "Moderate",
+            "Outsource to a digitization vendor": "High",
+            "Phased community partnership": "Low"
+          },
+          "security and confidentiality": {
+            "In-house scanning center": "Moderate",
+            "Outsource to a digitization vendor": "High",
+            "Phased community partnership": "Low"
+          },
+          "timeline": {
+            "In-house scanning center": "Long",
+            "Outsource to a digitization vendor": "Short",
+            "Phased community partnership": "Long"
+          },
+          "budget": {
+            "In-house scanning center": "High",
+            "Outsource to a digitization vendor": "Moderate",
+            "Phased community partnership": "Low"
+          }
+        }
+      },
+      "latency_s": 5.369,
+      "prompt_tokens": 275,
+      "completion_tokens": 243,
+      "total_tokens": 518,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d07",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-1",
+            "label": "Outsource Digitization to a Specialized Firm",
+            "description": "Hire a professional digitization service that specializes in converting large volumes of paper archives into digital formats. This option leverages expertise and technology that the agency may not possess in-house.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Fast",
+              "timeline": "6-12 months"
+            }
+          },
+          {
+            "id": "opt-2",
+            "label": "In-House Digitization with New Equipment",
+            "description": "Invest in high-quality scanning equipment and hire additional staff to manage the digitization process internally. This approach allows for greater control over the project and potential long-term savings.",
+            "key_attributes": {
+              "cost": "Medium-High",
+              "risk": "Medium-High",
+              "speed": "Moderate",
+              "timeline": "12-24 months"
+            }
+          },
+          {
+            "id": "opt-3",
+            "label": "Phased Digitization with Prioritization",
+            "description": "Implement a phased approach, prioritizing the most critical documents for digitization first. This method allows for gradual investment and the ability to adapt the process based on initial outcomes.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Low",
+              "speed": "Slow to Moderate",
+              "timeline": "24-36 months"
+            }
+          },
+          {
+            "id": "opt-4",
+            "label": "Crowdsourcing the Digitization Process",
+            "description": "Engage volunteers or the community to assist in digitizing the archives, potentially through a public campaign. This option can reduce costs and increase public involvement but may require significant oversight.",
+            "key_attributes": {
+              "cost": "Low",
+              "risk": "High",
+              "speed": "Slow",
+              "timeline": "36+ months"
+            }
+          },
+          {
+            "id": "opt-5",
+            "label": "Collaborate with Educational Institutions",
+            "description": "Partner with universities or colleges that have programs in archival studies or digital humanities to have students assist with the digitization process as part of their coursework.",
+            "key_attributes": {
+              "cost": "Medium-Low",
+              "risk": "Medium",
+              "speed": "Moderate",
+              "timeline": "12-18 months"
+            }
+          }
+        ],
+        "selected_option": "option_2",
+        "justification": "In-house digitization with new equipment offers a balance of control, moderate cost, and a reasonable timeline, making it suitable for a government agency's needs."
+      },
+      "latency_s": 12.183,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 10580.176
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 1569.481
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d08",
+      "output": {
+        "selected_option": "Invest in solar and wind farms",
+        "justification": "Investing in solar and wind farms provides the highest certainty in emission reductions while aligning with public perception of clean energy. Although it requires significant capital investment, the long-term benefits and reduced regulatory risks make it the most viable option for achieving the carbon reduction target.",
+        "evaluation": {
+          "emission reduction certainty": {
+            "Invest in solar and wind farms": "High",
+            "Carbon capture and storage (CCS)": "Medium",
+            "Power purchase agreements (PPAs)": "Medium"
+          },
+          "capital investment": {
+            "Invest in solar and wind farms": "High",
+            "Carbon capture and storage (CCS)": "Medium",
+            "Power purchase agreements (PPAs)": "Low"
+          },
+          "regulatory risk": {
+            "Invest in solar and wind farms": "Low",
+            "Carbon capture and storage (CCS)": "Medium",
+            "Power purchase agreements (PPAs)": "Medium"
+          },
+          "public perception": {
+            "Invest in solar and wind farms": "High",
+            "Carbon capture and storage (CCS)": "Low",
+            "Power purchase agreements (PPAs)": "Medium"
+          }
+        }
+      },
+      "latency_s": 35.355,
+      "prompt_tokens": 280,
+      "completion_tokens": 262,
+      "total_tokens": 542,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d08",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-1",
+            "label": "Invest in Renewable Energy Sources",
+            "description": "Allocate significant resources to develop solar, wind, and hydroelectric power projects to replace fossil fuel energy generation. This approach would not only reduce carbon emissions but also diversify the energy portfolio.",
+            "key_attributes": {
+              "cost": "High initial investment",
+              "risk": "Moderate (dependent on technology and market conditions)",
+              "speed": "Medium (projects take time to develop and implement)",
+              "timeline": "Completion by 2030"
+            }
+          },
+          {
+            "id": "opt-2",
+            "label": "Enhance Energy Efficiency Programs",
+            "description": "Implement comprehensive energy efficiency initiatives across all operations, including upgrading infrastructure and incentivizing customers to reduce energy consumption. This could lead to significant carbon reductions without the need for extensive new infrastructure.",
+            "key_attributes": {
+              "cost": "Moderate (lower than new energy sources)",
+              "risk": "Low (proven strategies)",
+              "speed": "Fast (can start immediately)",
+              "timeline": "Ongoing until 2030"
+            }
+          },
+          {
+            "id": "opt-3",
+            "label": "Carbon Capture and Storage Technology",
+            "description": "Invest in carbon capture and storage (CCS) technologies to capture emissions from existing fossil fuel plants and store them underground. This option allows continued use of current infrastructure while mitigating carbon output.",
+            "key_attributes": {
+              "cost": "High (technology still developing)",
+              "risk": "High (unproven at scale in many contexts)",
+              "speed": "Slow (requires significant R&D and regulatory approval)",
+              "timeline": "Potentially operational by 2030"
+            }
+          },
+          {
+            "id": "opt-4",
+            "label": "Transition to Natural Gas",
+            "description": "Gradually replace coal and oil with natural gas, which emits less carbon dioxide when burned. This transitional strategy could help meet short-term targets while longer-term renewable solutions are developed.",
+            "key_attributes": {
+              "cost": "Moderate (infrastructure already exists)",
+              "risk": "Moderate (market volatility and regulatory changes)",
+              "speed": "Medium (existing plants can be converted)",
+              "timeline": "Transition by 2030"
+            }
+          }
+        ],
+        "selected_option": "option_2",
+        "justification": "Enhancing energy efficiency programs offers a low-cost, low-risk, and fast approach to achieving significant carbon reductions, aligning well with the company's 2030 target."
+      },
+      "latency_s": 12.362,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 10754.228
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 1568.302
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d09",
+      "output": {
+        "selected_option": "Adaptive platform trial",
+        "justification": "The adaptive platform trial offers flexibility in design, allowing for adjustments based on interim results, which can enhance statistical power and improve patient recruitment speed. Additionally, it is increasingly accepted by regulatory bodies, making it a robust choice for the clinical trial of a new oncology drug.",
+        "evaluation": {
+          "statistical power": {
+            "Traditional randomized controlled trial (RCT)": "Moderate",
+            "Adaptive platform trial": "High",
+            "Decentralized virtual trial": "Moderate"
+          },
+          "patient recruitment speed": {
+            "Traditional randomized controlled trial (RCT)": "Slow",
+            "Adaptive platform trial": "Fast",
+            "Decentralized virtual trial": "Fast"
+          },
+          "cost": {
+            "Traditional randomized controlled trial (RCT)": "Moderate",
+            "Adaptive platform trial": "High",
+            "Decentralized virtual trial": "Moderate"
+          },
+          "regulatory acceptance": {
+            "Traditional randomized controlled trial (RCT)": "High",
+            "Adaptive platform trial": "Increasing",
+            "Decentralized virtual trial": "Moderate"
+          }
+        }
+      },
+      "latency_s": 5.221,
+      "prompt_tokens": 276,
+      "completion_tokens": 245,
+      "total_tokens": 521,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d09",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-randomized-control",
+            "label": "Randomized Controlled Trial",
+            "description": "Implement a traditional randomized controlled trial (RCT) design where participants are randomly assigned to either the treatment group receiving the new oncology drug or a control group receiving a placebo.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Moderate",
+              "timeline": "12-24 months"
+            }
+          },
+          {
+            "id": "opt-adaptive-design",
+            "label": "Adaptive Trial Design",
+            "description": "Adopt an adaptive trial design that allows for modifications to the trial procedures based on interim results, potentially speeding up the process and optimizing patient allocation.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "Fast",
+              "timeline": "6-18 months"
+            }
+          },
+          {
+            "id": "opt-biomarker-strategy",
+            "label": "Biomarker-Driven Trial",
+            "description": "Conduct a biomarker-driven clinical trial that targets specific patient populations based on genetic markers, enhancing the likelihood of efficacy and reducing unnecessary exposure to the drug.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "High",
+              "speed": "Slow",
+              "timeline": "18-36 months"
+            }
+          },
+          {
+            "id": "opt-sequential-design",
+            "label": "Sequential Trial Design",
+            "description": "Utilize a sequential trial design where the trial is conducted in phases, allowing for early stopping for efficacy or futility based on predefined criteria.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "Moderate",
+              "timeline": "12-24 months"
+            }
+          },
+          {
+            "id": "opt-platform-trial",
+            "label": "Platform Trial Design",
+            "description": "Implement a platform trial design that allows for simultaneous testing of multiple treatments against a common control, facilitating quicker insights across different oncology therapies.",
+            "key_attributes": {
+              "cost": "Very High",
+              "risk": "Medium",
+              "speed": "Fast",
+              "timeline": "12-30 months"
+            }
+          }
+        ],
+        "selected_option": "option_2",
+        "justification": "The Adaptive Trial Design offers a balance of medium cost and risk while providing faster patient recruitment and the flexibility to modify the trial based on interim results, aligning well with the criteria."
+      },
+      "latency_s": 10.32,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 8583.546
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 1705.708
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d10",
+      "output": {
+        "selected_option": "Bus rapid transit (BRT)",
+        "justification": "BRT offers a balance of high ridership capacity and relatively low construction costs compared to light rail. It can be implemented more quickly than light rail and provides equitable access to underserved areas through dedicated lanes and frequent service.",
+        "evaluation": {
+          "ridership capacity": {
+            "Light rail extension": "High",
+            "Bus rapid transit (BRT)": "Very High",
+            "On-demand micro-transit": "Moderate"
+          },
+          "construction cost": {
+            "Light rail extension": "High",
+            "Bus rapid transit (BRT)": "Moderate",
+            "On-demand micro-transit": "Low"
+          },
+          "implementation speed": {
+            "Light rail extension": "Slow",
+            "Bus rapid transit (BRT)": "Fast",
+            "On-demand micro-transit": "Moderate"
+          },
+          "equity of access": {
+            "Light rail extension": "Moderate",
+            "Bus rapid transit (BRT)": "High",
+            "On-demand micro-transit": "High"
+          }
+        }
+      },
+      "latency_s": 4.609,
+      "prompt_tokens": 274,
+      "completion_tokens": 239,
+      "total_tokens": 513,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d10",
+      "output": {
+        "options_detail": [
+          {
+            "id": "opt-light-rail",
+            "label": "Light Rail Expansion",
+            "description": "Implement a light rail system that connects major neighborhoods and business districts, reducing traffic congestion and improving air quality. This option would involve constructing new tracks and stations, requiring significant upfront investment but offering long-term benefits.",
+            "key_attributes": {
+              "cost": "High",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "5-10 years"
+            }
+          },
+          {
+            "id": "opt-bus-rapid-transit",
+            "label": "Bus Rapid Transit (BRT) System",
+            "description": "Develop a Bus Rapid Transit system with dedicated lanes and priority signaling to enhance bus travel speed and reliability. This option is generally less expensive and quicker to implement than rail, making it suitable for immediate relief of transit needs.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Low",
+              "speed": "High",
+              "timeline": "2-4 years"
+            }
+          },
+          {
+            "id": "opt-microtransit",
+            "label": "Microtransit Solutions",
+            "description": "Introduce a microtransit service that utilizes smaller vehicles and on-demand routing to serve areas with lower population density. This flexible option can adapt to changing ridership patterns and is cost-effective for less populated regions.",
+            "key_attributes": {
+              "cost": "Low",
+              "risk": "Low",
+              "speed": "High",
+              "timeline": "1-2 years"
+            }
+          },
+          {
+            "id": "opt-bike-share",
+            "label": "Expanded Bike Share Program",
+            "description": "Expand the existing bike share program to encourage cycling as a viable transit option, especially for short trips. This sustainable approach promotes healthy lifestyles and reduces congestion, requiring minimal infrastructure investment.",
+            "key_attributes": {
+              "cost": "Low",
+              "risk": "Low",
+              "speed": "High",
+              "timeline": "1 year"
+            }
+          },
+          {
+            "id": "opt-park-and-ride",
+            "label": "Park-and-Ride Facilities",
+            "description": "Establish park-and-ride facilities at key transit hubs to encourage commuters to use public transit for the last leg of their journey. This strategy can alleviate parking issues in urban areas while promoting the use of public transit.",
+            "key_attributes": {
+              "cost": "Medium",
+              "risk": "Medium",
+              "speed": "Medium",
+              "timeline": "3-5 years"
+            }
+          }
+        ],
+        "selected_option": "option_2",
+        "justification": "The Bus Rapid Transit (BRT) System offers a balance of medium cost and high implementation speed, making it suitable for immediate transit needs while accommodating a growing population."
+      },
+      "latency_s": 11.959,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "generate_options",
+          "uses": "agent.option.generate",
+          "status": "completed",
+          "latency_ms": 10014.003
+        },
+        {
+          "step_id": "select_best",
+          "uses": "agent.flow.branch",
+          "status": "completed",
+          "latency_ms": 1902.551
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.8
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t01",
+      "output": {
+        "key_information": [
+          "Artificial intelligence is transforming healthcare delivery.",
+          "Machine learning algorithms analyze medical images with accuracy rivaling radiologists.",
+          "The FDA has approved over 500 AI-enabled medical devices since 2018."
+        ],
+        "summary": "Artificial intelligence is significantly enhancing healthcare by improving the accuracy of medical image analysis and reducing documentation burdens through natural language processing. Despite these advancements, challenges such as algorithmic bias and data privacy concerns hinder broader adoption.",
+        "classification": "Healthcare"
+      },
+      "latency_s": 3.335,
+      "prompt_tokens": 315,
+      "completion_tokens": 105,
+      "total_tokens": 420,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t01",
+      "output": {
+        "key_information": [
+          {
+            "text": "Artificial intelligence",
+            "type": "OTHER"
+          },
+          {
+            "text": "Machine learning",
+            "type": "OTHER"
+          },
+          {
+            "text": "Natural language processing",
+            "type": "OTHER"
+          },
+          {
+            "text": "FDA",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "2018",
+            "type": "DATE"
+          }
+        ],
+        "summary": "Artificial intelligence is revolutionizing healthcare by enhancing medical image analysis, streamlining documentation through natural language processing, and enabling predictive models for patient risk assessment. Despite these advancements, challenges such as algorithmic bias, data privacy, and regulatory needs persist. The FDA has approved over 500 AI-enabled medical devices since 2018, indicating increasing institutional confidence in AI technologies.",
+        "classification": "Healthcare Technology"
+      },
+      "latency_s": 6.626,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 3846.754
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 1948.145
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 682.881
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.92
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t02",
+      "output": {
+        "key_information": [
+          "Global semiconductor shortage began in 2020",
+          "Automakers lost an estimated $210 billion in revenue",
+          "U.S. CHIPS Act allocated $52 billion for domestic manufacturing"
+        ],
+        "summary": "The global semiconductor shortage that started in 2020 revealed vulnerabilities in supply chains, leading to significant revenue losses for automakers. In response, governments invested heavily in domestic manufacturing initiatives, with the U.S. CHIPS Act and EU proposals totaling billions. Industry analysts expect a 50% increase in global semiconductor capacity by 2027, despite ongoing geopolitical risks in East Asia.",
+        "classification": "Economics"
+      },
+      "latency_s": 3.321,
+      "prompt_tokens": 328,
+      "completion_tokens": 138,
+      "total_tokens": 466,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t02",
+      "output": {
+        "key_information": [
+          {
+            "text": "semiconductor shortage",
+            "type": "EVENT"
+          },
+          {
+            "text": "2020",
+            "type": "DATE"
+          },
+          {
+            "text": "$210 billion",
+            "type": "MONEY"
+          },
+          {
+            "text": "U.S. CHIPS Act",
+            "type": "LAW"
+          },
+          {
+            "text": "$52 billion",
+            "type": "MONEY"
+          },
+          {
+            "text": "EU",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "€43 billion",
+            "type": "MONEY"
+          },
+          {
+            "text": "TSMC",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Samsung",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Intel",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "United States",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Japan",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Germany",
+            "type": "LOCATION"
+          },
+          {
+            "text": "2027",
+            "type": "DATE"
+          },
+          {
+            "text": "East Asia",
+            "type": "LOCATION"
+          }
+        ],
+        "summary": "The global semiconductor shortage that began in 2020 highlighted vulnerabilities in supply chains, causing automakers to lose an estimated $210 billion in revenue. In response, governments invested heavily, with the U.S. CHIPS Act allocating $52 billion and the EU proposing €43 billion for chip initiatives. Major companies like TSMC, Samsung, and Intel are establishing new fabrication plants in the U.S., Japan, and Germany. Analysts predict a 50% increase in global semiconductor capacity by 2027, but the concentration in East Asia poses a geopolitical risk.",
+        "classification": "Economics"
+      },
+      "latency_s": 8.661,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 5088.011
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2650.819
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 875.42
+        }
+      ],
+      "status": "completed",
+      "correctness": 1.0
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t03",
+      "output": {
+        "key_information": [
+          "30-40% of employees work remotely at least three days per week",
+          "Office vacancy rates above 20% in San Francisco and New York",
+          "Population growth exceeding 5% annually in secondary cities like Austin, Boise, and Raleigh"
+        ],
+        "summary": "Remote work has significantly changed urban economic landscapes, leading to high office vacancy rates in major cities while secondary cities see population growth. Commercial real estate is adapting by converting office spaces into residential units, and coworking spaces are implementing hybrid models. The long-term effects on urban infrastructure and economies are still unclear.",
+        "classification": "Economics"
+      },
+      "latency_s": 2.954,
+      "prompt_tokens": 321,
+      "completion_tokens": 136,
+      "total_tokens": 457,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t03",
+      "output": {
+        "key_information": [
+          {
+            "text": "San Francisco",
+            "type": "LOCATION"
+          },
+          {
+            "text": "New York",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Austin",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Boise",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Raleigh",
+            "type": "LOCATION"
+          },
+          {
+            "text": "30-40%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "20%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "5%",
+            "type": "PERCENT"
+          }
+        ],
+        "summary": "Remote work has significantly changed urban economic geography, with 30-40% of tech employees working remotely at least three days a week. This has led to over 20% office vacancy rates in cities like San Francisco and New York, while secondary cities such as Austin, Boise, and Raleigh have seen over 5% annual population growth. Developers are converting vacant office buildings into residential units, and coworking spaces are adopting hybrid membership models. The long-term effects on urban tax bases, public transit, and downtown retail are still unclear.",
+        "classification": "Economic Impact of Remote Work"
+      },
+      "latency_s": 6.006,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 3197.058
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2061.539
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 712.951
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t04",
+      "output": {
+        "key_information": [
+          "Ocean acidification is driven by the absorption of atmospheric CO₂.",
+          "Ocean pH has dropped from 8.2 to 8.1 since pre-industrial times, indicating a 26% increase in acidity.",
+          "Coral reefs support 25% of all marine species and are experiencing calcification rate declines of 14-30% under projected 2100 conditions."
+        ],
+        "summary": "Ocean acidification, caused by increased atmospheric CO₂, poses a significant threat to marine ecosystems, particularly coral reefs, which are vital for marine biodiversity. The decline in ocean pH and the adverse effects on shellfish industries highlight the urgent need for interventions, although scalability of these solutions remains uncertain.",
+        "classification": "Environment"
+      },
+      "latency_s": 4.206,
+      "prompt_tokens": 335,
+      "completion_tokens": 161,
+      "total_tokens": 496,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t04",
+      "output": {
+        "key_information": [
+          {
+            "text": "Ocean acidification",
+            "type": "OTHER"
+          },
+          {
+            "text": "CO₂",
+            "type": "OTHER"
+          },
+          {
+            "text": "Coral reefs",
+            "type": "OTHER"
+          },
+          {
+            "text": "Pacific Northwest",
+            "type": "LOCATION"
+          },
+          {
+            "text": "2100",
+            "type": "DATE"
+          }
+        ],
+        "summary": "Ocean acidification, caused by increased atmospheric CO₂, is threatening marine ecosystems, with ocean pH decreasing from 8.2 to 8.1 since pre-industrial times. Coral reefs, vital for 25% of marine species, face significant calcification declines, and shellfish industries in the Pacific Northwest have experienced larval die-offs due to corrosive waters. Researchers are investigating potential interventions like ocean alkalinity enhancement and breeding acid-resistant corals, but scalability is uncertain.",
+        "classification": "Environmental Science"
+      },
+      "latency_s": 6.031,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 2270.48
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2456.212
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 1268.036
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.92
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t05",
+      "output": {
+        "key_information": [
+          "Central banks are exploring digital currencies (CBDCs)",
+          "China's digital yuan has been piloted in over 25 cities with 260 million wallets created",
+          "93% of central banks are researching CBDCs, but only 11 have fully launched"
+        ],
+        "summary": "Central banks globally are investigating the implementation of digital currencies, with China's digital yuan already piloted in numerous cities. The European Central Bank aims to introduce a digital euro by 2026, while proponents highlight benefits such as enhanced financial inclusion and reduced payment costs. However, concerns about surveillance and cybersecurity persist among critics.",
+        "classification": "Finance"
+      },
+      "latency_s": 2.631,
+      "prompt_tokens": 326,
+      "completion_tokens": 138,
+      "total_tokens": 464,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t05",
+      "output": {
+        "key_information": [
+          {
+            "text": "Central banks",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "digital currencies",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "China",
+            "type": "LOCATION"
+          },
+          {
+            "text": "digital yuan",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "European Central Bank",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "digital euro",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "2026",
+            "type": "DATE"
+          },
+          {
+            "text": "BIS",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "50%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "93%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "11",
+            "type": "MONEY"
+          }
+        ],
+        "summary": "Central banks globally are investigating central bank digital currencies (CBDCs) as an evolution of monetary systems. China's digital yuan has been piloted in over 25 cities with 260 million wallets, while the European Central Bank aims to launch a digital euro by 2026. Supporters believe CBDCs can improve financial inclusion, cut payment costs by 50%, and enhance monetary policy, while critics raise concerns about surveillance, risks to commercial banks, and cybersecurity. A BIS survey indicates that 93% of central banks are researching CBDCs, but only 11 have fully launched them.",
+        "classification": "Finance and Economics"
+      },
+      "latency_s": 10.809,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 4351.502
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 5544.721
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 853.105
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.92
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t06",
+      "output": {
+        "key_information": [
+          "CRISPR-Cas9 gene editing has moved to clinical application in under a decade",
+          "The first CRISPR-based therapy approved in 2023 treats sickle cell disease",
+          "Over 50 clinical trials are investigating CRISPR for various conditions"
+        ],
+        "summary": "CRISPR-Cas9 gene editing has rapidly transitioned from laboratory research to clinical use, with the first therapy approved in 2023 for sickle cell disease. Currently, over 50 clinical trials are exploring its application for multiple conditions, despite facing challenges such as off-target effects and ethical concerns.",
+        "classification": "Healthcare"
+      },
+      "latency_s": 3.038,
+      "prompt_tokens": 327,
+      "completion_tokens": 138,
+      "total_tokens": 465,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t06",
+      "output": {
+        "key_information": [
+          {
+            "text": "CRISPR-Cas9",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "sickle cell disease",
+            "type": "OTHER"
+          },
+          {
+            "text": "2023",
+            "type": "DATE"
+          },
+          {
+            "text": "Broad Institute",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "UC Berkeley",
+            "type": "ORGANIZATION"
+          }
+        ],
+        "summary": "CRISPR-Cas9 gene editing has rapidly progressed to clinical applications, with the first therapy approved in 2023 for sickle cell disease. Over 50 trials are exploring its use for various conditions, but challenges remain, including off-target effects, delivery methods, and ethical concerns. Intellectual property disputes have been partially resolved, facilitating clearer licensing for developers.",
+        "classification": "Biotechnology"
+      },
+      "latency_s": 5.26,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 2329.25
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2214.137
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 662.423
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.92
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t07",
+      "output": {
+        "key_information": [
+          "12 million tons of EV batteries will require recycling or disposal annually by 2030",
+          "Companies like Redwood Materials and Li-Cycle recover over 95% of critical minerals including lithium, cobalt, and nickel",
+          "The EU Battery Regulation mandates minimum recycled content thresholds starting in 2031"
+        ],
+        "summary": "The lithium-ion battery recycling industry is rapidly growing as electric vehicle batteries reach the end of their life cycle, with an estimated 12 million tons needing recycling annually by 2030. Companies are developing efficient processes to recover critical minerals, while new regulations in the EU will enforce recycled content requirements starting in 2031.",
+        "classification": "Environment"
+      },
+      "latency_s": 2.493,
+      "prompt_tokens": 318,
+      "completion_tokens": 147,
+      "total_tokens": 465,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t07",
+      "output": {
+        "key_information": [
+          {
+            "text": "lithium-ion battery recycling industry",
+            "type": "OTHER"
+          },
+          {
+            "text": "electric vehicle batteries",
+            "type": "OTHER"
+          },
+          {
+            "text": "2030",
+            "type": "DATE"
+          },
+          {
+            "text": "12 million tons",
+            "type": "MONEY"
+          },
+          {
+            "text": "Redwood Materials",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Li-Cycle",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "hydrometallurgical processes",
+            "type": "OTHER"
+          },
+          {
+            "text": "95%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "lithium",
+            "type": "OTHER"
+          },
+          {
+            "text": "cobalt",
+            "type": "OTHER"
+          },
+          {
+            "text": "nickel",
+            "type": "OTHER"
+          },
+          {
+            "text": "EU Battery Regulation",
+            "type": "LAW"
+          },
+          {
+            "text": "2031",
+            "type": "DATE"
+          },
+          {
+            "text": "commodity prices",
+            "type": "OTHER"
+          },
+          {
+            "text": "lithium prices",
+            "type": "OTHER"
+          },
+          {
+            "text": "investors",
+            "type": "OTHER"
+          }
+        ],
+        "summary": "The lithium-ion battery recycling industry is growing quickly as electric vehicle batteries reach end-of-life, with an estimated 12 million tons needing recycling annually by 2030. Companies like Redwood Materials and Li-Cycle use hydrometallurgical processes to recover over 95% of critical minerals. The EU Battery Regulation will enforce minimum recycled content thresholds starting in 2031. While current lithium prices make recycling profitable, price volatility poses planning challenges for investors.",
+        "classification": "Industry and Economy"
+      },
+      "latency_s": 9.781,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 6749.637
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2087.365
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 880.856
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t08",
+      "output": {
+        "key_information": [
+          "Google's quantum processor solved an optimization problem in 6 minutes",
+          "Classical supercomputers would take 47 years for the same problem",
+          "IBM offers 1,121-qubit processors through its cloud platform"
+        ],
+        "summary": "Quantum computing has achieved significant milestones, including Google's demonstration of solving an optimization problem much faster than classical supercomputers. IBM is also advancing the field by providing access to 1,121-qubit processors via the cloud. Despite these advancements, error correction remains a major challenge in the development of quantum hardware.",
+        "classification": "Technology"
+      },
+      "latency_s": 2.504,
+      "prompt_tokens": 322,
+      "completion_tokens": 131,
+      "total_tokens": 453,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t08",
+      "output": {
+        "key_information": [
+          {
+            "text": "Google",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "IBM",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Shor's algorithm",
+            "type": "OTHER"
+          },
+          {
+            "text": "RSA encryption",
+            "type": "OTHER"
+          }
+        ],
+        "summary": "Quantum computing is at a pivotal moment, with Google demonstrating quantum advantage by solving an optimization problem in 6 minutes, a task that would take classical supercomputers 47 years. IBM provides 1,121-qubit processors via its cloud. Applications include faster drug discovery and threats to RSA encryption from Shor's algorithm. However, error correction is a major challenge, needing about 1,000 physical qubits for each logical qubit.",
+        "classification": "Technology"
+      },
+      "latency_s": 5.223,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 2295.09
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2037.769
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 800.564
+        }
+      ],
+      "status": "completed",
+      "correctness": 1.0
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t09",
+      "output": {
+        "key_information": [
+          "Vertical farming addresses urban food security challenges.",
+          "Indoor farms can produce 350 times more yield per square meter than conventional agriculture.",
+          "Industry revenue is projected to reach $31 billion by 2030."
+        ],
+        "summary": "Vertical farming is becoming a key solution for urban food security, significantly increasing yield while using less water. Recent advancements in LED technology and renewable energy integration have helped reduce production costs, making this industry more viable. By 2030, the revenue from vertical farming is expected to reach $31 billion.",
+        "classification": "Agriculture"
+      },
+      "latency_s": 2.688,
+      "prompt_tokens": 325,
+      "completion_tokens": 126,
+      "total_tokens": 451,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t09",
+      "output": {
+        "key_information": [
+          {
+            "text": "Singapore",
+            "type": "LOCATION"
+          },
+          {
+            "text": "the Netherlands",
+            "type": "LOCATION"
+          },
+          {
+            "text": "UAE",
+            "type": "LOCATION"
+          },
+          {
+            "text": "LED",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "hydroponic systems",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "2020",
+            "type": "DATE"
+          },
+          {
+            "text": "$31 billion",
+            "type": "MONEY"
+          },
+          {
+            "text": "2030",
+            "type": "DATE"
+          }
+        ],
+        "summary": "Vertical farming is becoming a key solution for urban food security, with indoor farms producing 350 times more yield per square meter than traditional agriculture. Facilities in Singapore, the Netherlands, and the UAE provide fresh greens year-round, using 95% less water. However, high energy costs, which make up 30-40% of expenses, remain a challenge. Recent advancements in LED technology and renewable energy integration have cut production costs by 40% since 2020. The industry's revenue is expected to reach $31 billion by 2030.",
+        "classification": "Agriculture Technology"
+      },
+      "latency_s": 7.85,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 3863.275
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 3173.38
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 767.154
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.92
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t10",
+      "output": {
+        "key_information": [
+          "Over 36,000 objects larger than 10 cm are tracked in Low Earth Orbit (LEO)",
+          "Estimated 130 million fragments smaller than 1 cm exist",
+          "Active debris removal missions like ESA's ClearSpace-1 aim to capture and deorbit defunct satellites"
+        ],
+        "summary": "Space debris management is increasingly urgent due to the congestion in Low Earth Orbit, with over 36,000 tracked objects and an estimated 130 million smaller fragments. The Kessler Syndrome poses a significant risk to orbital altitudes, leading to calls for mandatory deorbiting and improved space traffic management regulations.",
+        "classification": "Space"
+      },
+      "latency_s": 3.224,
+      "prompt_tokens": 331,
+      "completion_tokens": 143,
+      "total_tokens": 474,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t10",
+      "output": {
+        "key_information": [
+          {
+            "text": "Low Earth Orbit",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Kessler Syndrome",
+            "type": "EVENT"
+          },
+          {
+            "text": "ESA",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "ClearSpace-1",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "SpaceX",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Starlink",
+            "type": "PRODUCT"
+          }
+        ],
+        "summary": "Space debris management is critical as Low Earth Orbit becomes congested, with over 36,000 tracked objects larger than 10 cm and around 130 million fragments smaller than 1 cm. The Kessler Syndrome poses a risk of making key orbital altitudes unusable. Active debris removal missions, like ESA's ClearSpace-1, aim to capture defunct satellites. The proliferation of satellites, particularly from SpaceX's Starlink, has led to demands for mandatory deorbiting and improved space traffic management regulations.",
+        "classification": "Space Debris Management"
+      },
+      "latency_s": 6.291,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 2373.697
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 3070.525
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 812.432
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.92
+    }
+  ],
+  "variability": {
+    "decision_prompt_d01": {
+      "variability_score": 0.0,
+      "repetitions": 3
+    },
+    "decision_orca_d01": {
+      "variability_score": 0.5717,
+      "repetitions": 3
+    },
+    "decision_prompt_d02": {
+      "variability_score": 0.1893,
+      "repetitions": 3
+    },
+    "decision_orca_d02": {
+      "variability_score": 0.5258,
+      "repetitions": 3
+    },
+    "decision_prompt_d03": {
+      "variability_score": 0.2417,
+      "repetitions": 3
+    },
+    "decision_orca_d03": {
+      "variability_score": 0.7039,
+      "repetitions": 3
+    },
+    "text_prompt_t01": {
+      "variability_score": 0.1026,
+      "repetitions": 3
+    },
+    "text_orca_t01": {
+      "variability_score": 0.165,
+      "repetitions": 3
+    },
+    "text_prompt_t02": {
+      "variability_score": 0.0188,
+      "repetitions": 3
+    },
+    "text_orca_t02": {
+      "variability_score": 0.0814,
+      "repetitions": 3
+    },
+    "text_prompt_t03": {
+      "variability_score": 0.1205,
+      "repetitions": 3
+    },
+    "text_orca_t03": {
+      "variability_score": 0.1543,
+      "repetitions": 3
+    }
+  }
+}

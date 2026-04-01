@@ -1,0 +1,42 @@
+[
+  {
+    "id": "t01",
+    "paragraph": "Artificial intelligence is transforming healthcare delivery in unprecedented ways. Machine learning algorithms now analyze medical images with accuracy rivaling radiologists, detecting early-stage cancers in mammograms and CT scans. Natural language processing extracts structured data from clinical notes, reducing documentation burden on physicians. Predictive models identify patients at high risk of readmission, enabling proactive interventions. However, concerns about algorithmic bias, data privacy, and the need for regulatory frameworks remain significant barriers to widespread adoption. The FDA has approved over 500 AI-enabled medical devices since 2018, signaling growing institutional trust."
+  },
+  {
+    "id": "t02",
+    "paragraph": "The global semiconductor shortage that began in 2020 exposed critical vulnerabilities in just-in-time supply chains. Automakers lost an estimated $210 billion in revenue as chip shortages halted production lines worldwide. In response, governments launched massive investments: the U.S. CHIPS Act allocated $52 billion for domestic manufacturing, while the EU proposed €43 billion for its own chip initiative. TSMC, Samsung, and Intel announced new fabrication plants across the United States, Japan, and Germany. Industry analysts project that global semiconductor capacity will increase by 50% by 2027, though geographic concentration in East Asia remains a geopolitical risk."
+  },
+  {
+    "id": "t03",
+    "paragraph": "Remote work has fundamentally altered urban economic geography. Major tech companies report that 30-40% of employees now work remotely at least three days per week. This shift has triggered office vacancy rates above 20% in cities like San Francisco and New York, while secondary cities such as Austin, Boise, and Raleigh have experienced population growth exceeding 5% annually. Commercial real estate developers are converting empty office towers into residential units. Meanwhile, coworking spaces have adapted with hybrid membership models. The long-term impact on urban tax bases, public transit ridership, and downtown retail ecosystems remains uncertain."
+  },
+  {
+    "id": "t04",
+    "paragraph": "Ocean acidification, driven by the absorption of atmospheric CO₂, threatens marine ecosystems on a global scale. Since pre-industrial times, ocean pH has dropped from 8.2 to 8.1—a 26% increase in acidity. Coral reefs, which support 25% of all marine species, are particularly vulnerable: experiments show that calcification rates decline by 14-30% under projected 2100 conditions. Shellfish industries in the Pacific Northwest have already reported larval die-offs linked to corrosive water. Researchers are exploring interventions including ocean alkalinity enhancement and selective breeding of acid-resistant coral strains, though scalability remains an open question."
+  },
+  {
+    "id": "t05",
+    "paragraph": "Central banks worldwide are exploring digital currencies (CBDCs) as the next evolution of monetary systems. China's digital yuan has been piloted in over 25 cities with 260 million wallets created. The European Central Bank plans to launch a digital euro by 2026. Proponents argue that CBDCs can enhance financial inclusion, reduce payment costs by up to 50%, and improve monetary policy transmission. Critics warn of surveillance risks, potential disintermediation of commercial banks, and cybersecurity vulnerabilities. A BIS survey found that 93% of central banks are actively researching CBDCs, though only 11 have fully launched."
+  },
+  {
+    "id": "t06",
+    "paragraph": "CRISPR-Cas9 gene editing has moved from laboratory proof-of-concept to clinical application in under a decade. The first CRISPR-based therapy, approved in 2023, treats sickle cell disease by editing patients' stem cells to produce functional hemoglobin. Over 50 clinical trials are currently investigating CRISPR for conditions ranging from cancer to hereditary blindness. The technology faces challenges including off-target editing effects, delivery mechanisms for in-vivo therapy, and ethical debates around germline editing. Intellectual property disputes between the Broad Institute and UC Berkeley have been partially resolved, creating clearer licensing pathways for commercial developers."
+  },
+  {
+    "id": "t07",
+    "paragraph": "The lithium-ion battery recycling industry is scaling rapidly as the first wave of electric vehicle batteries reaches end-of-life. By 2030, an estimated 12 million tons of EV batteries will require recycling or disposal annually. Companies like Redwood Materials and Li-Cycle have developed hydrometallurgical processes that recover over 95% of critical minerals including lithium, cobalt, and nickel. The EU Battery Regulation mandates minimum recycled content thresholds starting in 2031. Economic viability depends on commodity prices; at current lithium prices, recycling is profitable, but volatility creates planning uncertainty for investors."
+  },
+  {
+    "id": "t08",
+    "paragraph": "Quantum computing has reached a critical inflection point with recent demonstrations of quantum advantage on practical problems. Google's quantum processor solved an optimization problem in 6 minutes that would take classical supercomputers 47 years. IBM now offers 1,121-qubit processors through its cloud platform. Potential applications include drug discovery, where quantum simulations could model molecular interactions 1,000 times faster than classical methods, and cryptography, where Shor's algorithm threatens current RSA encryption. However, error correction remains the fundamental bottleneck: current hardware requires approximately 1,000 physical qubits per logical qubit."
+  },
+  {
+    "id": "t09",
+    "paragraph": "Vertical farming is emerging as a viable solution to urban food security challenges. Indoor farms using LED lighting and hydroponic systems can produce 350 times more yield per square meter than conventional agriculture. Major facilities in Singapore, the Netherlands, and the UAE now supply fresh leafy greens year-round with 95% less water usage. Energy costs remain the primary economic challenge, accounting for 30-40% of operating expenses. Recent efficiency improvements in LED technology and integration with renewable energy sources have reduced production costs by 40% since 2020. Industry revenue is projected to reach $31 billion by 2030."
+  },
+  {
+    "id": "t10",
+    "paragraph": "Space debris management has become an urgent priority as Low Earth Orbit (LEO) grows increasingly congested. Over 36,000 objects larger than 10 cm are currently tracked, alongside an estimated 130 million fragments smaller than 1 cm. The Kessler Syndrome—a cascading collision scenario—could render key orbital altitudes unusable within decades. Active debris removal missions, such as ESA's ClearSpace-1, plan to capture and deorbit defunct satellites using robotic arms. SpaceX's Starlink constellation alone accounts for over 5,000 satellites, prompting new calls for mandatory deorbiting requirements and space traffic management regulations."
+  }
+]

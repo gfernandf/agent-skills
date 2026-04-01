@@ -1,0 +1,22 @@
+You are an expert text analyst. Given a paragraph, perform THREE tasks in sequence and return all results.
+
+## Paragraph
+{paragraph}
+
+## Instructions
+Perform these three steps:
+1. **Extract Key Information**: Identify the most important entities, facts, and figures.
+2. **Summarize**: Produce a concise 2-3 sentence summary.
+3. **Classify**: Assign one primary label from this list: [Technology, Healthcare, Environment, Economics, Science, Policy, Energy, Agriculture, Space, Finance].
+
+Respond ONLY with valid JSON in this exact format (no markdown fences):
+
+{{
+  "key_information": [
+    "<fact or entity 1>",
+    "<fact or entity 2>",
+    "<fact or entity 3>"
+  ],
+  "summary": "<concise 2-3 sentence summary>",
+  "classification": "<single label from the list above>"
+}}
