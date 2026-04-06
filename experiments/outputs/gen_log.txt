@@ -1,0 +1,32 @@
+﻿Processing: benchmark_results_20260331T183252Z.json
+  CSV   -> benchmark_metrics_20260331T183252Z.csv
+  VAR   -> variability_20260331T183252Z.json
+  Report -> benchmark_report_20260331T183252Z.md
+
+======================================================================
+SUMMARY
+======================================================================
+
+--- Decision ---
+  prompt   | correctness=1.00 | latency=4.79s | tokens=522 | traceable=No  | reusable=No  | ok=10/10
+  orca     | correctness=0.80 | latency=12.17s | tokens=0 | traceable=Yes | reusable=Yes | ok=10/10
+
+--- Text Processing ---
+  prompt   | correctness=1.00 | latency=2.93s | tokens=464 | traceable=No  | reusable=No  | ok=10/10
+  orca     | correctness=0.93 | latency=7.86s | tokens=0 | traceable=Yes | reusable=Yes | ok=10/10
+
+--- Variability Scores ---
+  decision_prompt_d01: 0.0000 (3 reps)
+  decision_orca_d01: 0.5633 (3 reps)
+  decision_prompt_d02: 0.5390 (3 reps)
+  decision_orca_d02: 0.5974 (3 reps)
+  decision_prompt_d03: 0.2348 (3 reps)
+  decision_orca_d03: 0.6635 (3 reps)
+  text_prompt_t01: 0.1735 (3 reps)
+  text_orca_t01: 0.1792 (3 reps)
+  text_prompt_t02: 0.0819 (3 reps)
+  text_orca_t02: 0.1329 (3 reps)
+  text_prompt_t03: 0.1138 (3 reps)
+  text_orca_t03: 0.1899 (3 reps)
+
+Done.

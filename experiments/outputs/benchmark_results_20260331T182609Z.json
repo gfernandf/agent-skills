@@ -1,0 +1,1550 @@
+{
+  "metadata": {
+    "timestamp": "20260331T182609Z",
+    "model": "gpt-4o-mini",
+    "seed": 42,
+    "task1_inputs": 10,
+    "task2_inputs": 10,
+    "orca_available": true
+  },
+  "runs": [
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d01",
+      "output": {
+        "selected_option": "Hybrid strangler-fig",
+        "justification": "The hybrid strangler-fig approach balances immediate needs with long-term goals, allowing for gradual migration and minimizing risk. It enables the company to maintain functionality while incrementally improving the architecture, thus ensuring better long-term maintainability and time-to-value.",
+        "evaluation": {
+          "cost": {
+            "Lift-and-shift": "Low",
+            "Re-architect to microservices": "High",
+            "Hybrid strangler-fig": "Medium"
+          },
+          "risk": {
+            "Lift-and-shift": "Medium",
+            "Re-architect to microservices": "High",
+            "Hybrid strangler-fig": "Low"
+          },
+          "time-to-value": {
+            "Lift-and-shift": "High",
+            "Re-architect to microservices": "Low",
+            "Hybrid strangler-fig": "Medium"
+          },
+          "long-term maintainability": {
+            "Lift-and-shift": "Low",
+            "Re-architect to microservices": "High",
+            "Hybrid strangler-fig": "Medium"
+          }
+        }
+      },
+      "latency_s": 9.79,
+      "prompt_tokens": 281,
+      "completion_tokens": 241,
+      "total_tokens": 522,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d01",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d02",
+      "output": {
+        "selected_option": "Cloud-native SaaS EHR",
+        "justification": "The Cloud-native SaaS EHR offers superior interoperability through API integrations, which is crucial for a multi-departmental hospital. Additionally, it typically has a lower total cost of ownership compared to commercial solutions and requires less in-house maintenance, facilitating higher user adoption rates.",
+        "evaluation": {
+          "interoperability": {
+            "Commercial off-the-shelf EHR": "Moderate",
+            "Open-source EHR with in-house customization": "Low",
+            "Cloud-native SaaS EHR": "High"
+          },
+          "total cost of ownership": {
+            "Commercial off-the-shelf EHR": "High",
+            "Open-source EHR with in-house customization": "Moderate",
+            "Cloud-native SaaS EHR": "Low"
+          },
+          "regulatory compliance": {
+            "Commercial off-the-shelf EHR": "High",
+            "Open-source EHR with in-house customization": "Moderate",
+            "Cloud-native SaaS EHR": "High"
+          },
+          "user adoption": {
+            "Commercial off-the-shelf EHR": "Moderate",
+            "Open-source EHR with in-house customization": "Low",
+            "Cloud-native SaaS EHR": "High"
+          }
+        }
+      },
+      "latency_s": 5.509,
+      "prompt_tokens": 291,
+      "completion_tokens": 277,
+      "total_tokens": 568,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d02",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d03",
+      "output": {
+        "selected_option": "Electric cargo bike fleet",
+        "justification": "The electric cargo bike fleet offers significant cost reductions by lowering fuel and maintenance expenses compared to vans. Additionally, it enhances delivery speed in congested urban areas and has a positive environmental impact due to reduced emissions, making it a scalable solution for last-mile delivery.",
+        "evaluation": {
+          "cost reduction": {
+            "Crowdsourced delivery network": "Moderate savings",
+            "Micro-fulfillment centers": "High initial costs",
+            "Electric cargo bike fleet": "High savings"
+          },
+          "delivery speed": {
+            "Crowdsourced delivery network": "Fast",
+            "Micro-fulfillment centers": "Moderate",
+            "Electric cargo bike fleet": "Very fast"
+          },
+          "environmental impact": {
+            "Crowdsourced delivery network": "Moderate",
+            "Micro-fulfillment centers": "Low",
+            "Electric cargo bike fleet": "High"
+          },
+          "scalability": {
+            "Crowdsourced delivery network": "High",
+            "Micro-fulfillment centers": "Moderate",
+            "Electric cargo bike fleet": "High"
+          }
+        }
+      },
+      "latency_s": 5.098,
+      "prompt_tokens": 269,
+      "completion_tokens": 248,
+      "total_tokens": 517,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d03",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d04",
+      "output": {
+        "selected_option": "Hybrid cohort model",
+        "justification": "The hybrid cohort model balances flexibility with in-person engagement, enhancing learning outcomes through direct interaction while still reaching a broader student base. It also maintains a reasonable operational cost compared to a fully traditional model and is likely to be viewed favorably by employers who value both online and hands-on experience.",
+        "evaluation": {
+          "student reach": {
+            "Fully online asynchronous": "High",
+            "Hybrid cohort model": "Medium-High",
+            "Traditional on-campus": "Low"
+          },
+          "learning outcomes": {
+            "Fully online asynchronous": "Medium",
+            "Hybrid cohort model": "High",
+            "Traditional on-campus": "High"
+          },
+          "operational cost": {
+            "Fully online asynchronous": "Low",
+            "Hybrid cohort model": "Medium",
+            "Traditional on-campus": "High"
+          },
+          "employer perception": {
+            "Fully online asynchronous": "Medium",
+            "Hybrid cohort model": "High",
+            "Traditional on-campus": "High"
+          }
+        }
+      },
+      "latency_s": 4.792,
+      "prompt_tokens": 269,
+      "completion_tokens": 226,
+      "total_tokens": 495,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d04",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d05",
+      "output": {
+        "selected_option": "CockroachDB",
+        "justification": "CockroachDB offers strong consistency and geo-partitioning, which are critical for a real-time payments platform. Its distributed nature ensures high availability and scalability while maintaining operational simplicity compared to the other options.",
+        "evaluation": {
+          "transaction consistency": {
+            "PostgreSQL with Citus extension": "High",
+            "Apache Cassandra": "Low",
+            "CockroachDB": "Very High"
+          },
+          "write throughput": {
+            "PostgreSQL with Citus extension": "Moderate",
+            "Apache Cassandra": "Very High",
+            "CockroachDB": "High"
+          },
+          "operational complexity": {
+            "PostgreSQL with Citus extension": "Moderate",
+            "Apache Cassandra": "High",
+            "CockroachDB": "Low"
+          },
+          "cost at scale": {
+            "PostgreSQL with Citus extension": "Moderate",
+            "Apache Cassandra": "Low",
+            "CockroachDB": "High"
+          }
+        }
+      },
+      "latency_s": 5.5,
+      "prompt_tokens": 274,
+      "completion_tokens": 224,
+      "total_tokens": 498,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d05",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d06",
+      "output": {
+        "selected_option": "Convert to experience centers",
+        "justification": "Transforming stores into experience centers can significantly enhance customer engagement and brand loyalty, which is crucial in a declining foot traffic environment. This option also has the potential for higher revenue through immersive experiences and events, while maintaining brand equity and minimizing capital expenditure compared to downsizing or franchising.",
+        "evaluation": {
+          "revenue impact": {
+            "Convert to experience centers": "High potential",
+            "Downsize and optimize": "Moderate",
+            "Franchise model": "Low"
+          },
+          "brand equity": {
+            "Convert to experience centers": "High",
+            "Downsize and optimize": "Moderate",
+            "Franchise model": "Low"
+          },
+          "capital expenditure": {
+            "Convert to experience centers": "Moderate",
+            "Downsize and optimize": "Low",
+            "Franchise model": "Low"
+          },
+          "employee retention": {
+            "Convert to experience centers": "High",
+            "Downsize and optimize": "Low",
+            "Franchise model": "Moderate"
+          }
+        }
+      },
+      "latency_s": 8.36,
+      "prompt_tokens": 277,
+      "completion_tokens": 236,
+      "total_tokens": 513,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d06",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d07",
+      "output": {
+        "selected_option": "Outsource to a digitization vendor",
+        "justification": "Outsourcing to a specialized vendor ensures high accuracy and professional handling of sensitive materials, while also adhering to security and confidentiality standards. This option is likely to meet the timeline requirements effectively and can be managed within a reasonable budget compared to building an in-house facility.",
+        "evaluation": {
+          "accuracy": {
+            "In-house scanning center": "Moderate",
+            "Outsource to a digitization vendor": "High",
+            "Phased community partnership": "Low"
+          },
+          "security and confidentiality": {
+            "In-house scanning center": "High",
+            "Outsource to a digitization vendor": "High",
+            "Phased community partnership": "Moderate"
+          },
+          "timeline": {
+            "In-house scanning center": "Long",
+            "Outsource to a digitization vendor": "Short",
+            "Phased community partnership": "Long"
+          },
+          "budget": {
+            "In-house scanning center": "High",
+            "Outsource to a digitization vendor": "Moderate",
+            "Phased community partnership": "Low"
+          }
+        }
+      },
+      "latency_s": 6.875,
+      "prompt_tokens": 275,
+      "completion_tokens": 246,
+      "total_tokens": 521,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d07",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d08",
+      "output": {
+        "selected_option": "Invest in solar and wind farms",
+        "justification": "Investing in solar and wind farms provides the highest certainty in emission reductions while aligning with public perception of clean energy. Although it requires significant capital investment, it mitigates regulatory risks associated with fossil fuels and offers long-term sustainability.",
+        "evaluation": {
+          "emission reduction certainty": {
+            "Invest in solar and wind farms": "High",
+            "Carbon capture and storage (CCS)": "Medium",
+            "Power purchase agreements (PPAs)": "Medium"
+          },
+          "capital investment": {
+            "Invest in solar and wind farms": "High",
+            "Carbon capture and storage (CCS)": "Medium",
+            "Power purchase agreements (PPAs)": "Low"
+          },
+          "regulatory risk": {
+            "Invest in solar and wind farms": "Low",
+            "Carbon capture and storage (CCS)": "Medium",
+            "Power purchase agreements (PPAs)": "Medium"
+          },
+          "public perception": {
+            "Invest in solar and wind farms": "High",
+            "Carbon capture and storage (CCS)": "Low",
+            "Power purchase agreements (PPAs)": "Medium"
+          }
+        }
+      },
+      "latency_s": 4.703,
+      "prompt_tokens": 280,
+      "completion_tokens": 256,
+      "total_tokens": 536,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d08",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d09",
+      "output": {
+        "selected_option": "Adaptive platform trial",
+        "justification": "The adaptive platform trial offers flexibility in design, allowing for adjustments based on interim results, which can enhance statistical power and improve patient recruitment speed. Additionally, it is increasingly accepted by regulatory bodies, making it a robust choice for the clinical trial of a new oncology drug.",
+        "evaluation": {
+          "statistical power": {
+            "Traditional randomized controlled trial (RCT)": "Moderate",
+            "Adaptive platform trial": "High",
+            "Decentralized virtual trial": "Moderate"
+          },
+          "patient recruitment speed": {
+            "Traditional randomized controlled trial (RCT)": "Slow",
+            "Adaptive platform trial": "Fast",
+            "Decentralized virtual trial": "Moderate"
+          },
+          "cost": {
+            "Traditional randomized controlled trial (RCT)": "Moderate",
+            "Adaptive platform trial": "High",
+            "Decentralized virtual trial": "Moderate"
+          },
+          "regulatory acceptance": {
+            "Traditional randomized controlled trial (RCT)": "High",
+            "Adaptive platform trial": "Increasingly High",
+            "Decentralized virtual trial": "Moderate"
+          }
+        }
+      },
+      "latency_s": 6.324,
+      "prompt_tokens": 276,
+      "completion_tokens": 248,
+      "total_tokens": 524,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d09",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "decision",
+      "input_id": "d10",
+      "output": {
+        "selected_option": "Bus rapid transit (BRT)",
+        "justification": "BRT offers a balance of high ridership capacity and relatively low construction costs compared to light rail. It can be implemented more quickly than light rail and provides equitable access to underserved areas through dedicated lanes and frequent service.",
+        "evaluation": {
+          "ridership capacity": {
+            "Light rail extension": "High",
+            "Bus rapid transit (BRT)": "Very High",
+            "On-demand micro-transit": "Moderate"
+          },
+          "construction cost": {
+            "Light rail extension": "High",
+            "Bus rapid transit (BRT)": "Moderate",
+            "On-demand micro-transit": "Low"
+          },
+          "implementation speed": {
+            "Light rail extension": "Slow",
+            "Bus rapid transit (BRT)": "Fast",
+            "On-demand micro-transit": "Moderate"
+          },
+          "equity of access": {
+            "Light rail extension": "Moderate",
+            "Bus rapid transit (BRT)": "High",
+            "On-demand micro-transit": "High"
+          }
+        }
+      },
+      "latency_s": 4.385,
+      "prompt_tokens": 274,
+      "completion_tokens": 239,
+      "total_tokens": 513,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "decision",
+      "input_id": "d10",
+      "output": {
+        "error": "Step 'generate_options' failed: Produced field 'options_detail' not found in step output. [skill=experiment.structured-decision, step=generate_options]"
+      },
+      "latency_s": 0,
+      "total_tokens": 0,
+      "traceable": false,
+      "reusable": true,
+      "correctness": 0.0,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "status": "failed"
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t01",
+      "output": {
+        "key_information": [
+          "Artificial intelligence is transforming healthcare delivery.",
+          "Machine learning algorithms analyze medical images with accuracy rivaling radiologists.",
+          "The FDA has approved over 500 AI-enabled medical devices since 2018."
+        ],
+        "summary": "Artificial intelligence is significantly enhancing healthcare by improving the accuracy of medical image analysis and reducing documentation burdens through natural language processing. Despite these advancements, challenges such as algorithmic bias and data privacy concerns hinder broader adoption.",
+        "classification": "Healthcare"
+      },
+      "latency_s": 2.087,
+      "prompt_tokens": 315,
+      "completion_tokens": 105,
+      "total_tokens": 420,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t01",
+      "output": {
+        "key_information": [
+          {
+            "text": "Artificial intelligence",
+            "type": "OTHER"
+          },
+          {
+            "text": "Machine learning",
+            "type": "OTHER"
+          },
+          {
+            "text": "Natural language processing",
+            "type": "OTHER"
+          },
+          {
+            "text": "FDA",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "2018",
+            "type": "DATE"
+          }
+        ],
+        "summary": "Artificial intelligence is revolutionizing healthcare by enhancing medical image analysis, streamlining documentation through natural language processing, and identifying high-risk patients with predictive models. Despite these advancements, challenges such as algorithmic bias, data privacy, and regulatory needs persist. The FDA's approval of over 500 AI-enabled medical devices since 2018 indicates increasing institutional confidence in AI technologies.",
+        "classification": "Healthcare Technology"
+      },
+      "latency_s": 5.375,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 2945.099
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 1641.296
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 727.879
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t02",
+      "output": {
+        "key_information": [
+          "Global semiconductor shortage began in 2020",
+          "Automakers lost an estimated $210 billion in revenue",
+          "U.S. CHIPS Act allocated $52 billion for domestic manufacturing"
+        ],
+        "summary": "The global semiconductor shortage that started in 2020 revealed vulnerabilities in supply chains, leading to significant revenue losses for automakers. In response, governments invested heavily in domestic manufacturing initiatives, with the U.S. CHIPS Act allocating $52 billion and the EU proposing €43 billion. Industry analysts predict a 50% increase in global semiconductor capacity by 2027, despite ongoing geopolitical risks in East Asia.",
+        "classification": "Economics"
+      },
+      "latency_s": 3.213,
+      "prompt_tokens": 328,
+      "completion_tokens": 144,
+      "total_tokens": 472,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t02",
+      "output": {
+        "key_information": [
+          {
+            "text": "semiconductor shortage",
+            "type": "EVENT"
+          },
+          {
+            "text": "2020",
+            "type": "DATE"
+          },
+          {
+            "text": "$210 billion",
+            "type": "MONEY"
+          },
+          {
+            "text": "U.S. CHIPS Act",
+            "type": "LAW"
+          },
+          {
+            "text": "$52 billion",
+            "type": "MONEY"
+          },
+          {
+            "text": "EU",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "€43 billion",
+            "type": "MONEY"
+          },
+          {
+            "text": "TSMC",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Samsung",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Intel",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "United States",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Japan",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Germany",
+            "type": "LOCATION"
+          },
+          {
+            "text": "2027",
+            "type": "DATE"
+          },
+          {
+            "text": "East Asia",
+            "type": "LOCATION"
+          }
+        ],
+        "summary": "The global semiconductor shortage that began in 2020 highlighted vulnerabilities in supply chains, causing automakers to lose an estimated $210 billion in revenue. In response, governments invested heavily, with the U.S. CHIPS Act allocating $52 billion and the EU proposing €43 billion for chip initiatives. Companies like TSMC, Samsung, and Intel announced new fabrication plants in the U.S., Japan, and Germany. Analysts predict a 50% increase in global semiconductor capacity by 2027, but geographic concentration in East Asia poses a geopolitical risk.",
+        "classification": "Economics"
+      },
+      "latency_s": 10.375,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 7547.682
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2122.14
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 664.866
+        }
+      ],
+      "status": "completed",
+      "correctness": 1.0
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t03",
+      "output": {
+        "key_information": [
+          "30-40% of employees work remotely at least three days per week",
+          "Office vacancy rates above 20% in San Francisco and New York",
+          "Population growth exceeding 5% annually in secondary cities like Austin, Boise, and Raleigh"
+        ],
+        "summary": "Remote work has significantly changed urban economic landscapes, leading to high office vacancy rates in major cities while secondary cities see population growth. Commercial real estate is adapting by converting office spaces into residential units, and coworking spaces are implementing hybrid models. The long-term effects on urban infrastructure and economies are still unclear.",
+        "classification": "Economics"
+      },
+      "latency_s": 2.283,
+      "prompt_tokens": 321,
+      "completion_tokens": 136,
+      "total_tokens": 457,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t03",
+      "output": {
+        "key_information": [
+          {
+            "text": "San Francisco",
+            "type": "LOCATION"
+          },
+          {
+            "text": "New York",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Austin",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Boise",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Raleigh",
+            "type": "LOCATION"
+          },
+          {
+            "text": "30-40%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "20%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "5%",
+            "type": "PERCENT"
+          }
+        ],
+        "summary": "Remote work has significantly changed urban economic geography, with major tech companies reporting 30-40% of employees working remotely at least three days a week. This has led to office vacancy rates exceeding 20% in cities like San Francisco and New York, while secondary cities such as Austin, Boise, and Raleigh have seen over 5% annual population growth. Developers are converting vacant office buildings into residential units, and coworking spaces are adopting hybrid membership models. The long-term effects on urban tax bases, public transit, and downtown retail remain uncertain.",
+        "classification": "Urban Economics"
+      },
+      "latency_s": 6.407,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 2733.297
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 1921.964
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 1711.163
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t04",
+      "output": {
+        "key_information": [
+          "Ocean acidification is driven by the absorption of atmospheric CO₂.",
+          "Ocean pH has dropped from 8.2 to 8.1 since pre-industrial times, indicating a 26% increase in acidity.",
+          "Coral reefs support 25% of all marine species and are experiencing a decline in calcification rates by 14-30% under projected 2100 conditions."
+        ],
+        "summary": "Ocean acidification, caused by increased atmospheric CO₂, poses a significant threat to marine ecosystems, particularly coral reefs, which are vital for marine biodiversity. The decline in ocean pH and its impact on calcification rates highlight the urgency of addressing this environmental issue through potential interventions.",
+        "classification": "Environment"
+      },
+      "latency_s": 2.76,
+      "prompt_tokens": 335,
+      "completion_tokens": 159,
+      "total_tokens": 494,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t04",
+      "output": {
+        "key_information": [
+          {
+            "text": "Ocean acidification",
+            "type": "OTHER"
+          },
+          {
+            "text": "CO₂",
+            "type": "OTHER"
+          },
+          {
+            "text": "Coral reefs",
+            "type": "OTHER"
+          },
+          {
+            "text": "Pacific Northwest",
+            "type": "LOCATION"
+          },
+          {
+            "text": "2100",
+            "type": "DATE"
+          }
+        ],
+        "summary": "Ocean acidification, caused by increased atmospheric CO₂, is threatening marine ecosystems, with ocean pH dropping from 8.2 to 8.1 since pre-industrial times, marking a 26% increase in acidity. Coral reefs, home to 25% of marine species, face significant risks, with calcification rates potentially declining by 14-30% by 2100. The Pacific Northwest's shellfish industries have reported larval die-offs due to corrosive waters. Researchers are investigating interventions like ocean alkalinity enhancement and breeding acid-resistant corals, but scalability is uncertain.",
+        "classification": "Environmental Science"
+      },
+      "latency_s": 5.749,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 2298.599
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2684.012
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 721.508
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t05",
+      "output": {
+        "key_information": [
+          "Central banks are exploring digital currencies (CBDCs)",
+          "China's digital yuan has been piloted in over 25 cities with 260 million wallets created",
+          "93% of central banks are actively researching CBDCs, but only 11 have fully launched"
+        ],
+        "summary": "Central banks globally are investigating the implementation of digital currencies, with China's digital yuan already piloted in numerous cities. The European Central Bank aims to introduce a digital euro by 2026, while a significant majority of central banks are researching CBDCs despite only a few having launched them fully.",
+        "classification": "Finance"
+      },
+      "latency_s": 3.748,
+      "prompt_tokens": 326,
+      "completion_tokens": 134,
+      "total_tokens": 460,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t05",
+      "output": {
+        "key_information": [
+          {
+            "text": "Central banks",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "digital currencies",
+            "type": "OTHER"
+          },
+          {
+            "text": "China",
+            "type": "LOCATION"
+          },
+          {
+            "text": "digital yuan",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "European Central Bank",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "digital euro",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "2026",
+            "type": "DATE"
+          },
+          {
+            "text": "50%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "BIS",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "93%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "11",
+            "type": "MONEY"
+          }
+        ],
+        "summary": "Central banks globally are investigating central bank digital currencies (CBDCs) as an evolution of monetary systems. China's digital yuan has been piloted in over 25 cities, with 260 million wallets created, while the European Central Bank aims to launch a digital euro by 2026. Supporters believe CBDCs can improve financial inclusion, cut payment costs by up to 50%, and enhance monetary policy effectiveness. However, critics raise concerns about surveillance, risks to commercial banks, and cybersecurity issues. A BIS survey indicates that 93% of central banks are researching CBDCs, but only 11 have fully launched them.",
+        "classification": "Finance and Economics"
+      },
+      "latency_s": 7.925,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 4530.911
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2389.023
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 953.099
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t06",
+      "output": {
+        "key_information": [
+          "CRISPR-Cas9 gene editing has moved to clinical application in under a decade",
+          "First CRISPR-based therapy approved in 2023 for sickle cell disease",
+          "Over 50 clinical trials investigating CRISPR for various conditions"
+        ],
+        "summary": "CRISPR-Cas9 gene editing has rapidly transitioned from laboratory research to clinical applications, with the first therapy approved in 2023 for sickle cell disease. Currently, more than 50 clinical trials are exploring its potential for treating a range of conditions, despite facing challenges such as off-target effects and ethical concerns.",
+        "classification": "Healthcare"
+      },
+      "latency_s": 3.136,
+      "prompt_tokens": 327,
+      "completion_tokens": 140,
+      "total_tokens": 467,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t06",
+      "output": {
+        "key_information": [
+          {
+            "text": "CRISPR-Cas9",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "sickle cell disease",
+            "type": "OTHER"
+          },
+          {
+            "text": "2023",
+            "type": "DATE"
+          },
+          {
+            "text": "Broad Institute",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "UC Berkeley",
+            "type": "ORGANIZATION"
+          }
+        ],
+        "summary": "CRISPR-Cas9 gene editing has advanced to clinical application within a decade, with the first therapy approved in 2023 for sickle cell disease. Over 50 trials are exploring its use for various conditions, but challenges like off-target effects, delivery methods, and ethical concerns persist. Intellectual property disputes have been partially resolved, facilitating clearer licensing for commercial developers.",
+        "classification": "Biotechnology"
+      },
+      "latency_s": 5.623,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 2865.275
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 1560.067
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 1154.078
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t07",
+      "output": {
+        "key_information": [
+          "12 million tons of EV batteries will require recycling or disposal annually by 2030",
+          "Companies like Redwood Materials and Li-Cycle recover over 95% of critical minerals including lithium, cobalt, and nickel",
+          "The EU Battery Regulation mandates minimum recycled content thresholds starting in 2031"
+        ],
+        "summary": "The lithium-ion battery recycling industry is rapidly growing as electric vehicle batteries reach the end of their life cycle, with an estimated 12 million tons needing recycling by 2030. Companies are developing efficient processes to recover critical minerals, while new regulations in the EU will enforce recycled content requirements starting in 2031.",
+        "classification": "Environment"
+      },
+      "latency_s": 3.562,
+      "prompt_tokens": 318,
+      "completion_tokens": 146,
+      "total_tokens": 464,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t07",
+      "output": {
+        "key_information": [
+          {
+            "text": "lithium-ion battery recycling industry",
+            "type": "OTHER"
+          },
+          {
+            "text": "electric vehicle batteries",
+            "type": "OTHER"
+          },
+          {
+            "text": "2030",
+            "type": "DATE"
+          },
+          {
+            "text": "12 million tons",
+            "type": "MONEY"
+          },
+          {
+            "text": "Redwood Materials",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Li-Cycle",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "hydrometallurgical processes",
+            "type": "OTHER"
+          },
+          {
+            "text": "95%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "lithium",
+            "type": "OTHER"
+          },
+          {
+            "text": "cobalt",
+            "type": "OTHER"
+          },
+          {
+            "text": "nickel",
+            "type": "OTHER"
+          },
+          {
+            "text": "EU Battery Regulation",
+            "type": "LAW"
+          },
+          {
+            "text": "2031",
+            "type": "DATE"
+          },
+          {
+            "text": "commodity prices",
+            "type": "OTHER"
+          },
+          {
+            "text": "lithium prices",
+            "type": "OTHER"
+          },
+          {
+            "text": "investors",
+            "type": "OTHER"
+          }
+        ],
+        "summary": "The lithium-ion battery recycling industry is growing quickly as electric vehicle batteries reach end-of-life, with an estimated 12 million tons needing recycling annually by 2030. Companies like Redwood Materials and Li-Cycle use hydrometallurgical processes to recover over 95% of critical minerals. The EU Battery Regulation will enforce minimum recycled content thresholds starting in 2031. While current lithium prices make recycling profitable, market volatility poses planning challenges for investors.",
+        "classification": "Industry Trends"
+      },
+      "latency_s": 10.582,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 7987.698
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 1818.385
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 732.445
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t08",
+      "output": {
+        "key_information": [
+          "Google's quantum processor solved an optimization problem in 6 minutes",
+          "Classical supercomputers would take 47 years for the same problem",
+          "IBM offers 1,121-qubit processors through its cloud platform"
+        ],
+        "summary": "Quantum computing has achieved significant milestones, including Google's demonstration of solving an optimization problem much faster than classical supercomputers. IBM is advancing the field with its cloud-based 1,121-qubit processors, which have potential applications in drug discovery and cryptography. However, error correction remains a major challenge, requiring approximately 1,000 physical qubits for each logical qubit.",
+        "classification": "Technology"
+      },
+      "latency_s": 2.801,
+      "prompt_tokens": 322,
+      "completion_tokens": 145,
+      "total_tokens": 467,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t08",
+      "output": {
+        "key_information": [
+          {
+            "text": "Quantum computing",
+            "type": "OTHER"
+          },
+          {
+            "text": "Google",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "IBM",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Shor's algorithm",
+            "type": "OTHER"
+          },
+          {
+            "text": "RSA encryption",
+            "type": "OTHER"
+          }
+        ],
+        "summary": "Quantum computing is at a pivotal moment, with Google demonstrating quantum advantage by solving an optimization problem in 6 minutes, a task that would take classical supercomputers 47 years. IBM provides 1,121-qubit processors via its cloud. Key applications include drug discovery and cryptography, particularly with Shor's algorithm posing risks to RSA encryption. However, error correction is a significant challenge, requiring about 1,000 physical qubits for each logical qubit.",
+        "classification": "Technology"
+      },
+      "latency_s": 7.103,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 3139.83
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2931.244
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 969.224
+        }
+      ],
+      "status": "completed",
+      "correctness": 1.0
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t09",
+      "output": {
+        "key_information": [
+          "Vertical farming addresses urban food security challenges.",
+          "Indoor farms can produce 350 times more yield per square meter than conventional agriculture.",
+          "Industry revenue is projected to reach $31 billion by 2030."
+        ],
+        "summary": "Vertical farming is becoming a key solution for urban food security, significantly increasing yield while using less water. Recent advancements in LED technology and renewable energy integration have helped reduce production costs, with the industry expected to grow substantially by 2030.",
+        "classification": "Agriculture"
+      },
+      "latency_s": 2.719,
+      "prompt_tokens": 325,
+      "completion_tokens": 114,
+      "total_tokens": 439,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t09",
+      "output": {
+        "key_information": [
+          {
+            "text": "Singapore",
+            "type": "LOCATION"
+          },
+          {
+            "text": "the Netherlands",
+            "type": "LOCATION"
+          },
+          {
+            "text": "UAE",
+            "type": "LOCATION"
+          },
+          {
+            "text": "LED",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "hydroponic systems",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "2020",
+            "type": "DATE"
+          },
+          {
+            "text": "31 billion",
+            "type": "MONEY"
+          },
+          {
+            "text": "2030",
+            "type": "DATE"
+          },
+          {
+            "text": "95%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "30-40%",
+            "type": "PERCENT"
+          },
+          {
+            "text": "40%",
+            "type": "PERCENT"
+          }
+        ],
+        "summary": "Vertical farming is becoming a key solution for urban food security, with indoor farms yielding 350 times more per square meter than traditional agriculture. Facilities in Singapore, the Netherlands, and the UAE provide fresh greens year-round using 95% less water. However, high energy costs, making up 30-40% of expenses, remain a challenge. Recent advancements in LED technology and renewable energy integration have cut production costs by 40% since 2020. The industry's revenue is expected to reach $31 billion by 2030.",
+        "classification": "Agriculture Technology"
+      },
+      "latency_s": 10.535,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 6486.485
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 3232.206
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 749.451
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    },
+    {
+      "approach": "prompt",
+      "task": "text_processing",
+      "input_id": "t10",
+      "output": {
+        "key_information": [
+          "Over 36,000 objects larger than 10 cm are tracked in Low Earth Orbit (LEO)",
+          "Estimated 130 million fragments smaller than 1 cm exist in LEO",
+          "Active debris removal missions like ESA's ClearSpace-1 aim to capture defunct satellites"
+        ],
+        "summary": "Space debris management is increasingly urgent due to the congestion in Low Earth Orbit, with over 36,000 tracked objects and an estimated 130 million smaller fragments. The Kessler Syndrome poses a risk of making key orbital altitudes unusable, leading to calls for mandatory deorbiting and improved space traffic regulations.",
+        "classification": "Space"
+      },
+      "latency_s": 3.685,
+      "prompt_tokens": 331,
+      "completion_tokens": 145,
+      "total_tokens": 476,
+      "traceable": false,
+      "reusable": false,
+      "correctness": 1.0
+    },
+    {
+      "approach": "orca",
+      "task": "text_processing",
+      "input_id": "t10",
+      "output": {
+        "key_information": [
+          {
+            "text": "Low Earth Orbit",
+            "type": "LOCATION"
+          },
+          {
+            "text": "Kessler Syndrome",
+            "type": "EVENT"
+          },
+          {
+            "text": "ESA",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "ClearSpace-1",
+            "type": "PRODUCT"
+          },
+          {
+            "text": "SpaceX",
+            "type": "ORGANIZATION"
+          },
+          {
+            "text": "Starlink",
+            "type": "PRODUCT"
+          }
+        ],
+        "summary": "Space debris management is a critical issue as Low Earth Orbit becomes crowded, with over 36,000 tracked objects larger than 10 cm and around 130 million smaller fragments. The Kessler Syndrome poses a risk of making key orbital altitudes unusable. Active debris removal initiatives, like ESA's ClearSpace-1, aim to capture and deorbit defunct satellites. The proliferation of satellites, particularly from SpaceX's Starlink, has led to demands for mandatory deorbiting and improved space traffic management regulations.",
+        "classification": "Space Debris Management"
+      },
+      "latency_s": 6.828,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "traceable": true,
+      "reusable": true,
+      "step_trace": [
+        {
+          "step_id": "extract_entities",
+          "uses": "text.entity.extract",
+          "status": "completed",
+          "latency_ms": 3480.696
+        },
+        {
+          "step_id": "summarize",
+          "uses": "text.content.summarize",
+          "status": "completed",
+          "latency_ms": 2515.543
+        },
+        {
+          "step_id": "classify",
+          "uses": "text.content.classify",
+          "status": "completed",
+          "latency_ms": 799.263
+        }
+      ],
+      "status": "completed",
+      "correctness": 0.82
+    }
+  ],
+  "variability": {
+    "decision_prompt_d01": {
+      "variability_score": 0.1723,
+      "repetitions": 3
+    },
+    "decision_orca_d01": {
+      "variability_score": 0.5711,
+      "repetitions": 3
+    },
+    "decision_prompt_d02": {
+      "variability_score": 0.3254,
+      "repetitions": 3
+    },
+    "decision_orca_d02": {
+      "variability_score": 0.6418,
+      "repetitions": 3
+    },
+    "decision_prompt_d03": {
+      "variability_score": 0.1266,
+      "repetitions": 3
+    },
+    "decision_orca_d03": {
+      "variability_score": 0.6922,
+      "repetitions": 3
+    },
+    "text_prompt_t01": {
+      "variability_score": 0.2193,
+      "repetitions": 3
+    },
+    "text_orca_t01": {
+      "variability_score": 0.2179,
+      "repetitions": 3
+    },
+    "text_prompt_t02": {
+      "variability_score": 0.1718,
+      "repetitions": 3
+    },
+    "text_orca_t02": {
+      "variability_score": 0.1229,
+      "repetitions": 3
+    },
+    "text_prompt_t03": {
+      "variability_score": 0.0443,
+      "repetitions": 3
+    },
+    "text_orca_t03": {
+      "variability_score": 0.1257,
+      "repetitions": 3
+    }
+  }
+}
