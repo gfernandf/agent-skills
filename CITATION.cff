@@ -24,3 +24,16 @@ authors:
   - family-names: "Fernandez Alvarez"
     given-names: "Guillermo"
     email: "gfernandf+as@gmail.com"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Fernandez Alvarez"
+      given-names: "Guillermo E."
+  title: >-
+    Beyond Prompting: Decoupling Cognition from Execution in LLM-based
+    Agents through the ORCA Framework
+  year: 2026
+  publisher:
+    name: "Zenodo"
+  doi: "10.5281/zenodo.19438943"
+  url: "https://doi.org/10.5281/zenodo.19438943"

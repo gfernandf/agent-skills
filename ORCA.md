@@ -106,3 +106,13 @@ ORCA shifts agent design:
 
 From prompt-driven → to execution-driven systems.
 
+---
+
+## 📄 Research Paper
+
+The formal foundations of ORCA are described in:
+
+> Fernandez Alvarez, G. E. (2026). *Beyond Prompting: Decoupling Cognition from Execution in LLM-based Agents through the ORCA Framework*. Zenodo. [https://doi.org/10.5281/zenodo.19438943](https://doi.org/10.5281/zenodo.19438943)
+
+📥 [Download PDF](docs/papers/orca_paper_final_clean_v2.pdf) · 📖 [Full paper page](docs/PAPER.md)
+

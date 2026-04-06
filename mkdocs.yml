@@ -61,6 +61,11 @@ nav:
       - MCP Integration: MCP_INTEGRATION_SLICES.md
       - Skill Authoring: SKILL_AUTHORING.md
       - Adapter Auth Policy: ADAPTER_AUTH_POLICY.md
+  - Research:
+      - "Paper: ORCA Framework": PAPER.md
+      - ORCA Specification: ../ORCA.md
+      - CoALA Mapping: COALA_MAPPING.md
+      - Positioning: POSITIONING.md
   - Internal:
       - ADR: ADR.md
       - API Versioning: API_VERSIONING_CHANGELOG.md

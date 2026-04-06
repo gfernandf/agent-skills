@@ -16,6 +16,7 @@
   <img src="https://img.shields.io/badge/Tests-1694_passed-brightgreen.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Capabilities-122-blueviolet.svg" alt="Capabilities">
   <img src="https://img.shields.io/badge/Skills-36-blueviolet.svg" alt="Skills">
+  <a href="https://doi.org/10.5281/zenodo.19438943"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.19438943.svg" alt="DOI"></a>
 </p>
 
 **A deterministic, binding-driven execution engine for composable AI agent skills.**
@@ -359,9 +360,36 @@ Each `execute_*` helper maps the underscore tool name back to the dotted capabil
 
 Apache 2.0 — see [LICENSE](LICENSE).
 
+## 📄 Research Paper
+
+> **Beyond Prompting: Decoupling Cognition from Execution in LLM-based Agents through the ORCA Framework**
+>
+> Fernandez Alvarez, G. E. (2026) · [DOI: 10.5281/zenodo.19438943](https://doi.org/10.5281/zenodo.19438943)
+
+The theoretical foundations of ORCA and this runtime are described in our research paper.
+See the full [paper landing page](docs/PAPER.md) for abstract, downloads, and citation formats.
+
+📥 [Download PDF](docs/papers/orca_paper_final_clean_v2.pdf) · 📖 [ORCA Specification](ORCA.md)
+
+---
+
 ## Citing
 
-If you use Agent Skills in your research, please cite:
+If you use Agent Skills or ORCA in your research, please cite the paper:
+
+```bibtex
+@article{fernandez_orca_2026,
+  author    = {Fernandez Alvarez, Guillermo E.},
+  title     = {Beyond Prompting: Decoupling Cognition from Execution in
+               LLM-based Agents through the ORCA Framework},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.19438943},
+  url       = {https://doi.org/10.5281/zenodo.19438943}
+}
+```
+
+To cite the software specifically:
 
 ```bibtex
 @software{fernandez_agent_skills_2026,
