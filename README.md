@@ -9,12 +9,12 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/agent-skills/"><img src="https://img.shields.io/pypi/v/agent-skills.svg" alt="PyPI"></a>
+  <a href="https://pypi.org/project/orca-agent-skills/"><img src="https://img.shields.io/pypi/v/orca-agent-skills.svg" alt="PyPI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
   <a href="https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml"><img src="https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11%2B-blue.svg" alt="Python"></a>
   <img src="https://img.shields.io/badge/Tests-1694_passed-brightgreen.svg" alt="Tests">
-  <img src="https://img.shields.io/badge/Capabilities-122-blueviolet.svg" alt="Capabilities">
+  <img src="https://img.shields.io/badge/Capabilities-141-blueviolet.svg" alt="Capabilities">
   <img src="https://img.shields.io/badge/Skills-36-blueviolet.svg" alt="Skills">
   <a href="https://doi.org/10.5281/zenodo.19438943"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.19438943.svg" alt="DOI"></a>
 </p>
@@ -23,8 +23,32 @@
 
 Agent Skills Runtime lets you define agent capabilities as abstract contracts, wire them to any backend (Python, OpenAPI, MCP, OpenRPC), and execute multi-step workflows as declarative DAGs — with built-in safety gates, cognitive state tracking, and full observability.
 
-> **No API keys required.** 122 capabilities ship with deterministic Python baselines.
+> **No API keys required.** 141 capabilities ship with deterministic Python baselines.
 > Install, run your first skill in under 3 minutes.
+
+---
+
+## ⚡ 30-second start
+
+```bash
+# 1 — install
+pip install orca-agent-skills
+
+# 2 — get the capability registry
+git clone https://github.com/gfernandf/agent-skill-registry.git
+
+# 3 — run your first skill (no API key needed)
+agent-skills run text.summarize-plain-input \
+  --input '{"text": "ORCA decouples agent reasoning from execution. Skills are declarative DAGs, not prompt chains.", "max_length": 20}'
+```
+
+Expected output:
+```json
+{"summary": "ORCA decouples agent reasoning from execution..."}
+```
+
+No API key. No server. Pure Python baseline, runs offline.
+[→ Full Quick Start](#quick-start) · [→ Use with LangChain / OpenAI / Gemini / MCP](#choosing-your-integration-mode)
 
 ---
 
@@ -397,7 +421,7 @@ To cite the software specifically:
   title        = {Agent Skills Runtime},
   year         = {2026},
   url          = {https://github.com/gfernandf/agent-skills},
-  version      = {0.1.0},
+  version      = {1.0.0},
   license      = {Apache-2.0}
 }
 ```

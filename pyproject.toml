@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orca-agent-skills"
-version = "0.1.0"
+version = "1.0.0"
 description = "Runtime for executing reusable AI agent skills and capability bindings"
 readme = "README.md"
 license = "Apache-2.0"
@@ -12,7 +12,7 @@ authors = [{name = "Guillermo Fernandez Alvarez", email = "gfernandf+as@gmail.co
 requires-python = ">=3.11"
 keywords = ["ai", "agents", "skills", "capabilities", "workflows", "llm"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
