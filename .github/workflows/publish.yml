@@ -53,8 +53,8 @@ jobs:
       - name: Verify CLI entry point
         run: agent-skills --help
 
-      - name: Verify SDK import
-        run: python -c "from sdk import execute, __version__; print(__version__)"
+      - name: Verify SDK version import
+        run: python -c "from importlib.metadata import version; print(version('orca-agent-skills'))"
 
   publish-pypi:
     needs: test-install

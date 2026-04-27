@@ -19,9 +19,12 @@ Recommended imports::
 from importlib.metadata import PackageNotFoundError, version
 
 try:
-    __version__ = version("agent-skills")
+    __version__ = version("orca-agent-skills")
 except PackageNotFoundError:
-    __version__ = "0.1.0+dev"
+    try:
+        __version__ = version("agent-skills")
+    except PackageNotFoundError:
+        __version__ = "0.1.0+dev"
 
 # Re-export public API so users can write:
 #   from sdk import execute, as_openai_tools, ...
