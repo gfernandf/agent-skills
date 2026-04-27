@@ -158,7 +158,7 @@ def transform_records(records, mapping):
 def map_array(items, expression, context=None):
     """Apply an expression to each element in an array (baseline: identity)."""
     results = []
-    for item in (items or []):
+    for item in items or []:
         results.append(item)
     return {"items": results, "item_count": len(results)}
 
@@ -184,14 +184,14 @@ def join_records(records_a, records_b, key_field, join_type=None):
     """Join two record sets on a key field."""
     jtype = (join_type or "inner").lower()
     index_b = {}
-    for rec in (records_b or []):
+    for rec in records_b or []:
         key = rec.get(key_field)
         if key is not None:
             index_b.setdefault(key, []).append(rec)
 
     joined = []
     matched_keys = set()
-    for rec_a in (records_a or []):
+    for rec_a in records_a or []:
         key = rec_a.get(key_field)
         matches = index_b.get(key, [])
         if matches:
@@ -203,7 +203,7 @@ def join_records(records_a, records_b, key_field, join_type=None):
             joined.append(dict(rec_a))
 
     if jtype in ("right", "outer"):
-        for rec_b in (records_b or []):
+        for rec_b in records_b or []:
             key = rec_b.get(key_field)
             if key not in matched_keys:
                 joined.append(dict(rec_b))
@@ -215,7 +215,7 @@ def merge_records(records, strategy=None):
     """Deep-merge a list of records into one."""
     strat = strategy or "shallow"
     result = {}
-    for rec in (records or []):
+    for rec in records or []:
         if not isinstance(rec, dict):
             continue
         if strat == "deep":

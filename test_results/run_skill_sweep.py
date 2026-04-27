@@ -1,4 +1,5 @@
 """Sweep all skills with `cli test` and report pass/fail."""
+
 import subprocess
 import sys
 import json
@@ -6,7 +7,8 @@ import json
 # Get all skill IDs
 r = subprocess.run(
     [sys.executable, "-m", "cli.main", "list", "--json"],
-    capture_output=True, text=True,
+    capture_output=True,
+    text=True,
 )
 data = json.loads(r.stdout)
 skills = [s["id"] for s in data["skills"]]
@@ -17,7 +19,9 @@ for sid in skills:
     try:
         r2 = subprocess.run(
             [sys.executable, "-m", "cli.main", "test", sid],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         combined = r2.stdout + r2.stderr
         if "PASS" in combined or '"status": "completed"' in combined:
@@ -31,13 +35,13 @@ for sid in skills:
         results["fail"].append((sid, "TIMEOUT after 60s"))
         print("  TIMEOUT", flush=True)
 
-print(f"\n{'='*60}")
-print(f"SKILL TEST SUMMARY")
-print(f"{'='*60}")
+print(f"\n{'=' * 60}")
+print("SKILL TEST SUMMARY")
+print(f"{'=' * 60}")
 print(f"PASS: {len(results['pass'])}/{len(skills)}")
 print(f"FAIL: {len(results['fail'])}/{len(skills)}")
 if results["fail"]:
-    print(f"\nFailed skills:")
+    print("\nFailed skills:")
     for sid, err in results["fail"]:
         # Clean up for readability
         short = err.replace("\n", " | ")[:300]

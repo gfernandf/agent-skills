@@ -439,10 +439,35 @@ def compare_texts(text_a, text_b, dimensions=None):
 
 def analyze_sentiment(text, dimensions=None):
     """Analyze sentiment polarity (baseline: keyword heuristic)."""
-    positive = ["love", "great", "amazing", "excellent", "wonderful", "fantastic",
-                "happy", "good", "best", "awesome", "easier", "perfect", "enjoy"]
-    negative = ["hate", "terrible", "awful", "worst", "bad", "horrible", "angry",
-                "poor", "fail", "broken", "frustrat", "disappoint"]
+    positive = [
+        "love",
+        "great",
+        "amazing",
+        "excellent",
+        "wonderful",
+        "fantastic",
+        "happy",
+        "good",
+        "best",
+        "awesome",
+        "easier",
+        "perfect",
+        "enjoy",
+    ]
+    negative = [
+        "hate",
+        "terrible",
+        "awful",
+        "worst",
+        "bad",
+        "horrible",
+        "angry",
+        "poor",
+        "fail",
+        "broken",
+        "frustrat",
+        "disappoint",
+    ]
     text_lower = text.lower()
     pos = sum(1 for w in positive if w in text_lower)
     neg = sum(1 for w in negative if w in text_lower)

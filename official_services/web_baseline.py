@@ -503,7 +503,12 @@ def send_request(url, method, headers=None, body=None, timeout_seconds=None):
         data = None
         if body and method in ("POST", "PUT", "PATCH"):
             import json as _json
-            data = _json.dumps(body).encode("utf-8") if isinstance(body, dict) else str(body).encode("utf-8")
+
+            data = (
+                _json.dumps(body).encode("utf-8")
+                if isinstance(body, dict)
+                else str(body).encode("utf-8")
+            )
 
         req = urllib.request.Request(url, data=data, method=method)
         for k, v in (headers or {}).items():
@@ -521,6 +526,11 @@ def send_request(url, method, headers=None, body=None, timeout_seconds=None):
                 "error": None,
             }
     except urllib.error.HTTPError as e:
-        return {"status_code": e.code, "headers": dict(e.headers), "body": str(e.reason), "error": str(e)}
+        return {
+            "status_code": e.code,
+            "headers": dict(e.headers),
+            "body": str(e.reason),
+            "error": str(e),
+        }
     except Exception as e:
         return {"status_code": 0, "headers": {}, "body": "", "error": str(e)}

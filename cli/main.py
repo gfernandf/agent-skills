@@ -39,6 +39,7 @@ def main() -> None:
     # Ensure Unicode output on Windows (cp1252 cannot encode ✓✗→ etc.)
     if sys.stdout.encoding and sys.stdout.encoding.lower().replace("-", "") != "utf8":
         import io
+
         sys.stdout = io.TextIOWrapper(
             sys.stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True
         )
@@ -1069,7 +1070,11 @@ def main() -> None:
 
     elif args.command == "describe":
         _cmd_describe(
-            registry_root, args.skill_id, args.json, args.verbose, args.mermaid,
+            registry_root,
+            args.skill_id,
+            args.json,
+            args.verbose,
+            args.mermaid,
             runtime_root=runtime_root,
         )
 
@@ -1517,6 +1522,7 @@ def _cmd_scaffold(
 
     # Suppress planner log noise during scaffold
     import logging as _logging
+
     _scaffold_logger = _logging.getLogger("agent_skills")
     _prev_level = _scaffold_logger.level
     _scaffold_logger.setLevel(_logging.WARNING)
@@ -1634,6 +1640,7 @@ def _scaffold_wizard(
     print()
 
     import os
+
     # Si hay OPENAI_API_KEY, solo pedir objetivo y canal, y devolver vacíos los demás campos
     if os.environ.get("OPENAI_API_KEY"):
         try:
@@ -1651,7 +1658,9 @@ def _scaffold_wizard(
             ch = input().strip()
         except EOFError:
             ch = ""
-        channel = ch if ch in ("local", "experimental", "community") else default_channel
+        channel = (
+            ch if ch in ("local", "experimental", "community") else default_channel
+        )
         print("\nGenerating skill with LLM...\n")
         return intent, channel, {}, {}, []
 

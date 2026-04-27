@@ -11,6 +11,7 @@ The main scaffold flow (cli.main scaffold --wizard) does NOT call
 this script; it uses _call_openai() inside scaffold_service.py
 directly.  This file exists as a standalone utility for manual use.
 """
+
 from __future__ import annotations
 
 import json
@@ -37,27 +38,33 @@ def discover_capabilities(
                 with open(path, encoding="utf-8") as f:
                     doc = yaml.safe_load(f)
                 if doc and isinstance(doc, dict) and "id" in doc:
-                    seen.setdefault(doc["id"], {
-                        "id": doc["id"],
-                        "description": (doc.get("description") or "")[:120],
-                    })
+                    seen.setdefault(
+                        doc["id"],
+                        {
+                            "id": doc["id"],
+                            "description": (doc.get("description") or "")[:120],
+                        },
+                    )
             except Exception:
                 continue
     return list(seen.values())
 
 
-def call_openai(prompt: str, system: str, api_key: str,
-                model: str = "gpt-4o-mini") -> str:
+def call_openai(
+    prompt: str, system: str, api_key: str, model: str = "gpt-4o-mini"
+) -> str:
     """Call OpenAI chat completions via urllib (no SDK needed)."""
-    payload = json.dumps({
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": prompt},
-        ],
-        "temperature": 0.2,
-        "max_tokens": 1200,
-    }).encode("utf-8")
+    payload = json.dumps(
+        {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0.2,
+            "max_tokens": 1200,
+        }
+    ).encode("utf-8")
 
     req = urllib.request.Request(
         "https://api.openai.com/v1/chat/completions",
@@ -78,12 +85,9 @@ def call_openai(prompt: str, system: str, api_key: str,
     return body["choices"][0]["message"]["content"]
 
 
-def propose_skill_yaml(user_goal: str, capabilities: list[dict],
-                       api_key: str) -> str:
+def propose_skill_yaml(user_goal: str, capabilities: list[dict], api_key: str) -> str:
     """Ask the LLM to produce a skill YAML for *user_goal*."""
-    cap_block = "\n".join(
-        f"- {c['id']}: {c['description']}" for c in capabilities[:60]
-    )
+    cap_block = "\n".join(f"- {c['id']}: {c['description']}" for c in capabilities[:60])
     system = (
         "You are a skill YAML generator for agent-skills. "
         "Reply with ONLY valid YAML — no markdown fences, no explanation. "
@@ -111,9 +115,11 @@ def propose_skill_yaml(user_goal: str, capabilities: list[dict],
 
 
 if __name__ == "__main__":
-    goal = sys.argv[1] if len(sys.argv) > 1 else input(
-        "What should the new skill do?\n> "
-    ).strip()
+    goal = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else input("What should the new skill do?\n> ").strip()
+    )
     api_key = os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
         print("Error: OPENAI_API_KEY not set.", file=sys.stderr)

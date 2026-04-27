@@ -1245,9 +1245,7 @@ def generate_skill_from_prompt(
         import yaml as _yaml
 
         # 1) Semantic capability filtering: score by keyword overlap with intent
-        _intent_tokens = set(
-            _re.findall(r"[a-z]{3,}", intent_description.lower())
-        )
+        _intent_tokens = set(_re.findall(r"[a-z]{3,}", intent_description.lower()))
         _scored: list[tuple[int, dict[str, Any]]] = []
         for _c in capabilities:
             _cid = _c.get("id", "")
@@ -1299,9 +1297,7 @@ def generate_skill_from_prompt(
 
             used_caps: list[str] = []
             if isinstance(doc.get("steps"), list):
-                used_caps = [
-                    s.get("uses") for s in doc["steps"] if s.get("uses")
-                ]
+                used_caps = [s.get("uses") for s in doc["steps"] if s.get("uses")]
             llm_id = doc.get("id", suggested_id)
 
             # Re-serialize after post-processing to ensure clean output

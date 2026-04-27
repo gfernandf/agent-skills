@@ -10,24 +10,25 @@ Usage:
 
 Requires: OPENAI_API_KEY environment variable.
 """
+
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import os
-import random
 import sys
 import time
-import csv
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-REPO_ROOT = Path(__file__).resolve().parent.parent          # agent-skills/
-REGISTRY_ROOT = REPO_ROOT.parent / "agent-skill-registry"   # sibling repo
+REPO_ROOT = Path(__file__).resolve().parent.parent  # agent-skills/
+REGISTRY_ROOT = REPO_ROOT.parent / "agent-skill-registry"  # sibling repo
 EXPERIMENTS_DIR = REPO_ROOT / "experiments"
 DATA_DIR = EXPERIMENTS_DIR / "data"
 PROMPTS_DIR = EXPERIMENTS_DIR / "prompts"
@@ -39,25 +40,26 @@ sys.path.insert(0, str(REPO_ROOT))
 # ---------------------------------------------------------------------------
 # LLM client (thin wrapper around OpenAI chat completions)
 # ---------------------------------------------------------------------------
-import urllib.request
-import urllib.error
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 MODEL = "gpt-4o-mini"
 SEED = 42
+
 
 def _llm_call(messages: list[dict], temperature: float = 0.2) -> dict:
     """Direct OpenAI chat completions call. Returns usage + content."""
     if not OPENAI_API_KEY:
         raise RuntimeError("OPENAI_API_KEY not set")
 
-    payload = json.dumps({
-        "model": MODEL,
-        "messages": messages,
-        "temperature": temperature,
-        "seed": SEED,
-        "response_format": {"type": "json_object"},
-    }).encode()
+    payload = json.dumps(
+        {
+            "model": MODEL,
+            "messages": messages,
+            "temperature": temperature,
+            "seed": SEED,
+            "response_format": {"type": "json_object"},
+        }
+    ).encode()
 
     req = urllib.request.Request(
         "https://api.openai.com/v1/chat/completions",
@@ -97,6 +99,7 @@ def _llm_call(messages: list[dict], temperature: float = 0.2) -> dict:
 def _build_orca_engine():
     """Build the ORCA runtime engine with experiment skills overlay."""
     import logging
+
     # Suppress verbose engine trace logs during benchmark
     logging.getLogger("runtime").setLevel(logging.WARNING)
 
@@ -172,7 +175,10 @@ def run_task1_prompt(item: dict) -> dict:
     """Prompt-based baseline for Task 1."""
     prompt_text = _format_task1_prompt(item)
     messages = [
-        {"role": "system", "content": "You are a structured decision analyst. Always respond with valid JSON."},
+        {
+            "role": "system",
+            "content": "You are a structured decision analyst. Always respond with valid JSON.",
+        },
         {"role": "user", "content": prompt_text},
     ]
     result = _llm_call(messages)
@@ -218,8 +224,16 @@ def run_task1_orca(engine, item: dict) -> dict:
 # TASK 2 — Multi-step Text Processing
 # ===================================================================
 CLASSIFICATION_LABELS = [
-    "Technology", "Healthcare", "Environment", "Economics",
-    "Science", "Policy", "Energy", "Agriculture", "Space", "Finance",
+    "Technology",
+    "Healthcare",
+    "Environment",
+    "Economics",
+    "Science",
+    "Policy",
+    "Energy",
+    "Agriculture",
+    "Space",
+    "Finance",
 ]
 
 
@@ -232,7 +246,10 @@ def run_task2_prompt(item: dict) -> dict:
     """Prompt-based baseline for Task 2."""
     prompt_text = _format_task2_prompt(item)
     messages = [
-        {"role": "system", "content": "You are an expert text analyst. Always respond with valid JSON."},
+        {
+            "role": "system",
+            "content": "You are an expert text analyst. Always respond with valid JSON.",
+        },
         {"role": "user", "content": prompt_text},
     ]
     result = _llm_call(messages)
@@ -313,8 +330,12 @@ def main():
     print("=" * 60)
 
     # Load datasets
-    task1_data = json.loads((DATA_DIR / "task1_decision_inputs.json").read_text(encoding="utf-8"))
-    task2_data = json.loads((DATA_DIR / "task2_text_inputs.json").read_text(encoding="utf-8"))
+    task1_data = json.loads(
+        (DATA_DIR / "task1_decision_inputs.json").read_text(encoding="utf-8")
+    )
+    task2_data = json.loads(
+        (DATA_DIR / "task2_text_inputs.json").read_text(encoding="utf-8")
+    )
 
     # Build ORCA engine
     print("\n[1/5] Building ORCA runtime engine...")
@@ -335,19 +356,27 @@ def main():
     # ---------------------------------------------------------------
     print("\n[2/5] Running Task 1: Structured Decision-Making...")
     for i, item in enumerate(task1_data):
-        print(f"      [{i+1}/10] Input {item['id']} - prompt...", end=" ", flush=True)
+        print(f"      [{i + 1}/10] Input {item['id']} - prompt...", end=" ", flush=True)
         try:
             r = run_task1_prompt(item)
             all_results.append(r)
             print(f"OK ({r['latency_s']}s)", end="")
         except Exception as e:
             print(f"FAIL ({e})", end="")
-            all_results.append({
-                "approach": "prompt", "task": "decision", "input_id": item["id"],
-                "output": {"error": str(e)}, "latency_s": 0, "total_tokens": 0,
-                "traceable": False, "reusable": False,
-                "prompt_tokens": 0, "completion_tokens": 0,
-            })
+            all_results.append(
+                {
+                    "approach": "prompt",
+                    "task": "decision",
+                    "input_id": item["id"],
+                    "output": {"error": str(e)},
+                    "latency_s": 0,
+                    "total_tokens": 0,
+                    "traceable": False,
+                    "reusable": False,
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                }
+            )
 
         if orca_available:
             print(" | orca...", end=" ", flush=True)
@@ -357,12 +386,21 @@ def main():
                 print(f"OK ({r['latency_s']}s)")
             except Exception as e:
                 print(f"FAIL ({e})")
-                all_results.append({
-                    "approach": "orca", "task": "decision", "input_id": item["id"],
-                    "output": {"error": str(e)}, "latency_s": 0, "total_tokens": 0,
-                    "traceable": False, "reusable": True,
-                    "prompt_tokens": 0, "completion_tokens": 0, "status": "failed",
-                })
+                all_results.append(
+                    {
+                        "approach": "orca",
+                        "task": "decision",
+                        "input_id": item["id"],
+                        "output": {"error": str(e)},
+                        "latency_s": 0,
+                        "total_tokens": 0,
+                        "traceable": False,
+                        "reusable": True,
+                        "prompt_tokens": 0,
+                        "completion_tokens": 0,
+                        "status": "failed",
+                    }
+                )
         else:
             print()
 
@@ -371,19 +409,27 @@ def main():
     # ---------------------------------------------------------------
     print("\n[3/5] Running Task 2: Multi-step Text Processing...")
     for i, item in enumerate(task2_data):
-        print(f"      [{i+1}/10] Input {item['id']} - prompt...", end=" ", flush=True)
+        print(f"      [{i + 1}/10] Input {item['id']} - prompt...", end=" ", flush=True)
         try:
             r = run_task2_prompt(item)
             all_results.append(r)
             print(f"OK ({r['latency_s']}s)", end="")
         except Exception as e:
             print(f"FAIL ({e})", end="")
-            all_results.append({
-                "approach": "prompt", "task": "text_processing", "input_id": item["id"],
-                "output": {"error": str(e)}, "latency_s": 0, "total_tokens": 0,
-                "traceable": False, "reusable": False,
-                "prompt_tokens": 0, "completion_tokens": 0,
-            })
+            all_results.append(
+                {
+                    "approach": "prompt",
+                    "task": "text_processing",
+                    "input_id": item["id"],
+                    "output": {"error": str(e)},
+                    "latency_s": 0,
+                    "total_tokens": 0,
+                    "traceable": False,
+                    "reusable": False,
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                }
+            )
 
         if orca_available:
             print(" | orca...", end=" ", flush=True)
@@ -393,12 +439,21 @@ def main():
                 print(f"OK ({r['latency_s']}s)")
             except Exception as e:
                 print(f"FAIL ({e})")
-                all_results.append({
-                    "approach": "orca", "task": "text_processing", "input_id": item["id"],
-                    "output": {"error": str(e)}, "latency_s": 0, "total_tokens": 0,
-                    "traceable": False, "reusable": True,
-                    "prompt_tokens": 0, "completion_tokens": 0, "status": "failed",
-                })
+                all_results.append(
+                    {
+                        "approach": "orca",
+                        "task": "text_processing",
+                        "input_id": item["id"],
+                        "output": {"error": str(e)},
+                        "latency_s": 0,
+                        "total_tokens": 0,
+                        "traceable": False,
+                        "reusable": True,
+                        "prompt_tokens": 0,
+                        "completion_tokens": 0,
+                        "status": "failed",
+                    }
+                )
         else:
             print()
 
@@ -417,7 +472,7 @@ def main():
             key = f"decision_{approach_name}_{item['id']}"
             reps = []
             for rep in range(3):
-                print(f"      {key} rep {rep+1}/3...", end=" ", flush=True)
+                print(f"      {key} rep {rep + 1}/3...", end=" ", flush=True)
                 try:
                     r = runner(item)
                     reps.append(r)
@@ -433,7 +488,7 @@ def main():
             key = f"decision_orca_{item['id']}"
             reps = []
             for rep in range(3):
-                print(f"      {key} rep {rep+1}/3...", end=" ", flush=True)
+                print(f"      {key} rep {rep + 1}/3...", end=" ", flush=True)
                 try:
                     r = run_task1_orca(engine, item)
                     reps.append(r)
@@ -450,7 +505,7 @@ def main():
             key = f"text_{approach_name}_{item['id']}"
             reps = []
             for rep in range(3):
-                print(f"      {key} rep {rep+1}/3...", end=" ", flush=True)
+                print(f"      {key} rep {rep + 1}/3...", end=" ", flush=True)
                 try:
                     r = runner(item)
                     reps.append(r)
@@ -466,7 +521,7 @@ def main():
             key = f"text_orca_{item['id']}"
             reps = []
             for rep in range(3):
-                print(f"      {key} rep {rep+1}/3...", end=" ", flush=True)
+                print(f"      {key} rep {rep + 1}/3...", end=" ", flush=True)
                 try:
                     r = run_task2_orca(engine, item)
                     reps.append(r)
@@ -486,18 +541,23 @@ def main():
     # 1. Full results JSON
     results_json_path = OUTPUT_DIR / f"benchmark_results_{timestamp}.json"
     results_json_path.write_text(
-        json.dumps({
-            "metadata": {
-                "timestamp": timestamp,
-                "model": MODEL,
-                "seed": SEED,
-                "task1_inputs": len(task1_data),
-                "task2_inputs": len(task2_data),
-                "orca_available": orca_available,
+        json.dumps(
+            {
+                "metadata": {
+                    "timestamp": timestamp,
+                    "model": MODEL,
+                    "seed": SEED,
+                    "task1_inputs": len(task1_data),
+                    "task2_inputs": len(task2_data),
+                    "orca_available": orca_available,
+                },
+                "runs": all_results,
+                "variability": variability_results,
             },
-            "runs": all_results,
-            "variability": variability_results,
-        }, indent=2, ensure_ascii=False, default=str),
+            indent=2,
+            ensure_ascii=False,
+            default=str,
+        ),
         encoding="utf-8",
     )
     print(f"      JSON  -> {results_json_path.relative_to(REPO_ROOT)}")
@@ -505,10 +565,15 @@ def main():
     # 2. CSV with metrics
     csv_path = OUTPUT_DIR / f"benchmark_metrics_{timestamp}.csv"
     csv_fields = [
-        "task", "approach", "input_id",
+        "task",
+        "approach",
+        "input_id",
         "latency_s",
-        "prompt_tokens", "completion_tokens", "total_tokens",
-        "traceable", "reusable",
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "traceable",
+        "reusable",
     ]
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=csv_fields, extrasaction="ignore")
@@ -530,7 +595,9 @@ def main():
 
     # 5. Generate Markdown report
     report_path = OUTPUT_DIR / f"benchmark_report_{timestamp}.md"
-    report_content = generate_report(all_results, variability_results, orca_available, timestamp)
+    report_content = generate_report(
+        all_results, variability_results, orca_available, timestamp
+    )
     report_path.write_text(report_content, encoding="utf-8")
     print(f"      Report -> {report_path.relative_to(REPO_ROOT)}")
 
@@ -546,7 +613,11 @@ def _print_summary(results: list[dict], variability: dict, orca_available: bool)
     for task_name in ["decision", "text_processing"]:
         print(f"\n--- {task_name.replace('_', ' ').title()} ---")
         for approach in ["prompt", "orca"]:
-            runs = [r for r in results if r["task"] == task_name and r["approach"] == approach]
+            runs = [
+                r
+                for r in results
+                if r["task"] == task_name and r["approach"] == approach
+            ]
             if not runs:
                 continue
             avg_latency = sum(r.get("latency_s", 0) for r in runs) / len(runs)
@@ -554,10 +625,12 @@ def _print_summary(results: list[dict], variability: dict, orca_available: bool)
             traceable = any(r.get("traceable", False) for r in runs)
             reusable = any(r.get("reusable", False) for r in runs)
 
-            print(f"  {approach:8s} | "
-                  f"latency={avg_latency:.2f}s | tokens={avg_tokens:.0f} | "
-                  f"traceable={'Yes' if traceable else 'No':3s} | "
-                  f"reusable={'Yes' if reusable else 'No':3s}")
+            print(
+                f"  {approach:8s} | "
+                f"latency={avg_latency:.2f}s | tokens={avg_tokens:.0f} | "
+                f"traceable={'Yes' if traceable else 'No':3s} | "
+                f"reusable={'Yes' if reusable else 'No':3s}"
+            )
 
     print("\n--- Variability Scores ---")
     for key, val in variability.items():
@@ -588,9 +661,15 @@ def generate_report(
     lines.append("")
     lines.append("### 1.1 Objective")
     lines.append("Compare two execution strategies for LLM-based tasks:")
-    lines.append("1. **Prompt-based baseline**: A single prompt performs the full task in one LLM call.")
-    lines.append("2. **ORCA structured execution**: A declarative skill composed of reusable capabilities,")
-    lines.append("   each mapped to a binding and executed through the ORCA runtime engine.")
+    lines.append(
+        "1. **Prompt-based baseline**: A single prompt performs the full task in one LLM call."
+    )
+    lines.append(
+        "2. **ORCA structured execution**: A declarative skill composed of reusable capabilities,"
+    )
+    lines.append(
+        "   each mapped to a binding and executed through the ORCA runtime engine."
+    )
     lines.append("")
     lines.append("### 1.2 Tasks")
     lines.append("")
@@ -603,18 +682,28 @@ def generate_report(
     lines.append("**Task 2 — Multi-step Text Processing**")
     lines.append("- Input: A paragraph of text.")
     lines.append("- Steps: (1) extract key information, (2) summarize, (3) classify.")
-    lines.append("- ORCA Skill: `experiment.text-processing-pipeline` using capabilities")
-    lines.append("  `text.entity.extract` -> `text.content.summarize` -> `text.content.classify`.")
+    lines.append(
+        "- ORCA Skill: `experiment.text-processing-pipeline` using capabilities"
+    )
+    lines.append(
+        "  `text.entity.extract` -> `text.content.summarize` -> `text.content.classify`."
+    )
     lines.append("")
     lines.append("### 1.3 Metrics")
     lines.append("| Metric | Description |")
     lines.append("|--------|-------------|")
 
     lines.append("| Latency | Wall-clock execution time in seconds |")
-    lines.append("| Token Usage | Prompt + completion tokens (prompt-based); approximate for ORCA |")
+    lines.append(
+        "| Token Usage | Prompt + completion tokens (prompt-based); approximate for ORCA |"
+    )
     lines.append("| Traceability | Binary: whether intermediate steps are exposed |")
-    lines.append("| Reusability | Binary: whether components can be independently reused |")
-    lines.append("| Variability | Jaccard distance across 3 repeated runs on 3 selected inputs |")
+    lines.append(
+        "| Reusability | Binary: whether components can be independently reused |"
+    )
+    lines.append(
+        "| Variability | Jaccard distance across 3 repeated runs on 3 selected inputs |"
+    )
     lines.append("")
     lines.append("### 1.4 Experimental Setup")
     lines.append("- 10 inputs per task, 2 approaches per task")
@@ -628,16 +717,26 @@ def generate_report(
     lines.append("## 2. Results")
     lines.append("")
 
-    for task_name, task_label in [("decision", "Task 1: Structured Decision-Making"),
-                                   ("text_processing", "Task 2: Multi-step Text Processing")]:
-        lines.append(f"### 2.1 {task_label}" if task_name == "decision" else f"### 2.2 {task_label}")
+    for task_name, task_label in [
+        ("decision", "Task 1: Structured Decision-Making"),
+        ("text_processing", "Task 2: Multi-step Text Processing"),
+    ]:
+        lines.append(
+            f"### 2.1 {task_label}"
+            if task_name == "decision"
+            else f"### 2.2 {task_label}"
+        )
         lines.append("")
 
         # Per-input table
         lines.append("#### Individual Results")
         lines.append("")
-        lines.append("| Input | Approach | Latency (s) | Tokens | Traceable | Reusable |")
-        lines.append("|-------|----------|-------------|--------|-----------|----------|")
+        lines.append(
+            "| Input | Approach | Latency (s) | Tokens | Traceable | Reusable |"
+        )
+        lines.append(
+            "|-------|----------|-------------|--------|-----------|----------|"
+        )
         task_runs = [r for r in results if r["task"] == task_name]
         for r in sorted(task_runs, key=lambda x: (x["input_id"], x["approach"])):
             lines.append(
@@ -651,8 +750,12 @@ def generate_report(
         # Aggregate summary
         lines.append("#### Aggregate Summary")
         lines.append("")
-        lines.append("| Approach | Avg Latency (s) | Avg Tokens | Traceable | Reusable |")
-        lines.append("|----------|-----------------|------------|-----------|----------|")
+        lines.append(
+            "| Approach | Avg Latency (s) | Avg Tokens | Traceable | Reusable |"
+        )
+        lines.append(
+            "|----------|-----------------|------------|-----------|----------|"
+        )
         for approach in ["prompt", "orca"]:
             runs = [r for r in task_runs if r["approach"] == approach]
             if not runs:
@@ -669,39 +772,65 @@ def generate_report(
     # Variability section
     lines.append("### 2.3 Variability Analysis")
     lines.append("")
-    lines.append("Variability is measured as the mean Jaccard distance of output token sets")
-    lines.append("across 3 repeated runs. A score of 0.0 means identical outputs; 1.0 means")
+    lines.append(
+        "Variability is measured as the mean Jaccard distance of output token sets"
+    )
+    lines.append(
+        "across 3 repeated runs. A score of 0.0 means identical outputs; 1.0 means"
+    )
     lines.append("completely different outputs.")
     lines.append("")
     lines.append("| Key | Variability Score | Repetitions |")
     lines.append("|-----|-------------------|-------------|")
     for key, val in variability.items():
-        lines.append(f"| {key} | {val['variability_score']:.4f} | {val['repetitions']} |")
+        lines.append(
+            f"| {key} | {val['variability_score']:.4f} | {val['repetitions']} |"
+        )
     lines.append("")
 
     # ----- Analysis -----
     lines.append("## 3. Analysis")
     lines.append("")
     lines.append("### 3.1 Latency")
-    lines.append("The prompt-based approach uses a single LLM call, resulting in lower latency.")
-    lines.append("ORCA executes multiple sequential capability bindings, adding overhead per step")
+    lines.append(
+        "The prompt-based approach uses a single LLM call, resulting in lower latency."
+    )
+    lines.append(
+        "ORCA executes multiple sequential capability bindings, adding overhead per step"
+    )
     lines.append("but enabling independent optimization of each stage.")
     lines.append("")
     lines.append("### 3.2 Traceability")
-    lines.append("ORCA provides full step-level traceability through its `StepResult` trace,")
-    lines.append("exposing resolved inputs, produced outputs, binding IDs, and latency per step.")
-    lines.append("The prompt-based approach is opaque: only the final output is visible.")
+    lines.append(
+        "ORCA provides full step-level traceability through its `StepResult` trace,"
+    )
+    lines.append(
+        "exposing resolved inputs, produced outputs, binding IDs, and latency per step."
+    )
+    lines.append(
+        "The prompt-based approach is opaque: only the final output is visible."
+    )
     lines.append("")
     lines.append("### 3.3 Reusability")
-    lines.append("ORCA capabilities are independently reusable across different skills.")
-    lines.append("For example, `text.content.summarize` used in the text processing pipeline")
+    lines.append(
+        "ORCA capabilities are independently reusable across different skills."
+    )
+    lines.append(
+        "For example, `text.content.summarize` used in the text processing pipeline"
+    )
     lines.append("can be reused in any other skill without modification.")
     lines.append("The prompt-based approach is monolithic and task-specific.")
     lines.append("")
     lines.append("### 3.4 Variability")
-    lines.append("With a fixed seed, both approaches should produce near-identical outputs")
-    lines.append("across repetitions. Variability scores near zero confirm reproducibility.")
-    lines.append("Higher variability in ORCA may arise from multi-step composition effects.")
+    lines.append(
+        "With a fixed seed, both approaches should produce near-identical outputs"
+    )
+    lines.append(
+        "across repetitions. Variability scores near zero confirm reproducibility."
+    )
+    lines.append(
+        "Higher variability in ORCA may arise from multi-step composition effects."
+    )
     lines.append("")
 
     # ----- Conclusion -----
@@ -714,11 +843,19 @@ def generate_report(
     lines.append("| Traceability | None | Full step-level trace |")
     lines.append("| Reusability | None | Full capability reuse |")
     lines.append("| Variability | Low (fixed seed) | Low-moderate |")
-    lines.append("| Maintainability | Low (monolithic prompt) | High (declarative YAML) |")
+    lines.append(
+        "| Maintainability | Low (monolithic prompt) | High (declarative YAML) |"
+    )
     lines.append("")
-    lines.append("The trade-off is clear: prompt-based execution is simpler and faster for")
-    lines.append("one-off tasks, while ORCA structured execution provides engineering benefits")
-    lines.append("(traceability, reusability, composability) critical for production systems")
+    lines.append(
+        "The trade-off is clear: prompt-based execution is simpler and faster for"
+    )
+    lines.append(
+        "one-off tasks, while ORCA structured execution provides engineering benefits"
+    )
+    lines.append(
+        "(traceability, reusability, composability) critical for production systems"
+    )
     lines.append("where auditability and maintainability outweigh raw latency.")
     lines.append("")
 

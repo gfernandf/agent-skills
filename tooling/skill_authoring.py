@@ -85,8 +85,7 @@ def run_skill_test(
     # Only required outputs block the test pass
     outputs_meta = skill_doc.get("outputs", {})
     required_missing = [
-        k for k in missing
-        if outputs_meta.get(k, {}).get("required", False)
+        k for k in missing if outputs_meta.get(k, {}).get("required", False)
     ]
 
     report: dict[str, Any] = {

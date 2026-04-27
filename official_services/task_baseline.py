@@ -317,7 +317,14 @@ def transition_state(task_id, target_state):
         }
 
 
-def schedule_event(title, scheduled_time, description=None, recurrence=None, attendees=None, context=None):
+def schedule_event(
+    title,
+    scheduled_time,
+    description=None,
+    recurrence=None,
+    attendees=None,
+    context=None,
+):
     """Schedule a future event or recurring timer."""
     event_id = _next_id("evt")
     return {

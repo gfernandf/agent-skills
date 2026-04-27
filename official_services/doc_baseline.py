@@ -220,7 +220,9 @@ def generate_document(instruction, context=None, sections=None, format=None):
     if sections:
         for sec in sections:
             if isinstance(sec, dict):
-                parts.append(f"## {sec.get('title', 'Section')}\n{sec.get('content', '')}")
+                parts.append(
+                    f"## {sec.get('title', 'Section')}\n{sec.get('content', '')}"
+                )
             else:
                 parts.append(f"## {sec}")
     if not context and not sections:

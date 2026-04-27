@@ -119,7 +119,11 @@ def read_sheet(path, sheet_name=None, range=None):
     except Exception as e:
         return {"rows": [], "row_count": 0, "error": str(e)}
 
-    return {"rows": rows, "row_count": len(rows), "headers": list(rows[0].keys()) if rows else []}
+    return {
+        "rows": rows,
+        "row_count": len(rows),
+        "headers": list(rows[0].keys()) if rows else [],
+    }
 
 
 def write_sheet(path, table, headers=None, sheet_name=None):
