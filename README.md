@@ -30,17 +30,36 @@ Agent Skills Runtime lets you define agent capabilities as abstract contracts, w
 
 ## ⚡ 30-second start
 
+> Works on macOS, Linux, and Windows. No API key required.
+
 ```bash
-# 1 — install
-pip install orca-agent-skills
+# 1 — clone and install
+git clone https://github.com/gfernandf/agent-skills.git
+cd agent-skills
+pip install -e .
 
-# 2 — get the capability registry
-git clone https://github.com/gfernandf/agent-skill-registry.git
+# 2 — get the capability registry (clone it alongside agent-skills/)
+git clone https://github.com/gfernandf/agent-skill-registry.git ../agent-skill-registry
 
-# 3 — run your first skill (no API key needed)
-agent-skills run text.summarize-plain-input \
-  --input '{"text": "ORCA decouples agent reasoning from execution. Skills are declarative DAGs, not prompt chains.", "max_length": 20}'
+# 3 — verify everything is wired
+python skills.py doctor
+
+# 4 — run your first skill (no API key needed)
+# macOS / Linux / Git Bash:
+python skills.py run text.summarize-plain-input \
+  --input '{"text": "ORCA decouples agent reasoning from execution. Skills are DAGs, not prompt chains.", "max_length": 20}' \
+  2>/dev/null
 ```
+
+<details>
+<summary>Windows PowerShell alternative for step 4</summary>
+
+```powershell
+'{ "text": "ORCA decouples agent reasoning from execution.", "max_length": 20 }' | Set-Content input_qs.json -Encoding ascii
+python skills.py run text.summarize-plain-input --input-file input_qs.json 2>$null
+Remove-Item input_qs.json
+```
+</details>
 
 Expected output:
 ```json
@@ -229,27 +248,41 @@ graph TB
 
 ### Install from PyPI
 
+> **Note:** The package is currently published on PyPI as `agent-skills`. The rename to `orca-agent-skills` will be effective with the next PyPI release. For `v1.0.0` features, use [Install from source](#install-from-source) below.
+
 ```bash
-pip install orca-agent-skills          # core
-pip install orca-agent-skills[all]     # + PDF, web, OTel extras
-pip install orca-agent-skills[mcp]     # + MCP server/client
-pip install orca-agent-skills[dev]     # + pytest, ruff, benchmarks
+pip install agent-skills          # core (current PyPI name)
+pip install agent-skills[all]     # + PDF, web, OTel extras
+pip install agent-skills[mcp]     # + MCP server/client
+pip install agent-skills[dev]     # + pytest, ruff, benchmarks
 ```
 
 The PyPI package includes the execution engine and CLI. You'll also need the companion **[agent-skill-registry](https://github.com/gfernandf/agent-skill-registry)** (capability contracts, skills, vocabulary):
 
 ```bash
 git clone https://github.com/gfernandf/agent-skill-registry.git
-agent-skills doctor   # verifies registry is found
+python skills.py doctor   # verifies registry is found
 ```
+
+> **Windows note:** After `pip install`, if `agent-skills` is not found in your shell, add Python's `Scripts/` directory to your PATH, or use `python skills.py` from the repo root as a drop-in replacement for all `agent-skills` commands throughout this README.
 
 ### Install from source
 
+**macOS / Linux:**
 ```bash
 git clone https://github.com/gfernandf/agent-skills.git
 cd agent-skills
 make bootstrap       # clones registry alongside, installs deps
-agent-skills doctor   # all checks should pass
+python skills.py doctor
+```
+
+**Windows (PowerShell):**
+```powershell
+git clone https://github.com/gfernandf/agent-skills.git
+cd agent-skills
+pip install -e ".[all,dev]"
+git clone https://github.com/gfernandf/agent-skill-registry.git ../agent-skill-registry
+python skills.py doctor
 ```
 
 > **What `make bootstrap` does:** clones the registry into `../agent-skill-registry/`, then runs `pip install -e ".[all,dev]"`. If you prefer manual setup, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
@@ -261,17 +294,30 @@ agent-skills doctor   # all checks should pass
 </p>
 
 ```bash
-agent-skills run text.summarize-plain-input \
-  --input '{"text": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills. It supports four binding protocols and ships with 122 Python baselines.", "max_length": 50}'
+# macOS / Linux / Git Bash (stderr suppressed for clean output):
+python skills.py run text.summarize-plain-input \
+  --input '{"text": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills. It supports four binding protocols and ships with 141 Python baselines.", "max_length": 50}' \
+  2>/dev/null
 ```
+
+<details>
+<summary>Windows PowerShell</summary>
+
+```powershell
+'{ "text": "Agent Skills Runtime is a deterministic execution engine.", "max_length": 50 }' | Set-Content input_run.json -Encoding ascii
+python skills.py run text.summarize-plain-input --input-file input_run.json 2>$null
+Remove-Item input_run.json
+```
+</details>
 
 Expected output:
 ```json
 {
-  "summary": "Agent Skills Runtime is a deterministic execution engine...",
-  "sentiment": "positive"
+  "summary": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills."
 }
 ```
+
+> **Tip:** Trace/telemetry events are written to stderr. Redirect with `2>/dev/null` (bash) or `2>$null` (PowerShell) for clean output. Use `--audit-mode off` to disable audit records entirely.
 
 ### Run via HTTP
 
@@ -289,14 +335,17 @@ Every capability ships with a deterministic Python baseline. Set `OPENAI_API_KEY
 
 ```bash
 # 1. Baseline mode (no API key, pure Python)
-agent-skills run text.summarize-plain-input \
-  --input '{"text": "Agent Skills decouples capability contracts from execution backends.", "max_length": 30}'
+python skills.py run text.summarize-plain-input \
+  --input '{"text": "Agent Skills decouples capability contracts from execution backends.", "max_length": 30}' \
+  2>/dev/null
 # → {"summary": "Agent Skills decouples capability contracts from exec..."}
 
-# 2. LLM mode (set key, same command)
-export OPENAI_API_KEY=sk-...
-agent-skills run text.summarize-plain-input \
-  --input '{"text": "Agent Skills decouples capability contracts from execution backends.", "max_length": 30}'
+# 2. LLM mode (set key, same command — zero code changes)
+export OPENAI_API_KEY=sk-...          # bash
+# $env:OPENAI_API_KEY = "sk-..."      # PowerShell
+python skills.py run text.summarize-plain-input \
+  --input '{"text": "Agent Skills decouples capability contracts from execution backends.", "max_length": 30}' \
+  2>/dev/null
 # → {"summary": "Agent Skills separates capability definitions from their runtime implementations."}
 ```
 
