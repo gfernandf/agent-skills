@@ -9,7 +9,7 @@ abstract: >-
   tracking, and full observability.
 type: software
 license: Apache-2.0
-version: 1.0.1
+version: 1.0.2
 date-released: "2026-04-27"
 repository-code: "https://github.com/gfernandf/agent-skills"
 keywords:

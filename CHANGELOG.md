@@ -3,6 +3,14 @@
 All notable changes to **agent-skills** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.2] - 2026-04-27
+
+### Fixed
+
+- Published wheels now include the `tooling` package so the `agent-skills`
+  console entry point can import `tooling.promotion_package` successfully in a
+  clean install environment.
+
 ## [1.0.1] - 2026-04-27
 
 ### Fixed
