@@ -3,6 +3,20 @@
 All notable changes to **agent-skills** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.1] - 2026-04-27
+
+### Fixed
+
+- README quickstart now documents the working source-install path, `python skills.py`
+  CLI usage, Windows PowerShell input-file flow, and stderr suppression for clean
+  first-run output.
+- Publish workflow now validates the installed package safely in clean CI
+  environments without requiring the external registry checkout.
+- SDK version resolution now accepts both `orca-agent-skills` and the legacy
+  `agent-skills` package name for compatibility during the PyPI rename.
+- Lint and formatting issues in benchmark/experiment code were corrected so the
+  main CI workflow passes on `master`.
+
 ## [1.0.0] - 2026-04-27
 
 ### Added

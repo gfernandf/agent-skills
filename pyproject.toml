@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orca-agent-skills"
-version = "1.0.0"
+version = "1.0.1"
 description = "Runtime for executing reusable AI agent skills and capability bindings"
 readme = "README.md"
 license = "Apache-2.0"
