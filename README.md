@@ -46,8 +46,8 @@ python skills.py doctor
 
 # 4 — run your first skill (no API key needed)
 # macOS / Linux / Git Bash:
-python skills.py run text.summarize-plain-input \
-  --input '{"text": "ORCA decouples agent reasoning from execution. Skills are DAGs, not prompt chains.", "max_length": 20}' \
+python skills.py run text.language-summary \
+  --input '{"text": "ORCA decouples agent reasoning from execution. Skills are DAGs, not prompt chains."}' \
   2>/dev/null
 ```
 
@@ -55,15 +55,15 @@ python skills.py run text.summarize-plain-input \
 <summary>Windows PowerShell alternative for step 4</summary>
 
 ```powershell
-'{ "text": "ORCA decouples agent reasoning from execution.", "max_length": 20 }' | Set-Content input_qs.json -Encoding ascii
-python skills.py run text.summarize-plain-input --input-file input_qs.json 2>$null
+'{ "text": "ORCA decouples agent reasoning from execution." }' | Set-Content input_qs.json -Encoding ascii
+python skills.py run text.language-summary --input-file input_qs.json 2>$null
 Remove-Item input_qs.json
 ```
 </details>
 
 Expected output:
 ```json
-{"summary": "ORCA decouples agent reasoning from execution..."}
+{"language": "en", "summary": "ORCA decouples agent reasoning from execution..."}
 ```
 
 No API key. No server. Pure Python baseline, runs offline.
@@ -248,13 +248,11 @@ graph TB
 
 ### Install from PyPI
 
-> **Note:** The package is currently published on PyPI as `agent-skills`. The rename to `orca-agent-skills` will be effective with the next PyPI release. For `v1.0.0` features, use [Install from source](#install-from-source) below.
-
 ```bash
-pip install agent-skills          # core (current PyPI name)
-pip install agent-skills[all]     # + PDF, web, OTel extras
-pip install agent-skills[mcp]     # + MCP server/client
-pip install agent-skills[dev]     # + pytest, ruff, benchmarks
+pip install orca-agent-skills          # core
+pip install orca-agent-skills[all]     # + PDF, web, OTel extras
+pip install orca-agent-skills[mcp]     # + MCP server/client
+pip install orca-agent-skills[dev]     # + pytest, ruff, benchmarks
 ```
 
 The PyPI package includes the execution engine and CLI. You'll also need the companion **[agent-skill-registry](https://github.com/gfernandf/agent-skill-registry)** (capability contracts, skills, vocabulary):
@@ -295,8 +293,8 @@ python skills.py doctor
 
 ```bash
 # macOS / Linux / Git Bash (stderr suppressed for clean output):
-python skills.py run text.summarize-plain-input \
-  --input '{"text": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills. It supports four binding protocols and ships with 141 Python baselines.", "max_length": 50}' \
+python skills.py run text.language-summary \
+  --input '{"text": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills. It supports four binding protocols and ships with 141 Python baselines."}' \
   2>/dev/null
 ```
 
@@ -304,8 +302,8 @@ python skills.py run text.summarize-plain-input \
 <summary>Windows PowerShell</summary>
 
 ```powershell
-'{ "text": "Agent Skills Runtime is a deterministic execution engine.", "max_length": 50 }' | Set-Content input_run.json -Encoding ascii
-python skills.py run text.summarize-plain-input --input-file input_run.json 2>$null
+'{ "text": "Agent Skills Runtime is a deterministic execution engine." }' | Set-Content input_run.json -Encoding ascii
+python skills.py run text.language-summary --input-file input_run.json 2>$null
 Remove-Item input_run.json
 ```
 </details>
@@ -313,7 +311,8 @@ Remove-Item input_run.json
 Expected output:
 ```json
 {
-  "summary": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills."
+  "language": "en",
+  "summary": "Agent Skills Runtime is a deterministic execution engine..."
 }
 ```
 
@@ -324,9 +323,9 @@ Expected output:
 ```bash
 agent-skills serve                     # starts server on :8080
 curl http://localhost:8080/v1/health   # health check
-curl -X POST http://localhost:8080/v1/skills/text.summarize-plain-input/execute \
+curl -X POST http://localhost:8080/v1/skills/text.language-summary/execute \
   -H "Content-Type: application/json" \
-  -d '{"inputs": {"text": "Hello world", "max_length": 20}}'
+  -d '{"inputs": {"text": "Hello world from ORCA"}}'
 ```
 
 ### Baseline → LLM: same skill, two modes
@@ -335,18 +334,18 @@ Every capability ships with a deterministic Python baseline. Set `OPENAI_API_KEY
 
 ```bash
 # 1. Baseline mode (no API key, pure Python)
-python skills.py run text.summarize-plain-input \
-  --input '{"text": "Agent Skills decouples capability contracts from execution backends.", "max_length": 30}' \
+python skills.py run text.language-summary \
+  --input '{"text": "Agent Skills decouples capability contracts from execution backends."}' \
   2>/dev/null
-# → {"summary": "Agent Skills decouples capability contracts from exec..."}
+# → {"language": "en", "summary": "Agent Skills decouples capability contracts from execution backends."}
 
 # 2. LLM mode (set key, same command — zero code changes)
 export OPENAI_API_KEY=sk-...          # bash
 # $env:OPENAI_API_KEY = "sk-..."      # PowerShell
-python skills.py run text.summarize-plain-input \
-  --input '{"text": "Agent Skills decouples capability contracts from execution backends.", "max_length": 30}' \
+python skills.py run text.language-summary \
+  --input '{"text": "Agent Skills decouples capability contracts from execution backends."}' \
   2>/dev/null
-# → {"summary": "Agent Skills separates capability definitions from their runtime implementations."}
+# → {"language": "en", "summary": "Agent Skills separates capability definitions from their runtime implementations."}
 ```
 
 The binding resolver picks the best available backend automatically:
