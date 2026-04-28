@@ -565,6 +565,10 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 make check   # lint + format + tests in one command
 ```
 
+Looking for a good first issue? Check the [help wanted](https://github.com/gfernandf/agent-skills/issues?q=is%3Aopen+label%3A%22help+wanted%22) list.
+
+> ⭐ If Agent Skills saves you time or you find the ideas useful, a star helps others discover the project.
+
 ## Troubleshooting
 
 | Problem | Solution |
