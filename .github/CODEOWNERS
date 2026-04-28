@@ -1,0 +1,13 @@
+# Default owner
+* @gfernandf
+
+# Runtime core
+runtime/ @gfernandf
+gateway/ @gfernandf
+
+# SDK and adapters
+sdk/ @gfernandf
+official_mcp_servers/ @gfernandf
+
+# Registry governance
+policies/ @gfernandf

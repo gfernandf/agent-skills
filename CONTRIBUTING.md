@@ -25,11 +25,11 @@ using the appropriate template (bug / feature / RFC).
 
 ### Code contributions
 
-1. **Fork** the repo and create a branch from `main`.
+1. **Fork** the repo and create a branch from `master`.
 2. **Implement** your change — keep PRs focused on a single concern.
 3. **Add tests** — every behavioral change needs at least one test.
 4. **Run the full suite**: `python -m pytest runtime/ -x -q`
-5. **Open a PR** against `main` with a clear description.
+5. **Open a PR** against `master` with a clear description.
 
 ### Skill / capability contributions (registry)
 
