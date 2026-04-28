@@ -36,7 +36,7 @@ Agent Skills Runtime lets you define agent capabilities as abstract contracts, w
 # 1 — clone and install
 git clone https://github.com/gfernandf/agent-skills.git
 cd agent-skills
-pip install -e .
+pip install -e .          # first run takes ~30-60 s — normal
 
 # 2 — get the capability registry (clone it alongside agent-skills/)
 git clone https://github.com/gfernandf/agent-skill-registry.git ../agent-skill-registry
@@ -264,7 +264,11 @@ git clone https://github.com/gfernandf/agent-skill-registry.git
 python skills.py doctor   # verifies registry is found
 ```
 
-> **Windows note:** After `pip install`, if `agent-skills` is not found in your shell, add Python's `Scripts/` directory to your PATH, or use `python skills.py` from the repo root as a drop-in replacement for all `agent-skills` commands throughout this README.
+> **Windows note:** After `pip install`, if `agent-skills` is not found in your shell, run the following once to add Python's `Scripts/` to your PATH — then restart your terminal:
+> ```powershell
+> [System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";" + (python -c "import sysconfig; print(sysconfig.get_path('scripts'))"), "User")
+> ```
+> Or use `python skills.py` from the repo root as a drop-in replacement for all `agent-skills` commands throughout this README.
 
 ### Install from source
 
@@ -310,6 +314,11 @@ $env:OPENAI_API_KEY = ""
 python skills.py run text.language-summary --input-file input_run.json 2>$null
 Remove-Item input_run.json
 ```
+
+> **No output or blank screen?** Drop `2>$null` to see the full error message:
+> ```powershell
+> python skills.py run text.language-summary --input-file input_run.json
+> ```
 </details>
 
 Expected output:
