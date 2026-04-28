@@ -46,6 +46,7 @@ python skills.py doctor
 
 # 4 — run your first skill (no API key needed)
 # macOS / Linux / Git Bash:
+unset OPENAI_API_KEY
 python skills.py run text.language-summary \
   --input '{"text": "ORCA decouples agent reasoning from execution. Skills are DAGs, not prompt chains."}' \
   2>/dev/null
@@ -55,6 +56,7 @@ python skills.py run text.language-summary \
 <summary>Windows PowerShell alternative for step 4</summary>
 
 ```powershell
+$env:OPENAI_API_KEY = ""
 '{ "text": "ORCA decouples agent reasoning from execution." }' | Set-Content input_qs.json -Encoding ascii
 python skills.py run text.language-summary --input-file input_qs.json 2>$null
 Remove-Item input_qs.json
@@ -293,6 +295,7 @@ python skills.py doctor
 
 ```bash
 # macOS / Linux / Git Bash (stderr suppressed for clean output):
+unset OPENAI_API_KEY
 python skills.py run text.language-summary \
   --input '{"text": "Agent Skills Runtime is a deterministic execution engine for composable AI agent skills. It supports four binding protocols and ships with 141 Python baselines."}' \
   2>/dev/null
@@ -302,6 +305,7 @@ python skills.py run text.language-summary \
 <summary>Windows PowerShell</summary>
 
 ```powershell
+$env:OPENAI_API_KEY = ""
 '{ "text": "Agent Skills Runtime is a deterministic execution engine." }' | Set-Content input_run.json -Encoding ascii
 python skills.py run text.language-summary --input-file input_run.json 2>$null
 Remove-Item input_run.json
