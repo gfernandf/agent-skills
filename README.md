@@ -449,12 +449,12 @@ Apache 2.0 — see [LICENSE](LICENSE).
 
 > **Beyond Prompting: Decoupling Cognition from Execution in LLM-based Agents through the ORCA Framework**
 >
-> Fernandez Alvarez, G. E. (2026) · [DOI: 10.5281/zenodo.19438943](https://doi.org/10.5281/zenodo.19438943)
+> Fernandez Alvarez, G. E. (2026) · [DOI: 10.5281/zenodo.19438943](https://doi.org/10.5281/zenodo.19438943) · [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6600840)
 
 The theoretical foundations of ORCA and this runtime are described in our research paper.
 See the full [paper landing page](docs/PAPER.md) for abstract, downloads, and citation formats.
 
-📥 [Download PDF](docs/papers/orca_paper_final_clean_v2.pdf) · 📖 [ORCA Specification](ORCA.md)
+📥 [Download PDF](docs/papers/orca_paper_final_clean_v2.pdf) · 📄 [SSRN Entry](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6600840) · 📖 [ORCA Specification](ORCA.md)
 
 ---
 

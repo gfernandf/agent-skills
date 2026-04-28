@@ -8,6 +8,8 @@
 
 **Guillermo E. Fernandez Alvarez** · 2026
 
+Also available on SSRN: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6600840
+
 ---
 
 ### Abstract
@@ -35,6 +37,8 @@ Key contributions include: (1) a formal separation of intent, cognition, and exe
 ### Download
 
 📥 **[Download PDF](papers/orca_paper_final_clean_v2.pdf)**
+
+📄 **[SSRN Entry](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6600840)**
 
 ---
 
