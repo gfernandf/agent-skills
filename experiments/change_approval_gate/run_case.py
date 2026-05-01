@@ -240,12 +240,12 @@ def _print_result(label: str, result: dict, fixture_meta: dict) -> None:
             print(f"    [{step.get('status', '?')}] {step['step_id']} ({step['uses']})")
     violated = out.get("violated_rules", [])
     if violated:
-        print(f"  Violated rules:")
+        print("  Violated rules:")
         for v in violated:
             print(f"    - {v}")
     followups = out.get("required_followups", [])
     if followups:
-        print(f"  Required followups:")
+        print("  Required followups:")
         for f in followups:
             print(f"    - {f}")
     rationale = out.get("rationale", "")
