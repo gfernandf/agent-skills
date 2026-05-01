@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "fixture_id": "f02",
+    "description": "Auth service change targeting staging — no test evidence provided",
+    "expected_decision": "block",
+    "expected_risk_level": "high",
+    "violated_rules": ["Missing required field: test_evidence"],
+    "teaching_point": "A functionally plausible auth change is blocked because test evidence is missing for staging. The gate fires on missing evidence, not on code quality.",
+    "policy": "standard"
+  },
+  "change_package": {
+    "change_id": "pr-0201",
+    "change_type": "pr",
+    "title": "Switch auth validation from session cookies to JWT tokens",
+    "diff_text": "--- a/src/auth/middleware.py\n+++ b/src/auth/middleware.py\n@@ -10,14 +10,20 @@\n-import sessions\n+import jwt\n+JWT_SECRET = os.environ['JWT_SECRET']\n+\n-def validate_session(request):\n-    token = request.cookies.get('session_token')\n-    if not sessions.is_valid(token):\n-        raise AuthError('Invalid session')\n+def validate_jwt(request):\n+    token = request.headers.get('Authorization', '').replace('Bearer ', '')\n+    try:\n+        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])\n+    except jwt.InvalidTokenError:\n+        raise AuthError('Invalid token')",
+    "target_environment": "staging",
+    "changed_files": [
+      "src/auth/middleware.py",
+      "src/auth/session.py",
+      "requirements.txt"
+    ],
+    "author_summary": "Switching from session-based to JWT-based auth to support the new mobile client. Session module will be deprecated in a follow-up PR.",
+    "labels": ["security", "breaking-change", "auth"],
+    "rollback_plan": "Revert PR and re-enable session auth middleware. No DB changes needed."
+  }
+}

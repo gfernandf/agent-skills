@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "fixture_id": "f05",
+    "description": "Rate-limiting config change for prod with blast radius across all API endpoints — no test evidence",
+    "expected_decision": "block",
+    "expected_risk_level": "high",
+    "violated_rules": ["Missing required field: test_evidence"],
+    "teaching_point": "A 'small' config change that affects every API endpoint is blocked. The surface footprint (1 YAML file) does not reflect the operational blast radius. The gate fires on missing evidence for prod.",
+    "policy": "strict_prod"
+  },
+  "change_package": {
+    "change_id": "pr-0501",
+    "change_type": "pr",
+    "title": "Tighten prod rate limits: reduce global cap from 1000 to 200 req/min",
+    "diff_text": "--- a/config/rate_limits_prod.yaml\n+++ b/config/rate_limits_prod.yaml\n@@ -3,4 +3,4 @@\n global:\n-  requests_per_minute: 1000\n+  requests_per_minute: 200\n   burst_allowance: 50\n   action: throttle",
+    "target_environment": "prod",
+    "changed_files": ["config/rate_limits_prod.yaml"],
+    "author_summary": "Reducing the global rate limit to align with capacity planning results from last week's load test. The 1000 rpm cap was causing cascading timeouts under burst traffic. New cap: 200 rpm with 50-burst allowance.",
+    "labels": ["config", "ops"],
+    "rollback_plan": "Revert config/rate_limits_prod.yaml to previous value. Takes effect on next config reload (no redeploy needed)."
+  }
+}

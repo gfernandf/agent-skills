@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "fixture_id": "f03",
+    "description": "Destructive DB migration (column drop) to prod — no rollback plan",
+    "expected_decision": "block",
+    "expected_risk_level": "high",
+    "violated_rules": ["Missing required field: rollback_plan", "Missing required field: test_evidence"],
+    "teaching_point": "An irreversible database schema change targeting prod is blocked because there is no documented rollback plan. The surface-level description sounds routine. The gate sees the missing evidence.",
+    "policy": "strict_prod"
+  },
+  "change_package": {
+    "change_id": "rel-0301",
+    "change_type": "release",
+    "title": "v2.4.0: migrate orders table — drop legacy 'status_code' column",
+    "diff_text": "-- Migration: 0042_drop_orders_status_code.sql\nALTER TABLE orders DROP COLUMN status_code;\n-- Backfill completed in migration 0041. This removes the now-unused column.\n-- Application code references removed in PR #892.",
+    "target_environment": "prod",
+    "changed_files": [
+      "migrations/0042_drop_orders_status_code.sql",
+      "src/orders/models.py"
+    ],
+    "author_summary": "Cleanup migration. The status_code column has been unused since v2.3 — the new status enum has been backfilled. This just removes the dead column.",
+    "labels": ["database", "destructive", "migration"],
+    "release_notes": "v2.4.0 removes deprecated orders.status_code column. No user-facing changes."
+  }
+}

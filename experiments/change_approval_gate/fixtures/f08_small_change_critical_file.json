@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "fixture_id": "f08",
+    "description": "One-line change in the central HTTP request router — small footprint, high blast radius",
+    "expected_decision": "escalate",
+    "expected_risk_level": "critical",
+    "teaching_point": "The gate passes — all required fields are present, no forbidden patterns. But the risk classifier sees a 1-line change in the central routing file and classifies it critical (every request flows through this file). The result is 'escalate', not 'approve'. An LLM reviewer looking at 'tiny diff' may say approve. ORCA's risk step considers what was changed, not just how much.",
+    "policy": "standard"
+  },
+  "change_package": {
+    "change_id": "pr-0801",
+    "change_type": "pr",
+    "title": "Fix typo in router: correct 'preflight' → 'preflight' CORS header name",
+    "diff_text": "--- a/src/core/router.py\n+++ b/src/core/router.py\n@@ -87,1 +87,1 @@\n-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Autorization'\n+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'",
+    "target_environment": "prod",
+    "changed_files": ["src/core/router.py"],
+    "author_summary": "One-character typo fix in the CORS preflight handler. 'Autorization' should be 'Authorization'. This has been silently failing CORS preflight for non-Chrome browsers.",
+    "labels": ["bugfix", "cors"],
+    "test_evidence": "Manual browser test: Firefox CORS preflight now passes. Automated: 89/89 route tests pass.",
+    "rollback_plan": "Revert the single-character change. Impact: CORS preflight continues to fail for non-Chrome browsers (existing bug, no regression)."
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "fixture_id": "f01",
+    "description": "Pure refactor: extract helper function, no behavior change",
+    "expected_decision": "approve",
+    "expected_risk_level": "low",
+    "teaching_point": "The gate does not over-block. A clean refactor with full evidence passes unconditionally.",
+    "policy": "standard"
+  },
+  "change_package": {
+    "change_id": "pr-0101",
+    "change_type": "pr",
+    "title": "Refactor: extract validate_email helper from UserService",
+    "diff_text": "--- a/src/user/service.py\n+++ b/src/user/service.py\n@@ -45,6 +45,18 @@ class UserService:\n+def validate_email(email: str) -> bool:\n+    \"\"\"Extracted helper — no behavior change, improves testability.\"\"\"\n+    return bool(re.match(r'^[\\w.+-]+@[\\w-]+\\.[\\w.-]+$', email))\n+\n class UserService:\n     def create_user(self, data: dict):\n-        if not re.match(r'^[\\w.+-]+@[\\w-]+\\.[\\w.-]+$', data['email']):\n+        if not validate_email(data['email']):\n             raise ValueError('Invalid email')",
+    "target_environment": "dev",
+    "changed_files": ["src/user/service.py"],
+    "author_summary": "Pure refactor — extracted inline regex into a named helper. No logic change, improves testability. All existing tests pass.",
+    "labels": ["refactor", "no-behavior-change"],
+    "test_evidence": "Unit tests pass: 47/47. Coverage: 91%. No new failures.",
+    "rollback_plan": "Revert PR — no DB migrations, no config changes."
+  }
+}

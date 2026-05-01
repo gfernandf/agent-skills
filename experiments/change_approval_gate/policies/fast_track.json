@@ -1,0 +1,16 @@
+{
+  "name": "fast-track",
+  "description": "Minimal gate for low-stakes dev changes. Only requires the core diff fields. No rollback or test evidence requirements. Blocks only on explicit WIP/DNC labels.",
+  "gate": {
+    "rules": {
+      "required_keys": ["diff_text", "changed_files"],
+      "forbidden_keys": ["wip", "do-not-merge"]
+    },
+    "action": "block"
+  },
+  "risk": {
+    "max_level": "high",
+    "escalate_on_critical": true,
+    "categories": ["low", "medium", "high", "critical"]
+  }
+}

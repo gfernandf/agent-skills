@@ -1,0 +1,28 @@
+{
+  "name": "strict-prod",
+  "description": "High-bar gate for production deployments and releases. Requires rollback plan, test evidence, and author summary for all environments. Blocks on a broad set of forbidden patterns. Escalates on critical risk. Maximum tolerated risk level: medium.",
+  "gate": {
+    "rules": {
+      "required_keys": [
+        "diff_text",
+        "changed_files",
+        "author_summary",
+        "rollback_plan",
+        "test_evidence"
+      ],
+      "forbidden_keys": [
+        "wip",
+        "do-not-merge",
+        "hardcoded-secret",
+        "skip-review",
+        "skip-tests"
+      ]
+    },
+    "action": "block"
+  },
+  "risk": {
+    "max_level": "medium",
+    "escalate_on_critical": true,
+    "categories": ["low", "medium", "high", "critical"]
+  }
+}

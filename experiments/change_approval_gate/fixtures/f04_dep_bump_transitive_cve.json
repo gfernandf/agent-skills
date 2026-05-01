@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "fixture_id": "f04",
+    "description": "Dependency version bump with a known CVE in a transitive dependency",
+    "expected_decision": "escalate",
+    "expected_risk_level": "critical",
+    "teaching_point": "The gate passes (no required fields missing) but risk is classified as critical due to the transitive CVE note. Escalate — not block — because the author provided evidence and context, but human review of the CVE is required before merging.",
+    "policy": "standard"
+  },
+  "change_package": {
+    "change_id": "pr-0401",
+    "change_type": "pr",
+    "title": "Bump requests from 2.28.1 to 2.31.0 (+ transitive urllib3 CVE note)",
+    "diff_text": "--- a/requirements.txt\n+++ b/requirements.txt\n@@ -14,2 +14,2 @@\n-requests==2.28.1\n+requests==2.31.0\n # Note: requests 2.31.0 pulls in urllib3 1.26.18 which has CVE-2023-43804\n # (moderate severity, HTTP request smuggling in proxied environments).\n # Our deployment does NOT use an HTTP proxy — assessed as unexploitable in context.",
+    "target_environment": "staging",
+    "changed_files": ["requirements.txt"],
+    "author_summary": "Bumping requests to pick up security fixes in 2.29-2.31. Transitive urllib3 CVE-2023-43804 noted but assessed as unexploitable in our network topology (no proxies). Security team asked to confirm.",
+    "labels": ["dependency", "security"],
+    "test_evidence": "Integration tests pass: 112/112. Dependency audit: 1 known CVE (urllib3, assessed low risk for our environment).",
+    "rollback_plan": "Revert requirements.txt. No DB or config changes."
+  }
+}

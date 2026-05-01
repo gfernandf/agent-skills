@@ -1,0 +1,25 @@
+fixture_id,policy,expected,prompt_decision,orca_decision,prompt_latency_s,orca_latency_s,orca_traceable,orca_steps
+f01_refactor_innocuous,fast_track,approve,approve,approve,2.935,16.856,True,7
+f01_refactor_innocuous,standard,approve,approve,approve,2.785,16.168,True,7
+f01_refactor_innocuous,strict_prod,approve,approve,approve,2.85,16.297,True,7
+f02_auth_no_test_evidence,fast_track,block,block,approve,4.168,19.888,True,7
+f02_auth_no_test_evidence,standard,block,block,approve,4.145,19.696,True,7
+f02_auth_no_test_evidence,strict_prod,block,block,"error: Step 'justify_decision' failed: Capability 'policy.decision.justify' execution failed. [capability=policy.decision.justify] (cause: Binding execution failed for capability 'policy.decision.justify' after 1 attempt(s). [capability=policy.decision.justify] (cause: Protocol routing failed for protocol 'pythoncall'. (cause: Callable 'justify_decision' in module 'official_services.policy_baseline' failed during execution. [capability=policy.decision.justify] (cause: 'str' object has no attribute 'get')))) [skill=code.change-approval-gate, step=justify_decision]",3.607,0,False,0
+f03_db_migration_no_rollback,fast_track,block,approve,approve,2.601,13.818,True,7
+f03_db_migration_no_rollback,standard,block,block,approve,10.514,13.627,True,7
+f03_db_migration_no_rollback,strict_prod,block,block,"error: Step 'justify_decision' failed: Capability 'policy.decision.justify' execution failed. [capability=policy.decision.justify] (cause: Binding execution failed for capability 'policy.decision.justify' after 1 attempt(s). [capability=policy.decision.justify] (cause: Protocol routing failed for protocol 'pythoncall'. (cause: Callable 'justify_decision' in module 'official_services.policy_baseline' failed during execution. [capability=policy.decision.justify] (cause: 'str' object has no attribute 'get')))) [skill=code.change-approval-gate, step=justify_decision]",5.706,0,False,0
+f04_dep_bump_transitive_cve,fast_track,escalate,approve,approve,3.501,9.672,True,7
+f04_dep_bump_transitive_cve,standard,escalate,approve,approve,2.852,13.501,True,7
+f04_dep_bump_transitive_cve,strict_prod,escalate,approve,approve,3.596,10.361,True,7
+f05_config_blast_radius_prod,fast_track,block,approve,approve,3.96,13.71,True,7
+f05_config_blast_radius_prod,standard,block,approve,approve,3.146,19.364,True,7
+f05_config_blast_radius_prod,strict_prod,block,block,"error: Step 'justify_decision' failed: Capability 'policy.decision.justify' execution failed. [capability=policy.decision.justify] (cause: Binding execution failed for capability 'policy.decision.justify' after 1 attempt(s). [capability=policy.decision.justify] (cause: Protocol routing failed for protocol 'pythoncall'. (cause: Callable 'justify_decision' in module 'official_services.policy_baseline' failed during execution. [capability=policy.decision.justify] (cause: 'str' object has no attribute 'get')))) [skill=code.change-approval-gate, step=justify_decision]",3.984,0,False,0
+f06_hardcoded_secret,fast_track,block,block,approve,3.283,16.233,True,7
+f06_hardcoded_secret,standard,block,block,approve,3.37,14.836,True,7
+f06_hardcoded_secret,strict_prod,block,block,approve,3.805,15.431,True,7
+f07_release_no_test_evidence,fast_track,block,approve,approve,2.782,20.569,True,7
+f07_release_no_test_evidence,standard,block,approve,approve,3.018,16.342,True,7
+f07_release_no_test_evidence,strict_prod,block,block,"error: Step 'justify_decision' failed: Capability 'policy.decision.justify' execution failed. [capability=policy.decision.justify] (cause: Binding execution failed for capability 'policy.decision.justify' after 1 attempt(s). [capability=policy.decision.justify] (cause: Protocol routing failed for protocol 'pythoncall'. (cause: Callable 'justify_decision' in module 'official_services.policy_baseline' failed during execution. [capability=policy.decision.justify] (cause: 'str' object has no attribute 'get')))) [skill=code.change-approval-gate, step=justify_decision]",3.699,0,False,0
+f08_small_change_critical_file,fast_track,escalate,approve,approve,2.652,12.946,True,7
+f08_small_change_critical_file,standard,escalate,approve,approve,2.233,14.232,True,7
+f08_small_change_critical_file,strict_prod,escalate,approve,approve,3.289,14.957,True,7

@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "fixture_id": "f07",
+    "description": "Clean-looking release candidate for prod — diff looks fine but test_evidence field is absent",
+    "expected_decision": "block",
+    "expected_risk_level": "medium",
+    "violated_rules": ["Missing required field: test_evidence"],
+    "teaching_point": "This is the canonical 'looks fine' case. The diff is clean, the summary sounds responsible, the rollback plan is documented. But there is no test evidence. The strict_prod policy requires test evidence for prod. An LLM reviewer might say 'approve' because the code looks clean. The gate says 'block' because the evidence is absent.",
+    "policy": "strict_prod"
+  },
+  "change_package": {
+    "change_id": "rel-0701",
+    "change_type": "release",
+    "title": "v3.1.0 release — add user notification preferences API",
+    "diff_text": "--- a/src/notifications/views.py\n+++ b/src/notifications/views.py\n@@ -0,0 +1,34 @@\n+class NotificationPreferencesView(APIView):\n+    def get(self, request, user_id):\n+        prefs = NotificationPreference.objects.get(user_id=user_id)\n+        return Response(PreferenceSerializer(prefs).data)\n+\n+    def put(self, request, user_id):\n+        prefs, _ = NotificationPreference.objects.get_or_create(user_id=user_id)\n+        serializer = PreferenceSerializer(prefs, data=request.data, partial=True)\n+        serializer.is_valid(raise_exception=True)\n+        serializer.save()\n+        return Response(serializer.data)",
+    "target_environment": "prod",
+    "changed_files": [
+      "src/notifications/views.py",
+      "src/notifications/serializers.py",
+      "src/notifications/urls.py",
+      "migrations/0055_notification_preferences.py"
+    ],
+    "author_summary": "Adds the notification preferences CRUD API. New endpoint: GET/PUT /api/users/{id}/notification-preferences. DB migration adds the notification_preferences table.",
+    "labels": ["feature", "api", "database"],
+    "rollback_plan": "Run migration 0055 down. Revert deployment. No data loss — table is new."
+  }
+}

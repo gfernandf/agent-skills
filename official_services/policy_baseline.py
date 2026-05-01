@@ -63,8 +63,9 @@ def gate_constraint(payload, gate):
         if isinstance(key, str) and key not in payload:
             violations.append(f"missing_required_key:{key}")
 
+    payload_labels = payload.get("labels", []) if isinstance(payload.get("labels"), list) else []
     for key in rules.get("forbidden_keys") or []:
-        if isinstance(key, str) and key in payload:
+        if isinstance(key, str) and (key in payload or key in payload_labels):
             violations.append(f"forbidden_key_present:{key}")
 
     max_size = rules.get("max_size")
@@ -93,7 +94,7 @@ def justify_decision(decision, rules, context=None):
         r for r in rules_list if isinstance(r, dict) and r.get("outcome") == decision
     ]
     if not applicable:
-        applicable = rules_list[:1]
+        applicable = [r for r in rules_list[:1] if isinstance(r, dict)]
 
     rule_ids = [r.get("id", "unknown") for r in applicable]
     justification = f"Decision '{decision}' is justified by {len(applicable)} applicable rule(s): {', '.join(rule_ids)}."
@@ -125,6 +126,7 @@ def classify_risk(action, categories=None):
     factors = []
     score = 0
 
+    # Legacy generic fields (kept for backward compatibility)
     if action.get("destructive") or action.get("irreversible"):
         factors.append("destructive_or_irreversible")
         score += 2
@@ -142,10 +144,39 @@ def classify_risk(action, categories=None):
         factors.append("high_cost")
         score += 1
 
+    # Change-package-aware heuristics
+    # Label-based scoring
+    _high_risk_labels = {"security", "breaking-change", "destructive", "database"}
+    _critical_labels = {"hardcoded-secret", "skip-tests", "skip-review"}
+    labels = action.get("labels") if isinstance(action.get("labels"), list) else []
+    label_score = sum(2 if lbl in _critical_labels else 1 if lbl in _high_risk_labels else 0 for lbl in labels)
+    if label_score:
+        factors.append(f"risk_labels:{label_score}pts")
+        score += min(label_score, 2)
+
+    # CVE reference in diff text — deterministic security signal
+    if "CVE" in str(action.get("diff_text", "")):
+        factors.append("cve_reference_in_diff")
+        score += 2
+
+    # Production environment
+    if action.get("target_environment") == "prod":
+        factors.append("production_target")
+        score += 1
+
+    # Critical-path file changes (blast radius regardless of diff size)
+    _critical_path_patterns = ["router", "middleware", "/core/", "auth/", "gateway", "security/"]
+    for f in (action.get("changed_files") or []):
+        if any(p in str(f) for p in _critical_path_patterns):
+            factors.append(f"critical_path_file:{f}")
+            # +2 if in prod (highest blast radius), +1 otherwise
+            score += 2 if action.get("target_environment") == "prod" else 1
+            break  # count once
+
     idx = min(score, len(cats) - 1)
     risk_level = cats[idx]
     rationale = (
-        f"Risk classified as '{risk_level}' based on {len(factors)} factor(s)."
+        f"Risk classified as '{risk_level}' based on {len(factors)} factor(s): {', '.join(factors)}."
         if factors
         else f"No risk factors detected; classified as '{risk_level}'."
     )

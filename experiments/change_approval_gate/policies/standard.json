@@ -1,0 +1,16 @@
+{
+  "name": "standard",
+  "description": "Default gate for most PR and release workflows. Requires author summary. Rollback plan and test evidence are required for prod deployments. Blocks on WIP/DNC labels. Escalates on critical risk.",
+  "gate": {
+    "rules": {
+      "required_keys": ["diff_text", "changed_files", "author_summary", "test_evidence"],
+      "forbidden_keys": ["wip", "do-not-merge", "hardcoded-secret"]
+    },
+    "action": "block"
+  },
+  "risk": {
+    "max_level": "medium",
+    "escalate_on_critical": true,
+    "categories": ["low", "medium", "high", "critical"]
+  }
+}
