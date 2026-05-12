@@ -35,7 +35,11 @@ Configuration for Claude Desktop (``claude_desktop_config.json``)::
 
 from __future__ import annotations
 
-from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from concurrent.futures import (
+    Future,
+    ThreadPoolExecutor,
+    TimeoutError as FutureTimeoutError,
+)
 import json
 import logging
 from threading import Lock
@@ -141,9 +145,7 @@ def _build_skill_inspect_result(
     """Return metadata for a skill id."""
     target = next((s for s in skills if s.get("id") == skill_id), None)
     if target is None:
-        raise ValueError(
-            f"Skill '{skill_id}' is not available in this MCP session."
-        )
+        raise ValueError(f"Skill '{skill_id}' is not available in this MCP session.")
     return {
         "id": target.get("id"),
         "name": target.get("name") or "",
@@ -198,11 +200,13 @@ def _build_contract_inspect_result(
         )
 
     inputs = target.get("inputs") if isinstance(target.get("inputs"), dict) else {}
-    outputs = (
-        target.get("outputs") if isinstance(target.get("outputs"), dict) else {}
-    )
+    outputs = target.get("outputs") if isinstance(target.get("outputs"), dict) else {}
     required_inputs = sorted(
-        [name for name, spec in inputs.items() if isinstance(spec, dict) and spec.get("required", False)]
+        [
+            name
+            for name, spec in inputs.items()
+            if isinstance(spec, dict) and spec.get("required", False)
+        ]
     )
 
     return {
@@ -344,7 +348,9 @@ def _extract_compiled_plan_candidate(planner_output: str) -> Any:
     return None
 
 
-def _normalize_execute_from_plan_args(name: str, args: dict[str, Any]) -> dict[str, Any]:
+def _normalize_execute_from_plan_args(
+    name: str, args: dict[str, Any]
+) -> dict[str, Any]:
     """Accept aliases used by external planners for execute-from-plan."""
     if name != f"{_SKILL_PREFIX}agent.execute-from-plan":
         return args
@@ -438,7 +444,7 @@ def _execute_runtime_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
     from sdk.embedded import execute_capability, execute
 
     if name.startswith(_SKILL_PREFIX):
-        return execute(name[len(_SKILL_PREFIX):], args)
+        return execute(name[len(_SKILL_PREFIX) :], args)
     return execute_capability(name, args)
 
 
@@ -459,7 +465,12 @@ def _wait_for_run_result(run_id: str, timeout_ms: int) -> tuple[bool, dict[str, 
         raise ValueError(f"Unknown run_id '{run_id}'.")
     try:
         result = fut.result(timeout=timeout_ms / 1000.0)
-        return True, {"status": "completed", "run_id": run_id, "tool": tool_name, "result": result}
+        return True, {
+            "status": "completed",
+            "run_id": run_id,
+            "tool": tool_name,
+            "result": result,
+        }
     except FutureTimeoutError:
         return False, {"status": "running", "run_id": run_id, "tool": tool_name}
 
@@ -474,7 +485,12 @@ def _get_run_status_payload(run_id: str) -> dict[str, Any]:
         return {"status": "running", "run_id": run_id, "tool": tool_name}
     try:
         result = fut.result()
-        return {"status": "completed", "run_id": run_id, "tool": tool_name, "result": result}
+        return {
+            "status": "completed",
+            "run_id": run_id,
+            "tool": tool_name,
+            "result": result,
+        }
     except Exception as exc:
         return {
             "status": "error",
@@ -637,30 +653,34 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
             # bare ("research.generate-briefing") skill ids so the Planner can
             # pass the tool name directly from its tools list.
             if skill_id.startswith(_SKILL_PREFIX):
-                skill_id = skill_id[len(_SKILL_PREFIX):]
+                skill_id = skill_id[len(_SKILL_PREFIX) :]
             result = _build_skill_inspect_result(skill_id, skills)
 
         elif name == _RUN_STATUS_TOOL:
             run_id = safe_args.get("run_id")
             if not isinstance(run_id, str) or not run_id:
-                raise ValueError("run.status requires non-empty string argument 'run_id'.")
+                raise ValueError(
+                    "run.status requires non-empty string argument 'run_id'."
+                )
             result = _get_run_status_payload(run_id)
 
         elif name.startswith(_SKILL_PREFIX):
-            skill_id = name[len(_SKILL_PREFIX):]
+            skill_id = name[len(_SKILL_PREFIX) :]
             async_requested, wait_ms = _extract_execution_controls(safe_args)
             # For execute-from-plan: if plan is missing, force async to get it from cache later.
             # If plan exists, allow sync execution with extended timeout.
             if skill_id == "agent.execute-from-plan":
                 has_plan = bool(
-                    safe_args.get("compiled_plan") or 
-                    safe_args.get("compiled_plan_json") or
-                    safe_args.get("planner_output")
+                    safe_args.get("compiled_plan")
+                    or safe_args.get("compiled_plan_json")
+                    or safe_args.get("planner_output")
                 )
                 if not has_plan and not async_requested:
                     # No plan provided and not explicitly async → try cached plan later
                     async_requested = True
-            effective_wait_ms = wait_ms if wait_ms is not None else _DEFAULT_SKILL_WAIT_MS
+            effective_wait_ms = (
+                wait_ms if wait_ms is not None else _DEFAULT_SKILL_WAIT_MS
+            )
             if async_requested:
                 run_id = _start_background_run(name, safe_args)
                 result = _build_running_skill_placeholder(
@@ -827,14 +847,17 @@ async def run_sse(host: str = "0.0.0.0", port: int = 8765) -> None:
 
     async def handle_root(request):
         from starlette.responses import JSONResponse
-        return JSONResponse({
-            "message": "agent-skills MCP server",
-            "endpoints": {
-                "/sse": "Server-Sent Events transport",
-                "/messages/": "SSE message handling",
-                "/mcp": "JSON-RPC over HTTP",
+
+        return JSONResponse(
+            {
+                "message": "agent-skills MCP server",
+                "endpoints": {
+                    "/sse": "Server-Sent Events transport",
+                    "/messages/": "SSE message handling",
+                    "/mcp": "JSON-RPC over HTTP",
+                },
             }
-        })
+        )
 
     @asynccontextmanager
     async def lifespan(app):

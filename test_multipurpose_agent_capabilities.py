@@ -88,10 +88,20 @@ def test_agent_request_normalize():
     )
     assert_keys(result, "normalized_request", "language")
     nr = result["normalized_request"]
-    assert_keys(nr, "raw_request", "language", "detected_intent",
-                "explicit_constraints", "urgency", "requires_external_action",
-                "attachments", context="normalized_request")
-    assert nr["urgency"] in ("low", "medium", "high"), f"Invalid urgency: {nr['urgency']}"
+    assert_keys(
+        nr,
+        "raw_request",
+        "language",
+        "detected_intent",
+        "explicit_constraints",
+        "urgency",
+        "requires_external_action",
+        "attachments",
+        context="normalized_request",
+    )
+    assert nr["urgency"] in ("low", "medium", "high"), (
+        f"Invalid urgency: {nr['urgency']}"
+    )
     assert isinstance(nr["explicit_constraints"], list)
     assert isinstance(nr["attachments"], list)
 
@@ -109,9 +119,16 @@ def test_agent_goal_interpret():
     result = agent_bl.interpret_goal(normalized_request=nr)
     assert_keys(result, "interpreted_goal", "requires_clarification")
     goal = result["interpreted_goal"]
-    assert_keys(goal, "objective", "deliverable_type", "success_criteria",
-                "constraints", "assumptions", "open_questions",
-                context="interpreted_goal")
+    assert_keys(
+        goal,
+        "objective",
+        "deliverable_type",
+        "success_criteria",
+        "constraints",
+        "assumptions",
+        "open_questions",
+        context="interpreted_goal",
+    )
     assert isinstance(goal["success_criteria"], list)
     assert isinstance(result["requires_clarification"], bool)
 
@@ -132,21 +149,35 @@ def test_agent_criteria_define():
 
 
 def test_agent_catalog_search():
-    goal = {"objective": "search for relevant skills", "deliverable_type": "task_output"}
+    goal = {
+        "objective": "search for relevant skills",
+        "deliverable_type": "task_output",
+    }
     result = agent_bl.search_catalog(goal=goal)
     assert_keys(result, "candidate_items", "total_matched")
     assert isinstance(result["candidate_items"], list)
     assert isinstance(result["total_matched"], int)
     for item in result["candidate_items"]:
-        assert_keys(item, "ref", "type", "relevance_score", "reason",
-                    context="candidate_item")
+        assert_keys(
+            item, "ref", "type", "relevance_score", "reason", context="candidate_item"
+        )
         assert 0.0 <= item["relevance_score"] <= 1.0
 
 
 def test_agent_catalog_rank():
     candidates = [
-        {"ref": "web.source.search", "type": "capability", "relevance_score": 0.8, "reason": "A"},
-        {"ref": "agent.plan-and-route", "type": "skill", "relevance_score": 0.6, "reason": "B"},
+        {
+            "ref": "web.source.search",
+            "type": "capability",
+            "relevance_score": 0.8,
+            "reason": "A",
+        },
+        {
+            "ref": "agent.plan-and-route",
+            "type": "skill",
+            "relevance_score": 0.6,
+            "reason": "B",
+        },
     ]
     goal = {"objective": "rank test"}
     result = agent_bl.rank_catalog(candidate_items=candidates, interpreted_goal=goal)
@@ -159,8 +190,12 @@ def test_agent_catalog_rank():
 
 def test_agent_catalog_detect():
     goal = {"objective": "detect gaps"}
-    candidates = [{"ref": "web.source.search", "type": "capability", "relevance_score": 0.7}]
-    result = agent_bl.detect_catalog_gaps(interpreted_goal=goal, candidate_items=candidates)
+    candidates = [
+        {"ref": "web.source.search", "type": "capability", "relevance_score": 0.7}
+    ]
+    result = agent_bl.detect_catalog_gaps(
+        interpreted_goal=goal, candidate_items=candidates
+    )
     assert_keys(result, "missing_capabilities", "missing_skills", "gap_severity")
     assert result["gap_severity"] in ("none", "minor", "blocking")
 
@@ -182,8 +217,17 @@ def test_agent_plan_split():
     assert isinstance(result["expanded_steps"], list)
     assert result["step_count"] == len(result["expanded_steps"])
     for step in result["expanded_steps"]:
-        assert_keys(step, "id", "type", "ref", "purpose", "inputs", "outputs", "depends_on",
-                    context="expanded_step")
+        assert_keys(
+            step,
+            "id",
+            "type",
+            "ref",
+            "purpose",
+            "inputs",
+            "outputs",
+            "depends_on",
+            context="expanded_step",
+        )
 
 
 def test_agent_plan_map():
@@ -234,12 +278,21 @@ def test_agent_plan_validate():
     result = agent_bl.validate_plan(expanded_plan=plan)
     assert_keys(result, "validation_result")
     vr = result["validation_result"]
-    assert_keys(vr, "status", "errors", "warnings", "repairable", "check_count",
-                context="validation_result")
+    assert_keys(
+        vr,
+        "status",
+        "errors",
+        "warnings",
+        "repairable",
+        "check_count",
+        context="validation_result",
+    )
     assert vr["status"] in ("passed", "failed")
     assert isinstance(vr["errors"], list)
     # Plan above is valid, expect passed
-    assert vr["status"] == "passed", f"Expected passed, got {vr['status']}: {vr['errors']}"
+    assert vr["status"] == "passed", (
+        f"Expected passed, got {vr['status']}: {vr['errors']}"
+    )
 
 
 def test_agent_plan_validate_detects_bad_deps():
@@ -274,8 +327,13 @@ def test_agent_plan_reconcile():
             }
         ]
     }
-    errors = [{"step_id": "step_1", "check": "deps_exist",
-               "message": "depends_on references unknown step 'ghost_step'"}]
+    errors = [
+        {
+            "step_id": "step_1",
+            "check": "deps_exist",
+            "message": "depends_on references unknown step 'ghost_step'",
+        }
+    ]
     result = agent_bl.reconcile_plan(
         invalid_plan=invalid_plan, validation_errors=errors
     )
@@ -291,18 +349,38 @@ def test_agent_plan_reconcile():
 def test_agent_plan_synthesize():
     plan = {
         "bound_steps": [
-            {"id": "step_1", "type": "capability", "ref": "web.source.search",
-             "inputs": {}, "outputs": {}, "depends_on": []},
-            {"id": "step_2", "type": "capability", "ref": "text.content.summarize",
-             "inputs": {}, "outputs": {}, "depends_on": ["step_1"]},
+            {
+                "id": "step_1",
+                "type": "capability",
+                "ref": "web.source.search",
+                "inputs": {},
+                "outputs": {},
+                "depends_on": [],
+            },
+            {
+                "id": "step_2",
+                "type": "capability",
+                "ref": "text.content.summarize",
+                "inputs": {},
+                "outputs": {},
+                "depends_on": ["step_1"],
+            },
         ]
     }
     result = agent_bl.synthesize_plan(validated_plan=plan)
     assert_keys(result, "compiled_plan", "step_count")
     cp = result["compiled_plan"]
-    assert_keys(cp, "dag", "execution_order", "parallel_groups", "gates",
-                "state_bindings", "registry_version", "plan_hash",
-                context="compiled_plan")
+    assert_keys(
+        cp,
+        "dag",
+        "execution_order",
+        "parallel_groups",
+        "gates",
+        "state_bindings",
+        "registry_version",
+        "plan_hash",
+        context="compiled_plan",
+    )
     assert isinstance(cp["execution_order"], list)
     assert result["step_count"] == len(cp["execution_order"])
     assert len(cp["plan_hash"]) == 16
@@ -326,8 +404,14 @@ def test_agent_plan_gate():
     result = agent_bl.gate_plan(compiled_plan=compiled_plan)
     assert_keys(result, "authorization_result")
     ar = result["authorization_result"]
-    assert_keys(ar, "status", "blocked_steps", "approval_prompts", "risk_level",
-                context="authorization_result")
+    assert_keys(
+        ar,
+        "status",
+        "blocked_steps",
+        "approval_prompts",
+        "risk_level",
+        context="authorization_result",
+    )
     assert ar["status"] in ("approved", "denied", "requires_user_approval")
     assert isinstance(ar["blocked_steps"], list)
 
@@ -351,8 +435,14 @@ def test_agent_plan_execute():
     result = agent_bl.execute_plan(compiled_plan=compiled_plan, initial_state={})
     assert_keys(result, "execution_result", "failed_steps")
     er = result["execution_result"]
-    assert_keys(er, "status", "final_state", "step_results", "total_duration_ms",
-                context="execution_result")
+    assert_keys(
+        er,
+        "status",
+        "final_state",
+        "step_results",
+        "total_duration_ms",
+        context="execution_result",
+    )
     assert er["status"] in ("success", "partial", "failed")
     assert isinstance(er["step_results"], list)
     assert isinstance(result["failed_steps"], list)
@@ -364,8 +454,14 @@ def test_agent_output_generate():
         "status": "success",
         "final_state": {},
         "step_results": [
-            {"step_id": "s1", "ref": "web.source.search", "status": "success",
-             "outputs": {}, "error": None, "duration_ms": 200}
+            {
+                "step_id": "s1",
+                "ref": "web.source.search",
+                "status": "success",
+                "outputs": {},
+                "error": None,
+                "duration_ms": 200,
+            }
         ],
         "total_duration_ms": 200,
     }
@@ -385,10 +481,22 @@ def test_agent_output_generate():
     )
     assert_keys(result, "report", "report_status")
     report = result["report"]
-    assert_keys(report, "user_response", "artifacts", "limitations",
-                "next_steps", "evidence", context="report")
+    assert_keys(
+        report,
+        "user_response",
+        "artifacts",
+        "limitations",
+        "next_steps",
+        "evidence",
+        context="report",
+    )
     assert isinstance(report["user_response"], str)
-    assert result["report_status"] in ("success", "partial", "failed", "requires_followup")
+    assert result["report_status"] in (
+        "success",
+        "partial",
+        "failed",
+        "requires_followup",
+    )
 
 
 def test_agent_output_synthesize():
@@ -409,8 +517,14 @@ def test_agent_output_synthesize():
     execution_trace = {
         "status": "success",
         "step_results": [
-            {"step_id": "step_1", "ref": "web.source.search", "status": "success",
-             "outputs": {}, "error": None, "duration_ms": 200}
+            {
+                "step_id": "step_1",
+                "ref": "web.source.search",
+                "status": "success",
+                "outputs": {},
+                "error": None,
+                "duration_ms": 200,
+            }
         ],
         "total_duration_ms": 200,
         "final_state": {},
@@ -420,9 +534,18 @@ def test_agent_output_synthesize():
     )
     assert_keys(result, "candidate_skill", "confidence")
     cs = result["candidate_skill"]
-    assert_keys(cs, "name", "description", "version", "steps",
-                "inputs", "outputs", "tags", "notes",
-                context="candidate_skill")
+    assert_keys(
+        cs,
+        "name",
+        "description",
+        "version",
+        "steps",
+        "inputs",
+        "outputs",
+        "tags",
+        "notes",
+        context="candidate_skill",
+    )
     assert cs["version"] == "0.1.0"
     assert 0.0 <= result["confidence"] <= 1.0
 
@@ -438,25 +561,44 @@ def test_eval_output_validate():
     )
     assert_keys(result, "evaluation")
     ev = result["evaluation"]
-    assert_keys(ev, "passed", "score", "criteria_results",
-                "failed_criteria", "improvement_suggestions",
-                context="evaluation")
+    assert_keys(
+        ev,
+        "passed",
+        "score",
+        "criteria_results",
+        "failed_criteria",
+        "improvement_suggestions",
+        context="evaluation",
+    )
     assert isinstance(ev["passed"], bool)
     assert 0.0 <= ev["score"] <= 1.0
     assert len(ev["criteria_results"]) == 2
     for cr in ev["criteria_results"]:
-        assert_keys(cr, "criterion", "met", "score", "rationale",
-                    context="criterion_result")
+        assert_keys(
+            cr, "criterion", "met", "score", "rationale", context="criterion_result"
+        )
 
 
 def test_ops_trace_summarize():
     trace = {
         "status": "success",
         "step_results": [
-            {"step_id": "s1", "ref": "web.source.search", "status": "success",
-             "outputs": {}, "error": None, "duration_ms": 150},
-            {"step_id": "s2", "ref": "text.content.summarize", "status": "success",
-             "outputs": {}, "error": None, "duration_ms": 200},
+            {
+                "step_id": "s1",
+                "ref": "web.source.search",
+                "status": "success",
+                "outputs": {},
+                "error": None,
+                "duration_ms": 150,
+            },
+            {
+                "step_id": "s2",
+                "ref": "text.content.summarize",
+                "status": "success",
+                "outputs": {},
+                "error": None,
+                "duration_ms": 200,
+            },
         ],
         "total_duration_ms": 350,
         "final_state": {},
@@ -464,9 +606,16 @@ def test_ops_trace_summarize():
     result = ops_bl.summarize_trace(execution_trace=trace)
     assert_keys(result, "trace_summary")
     ts = result["trace_summary"]
-    assert_keys(ts, "steps_executed", "decisions", "failures",
-                "overall_status", "total_duration_ms", "success_rate",
-                context="trace_summary")
+    assert_keys(
+        ts,
+        "steps_executed",
+        "decisions",
+        "failures",
+        "overall_status",
+        "total_duration_ms",
+        "success_rate",
+        context="trace_summary",
+    )
     assert len(ts["steps_executed"]) == 2
     assert ts["overall_status"] == "success"
     assert ts["total_duration_ms"] == 350
@@ -511,16 +660,18 @@ def test_binding_files_exist():
             continue
         yaml_files = list(cap_dir.glob("*.yaml"))
         if len(yaml_files) < 2:
-            missing.append(
-                f"{cap_id}/ (has {len(yaml_files)} yaml files, expected 2)"
-            )
+            missing.append(f"{cap_id}/ (has {len(yaml_files)} yaml files, expected 2)")
     if missing:
-        raise AssertionError("Missing binding files:\n" + "\n".join(f"  - {m}" for m in missing))
+        raise AssertionError(
+            "Missing binding files:\n" + "\n".join(f"  - {m}" for m in missing)
+        )
 
 
 def test_capability_yamls_exist():
     """All 18 capability YAML files must exist in the registry."""
-    registry_root = Path(__file__).parent.parent / "agent-skill-registry" / "capabilities"
+    registry_root = (
+        Path(__file__).parent.parent / "agent-skill-registry" / "capabilities"
+    )
     expected = [
         "agent.request.normalize.yaml",
         "agent.goal.interpret.yaml",

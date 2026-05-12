@@ -39,7 +39,9 @@ def _orca_headers() -> dict[str, str]:
     return headers
 
 
-def _orca_request(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+def _orca_request(
+    method: str, path: str, body: dict[str, Any] | None = None
+) -> dict[str, Any]:
     url = f"{ORCA_BASE_URL}{path}"
     raw = json.dumps(body or {}).encode("utf-8") if body is not None else None
     req = Request(url, data=raw, headers=_orca_headers(), method=method)
@@ -78,7 +80,9 @@ def tool_skill_describe(skill_id: str) -> dict[str, Any]:
     return _orca_request("GET", f"/v1/skills/{skill_id}/describe")
 
 
-def tool_skill_execute(skill_id: str, inputs: dict[str, Any], include_trace: bool = False) -> dict[str, Any]:
+def tool_skill_execute(
+    skill_id: str, inputs: dict[str, Any], include_trace: bool = False
+) -> dict[str, Any]:
     return _orca_request(
         "POST",
         f"/v1/skills/{skill_id}/execute",
@@ -146,7 +150,9 @@ def _dispatch_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     if name == "skill_execute":
         return tool_skill_execute(
             skill_id=str(arguments.get("skill_id", "")),
-            inputs=arguments.get("inputs", {}) if isinstance(arguments.get("inputs"), dict) else {},
+            inputs=arguments.get("inputs", {})
+            if isinstance(arguments.get("inputs"), dict)
+            else {},
             include_trace=bool(arguments.get("include_trace", False)),
         )
     return {
@@ -246,7 +252,7 @@ def run_agent(user_goal: str) -> str:
 
 def main() -> int:
     if len(sys.argv) < 2:
-        print("Uso: python examples/orca_external_agent.py \"tu objetivo\"")
+        print('Uso: python examples/orca_external_agent.py "tu objetivo"')
         return 2
 
     goal = " ".join(sys.argv[1:]).strip()

@@ -63,7 +63,9 @@ def gate_constraint(payload, gate):
         if isinstance(key, str) and key not in payload:
             violations.append(f"missing_required_key:{key}")
 
-    payload_labels = payload.get("labels", []) if isinstance(payload.get("labels"), list) else []
+    payload_labels = (
+        payload.get("labels", []) if isinstance(payload.get("labels"), list) else []
+    )
     for key in rules.get("forbidden_keys") or []:
         if isinstance(key, str) and (key in payload or key in payload_labels):
             violations.append(f"forbidden_key_present:{key}")
@@ -149,7 +151,10 @@ def classify_risk(action, categories=None):
     _high_risk_labels = {"security", "breaking-change", "destructive", "database"}
     _critical_labels = {"hardcoded-secret", "skip-tests", "skip-review"}
     labels = action.get("labels") if isinstance(action.get("labels"), list) else []
-    label_score = sum(2 if lbl in _critical_labels else 1 if lbl in _high_risk_labels else 0 for lbl in labels)
+    label_score = sum(
+        2 if lbl in _critical_labels else 1 if lbl in _high_risk_labels else 0
+        for lbl in labels
+    )
     if label_score:
         factors.append(f"risk_labels:{label_score}pts")
         score += min(label_score, 2)
@@ -165,8 +170,15 @@ def classify_risk(action, categories=None):
         score += 1
 
     # Critical-path file changes (blast radius regardless of diff size)
-    _critical_path_patterns = ["router", "middleware", "/core/", "auth/", "gateway", "security/"]
-    for f in (action.get("changed_files") or []):
+    _critical_path_patterns = [
+        "router",
+        "middleware",
+        "/core/",
+        "auth/",
+        "gateway",
+        "security/",
+    ]
+    for f in action.get("changed_files") or []:
         if any(p in str(f) for p in _critical_path_patterns):
             factors.append(f"critical_path_file:{f}")
             # +2 if in prod (highest blast radius), +1 otherwise

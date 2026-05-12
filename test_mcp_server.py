@@ -76,8 +76,16 @@ _MOCK_SKILLS = [
         "name": "Structured Decision",
         "description": "Runs a structured decision flow with weighted criteria.",
         "inputs": {
-            "topic": {"type": "string", "required": True, "description": "Decision topic."},
-            "options": {"type": "array", "required": True, "description": "List of options."},
+            "topic": {
+                "type": "string",
+                "required": True,
+                "description": "Decision topic.",
+            },
+            "options": {
+                "type": "array",
+                "required": True,
+                "description": "List of options.",
+            },
         },
         "outputs": {
             "decision": {"type": "string"},
@@ -89,7 +97,11 @@ _MOCK_SKILLS = [
         "name": "Research Question Answer",
         "description": "Answers a research question with cited sources.",
         "inputs": {
-            "question": {"type": "string", "required": True, "description": "The research question."},
+            "question": {
+                "type": "string",
+                "required": True,
+                "description": "The research question.",
+            },
         },
         "outputs": {
             "answer": {"type": "string"},
@@ -388,7 +400,9 @@ class TestSkillTools:
 
             tools = await list_tools()
 
-        skill_tool = [t for t in tools if t.name == "skill.experiment.structured-decision"][0]
+        skill_tool = [
+            t for t in tools if t.name == "skill.experiment.structured-decision"
+        ][0]
         assert "[SKILL]" in skill_tool.description
         assert "structured decision" in skill_tool.description.lower()
 
@@ -402,7 +416,9 @@ class TestSkillTools:
 
             tools = await list_tools()
 
-        skill_tool = [t for t in tools if t.name == "skill.experiment.structured-decision"][0]
+        skill_tool = [
+            t for t in tools if t.name == "skill.experiment.structured-decision"
+        ][0]
         schema = skill_tool.inputSchema
         assert schema["type"] == "object"
         assert "topic" in schema["properties"]
@@ -516,6 +532,8 @@ class TestSkillTools:
 
         mock_skill_exec.assert_called_once()
         mock_cap_exec.assert_not_called()
+
+
 # __main__.py entry point
 # ────────────────────────────────────────────────────────────────
 

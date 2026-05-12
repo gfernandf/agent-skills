@@ -45,7 +45,9 @@ def _headers() -> dict[str, str]:
     return headers
 
 
-def _http_json(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+def _http_json(
+    method: str, path: str, body: dict[str, Any] | None = None
+) -> dict[str, Any]:
     url = f"{ORCA_BASE_URL}{path}"
     payload = json.dumps(body or {}).encode("utf-8") if body is not None else None
     req = Request(url, data=payload, headers=_headers(), method=method)
@@ -226,7 +228,11 @@ def run_bridge(instruction: str) -> int:
         return 1
 
     llm_payload = _llm_inputs(skill_doc, instruction)
-    inputs_payload = llm_payload if isinstance(llm_payload, dict) else _heuristic_inputs(skill_doc, instruction)
+    inputs_payload = (
+        llm_payload
+        if isinstance(llm_payload, dict)
+        else _heuristic_inputs(skill_doc, instruction)
+    )
 
     print("[bridge] Execution inputs:")
     print(json.dumps(inputs_payload, ensure_ascii=False, indent=2))
@@ -252,7 +258,7 @@ def run_bridge(instruction: str) -> int:
 
 def main() -> int:
     if len(sys.argv) < 2:
-        print("Usage: python examples/orca_intent_skill_bridge.py \"your instruction\"")
+        print('Usage: python examples/orca_intent_skill_bridge.py "your instruction"')
         return 2
     instruction = " ".join(sys.argv[1:]).strip()
     return run_bridge(instruction)

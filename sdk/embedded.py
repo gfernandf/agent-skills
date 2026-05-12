@@ -739,7 +739,9 @@ _GEMINI_TYPE_MAP: dict[str, str] = {
 }
 
 
-def _normalize_outputs_to_skill_contract(skill: Any, outputs: dict[str, Any]) -> dict[str, Any]:
+def _normalize_outputs_to_skill_contract(
+    skill: Any, outputs: dict[str, Any]
+) -> dict[str, Any]:
     """Normalize outputs to the skill contract for stable downstream composition.
 
     The runtime guarantees required outputs are present at execution time, but

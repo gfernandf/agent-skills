@@ -28,6 +28,7 @@ request:
           - plan_hash: a deterministic hash string derived from step refs
             and dependencies (use a UUID or sha-like string)
         - step_count: total number of steps
+        - compiled_plan_json: JSON string representation of compiled_plan
 
         Return valid JSON only. No markdown fences.
     - role: user
@@ -39,6 +40,7 @@ request:
 response:
   compiled_plan: response.choices.0.message.content_json.compiled_plan
   step_count: response.choices.0.message.content_json.step_count
+  compiled_plan_json: response.choices.0.message.content_json.compiled_plan_json
 
 metadata:
   method: POST

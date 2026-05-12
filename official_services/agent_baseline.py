@@ -142,7 +142,9 @@ def evaluate_branch(condition, context, branches, default_branch=None):
     for branch in branches or []:
         branch_id = branch.get("id") or branch.get("label", "")
         # Accept 'match_expression' (contract) or 'match' (legacy alias)
-        match_expr = str(branch.get("match_expression") or branch.get("match", "")).lower()
+        match_expr = str(
+            branch.get("match_expression") or branch.get("match", "")
+        ).lower()
         keywords = [
             w.strip("'\" ")
             for w in match_expr.replace("==", " ").split()
@@ -249,8 +251,22 @@ def normalize_request(user_message, context=None):
     lang = "en"
     if isinstance(user_message, str):
         # Simple heuristic: detect Spanish by common words
-        es_markers = ["hacer", "hazme", "dame", "necesito", "quiero", "crea", "analiza",
-                      "generar", "construir", "buscar", "tengo", "para", "sobre", "con"]
+        es_markers = [
+            "hacer",
+            "hazme",
+            "dame",
+            "necesito",
+            "quiero",
+            "crea",
+            "analiza",
+            "generar",
+            "construir",
+            "buscar",
+            "tengo",
+            "para",
+            "sobre",
+            "con",
+        ]
         lower = user_message.lower()
         if any(m in lower for m in es_markers):
             lang = "es"
@@ -258,13 +274,26 @@ def normalize_request(user_message, context=None):
     urgency = "medium"
     if isinstance(user_message, str):
         lower = user_message.lower()
-        if any(w in lower for w in ["urgent", "asap", "immediately", "ahora", "urgente"]):
+        if any(
+            w in lower for w in ["urgent", "asap", "immediately", "ahora", "urgente"]
+        ):
             urgency = "high"
         elif any(w in lower for w in ["when you can", "no rush", "eventually"]):
             urgency = "low"
 
-    side_effect_verbs = ["send", "write", "create", "delete", "update", "publish",
-                         "enviar", "escribir", "crear", "borrar", "modificar"]
+    side_effect_verbs = [
+        "send",
+        "write",
+        "create",
+        "delete",
+        "update",
+        "publish",
+        "enviar",
+        "escribir",
+        "crear",
+        "borrar",
+        "modificar",
+    ]
     requires_external = isinstance(user_message, str) and any(
         v in user_message.lower() for v in side_effect_verbs
     )
@@ -276,7 +305,9 @@ def normalize_request(user_message, context=None):
         constraints.extend(quoted)
 
     normalized_request = {
-        "raw_request": user_message if isinstance(user_message, str) else str(user_message),
+        "raw_request": user_message
+        if isinstance(user_message, str)
+        else str(user_message),
         "language": lang,
         "detected_intent": "general_task",
         "explicit_constraints": constraints,
@@ -284,7 +315,11 @@ def normalize_request(user_message, context=None):
         "requires_external_action": requires_external,
         "attachments": [],
     }
-    return {"normalized_request": normalized_request, "language": lang, "_fallback": True}
+    return {
+        "normalized_request": normalized_request,
+        "language": lang,
+        "_fallback": True,
+    }
 
 
 def interpret_goal(normalized_request, context=None):
@@ -306,14 +341,20 @@ def interpret_goal(normalized_request, context=None):
 
     raw_text = raw if isinstance(raw, str) else str(raw)
     objective_text = raw_text.strip()
-    
+
     # Remove common prefixes injected by chat systems
-    prefixes_to_strip = ["You said:", "User said:", "The assistant said:", "You asked:", "User asked:"]
+    prefixes_to_strip = [
+        "You said:",
+        "User said:",
+        "The assistant said:",
+        "You asked:",
+        "User asked:",
+    ]
     for prefix in prefixes_to_strip:
         if objective_text.startswith(prefix):
-            objective_text = objective_text[len(prefix):].strip()
+            objective_text = objective_text[len(prefix) :].strip()
             break
-    
+
     if not objective_text:
         objective_text = "Complete the task"
     # Keep full prompts for complex planning while guarding against extreme payloads.
@@ -378,6 +419,7 @@ def define_criteria(interpreted_goal):
 def _tokenize(text):
     """Split text into lowercase word tokens for keyword matching."""
     import re
+
     return set(re.findall(r"[a-z0-9]+", (text or "").lower()))
 
 
@@ -416,12 +458,21 @@ def search_catalog(goal, registry=None, filters=None):
         filters = {}
 
     # Build goal token set from objective + keywords fields
-    raw_goal_text = " ".join(filter(None, [
-        str(goal.get("objective", "")),
-        str(goal.get("summary", "")),
-        " ".join(goal.get("keywords", []) if isinstance(goal.get("keywords"), list) else []),
-        str(goal.get("domain", "")),
-    ]))
+    raw_goal_text = " ".join(
+        filter(
+            None,
+            [
+                str(goal.get("objective", "")),
+                str(goal.get("summary", "")),
+                " ".join(
+                    goal.get("keywords", [])
+                    if isinstance(goal.get("keywords"), list)
+                    else []
+                ),
+                str(goal.get("domain", "")),
+            ],
+        )
+    )
     # Expand Spanish synonyms to English equivalents for keyword overlap scoring
     _ES_SYNONYMS = {
         "briefing": "briefing research generate",
@@ -469,15 +520,17 @@ def search_catalog(goal, registry=None, filters=None):
                 id_tokens = _tokenize(cap_id.replace(".", " "))
                 score = _score_item(desc_tokens, goal_tokens, id_tokens)
                 if score >= min_score:
-                    candidates.append({
-                        "ref": cap_id,
-                        "type": "capability",
-                        "relevance_score": score,
-                        "description": cap.get("description", ""),
-                        "inputs": cap.get("inputs", {}),
-                        "outputs": cap.get("outputs", {}),
-                        "reason": f"Keyword match score {score} against goal tokens.",
-                    })
+                    candidates.append(
+                        {
+                            "ref": cap_id,
+                            "type": "capability",
+                            "relevance_score": score,
+                            "description": cap.get("description", ""),
+                            "inputs": cap.get("inputs", {}),
+                            "outputs": cap.get("outputs", {}),
+                            "reason": f"Keyword match score {score} against goal tokens.",
+                        }
+                    )
 
         # ── skills ──────────────────────────────────────────────────────────
         if not isinstance(kind_filter, list) or "skill" in kind_filter:
@@ -485,28 +538,43 @@ def search_catalog(goal, registry=None, filters=None):
                 skill_id = skill.get("id", "")
                 if domain_filter and not skill_id.startswith(domain_filter):
                     continue
-                desc_tokens = _tokenize(" ".join(filter(None, [
-                    skill.get("description", ""),
-                    skill.get("name", ""),
-                ])))
+                desc_tokens = _tokenize(
+                    " ".join(
+                        filter(
+                            None,
+                            [
+                                skill.get("description", ""),
+                                skill.get("name", ""),
+                            ],
+                        )
+                    )
+                )
                 id_tokens = _tokenize(skill_id.replace(".", " ").replace("-", " "))
                 score = _score_item(desc_tokens, goal_tokens, id_tokens)
                 if score >= min_score:
-                    candidates.append({
-                        "ref": skill_id,
-                        "type": "skill",
-                        "relevance_score": score,
-                        "description": skill.get("description", ""),
-                        "inputs": skill.get("inputs", {}),
-                        "outputs": skill.get("outputs", {}),
-                        "reason": f"Keyword match score {score} against goal tokens.",
-                    })
+                    candidates.append(
+                        {
+                            "ref": skill_id,
+                            "type": "skill",
+                            "relevance_score": score,
+                            "description": skill.get("description", ""),
+                            "inputs": skill.get("inputs", {}),
+                            "outputs": skill.get("outputs", {}),
+                            "reason": f"Keyword match score {score} against goal tokens.",
+                        }
+                    )
 
     except Exception:  # SDK unavailable — minimal hardcoded fallback
         candidates = [
-            {"ref": "model.output.generate", "type": "capability",
-             "relevance_score": 0.4, "description": "", "inputs": {}, "outputs": {},
-             "reason": "SDK unavailable; hardcoded fallback."},
+            {
+                "ref": "model.output.generate",
+                "type": "capability",
+                "relevance_score": 0.4,
+                "description": "",
+                "inputs": {},
+                "outputs": {},
+                "reason": "SDK unavailable; hardcoded fallback.",
+            },
         ]
 
     # Sort descending by score, apply max_results
@@ -541,7 +609,9 @@ def rank_catalog(candidate_items, interpreted_goal):
     capabilities = [c for c in candidate_items if c.get("type") == "capability"]
 
     def _rank(items):
-        sorted_items = sorted(items, key=lambda x: x.get("relevance_score", 0), reverse=True)
+        sorted_items = sorted(
+            items, key=lambda x: x.get("relevance_score", 0), reverse=True
+        )
         return [
             {
                 **item,
@@ -579,10 +649,16 @@ def detect_catalog_gaps(interpreted_goal, candidate_items):
     # A gap exists when the top-ranked items have low relevance or the
     # registry returned nothing useful (score below threshold).
     HIGH_SCORE = 0.3
-    good_caps = [c for c in candidate_items
-                 if c.get("type") == "capability" and c.get("relevance_score", 0) >= HIGH_SCORE]
-    good_skills = [c for c in candidate_items
-                   if c.get("type") == "skill" and c.get("relevance_score", 0) >= HIGH_SCORE]
+    good_caps = [
+        c
+        for c in candidate_items
+        if c.get("type") == "capability" and c.get("relevance_score", 0) >= HIGH_SCORE
+    ]
+    good_skills = [
+        c
+        for c in candidate_items
+        if c.get("type") == "skill" and c.get("relevance_score", 0) >= HIGH_SCORE
+    ]
 
     if not candidate_items:
         severity = "critical"
@@ -594,14 +670,22 @@ def detect_catalog_gaps(interpreted_goal, candidate_items):
         severity = "none"
 
     return {
-        "missing_capabilities": [] if good_caps else [{"reason": "No capability matched goal with score >= 0.3"}],
-        "missing_skills": [] if good_skills else [{"reason": "No skill matched goal with score >= 0.3"}],
+        "missing_capabilities": []
+        if good_caps
+        else [{"reason": "No capability matched goal with score >= 0.3"}],
+        "missing_skills": []
+        if good_skills
+        else [{"reason": "No skill matched goal with score >= 0.3"}],
         "gap_severity": severity,
     }
 
 
-def create_macro_plan(interpreted_goal, candidate_skills=None,
-                      candidate_capabilities=None, planning_strategy=None):
+def create_macro_plan(
+    interpreted_goal,
+    candidate_skills=None,
+    candidate_capabilities=None,
+    planning_strategy=None,
+):
     """
     Generate a high-level macro plan using real ranked candidates.
 
@@ -646,14 +730,20 @@ def create_macro_plan(interpreted_goal, candidate_skills=None,
     if strategy == "direct" and (top_skill or top_caps):
         # Fast path: single stage using the best available item
         best = top_skill or top_caps[0]
-        stages = [{
-            "id": "s1",
-            "objective": objective,
-            "expected_output": "result",
-            "suggested_skill": best.get("ref") if best.get("type") == "skill" else None,
-            "suggested_capability": best.get("ref") if best.get("type") == "capability" else None,
-            "parallel_with": [],
-        }]
+        stages = [
+            {
+                "id": "s1",
+                "objective": objective,
+                "expected_output": "result",
+                "suggested_skill": best.get("ref")
+                if best.get("type") == "skill"
+                else None,
+                "suggested_capability": best.get("ref")
+                if best.get("type") == "capability"
+                else None,
+                "parallel_with": [],
+            }
+        ]
     else:
         # Staged: distribute candidates across stages
         # s1 → primary research/retrieval skill
@@ -672,8 +762,16 @@ def create_macro_plan(interpreted_goal, candidate_skills=None,
         # Pick distinct skills: research skill for s1, synthesis skill for s2
         objective_l = str(objective).lower()
         source_signals = (
-            "fuente", "fuentes", "source", "sources", "evidencia", "evidence",
-            "trazabilidad", "traceability", "recientes", "recent",
+            "fuente",
+            "fuentes",
+            "source",
+            "sources",
+            "evidencia",
+            "evidence",
+            "trazabilidad",
+            "traceability",
+            "recientes",
+            "recent",
         )
         wants_research_first = any(sig in objective_l for sig in source_signals)
 
@@ -681,25 +779,44 @@ def create_macro_plan(interpreted_goal, candidate_skills=None,
         if wants_research_first:
             research_skill = next(
                 (
-                    s for s in candidate_skills
-                    if any(kw in s.get("ref", "") for kw in (
-                        "research.", "generate-briefing", "source.retrieve", "web.search"
-                    ))
+                    s
+                    for s in candidate_skills
+                    if any(
+                        kw in s.get("ref", "")
+                        for kw in (
+                            "research.",
+                            "generate-briefing",
+                            "source.retrieve",
+                            "web.search",
+                        )
+                    )
                 ),
                 top_skill,
             )
 
         compare_signals = (
-            "escenario", "escenarios", "base vs", "conservador", "compare", "comparar", "contrasta"
+            "escenario",
+            "escenarios",
+            "base vs",
+            "conservador",
+            "compare",
+            "comparar",
+            "contrasta",
         )
         wants_compare = any(sig in objective_l for sig in compare_signals)
 
         # Prefer compare for scenario prompts; otherwise prefer synthesis/decompose.
         if wants_compare:
             synth_skill = next(
-                (s for s in candidate_skills
-                 if s.get("ref") != (research_skill.get("ref") if research_skill else None)
-                 and any(kw in s.get("ref", "") for kw in ("analysis.compare", "compare"))),
+                (
+                    s
+                    for s in candidate_skills
+                    if s.get("ref")
+                    != (research_skill.get("ref") if research_skill else None)
+                    and any(
+                        kw in s.get("ref", "") for kw in ("analysis.compare", "compare")
+                    )
+                ),
                 None,
             )
         else:
@@ -707,38 +824,58 @@ def create_macro_plan(interpreted_goal, candidate_skills=None,
 
         if not synth_skill:
             synth_skill = next(
-                (s for s in candidate_skills
-                 if s.get("ref") != (research_skill.get("ref") if research_skill else None)
-                 and any(kw in s.get("ref", "") for kw in ("synthesize", "summarize", "decompose", "frame"))),
+                (
+                    s
+                    for s in candidate_skills
+                    if s.get("ref")
+                    != (research_skill.get("ref") if research_skill else None)
+                    and any(
+                        kw in s.get("ref", "")
+                        for kw in ("synthesize", "summarize", "decompose", "frame")
+                    )
+                ),
                 next(
-                    (s for s in candidate_skills
-                     if s.get("ref") != (research_skill.get("ref") if research_skill else None)
-                     and any(kw in s.get("ref", "") for kw in ("analys", "summar"))),
+                    (
+                        s
+                        for s in candidate_skills
+                        if s.get("ref")
+                        != (research_skill.get("ref") if research_skill else None)
+                        and any(kw in s.get("ref", "") for kw in ("analys", "summar"))
+                    ),
                     candidate_skills[1] if len(candidate_skills) > 1 else None,
                 ),
             )
 
         stages = []
-        stages.append(_stage(
-            "s1", objective,
-            runtime_caps[0].get("ref") if runtime_caps else None,
-            "primary_result",
-            skill_ref=research_skill.get("ref") if research_skill else None,
-        ))
+        stages.append(
+            _stage(
+                "s1",
+                objective,
+                runtime_caps[0].get("ref") if runtime_caps else None,
+                "primary_result",
+                skill_ref=research_skill.get("ref") if research_skill else None,
+            )
+        )
 
         if synth_skill:
-            stages.append(_stage(
-                "s2", "Synthesize and enrich primary result",
-                top_caps[1].get("ref") if len(top_caps) > 1 else None,
-                "enriched_result",
-                skill_ref=synth_skill.get("ref"),
-            ))
+            stages.append(
+                _stage(
+                    "s2",
+                    "Synthesize and enrich primary result",
+                    top_caps[1].get("ref") if len(top_caps) > 1 else None,
+                    "enriched_result",
+                    skill_ref=synth_skill.get("ref"),
+                )
+            )
         else:
-            stages.append(_stage(
-                "s2", "Synthesize and enrich primary result",
-                top_caps[1].get("ref") if len(top_caps) > 1 else None,
-                "enriched_result",
-            ))
+            stages.append(
+                _stage(
+                    "s2",
+                    "Synthesize and enrich primary result",
+                    top_caps[1].get("ref") if len(top_caps) > 1 else None,
+                    "enriched_result",
+                )
+            )
 
     macro_plan = {
         "goal_ref": objective[:40].lower().replace(" ", "-").strip("-"),
@@ -748,8 +885,9 @@ def create_macro_plan(interpreted_goal, candidate_skills=None,
     return {"macro_plan": macro_plan, "stage_count": len(stages)}
 
 
-def split_plan_stage(macro_stage, candidate_skills=None,
-                     candidate_capabilities=None, current_state=None):
+def split_plan_stage(
+    macro_stage, candidate_skills=None, candidate_capabilities=None, current_state=None
+):
     """
     Expand a macro plan stage into concrete ORCA-executable steps.
 
@@ -775,10 +913,16 @@ def split_plan_stage(macro_stage, candidate_skills=None,
     def _is_non_executable_planner_cap(ref):
         if not isinstance(ref, str) or not ref:
             return False
-        return ref.startswith((
-            "agent.catalog.", "agent.goal.", "agent.request.",
-            "agent.criteria.", "agent.plan.", "eval.output.",
-        ))
+        return ref.startswith(
+            (
+                "agent.catalog.",
+                "agent.goal.",
+                "agent.request.",
+                "agent.criteria.",
+                "agent.plan.",
+                "eval.output.",
+            )
+        )
 
     def _skill_outputs_map(ref, sid):
         for s in candidate_skills:
@@ -795,30 +939,35 @@ def split_plan_stage(macro_stage, candidate_skills=None,
         suggested_skill_ref = stage.get("suggested_skill")
         suggested_cap_ref = stage.get("suggested_capability")
 
-        primary_cap_ref = (
-            suggested_cap_ref
-            or (candidate_capabilities[0].get("ref") if candidate_capabilities else None)
+        primary_cap_ref = suggested_cap_ref or (
+            candidate_capabilities[0].get("ref") if candidate_capabilities else None
         )
-        primary_skill_ref = (
-            suggested_skill_ref
-            or (candidate_skills[0].get("ref") if candidate_skills else None)
+        primary_skill_ref = suggested_skill_ref or (
+            candidate_skills[0].get("ref") if candidate_skills else None
         )
 
         def _cap_inputs(ref):
             if ref == "agent.task.delegate":
-                return {"task": {"description": objective, "priority": "medium"},
-                        "agent": "research-agent", "timeout_seconds": 30}
+                return {
+                    "task": {"description": objective, "priority": "medium"},
+                    "agent": "research-agent",
+                    "timeout_seconds": 30,
+                }
             for c in candidate_capabilities:
                 if c.get("ref") == ref:
-                    return {k: f"$state.working.{sid}_{k}"
-                            for k in (c.get("inputs") or {}).keys()} or {"input": objective}
+                    return {
+                        k: f"$state.working.{sid}_{k}"
+                        for k in (c.get("inputs") or {}).keys()
+                    } or {"input": objective}
             return {"input": objective}
 
         def _cap_outputs(ref):
             for c in candidate_capabilities:
                 if c.get("ref") == ref:
-                    return {k: f"$state.working.{sid}_{k}"
-                            for k in (c.get("outputs") or {}).keys()} or {"result": f"$state.working.{sid}_result"}
+                    return {
+                        k: f"$state.working.{sid}_{k}"
+                        for k in (c.get("outputs") or {}).keys()
+                    } or {"result": f"$state.working.{sid}_result"}
             return {"result": f"$state.working.{sid}_result"}
 
         def _skill_inputs(ref):
@@ -830,7 +979,9 @@ def split_plan_stage(macro_stage, candidate_skills=None,
 
                     objective_l = str(objective).lower()
                     objective_ascii = unicodedata.normalize("NFKD", objective_l)
-                    objective_ascii = objective_ascii.encode("ascii", "ignore").decode("ascii")
+                    objective_ascii = objective_ascii.encode("ascii", "ignore").decode(
+                        "ascii"
+                    )
                     default_sources = 8
                     requested_sources = None
                     m = re.search(
@@ -852,8 +1003,10 @@ def split_plan_stage(macro_stage, candidate_skills=None,
                     # Build a search-friendly query from long instruction prompts.
                     search_query = str(objective)
                     for marker in (
-                        "Requisitos obligatorios:", "Control:",
-                        "requirements:", "mandatory controls:",
+                        "Requisitos obligatorios:",
+                        "Control:",
+                        "requirements:",
+                        "mandatory controls:",
                     ):
                         if marker in search_query:
                             search_query = search_query.split(marker, 1)[0]
@@ -862,10 +1015,20 @@ def split_plan_stage(macro_stage, candidate_skills=None,
                         search_query = search_query[:220].rsplit(" ", 1)[0]
 
                     broad_query = search_query
-                    if any(term in objective_l for term in ("mercado", "market", "fuente", "fuentes", "evidencia", "evidence", "storage", "almacenamiento")):
-                        broad_query = (
-                            f"{search_query} market report research trends risks opportunities Europe regulation policy"
+                    if any(
+                        term in objective_l
+                        for term in (
+                            "mercado",
+                            "market",
+                            "fuente",
+                            "fuentes",
+                            "evidencia",
+                            "evidence",
+                            "storage",
+                            "almacenamiento",
                         )
+                    ):
+                        broad_query = f"{search_query} market report research trends risks opportunities Europe regulation policy"
                     return {
                         "query": search_query,
                         "broad_query": broad_query,
@@ -891,8 +1054,11 @@ def split_plan_stage(macro_stage, candidate_skills=None,
                 # Downstream stage: feed previous stage outputs via state refs
                 if ref == "analysis.compare":
                     return {"options": prev_output_state, "comparison_goal": objective}
-                if ref in ("analysis.synthesize", "analysis.decompose",
-                           "analysis.theme.cluster"):
+                if ref in (
+                    "analysis.synthesize",
+                    "analysis.decompose",
+                    "analysis.theme.cluster",
+                ):
                     return {"items": prev_output_state, "goal": objective}
                 if ref == "task.frame":
                     return {"goal": objective, "context": prev_output_state}
@@ -935,46 +1101,52 @@ def split_plan_stage(macro_stage, candidate_skills=None,
 
         use_primary_cap = (
             bool(primary_cap_ref)
-            and not bool(primary_skill_ref)   # skill wins; cap only when no skill
+            and not bool(primary_skill_ref)  # skill wins; cap only when no skill
             and not _is_non_executable_planner_cap(primary_cap_ref)
             and primary_cap_ref != "agent.task.delegate"
             and _cap_has_valid_inputs(primary_cap_ref)
         )
 
         if use_primary_cap:
-            steps.append({
-                "id": f"{sid}_step1",
-                "type": "capability",
-                "ref": primary_cap_ref,
-                "purpose": f"Primary operation: {objective[:60]}",
-                "inputs": _cap_inputs(primary_cap_ref),
-                "outputs": _cap_outputs(primary_cap_ref),
-                "depends_on": list(prev_step_ids),
-            })
+            steps.append(
+                {
+                    "id": f"{sid}_step1",
+                    "type": "capability",
+                    "ref": primary_cap_ref,
+                    "purpose": f"Primary operation: {objective[:60]}",
+                    "inputs": _cap_inputs(primary_cap_ref),
+                    "outputs": _cap_outputs(primary_cap_ref),
+                    "depends_on": list(prev_step_ids),
+                }
+            )
 
         if primary_skill_ref and primary_skill_ref != primary_cap_ref:
             prev = ([f"{sid}_step1"] if use_primary_cap else []) + list(prev_step_ids)
             step_id = f"{sid}_step2" if use_primary_cap else f"{sid}_step1"
-            steps.append({
-                "id": step_id,
-                "type": "skill",
-                "ref": primary_skill_ref,
-                "purpose": f"Skill execution: {objective[:60]}",
-                "inputs": _skill_inputs(primary_skill_ref),
-                "outputs": _skill_outputs_map(primary_skill_ref, step_id),
-                "depends_on": prev,
-            })
+            steps.append(
+                {
+                    "id": step_id,
+                    "type": "skill",
+                    "ref": primary_skill_ref,
+                    "purpose": f"Skill execution: {objective[:60]}",
+                    "inputs": _skill_inputs(primary_skill_ref),
+                    "outputs": _skill_outputs_map(primary_skill_ref, step_id),
+                    "depends_on": prev,
+                }
+            )
 
         if not steps:
-            steps.append({
-                "id": f"{sid}_step1",
-                "type": "capability",
-                "ref": "model.output.generate",
-                "purpose": f"Fallback for stage {sid}",
-                "inputs": {"prompt": f"$state.working.{sid}_input"},
-                "outputs": {"content": f"$state.working.{sid}_output"},
-                "depends_on": list(prev_step_ids),
-            })
+            steps.append(
+                {
+                    "id": f"{sid}_step1",
+                    "type": "capability",
+                    "ref": "model.output.generate",
+                    "purpose": f"Fallback for stage {sid}",
+                    "inputs": {"prompt": f"$state.working.{sid}_input"},
+                    "outputs": {"content": f"$state.working.{sid}_output"},
+                    "depends_on": list(prev_step_ids),
+                }
+            )
 
         return steps
 
@@ -1006,15 +1178,17 @@ def split_plan_stage(macro_stage, candidate_skills=None,
             )
 
     if not expanded_steps:
-        expanded_steps.append({
-            "id": "s1_step1",
-            "type": "capability",
-            "ref": "model.output.generate",
-            "purpose": "Fallback: no stages resolved",
-            "inputs": {"prompt": "$state.working.s1_input"},
-            "outputs": {"content": "$state.working.s1_output"},
-            "depends_on": [],
-        })
+        expanded_steps.append(
+            {
+                "id": "s1_step1",
+                "type": "capability",
+                "ref": "model.output.generate",
+                "purpose": "Fallback: no stages resolved",
+                "inputs": {"prompt": "$state.working.s1_input"},
+                "outputs": {"content": "$state.working.s1_output"},
+                "depends_on": [],
+            }
+        )
 
     return {
         "expanded_steps": expanded_steps,
@@ -1055,11 +1229,13 @@ def map_plan_inputs(expanded_steps, state_schema=None):
             k: f"$state.working.{step_id}_{k}"
             for k in (step.get("outputs") or {}).keys()
         }
-        bound_steps.append({
-            **step,
-            "inputs": bound_inputs,
-            "outputs": bound_outputs,
-        })
+        bound_steps.append(
+            {
+                **step,
+                "inputs": bound_inputs,
+                "outputs": bound_outputs,
+            }
+        )
 
     return {
         "bound_steps": bound_steps,
@@ -1087,14 +1263,21 @@ def validate_plan(expanded_plan, registry=None, state_schema=None):
         dict: {"validation_result": object}
     """
     if not isinstance(expanded_plan, dict):
-        return {"validation_result": {
-            "status": "failed",
-            "errors": [{"step_id": None, "check": "plan_structure",
-                        "message": "expanded_plan must be a dict"}],
-            "warnings": [],
-            "repairable": True,
-            "check_count": 1,
-        }}
+        return {
+            "validation_result": {
+                "status": "failed",
+                "errors": [
+                    {
+                        "step_id": None,
+                        "check": "plan_structure",
+                        "message": "expanded_plan must be a dict",
+                    }
+                ],
+                "warnings": [],
+                "repairable": True,
+                "check_count": 1,
+            }
+        }
 
     steps = expanded_plan.get("bound_steps", expanded_plan.get("steps", []))
     errors = []
@@ -1102,12 +1285,22 @@ def validate_plan(expanded_plan, registry=None, state_schema=None):
     check_count = 0
 
     if not isinstance(steps, list):
-        errors.append({"step_id": None, "check": "steps_list",
-                       "message": "bound_steps must be a list"})
-        return {"validation_result": {
-            "status": "failed", "errors": errors, "warnings": warnings,
-            "repairable": True, "check_count": 1,
-        }}
+        errors.append(
+            {
+                "step_id": None,
+                "check": "steps_list",
+                "message": "bound_steps must be a list",
+            }
+        )
+        return {
+            "validation_result": {
+                "status": "failed",
+                "errors": errors,
+                "warnings": warnings,
+                "repairable": True,
+                "check_count": 1,
+            }
+        }
 
     step_ids = set()
     for step in steps:
@@ -1119,13 +1312,23 @@ def validate_plan(expanded_plan, registry=None, state_schema=None):
         # Check required fields
         for field in ["id", "ref", "type"]:
             if not step.get(field):
-                errors.append({"step_id": step_id, "check": f"required_{field}",
-                               "message": f"Step missing required field '{field}'"})
+                errors.append(
+                    {
+                        "step_id": step_id,
+                        "check": f"required_{field}",
+                        "message": f"Step missing required field '{field}'",
+                    }
+                )
 
         # Duplicate id check
         if step_id in step_ids:
-            errors.append({"step_id": step_id, "check": "unique_id",
-                           "message": f"Duplicate step id '{step_id}'"})
+            errors.append(
+                {
+                    "step_id": step_id,
+                    "check": "unique_id",
+                    "message": f"Duplicate step id '{step_id}'",
+                }
+            )
         if step_id:
             step_ids.add(step_id)
 
@@ -1140,8 +1343,13 @@ def validate_plan(expanded_plan, registry=None, state_schema=None):
             continue
         for dep in step.get("depends_on", []):
             if dep not in step_ids:
-                errors.append({"step_id": step.get("id"), "check": "deps_exist",
-                               "message": f"depends_on references unknown step '{dep}'"})
+                errors.append(
+                    {
+                        "step_id": step.get("id"),
+                        "check": "deps_exist",
+                        "message": f"depends_on references unknown step '{dep}'",
+                    }
+                )
 
     # Third pass: validate step refs exist in the registry
     known_refs: set[str] | None = None
@@ -1150,8 +1358,15 @@ def validate_plan(expanded_plan, registry=None, state_schema=None):
     else:
         try:
             from sdk.embedded import list_capabilities, list_skills
-            cap_ids = {c["id"] for c in list_capabilities() if isinstance(c, dict) and "id" in c}
-            skill_ids = {s["id"] for s in list_skills() if isinstance(s, dict) and "id" in s}
+
+            cap_ids = {
+                c["id"]
+                for c in list_capabilities()
+                if isinstance(c, dict) and "id" in c
+            }
+            skill_ids = {
+                s["id"] for s in list_skills() if isinstance(s, dict) and "id" in s
+            }
             known_refs = cap_ids | skill_ids
         except Exception:
             pass  # registry unavailable; skip ref existence check
@@ -1162,18 +1377,25 @@ def validate_plan(expanded_plan, registry=None, state_schema=None):
                 continue
             ref = step.get("ref")
             if ref and ref not in known_refs:
-                errors.append({"step_id": step.get("id"), "check": "ref_exists",
-                               "message": f"Step ref '{ref}' not found in registry"})
+                errors.append(
+                    {
+                        "step_id": step.get("id"),
+                        "check": "ref_exists",
+                        "message": f"Step ref '{ref}' not found in registry",
+                    }
+                )
 
     status = "passed" if not errors else "failed"
-    return {"validation_result": {
-        "status": status,
-        "errors": errors,
-        "warnings": warnings,
-        "repairable": bool(errors),
-        "check_count": check_count,
-        "_fallback": True,
-    }}
+    return {
+        "validation_result": {
+            "status": status,
+            "errors": errors,
+            "warnings": warnings,
+            "repairable": bool(errors),
+            "check_count": check_count,
+            "_fallback": True,
+        }
+    }
 
 
 def reconcile_plan(invalid_plan, validation_errors, registry=None):
@@ -1191,12 +1413,19 @@ def reconcile_plan(invalid_plan, validation_errors, registry=None):
     if not isinstance(invalid_plan, dict):
         return {
             "repaired_plan": {},
-            "repair_notes": [{"step_id": None, "action": "abort",
-                              "original": None, "replacement": None}],
+            "repair_notes": [
+                {
+                    "step_id": None,
+                    "action": "abort",
+                    "original": None,
+                    "replacement": None,
+                }
+            ],
             "still_invalid": True,
         }
 
     import copy
+
     repaired = copy.deepcopy(invalid_plan)
     repair_notes = []
 
@@ -1209,9 +1438,11 @@ def reconcile_plan(invalid_plan, validation_errors, registry=None):
             errors_list = validation_errors.get("errors")
         elif isinstance(validation_errors.get("validation_result"), dict):
             nested = validation_errors.get("validation_result") or {}
-            errors_list = nested.get("errors") if isinstance(nested.get("errors"), list) else []
+            errors_list = (
+                nested.get("errors") if isinstance(nested.get("errors"), list) else []
+            )
 
-    for err in (errors_list or []):
+    for err in errors_list or []:
         if not isinstance(err, dict):
             continue
         check = err.get("check", "")
@@ -1227,22 +1458,27 @@ def reconcile_plan(invalid_plan, validation_errors, registry=None):
                             invalid_dep = dep
                             break
                     if invalid_dep:
-                        step["depends_on"] = [d for d in step["depends_on"]
-                                              if d != invalid_dep]
-                        repair_notes.append({
-                            "step_id": step_id,
-                            "action": "remove_invalid_dependency",
-                            "original": invalid_dep,
-                            "replacement": None,
-                        })
+                        step["depends_on"] = [
+                            d for d in step["depends_on"] if d != invalid_dep
+                        ]
+                        repair_notes.append(
+                            {
+                                "step_id": step_id,
+                                "action": "remove_invalid_dependency",
+                                "original": invalid_dep,
+                                "replacement": None,
+                            }
+                        )
 
         elif check in ("required_id", "required_ref", "required_type"):
-            repair_notes.append({
-                "step_id": step_id,
-                "action": "flag_for_manual_review",
-                "original": check,
-                "replacement": None,
-            })
+            repair_notes.append(
+                {
+                    "step_id": step_id,
+                    "action": "flag_for_manual_review",
+                    "original": check,
+                    "replacement": None,
+                }
+            )
 
     return {
         "repaired_plan": repaired,
@@ -1284,7 +1520,13 @@ def synthesize_plan(validated_plan, runtime_config=None):
         if not isinstance(step, dict):
             continue
         step_id = step.get("id", "unknown")
-        nodes.append({"id": step_id, "ref": step.get("ref", ""), "type": step.get("type", "capability")})
+        nodes.append(
+            {
+                "id": step_id,
+                "ref": step.get("ref", ""),
+                "type": step.get("type", "capability"),
+            }
+        )
         for dep in step.get("depends_on", []):
             edges.append({"from": dep, "to": step_id})
         if step.get("gate", False):
@@ -1295,7 +1537,13 @@ def synthesize_plan(validated_plan, runtime_config=None):
     # Group independent steps (those with no depends_on that aren't depended on)
     dep_targets = {e["to"] for e in edges}
     root_steps = [n["id"] for n in nodes if n["id"] not in dep_targets]
-    parallel_groups = [root_steps] if root_steps else [[execution_order[0]]] if execution_order else []
+    parallel_groups = (
+        [root_steps]
+        if root_steps
+        else [[execution_order[0]]]
+        if execution_order
+        else []
+    )
 
     state_bindings = {}
     for step in steps:
@@ -1306,7 +1554,10 @@ def synthesize_plan(validated_plan, runtime_config=None):
             }
 
     plan_hash_input = json.dumps(
-        {"nodes": execution_order, "edges": sorted(f"{e['from']}->{e['to']}" for e in edges)},
+        {
+            "nodes": execution_order,
+            "edges": sorted(f"{e['from']}->{e['to']}" for e in edges),
+        },
         sort_keys=True,
     ).encode()
     plan_hash = hashlib.sha256(plan_hash_input).hexdigest()[:16]
@@ -1342,17 +1593,24 @@ def gate_plan(compiled_plan, user_permissions=None, policy_context=None):
         dict: {"authorization_result": object}
     """
     if not isinstance(compiled_plan, dict):
-        return {"authorization_result": {
-            "status": "denied",
-            "blocked_steps": [],
-            "approval_prompts": [],
-            "risk_level": "critical",
-        }}
+        return {
+            "authorization_result": {
+                "status": "denied",
+                "blocked_steps": [],
+                "approval_prompts": [],
+                "risk_level": "critical",
+            }
+        }
 
     # Conservative baseline: approve unless side_effects detected without permissions
-    side_effect_refs = {"email.message.send", "fs.file.write", "integration.record.create",
-                        "integration.record.update", "integration.record.delete",
-                        "web.request.send"}
+    side_effect_refs = {
+        "email.message.send",
+        "fs.file.write",
+        "integration.record.create",
+        "integration.record.update",
+        "integration.record.delete",
+        "web.request.send",
+    }
     blocked = []
     prompts = []
 
@@ -1364,10 +1622,19 @@ def gate_plan(compiled_plan, user_permissions=None, policy_context=None):
         if ref in side_effect_refs:
             perm_key = ref.replace(".", "_")
             if perms.get(perm_key) is False:
-                blocked.append({"step_id": node.get("id"), "reason": f"Permission denied for {ref}"})
+                blocked.append(
+                    {
+                        "step_id": node.get("id"),
+                        "reason": f"Permission denied for {ref}",
+                    }
+                )
             elif not perms:
-                prompts.append({"step_id": node.get("id"),
-                                "prompt_text": f"Step '{node.get('id')}' will call {ref}. Confirm to proceed."})
+                prompts.append(
+                    {
+                        "step_id": node.get("id"),
+                        "prompt_text": f"Step '{node.get('id')}' will call {ref}. Confirm to proceed.",
+                    }
+                )
 
     if blocked:
         status = "denied"
@@ -1434,7 +1701,7 @@ def execute_plan(compiled_plan, initial_state=None):
     def _resolve(value):
         """Resolve $state.working.<key> refs to values stored in state."""
         if isinstance(value, str) and value.startswith("$state.working."):
-            key = value[len("$state.working."):]
+            key = value[len("$state.working.") :]
             return state.get(key)
         if isinstance(value, list):
             return [_resolve(v) for v in value]
@@ -1452,41 +1719,48 @@ def execute_plan(compiled_plan, initial_state=None):
         resolved_inputs = {k: _resolve(v) for k, v in raw_inputs.items()}
         # Drop None values from unresolved refs (missing upstream outputs)
         resolved_inputs = {k: v for k, v in resolved_inputs.items() if v is not None}
-        
+
         # Add extended timeout for skills (research queries can take 60-120s)
         resolved_inputs["_max_wait_ms"] = 180000  # 180 seconds
 
         start_ms = _time.time() * 1000
         try:
             from sdk.embedded import execute as _sdk_execute
+
             result = _sdk_execute(ref, resolved_inputs)
             duration_ms = int(_time.time() * 1000 - start_ms)
 
             # Store outputs back into state via state_bindings
             output_bindings = binding.get("outputs", {})
             for out_key, state_ref in output_bindings.items():
-                if isinstance(state_ref, str) and state_ref.startswith("$state.working."):
-                    state_key = state_ref[len("$state.working."):]
+                if isinstance(state_ref, str) and state_ref.startswith(
+                    "$state.working."
+                ):
+                    state_key = state_ref[len("$state.working.") :]
                     state[state_key] = result.get(out_key)
 
-            step_results.append({
-                "step_id": step_id,
-                "ref": ref,
-                "status": "success",
-                "outputs": result,
-                "error": None,
-                "duration_ms": duration_ms,
-            })
+            step_results.append(
+                {
+                    "step_id": step_id,
+                    "ref": ref,
+                    "status": "success",
+                    "outputs": result,
+                    "error": None,
+                    "duration_ms": duration_ms,
+                }
+            )
         except Exception as exc:
             duration_ms = int(_time.time() * 1000 - start_ms)
-            step_results.append({
-                "step_id": step_id,
-                "ref": ref,
-                "status": "failed",
-                "outputs": {},
-                "error": str(exc),
-                "duration_ms": duration_ms,
-            })
+            step_results.append(
+                {
+                    "step_id": step_id,
+                    "ref": ref,
+                    "status": "failed",
+                    "outputs": {},
+                    "error": str(exc),
+                    "duration_ms": duration_ms,
+                }
+            )
             failed_steps.append(step_id)
 
     success_count = sum(1 for s in step_results if s["status"] == "success")
@@ -1516,7 +1790,9 @@ def execute_plan(compiled_plan, initial_state=None):
     }
 
 
-def generate_output_report(interpreted_goal, execution_result, evaluation=None, trace_summary=None):
+def generate_output_report(
+    interpreted_goal, execution_result, evaluation=None, trace_summary=None
+):
     """
     Generate the final user-facing report from pipeline outputs.
 
@@ -1555,8 +1831,12 @@ def generate_output_report(interpreted_goal, execution_result, evaluation=None, 
         f"**Steps completed:** {len(steps_done)}\n\n"
     )
     if limitations:
-        user_response += "**Limitations:**\n" + "\n".join(f"- {l}" for l in limitations) + "\n\n"
-    user_response += "_Note: This is a baseline report. Real execution produces richer output._"
+        user_response += (
+            "**Limitations:**\n" + "\n".join(f"- {l}" for l in limitations) + "\n\n"
+        )
+    user_response += (
+        "_Note: This is a baseline report. Real execution produces richer output._"
+    )
 
     report_status_map = {"success": "success", "partial": "partial", "failed": "failed"}
     report_status = report_status_map.get(exec_status, "requires_followup")
@@ -1600,12 +1880,14 @@ def synthesize_output_skill(successful_plan, execution_trace):
     steps = []
     for i, step_id in enumerate(execution_order):
         node = next((n for n in nodes if n.get("id") == step_id), {})
-        steps.append({
-            "id": f"step_{i + 1}",
-            "uses": node.get("ref", "model.output.generate"),
-            "input": {},
-            "output": {},
-        })
+        steps.append(
+            {
+                "id": f"step_{i + 1}",
+                "uses": node.get("ref", "model.output.generate"),
+                "input": {},
+                "output": {},
+            }
+        )
 
     # Derive a name from the first step refs
     refs = [n.get("ref", "") for n in nodes[:2]]
@@ -1624,12 +1906,20 @@ def synthesize_output_skill(successful_plan, execution_trace):
             ),
             "version": "0.1.0",
             "steps": steps,
-            "inputs": {"goal": {"type": "string", "required": True,
-                                "description": "Task objective"}},
-            "outputs": {"result": {"type": "object",
-                                   "description": "Task execution output"}},
+            "inputs": {
+                "goal": {
+                    "type": "string",
+                    "required": True,
+                    "description": "Task objective",
+                }
+            },
+            "outputs": {
+                "result": {"type": "object", "description": "Task execution output"}
+            },
             "tags": ["generated", "candidate"],
-            "notes": ["Auto-generated — verify step refs and bindings before registration."],
+            "notes": [
+                "Auto-generated — verify step refs and bindings before registration."
+            ],
         },
         "confidence": confidence,
         "_fallback": True,
