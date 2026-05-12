@@ -113,6 +113,7 @@ def execute(
     from runtime.models import ExecutionRequest
 
     engine, _, _ = _get_components()
+    skill = engine.skill_loader.get_skill(skill_id)
     req = ExecutionRequest(
         skill_id=skill_id, inputs=inputs, trace_id=trace_id, channel=channel
     )
@@ -128,7 +129,8 @@ def execute(
         raise RuntimeError(
             f"Skill '{skill_id}' finished with status '{result.status}': {msg}"
         )
-    return dict(result.outputs) if result.outputs else {}
+    raw_outputs = dict(result.outputs) if result.outputs else {}
+    return _normalize_outputs_to_skill_contract(skill, raw_outputs)
 
 
 def execute_capability(
@@ -170,8 +172,8 @@ def list_capabilities() -> list[dict[str, Any]]:
     return result
 
 
-def list_skills() -> list[dict[str, str]]:
-    """List all available skills."""
+def list_skills() -> list[dict[str, Any]]:
+    """List all available skills with contract metadata."""
     engine, _, _ = _get_components()
     loader = engine.skill_loader
     # CompositeSkillLoader or YamlSkillLoader — both have _skill_index (or composites)
@@ -195,10 +197,26 @@ def list_skills() -> list[dict[str, str]]:
                     "id": sid,
                     "name": getattr(skill, "name", ""),
                     "description": getattr(skill, "description", ""),
+                    "inputs": {
+                        k: _field_to_dict(v)
+                        for k, v in (getattr(skill, "inputs", {}) or {}).items()
+                    },
+                    "outputs": {
+                        k: _field_to_dict(v)
+                        for k, v in (getattr(skill, "outputs", {}) or {}).items()
+                    },
                 }
             )
         except Exception:
-            result.append({"id": sid, "name": "", "description": ""})
+            result.append(
+                {
+                    "id": sid,
+                    "name": "",
+                    "description": "",
+                    "inputs": {},
+                    "outputs": {},
+                }
+            )
     return result
 
 
@@ -719,6 +737,103 @@ _GEMINI_TYPE_MAP: dict[str, str] = {
     "array": "ARRAY",
     "object": "OBJECT",
 }
+
+
+def _normalize_outputs_to_skill_contract(skill: Any, outputs: dict[str, Any]) -> dict[str, Any]:
+    """Normalize outputs to the skill contract for stable downstream composition.
+
+    The runtime guarantees required outputs are present at execution time, but
+    this helper makes the returned payload deterministic for consumers by:
+    - keeping only declared output fields,
+    - filling missing required fields with safe type defaults,
+    - coercing values to the declared top-level field type.
+    """
+    if not getattr(skill, "outputs", None):
+        return dict(outputs)
+
+    normalized: dict[str, Any] = {}
+    for name, spec in skill.outputs.items():
+        has_value = name in outputs
+
+        if has_value:
+            value = outputs[name]
+        elif spec.default is not None:
+            value = spec.default
+        elif spec.required:
+            value = _default_value_for_field_type(spec.type)
+        else:
+            continue
+
+        normalized[name] = _coerce_value_to_field_type(value, spec.type)
+
+    return normalized
+
+
+def _default_value_for_field_type(field_type: str) -> Any:
+    t = (field_type or "").strip().lower()
+    if t == "string":
+        return ""
+    if t == "integer":
+        return 0
+    if t == "number":
+        return 0.0
+    if t == "boolean":
+        return False
+    if t == "array":
+        return []
+    if t == "object":
+        return {}
+    return None
+
+
+def _coerce_value_to_field_type(value: Any, field_type: str) -> Any:
+    t = (field_type or "").strip().lower()
+
+    if t == "string":
+        return "" if value is None else str(value)
+
+    if t == "integer":
+        try:
+            if isinstance(value, bool):
+                return int(value)
+            return int(value)
+        except Exception:
+            return 0
+
+    if t == "number":
+        try:
+            if isinstance(value, bool):
+                return float(int(value))
+            return float(value)
+        except Exception:
+            return 0.0
+
+    if t == "boolean":
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            v = value.strip().lower()
+            if v in {"true", "1", "yes", "y", "on"}:
+                return True
+            if v in {"false", "0", "no", "n", "off", ""}:
+                return False
+        return bool(value)
+
+    if t == "array":
+        if isinstance(value, list):
+            return value
+        if isinstance(value, tuple):
+            return list(value)
+        if value is None:
+            return []
+        return [value]
+
+    if t == "object":
+        if isinstance(value, dict):
+            return value
+        return {}
+
+    return value
 
 
 def _build_json_schema(cap_info: dict[str, Any]) -> dict[str, Any]:

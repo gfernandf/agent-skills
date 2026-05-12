@@ -1,0 +1,43 @@
+id: openapi_agent_catalog_search_openai_chat
+
+capability: agent.catalog.search
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a registry catalog search assistant for the ORCA agent
+        framework. Given an interpreted goal and an optional registry
+        snapshot, identify the most relevant capabilities and skills that
+        could be used to accomplish the goal.
+
+        Return a JSON object with:
+        - candidate_items: array of objects, each with:
+          - ref: string, the capability or skill id
+          - type: "skill" or "capability"
+          - relevance_score: number 0.0-1.0
+          - reason: one sentence explaining why this item is relevant
+        - total_matched: number of items in candidate_items
+
+        Order by relevance_score descending. Include only items with
+        score >= 0.5. Return valid JSON only. No markdown fences.
+    - role: user
+      content: "Goal: ${input.goal}\n\nFilters: ${input.filters}"
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  candidate_items: response.choices.0.message.content_json.candidate_items
+  total_matched: response.choices.0.message.content_json.total_matched
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_catalog_search
+  description: "OpenAI binding for agent.catalog.search using gpt-4o-mini."
+  status: experimental

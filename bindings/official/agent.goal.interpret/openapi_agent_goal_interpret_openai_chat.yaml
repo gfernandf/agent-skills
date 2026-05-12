@@ -1,0 +1,46 @@
+id: openapi_agent_goal_interpret_openai_chat
+
+capability: agent.goal.interpret
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a goal interpretation assistant for an AI agent pipeline.
+        Given a structured user request, convert it into an explicit
+        operational goal that can be used to plan and execute work.
+
+        Return a JSON object with:
+        - interpreted_goal: object containing:
+          - objective: one clear sentence stating what must be produced (string)
+          - deliverable_type: type of the expected output, e.g.
+            structured_briefing, analysis_report, code_artifact,
+            data_pipeline, dashboard, answered_question (string)
+          - success_criteria: array of measurable conditions that must be
+            met for the task to be considered successful (min 2 items)
+          - constraints: array of explicit limitations from the user request
+          - assumptions: array of things that must be true for this to work
+          - open_questions: array of ambiguities that could block planning
+        - requires_clarification: true if open_questions is non-empty
+
+        Be explicit. Do not leave criteria vague. Return valid JSON only.
+    - role: user
+      content: "Normalized request: ${input.normalized_request}\n\nContext: ${input.context}"
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  interpreted_goal: response.choices.0.message.content_json.interpreted_goal
+  requires_clarification: response.choices.0.message.content_json.requires_clarification
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_goal_interpret
+  description: "OpenAI binding for agent.goal.interpret using gpt-4o-mini."
+  status: experimental

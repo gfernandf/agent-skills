@@ -2,7 +2,14 @@ defaults:
 
   agent.task.delegate: python_agent_delegate
   agent.plan.create: python_agent_plan_create
+  agent.plan.execute: python_agent_plan_execute
+  agent.plan.gate: python_agent_plan_gate
   agent.plan.generate: openapi_agent_plan_generate_openai_chat
+  agent.plan.map: python_agent_plan_map
+  agent.plan.reconcile: python_agent_plan_reconcile
+  agent.plan.split: python_agent_plan_split
+  agent.plan.synthesize: python_agent_plan_synthesize
+  agent.plan.validate: python_agent_plan_validate
   agent.input.route: openapi_agent_route_openai_chat
   audio.speech.transcribe: python_audio_transcribe
   audio.speech.synthesize: python_audio_synthesize
@@ -58,7 +65,7 @@ defaults:
   text.content.extract: python_text_extract
   text.keyword.extract: openapi_text_keyword_extract_openai_chat
   text.language.detect: openapi_text_language_detect_openai_chat
-  text.content.summarize: openapi_text_summarize_openai_chat
+  text.content.summarize: python_text_summarize
   text.content.template: python_text_template
   text.content.translate: openapi_text_translate_openai_chat
   text.content.transform: openapi_text_transform_openai_chat
@@ -75,7 +82,7 @@ defaults:
   eval.option.analyze: openapi_eval_option_analyze_openai_chat
   eval.option.score: openapi_eval_option_score_openai_chat
   model.output.generate: python_model_output_generate
-  model.response.validate: openapi_model_response_validate_openai_chat
+  model.response.validate: python_model_response_validate
   model.embedding.generate: openapi_model_embedding_generate_openai
   model.output.classify: openapi_model_output_classify_openai_chat
   model.output.score: openapi_model_output_score_openai_chat
@@ -131,7 +138,7 @@ defaults:
 
   # --- new capabilities (batch 19) ---
   agent.flow.branch: openapi_agent_flow_branch_openai_chat
-  agent.flow.catch: openapi_agent_flow_catch_openai_chat
+  agent.flow.catch: python_agent_flow_catch
   agent.flow.iterate: python_agent_flow_iterate
   agent.flow.wait: python_agent_flow_wait
   agent.input.collect: openapi_agent_input_collect_openai_chat
@@ -149,3 +156,16 @@ defaults:
   text.content.compare: openapi_text_compare_openai_chat
   text.sentiment.analyze: openapi_text_sentiment_openai_chat
   web.request.send: python_web_request_send
+
+  # --- agent pipeline (previously missing defaults) ---
+  agent.request.normalize: python_agent_request_normalize
+  agent.goal.interpret: python_agent_goal_interpret
+  agent.criteria.define: python_agent_criteria_define
+  agent.catalog.search: python_agent_catalog_search
+  agent.catalog.rank: python_agent_catalog_rank
+  agent.catalog.detect: python_agent_catalog_detect
+  agent.task.plan: python_agent_task_plan
+  agent.output.generate: python_agent_output_generate
+  agent.output.synthesize: python_agent_output_synthesize
+  eval.output.validate: python_eval_output_validate
+  ops.trace.summarize: python_ops_trace_summarize

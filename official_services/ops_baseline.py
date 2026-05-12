@@ -213,3 +213,66 @@ def monitor_events(events, thresholds=None):
             "total": len(events_list),
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# New capability: ops.trace.summarize
+# ---------------------------------------------------------------------------
+
+
+def summarize_trace(execution_trace):
+    """
+    Summarize a raw execution trace into a compact structured report.
+
+    Args:
+        execution_trace (dict): Output from run_plan (execution_result)
+            or any dict with step_results and status fields.
+
+    Returns:
+        dict: {"trace_summary": object}
+    """
+    if not isinstance(execution_trace, dict):
+        execution_trace = {}
+
+    step_results = execution_trace.get("step_results", [])
+    overall_status = execution_trace.get("status", "unknown")
+    total_duration = execution_trace.get("total_duration_ms", 0)
+
+    steps_executed = []
+    failures = []
+
+    for step in step_results if isinstance(step_results, list) else []:
+        if not isinstance(step, dict):
+            continue
+        steps_executed.append(
+            {
+                "step_id": step.get("step_id", ""),
+                "ref": step.get("ref", ""),
+                "status": step.get("status", "unknown"),
+                "duration_ms": step.get("duration_ms", 0),
+            }
+        )
+        if step.get("status") != "success":
+            failures.append(
+                {
+                    "step_id": step.get("step_id", ""),
+                    "error": step.get("error") or "unknown error",
+                    "recovery_action": "retry or skip",
+                }
+            )
+
+    success_count = sum(1 for s in steps_executed if s["status"] == "success")
+    total_count = len(steps_executed)
+    success_rate = round(success_count / total_count, 3) if total_count else 1.0
+
+    return {
+        "trace_summary": {
+            "steps_executed": steps_executed,
+            "decisions": [],
+            "failures": failures,
+            "overall_status": overall_status,
+            "total_duration_ms": total_duration,
+            "success_rate": success_rate,
+            "_fallback": True,
+        }
+    }

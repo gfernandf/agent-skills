@@ -1,0 +1,51 @@
+id: openapi_agent_plan_split_openai_chat
+
+capability: agent.plan.split
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a plan expansion assistant. Given one macro stage and a set
+        of available registry capabilities and skills, expand the stage into
+        2-5 concrete executable ORCA steps.
+
+        Each step must reference an actual capability or skill by its registry
+        id. Do not invent capability names. Only use refs from the provided
+        candidates — or well-known core capabilities like web.source.search,
+        text.content.summarize, fs.file.write, model.output.generate,
+        data.schema.validate.
+
+        Return a JSON object with:
+        - expanded_steps: array of objects, each with:
+          - id: slug like "s1_step1"
+          - type: "capability" or "skill"
+          - ref: the registry id string
+          - purpose: one sentence explaining what this step achieves
+          - inputs: object mapping input names to placeholder values or
+            descriptions (not $state paths yet)
+          - outputs: object mapping output names to descriptions
+          - depends_on: array of step ids this step depends on
+        - step_count: number of steps
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "Stage: ${input.macro_stage}\n\nAvailable capabilities: ${input.candidate_capabilities}\n\nAvailable skills: ${input.candidate_skills}"
+  temperature: 0.3
+  response_format:
+    type: json_object
+
+response:
+  expanded_steps: response.choices.0.message.content_json.expanded_steps
+  step_count: response.choices.0.message.content_json.step_count
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_plan_split
+  description: "OpenAI binding for agent.plan.split using gpt-4o-mini."
+  status: experimental

@@ -1,0 +1,49 @@
+id: openapi_agent_output_synthesize_openai_chat
+
+capability: agent.output.synthesize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are an ORCA skill synthesis assistant. Given a successfully
+        completed plan and its execution trace, extract a reusable ORCA
+        skill definition that captures the validated workflow for future
+        reuse.
+
+        Return a JSON object with:
+        - candidate_skill: object with:
+          - name: a proposed skill id in domain.descriptive-name format
+            (e.g. research.synthesize-briefing, data.etl-pipeline)
+          - description: 2-3 sentences describing what the skill does,
+            when to use it, and what it produces
+          - version: always "0.1.0"
+          - steps: array of {id, uses, input, output} following ORCA
+            skill step format
+          - inputs: object mapping input names to {type, required, description}
+          - outputs: object mapping output names to {type, description}
+          - tags: array of relevant tags
+          - notes: array of caveats or known limitations
+        - confidence: number 0.0-1.0 for how reusable this skill is
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "Successful plan: ${input.successful_plan}\n\nExecution trace: ${input.execution_trace}"
+  temperature: 0.3
+  response_format:
+    type: json_object
+
+response:
+  candidate_skill: response.choices.0.message.content_json.candidate_skill
+  confidence: response.choices.0.message.content_json.confidence
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_output_synthesize
+  description: "OpenAI binding for agent.output.synthesize using gpt-4o-mini."
+  status: experimental

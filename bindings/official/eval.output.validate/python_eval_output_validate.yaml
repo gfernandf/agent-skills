@@ -1,0 +1,14 @@
+id: python_eval_output_validate
+capability: eval.output.validate
+service: eval_baseline
+protocol: pythoncall
+operation: validate_output
+request:
+  final_output: input.final_output
+  success_criteria: input.success_criteria
+  evidence: input.evidence
+response:
+  evaluation: response.evaluation
+metadata:
+  description: Python fallback for eval.output.validate using eval_baseline service.
+  status: stable

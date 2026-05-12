@@ -163,7 +163,11 @@ class PythonCallInvoker:
             )
 
         # ── Security: timeout-protected execution ─────────────────
-        timeout = _DEFAULT_TIMEOUT_SECONDS
+        timeout = self._resolve_timeout_seconds(
+            binding_timeout=binding.metadata.get("timeout_seconds"),
+            service_timeout=service.metadata.get("timeout_seconds"),
+            capability_id=capability_id,
+        )
         result_holder: dict[str, Any] = {}
         error_holder: dict[str, Exception] = {}
 
@@ -227,3 +231,21 @@ class PythonCallInvoker:
                 "duration_ms": duration_ms,
             },
         )
+
+    def _resolve_timeout_seconds(
+        self,
+        *,
+        binding_timeout: Any,
+        service_timeout: Any,
+        capability_id: str | None,
+    ) -> float:
+        chosen = binding_timeout if binding_timeout is not None else service_timeout
+        if chosen is None:
+            return _DEFAULT_TIMEOUT_SECONDS
+
+        if not isinstance(chosen, (int, float)) or chosen <= 0:
+            raise PythonCallInvocationError(
+                "PythonCall timeout_seconds must be a positive number.",
+                capability_id=capability_id,
+            )
+        return float(chosen)

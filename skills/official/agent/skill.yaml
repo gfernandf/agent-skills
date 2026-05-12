@@ -1,0 +1,74 @@
+id: agent.execute-from-plan
+version: 0.1.0
+name: Execute From Plan
+description: >
+  ORCA executor skill that takes a compiled plan from agent.orchestrate-from-prompt
+  and executes each step in DAG order, calling the referenced skills via the
+  embedded runtime and chaining outputs through CognitiveState state_bindings.
+  Returns the full execution result including per-step status, final state, and
+  the last successful step's output as final_output.
+
+inputs:
+  compiled_plan:
+    type: object
+    required: false
+    description: >
+      Compiled plan object from agent.orchestrate-from-prompt (compiled_plan output),
+      or its JSON string representation (compiled_plan_json). Must contain dag,
+      execution_order, state_bindings, and registry_version.
+  compiled_plan_json:
+    type: string
+    required: false
+    description: >
+      JSON string variant of the compiled plan. Accepted as an alias when
+      compiled_plan is not provided by the caller.
+  planner_output:
+    type: string
+    required: false
+    description: >
+      Raw Planner node output text. The executor attempts to extract
+      compiled_plan_json/compiled_plan from this payload when needed.
+  initial_state:
+    type: object
+    required: false
+    description: Optional initial CognitiveState. Defaults to empty state.
+
+outputs:
+  execution_result:
+    type: object
+    required: true
+    description: >
+      Execution result with status (success|partial|failed), step_results array,
+      final_state snapshot, total_duration_ms, and final_output from the last
+      successful step.
+  failed_steps:
+    type: array
+    required: false
+    description: List of step ids that failed. Empty on full success.
+
+steps:
+  - id: execute_plan
+    uses: agent.plan.execute
+    timeout_seconds: 180
+    input:
+      compiled_plan: inputs.compiled_plan
+      initial_state: inputs.initial_state
+    output:
+      execution_result: outputs.execution_result
+      failed_steps: outputs.failed_steps
+
+metadata:
+  classification:
+    role: procedure
+    invocation: direct
+    effect_mode: enrich
+  tags:
+    - agent
+    - orchestration
+    - execution
+    - plan-runner
+    - mcp
+  use_cases:
+    - Execute a compiled ORCA plan produced by agent.orchestrate-from-prompt.
+    - Chain research, analysis, and synthesis skills in DAG order with real data.
+    - Return structured execution results for downstream reporting.

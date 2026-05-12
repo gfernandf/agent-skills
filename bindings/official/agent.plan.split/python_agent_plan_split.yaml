@@ -1,0 +1,16 @@
+id: python_agent_plan_split
+capability: agent.plan.split
+service: agent_baseline
+protocol: pythoncall
+operation: split_plan_stage
+request:
+  macro_stage: input.macro_stage
+  candidate_skills: input.candidate_skills
+  candidate_capabilities: input.candidate_capabilities
+  current_state: input.current_state
+response:
+  expanded_steps: response.expanded_steps
+  step_count: response.step_count
+metadata:
+  description: Python fallback for agent.plan.split using agent_baseline service.
+  status: stable

@@ -1,0 +1,14 @@
+id: python_agent_plan_validate
+capability: agent.plan.validate
+service: agent_baseline
+protocol: pythoncall
+operation: validate_plan
+request:
+  expanded_plan: input.expanded_plan
+  registry: input.registry
+  state_schema: input.state_schema
+response:
+  validation_result: response.validation_result
+metadata:
+  description: Python fallback for agent.plan.validate using agent_baseline service.
+  status: stable

@@ -1,0 +1,14 @@
+id: python_agent_request_normalize
+capability: agent.request.normalize
+service: agent_baseline
+protocol: pythoncall
+operation: normalize_request
+request:
+  user_message: input.user_message
+  context: input.context
+response:
+  normalized_request: response.normalized_request
+  language: response.language
+metadata:
+  description: Python fallback for agent.request.normalize using agent_baseline service.
+  status: stable

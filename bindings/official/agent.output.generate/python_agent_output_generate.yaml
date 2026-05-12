@@ -1,0 +1,16 @@
+id: python_agent_output_generate
+capability: agent.output.generate
+service: agent_baseline
+protocol: pythoncall
+operation: generate_output_report
+request:
+  interpreted_goal: input.interpreted_goal
+  execution_result: input.execution_result
+  evaluation: input.evaluation
+  trace_summary: input.trace_summary
+response:
+  report: response.report
+  report_status: response.report_status
+metadata:
+  description: Python fallback for agent.output.generate using agent_baseline service.
+  status: stable

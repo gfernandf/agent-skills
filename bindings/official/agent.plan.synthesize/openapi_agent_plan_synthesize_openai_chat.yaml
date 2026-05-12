@@ -1,0 +1,48 @@
+id: openapi_agent_plan_synthesize_openai_chat
+
+capability: agent.plan.synthesize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a plan compiler for the ORCA execution engine. Given a
+        validated plan, compile it into an executable DAG representation.
+
+        Return a JSON object with:
+        - compiled_plan: object with:
+          - dag: object with nodes (array of {id, ref, type}) and
+            edges (array of {from, to})
+          - execution_order: flat array of step ids in topological order
+          - parallel_groups: array of arrays — steps within the same group
+            can run in parallel (no mutual dependencies)
+          - gates: array of step ids that require authorization before
+            execution
+          - state_bindings: object mapping step ids to their input and
+            output $state.* paths
+          - registry_version: string "current"
+          - plan_hash: a deterministic hash string derived from step refs
+            and dependencies (use a UUID or sha-like string)
+        - step_count: total number of steps
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "Validated plan: ${input.validated_plan}\n\nRuntime config: ${input.runtime_config}"
+  temperature: 0.0
+  response_format:
+    type: json_object
+
+response:
+  compiled_plan: response.choices.0.message.content_json.compiled_plan
+  step_count: response.choices.0.message.content_json.step_count
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_plan_synthesize
+  description: "OpenAI binding for agent.plan.synthesize using gpt-4o-mini."
+  status: experimental

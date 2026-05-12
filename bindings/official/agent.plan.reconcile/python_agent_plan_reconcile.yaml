@@ -1,0 +1,16 @@
+id: python_agent_plan_reconcile
+capability: agent.plan.reconcile
+service: agent_baseline
+protocol: pythoncall
+operation: reconcile_plan
+request:
+  invalid_plan: input.invalid_plan
+  validation_errors: input.validation_errors
+  registry: input.registry
+response:
+  repaired_plan: response.repaired_plan
+  repair_notes: response.repair_notes
+  still_invalid: response.still_invalid
+metadata:
+  description: Python fallback for agent.plan.reconcile using agent_baseline service.
+  status: stable

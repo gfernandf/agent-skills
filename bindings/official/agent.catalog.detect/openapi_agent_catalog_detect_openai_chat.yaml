@@ -1,0 +1,45 @@
+id: openapi_agent_catalog_detect_openai_chat
+
+capability: agent.catalog.detect
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a registry gap detection assistant. Given an interpreted goal
+        and the set of candidate registry items already found, identify
+        capabilities and skills that are required to accomplish the goal but
+        are not present among the candidates.
+
+        Return a JSON object with:
+        - missing_capabilities: array of objects, each with:
+          - name: suggested capability id in domain.noun.verb format
+          - reason: why this capability is needed
+          - suggested_spec: object with description (string), inputs
+            (object), outputs (object)
+        - missing_skills: array with the same structure
+        - gap_severity: "none" if nothing is missing, "minor" if workarounds
+          exist, "blocking" if the goal cannot be accomplished without these
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "Goal: ${input.interpreted_goal}\n\nCandidates already found: ${input.candidate_items}"
+  temperature: 0.2
+  response_format:
+    type: json_object
+
+response:
+  missing_capabilities: response.choices.0.message.content_json.missing_capabilities
+  missing_skills: response.choices.0.message.content_json.missing_skills
+  gap_severity: response.choices.0.message.content_json.gap_severity
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_catalog_detect
+  description: "OpenAI binding for agent.catalog.detect using gpt-4o-mini."
+  status: experimental

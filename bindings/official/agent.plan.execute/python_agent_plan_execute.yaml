@@ -1,0 +1,15 @@
+id: python_agent_plan_execute
+capability: agent.plan.execute
+service: agent_baseline
+protocol: pythoncall
+operation: execute_plan
+request:
+  compiled_plan: input.compiled_plan
+  initial_state: input.initial_state
+response:
+  execution_result: response.execution_result
+  failed_steps: response.failed_steps
+metadata:
+  description: Python binding for agent.plan.execute using agent_baseline service.
+  status: experimental
+  timeout_seconds: 180

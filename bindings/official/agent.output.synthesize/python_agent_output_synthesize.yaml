@@ -1,0 +1,14 @@
+id: python_agent_output_synthesize
+capability: agent.output.synthesize
+service: agent_baseline
+protocol: pythoncall
+operation: synthesize_output_skill
+request:
+  successful_plan: input.successful_plan
+  execution_trace: input.execution_trace
+response:
+  candidate_skill: response.candidate_skill
+  confidence: response.confidence
+metadata:
+  description: Python fallback for agent.output.synthesize using agent_baseline service.
+  status: stable

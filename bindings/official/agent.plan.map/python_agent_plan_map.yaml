@@ -1,0 +1,14 @@
+id: python_agent_plan_map
+capability: agent.plan.map
+service: agent_baseline
+protocol: pythoncall
+operation: map_plan_inputs
+request:
+  expanded_steps: input.expanded_steps
+  state_schema: input.state_schema
+response:
+  bound_steps: response.bound_steps
+  unresolved_bindings: response.unresolved_bindings
+metadata:
+  description: Python fallback for agent.plan.map using agent_baseline service.
+  status: stable

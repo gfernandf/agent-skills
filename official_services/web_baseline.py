@@ -325,26 +325,42 @@ def _parse_ddg_results(html, limit):
     return results
 
 
-def _synthetic_results(query, limit):
-    """Fallback: generate synthetic results when live search is unavailable."""
-    tokens = [t for t in (query or "").split() if len(t) > 2]
-    if not tokens:
-        tokens = ["topic"]
+def _parse_bing_results(html, limit):
+    """Parse Bing HTML search results into structured items."""
     results = []
-    for i in range(limit):
-        word = tokens[i % len(tokens)]
+    link_pattern = re.compile(
+        r'<li[^>]+class="b_algo"[^>]*>.*?<h2>\s*<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>',
+        re.DOTALL,
+    )
+    snippet_pattern = re.compile(
+        r'<li[^>]+class="b_algo"[^>]*>.*?<p>(.*?)</p>',
+        re.DOTALL,
+    )
+
+    links = link_pattern.findall(html)
+    snippets = snippet_pattern.findall(html)
+
+    for idx, (url, raw_title) in enumerate(links[:limit]):
+        title = re.sub(r"<[^>]+>", "", raw_title).strip()
+        snippet = ""
+        if idx < len(snippets):
+            snippet = re.sub(r"<[^>]+>", "", snippets[idx]).strip()
+
+        parsed_url = urllib.parse.urlparse(url)
+        domain = parsed_url.netloc or ""
+        if parsed_url.scheme.lower() not in _ALLOWED_SCHEMES or not domain:
+            continue
+
         results.append(
             {
-                "url": f"https://example.com/{word.lower()}-{i + 1}",
-                "title": f"{word.title()} — Result {i + 1} for '{query}'",
-                "snippet": (
-                    f"Synthetic result {i + 1} for '{query}'. "
-                    f"Live search unavailable; this placeholder mentions {word}."
-                ),
-                "rank": i + 1,
-                "domain": "example.com",
+                "url": url,
+                "title": title or f"Result {idx + 1}",
+                "snippet": snippet,
+                "rank": idx + 1,
+                "domain": domain,
             }
         )
+
     return results
 
 
@@ -366,7 +382,7 @@ def search_web(query, limit=None):
     limit = max(1, min(limit, 20))
 
     if not query or not query.strip():
-        return {"results": _synthetic_results(query, limit)}
+        raise RuntimeError("web.source.search requires a non-empty query")
 
     t0 = time.time()
     try:
@@ -389,14 +405,41 @@ def search_web(query, limit=None):
             )
             return {"results": results}
     except Exception:
-        pass  # fall through to synthetic
+        pass
 
-    log_event(
-        "web.source.search.fallback",
-        reason="live_search_unavailable",
-        duration_ms=elapsed_ms(t0),
+    # Secondary provider fallback: Bing HTML.
+    try:
+        url = "https://www.bing.com/search?" + urllib.parse.urlencode({"q": query})
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "AgentSkills/1.0 (capability=web.source.search)"},
+        )
+        with urllib.request.urlopen(req, timeout=_FETCH_TIMEOUT_SECONDS) as resp:
+            html = resp.read(_MAX_RESPONSE_BYTES).decode("utf-8", errors="ignore")
+
+        results = _parse_bing_results(html, limit)
+        if results:
+            log_event(
+                "web.source.search.live",
+                provider="bing",
+                result_count=len(results),
+                duration_ms=elapsed_ms(t0),
+            )
+            return {"results": results}
+    except Exception as exc:
+        log_event(
+            "web.source.search.fallback",
+            reason="live_search_unavailable",
+            error=str(exc),
+            duration_ms=elapsed_ms(t0),
+        )
+        raise RuntimeError(
+            "web.source.search failed because live search is unavailable; synthetic fallback is disabled."
+        ) from exc
+
+    raise RuntimeError(
+        "web.source.search failed because no live results were returned; synthetic fallback is disabled."
     )
-    return {"results": _synthetic_results(query, limit)}
 
 
 def verify_source(url):

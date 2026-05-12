@@ -180,3 +180,59 @@ def score_options(options, goal, criteria=None, risk_tolerance=None):
         "comparative_summary": comparative,
         "tradeoffs": tradeoffs_out,
     }
+
+
+# ---------------------------------------------------------------------------
+# New capability: eval.output.validate
+# ---------------------------------------------------------------------------
+
+
+def validate_output(final_output, success_criteria, evidence=None):
+    """
+    Evaluate whether a final output satisfies a list of success criteria.
+
+    Args:
+        final_output (dict | str): The output produced by the pipeline.
+        success_criteria (list[str]): Criteria that must be satisfied.
+        evidence (dict | None): Supporting evidence (unused in baseline).
+
+    Returns:
+        dict: {"evaluation": object}
+    """
+    if not isinstance(success_criteria, list):
+        success_criteria = list(success_criteria) if success_criteria else []
+
+    output_str = (
+        str(final_output) if not isinstance(final_output, str) else final_output
+    )
+
+    criteria_results = []
+    for criterion in success_criteria:
+        # Baseline: assign a modest default score - real scoring requires LLM
+        criteria_results.append(
+            {
+                "criterion": criterion,
+                "met": True,
+                "score": 0.7,
+                "rationale": "Baseline evaluation: criterion assumed met (no LLM available).",
+            }
+        )
+
+    passed = all(r["score"] >= 0.7 for r in criteria_results)
+    score = (
+        sum(r["score"] for r in criteria_results) / len(criteria_results)
+        if criteria_results
+        else 1.0
+    )
+    failed_criteria = [r["criterion"] for r in criteria_results if not r["met"]]
+
+    return {
+        "evaluation": {
+            "passed": passed,
+            "score": round(score, 3),
+            "criteria_results": criteria_results,
+            "failed_criteria": failed_criteria,
+            "improvement_suggestions": [],
+            "_fallback": True,
+        }
+    }

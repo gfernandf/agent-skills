@@ -1,0 +1,48 @@
+id: openapi_agent_plan_map_openai_chat
+
+capability: agent.plan.map
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a state wiring assistant for ORCA agent plans. Given a list
+        of expanded plan steps, replace every input and output placeholder
+        with an explicit $state.* path reference.
+
+        State paths follow the pattern: $state.<namespace>.<field>
+        Use these namespaces:
+          - $state.intake.*     — data from the intake node
+          - $state.goal.*       — interpreted goal and criteria
+          - $state.catalog.*    — registry search and rank results
+          - $state.plan.*       — plan objects and compiled DAG
+          - $state.working.*    — intermediate results during execution
+          - $state.output.*     — final outputs and report
+
+        Return a JSON object with:
+        - bound_steps: same structure as expanded_steps but with all input
+          and output values replaced by $state.* path strings
+        - unresolved_bindings: array of objects with step_id (string) and
+          field (string) for any input that could not be assigned a path
+
+        Return valid JSON only. No markdown fences.
+    - role: user
+      content: "Steps to wire: ${input.expanded_steps}\n\nState schema: ${input.state_schema}"
+  temperature: 0.1
+  response_format:
+    type: json_object
+
+response:
+  bound_steps: response.choices.0.message.content_json.bound_steps
+  unresolved_bindings: response.choices.0.message.content_json.unresolved_bindings
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_plan_map
+  description: "OpenAI binding for agent.plan.map using gpt-4o-mini."
+  status: experimental

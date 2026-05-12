@@ -1,0 +1,15 @@
+id: python_agent_catalog_search
+capability: agent.catalog.search
+service: agent_baseline
+protocol: pythoncall
+operation: search_catalog
+request:
+  goal: input.goal
+  registry: input.registry
+  filters: input.filters
+response:
+  candidate_items: response.candidate_items
+  total_matched: response.total_matched
+metadata:
+  description: Python fallback for agent.catalog.search using agent_baseline service.
+  status: stable

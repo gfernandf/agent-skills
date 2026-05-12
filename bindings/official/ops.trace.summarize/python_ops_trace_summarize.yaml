@@ -1,0 +1,12 @@
+id: python_ops_trace_summarize
+capability: ops.trace.summarize
+service: ops_baseline
+protocol: pythoncall
+operation: summarize_trace
+request:
+  execution_trace: input.execution_trace
+response:
+  trace_summary: response.trace_summary
+metadata:
+  description: Python fallback for ops.trace.summarize using ops_baseline service.
+  status: stable

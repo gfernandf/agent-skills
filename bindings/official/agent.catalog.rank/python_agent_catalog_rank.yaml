@@ -1,0 +1,14 @@
+id: python_agent_catalog_rank
+capability: agent.catalog.rank
+service: agent_baseline
+protocol: pythoncall
+operation: rank_catalog
+request:
+  candidate_items: input.candidate_items
+  interpreted_goal: input.interpreted_goal
+response:
+  ranked_skills: response.ranked_skills
+  ranked_capabilities: response.ranked_capabilities
+metadata:
+  description: Python fallback for agent.catalog.rank using agent_baseline service.
+  status: stable

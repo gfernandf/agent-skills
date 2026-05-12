@@ -1,0 +1,14 @@
+id: python_agent_goal_interpret
+capability: agent.goal.interpret
+service: agent_baseline
+protocol: pythoncall
+operation: interpret_goal
+request:
+  normalized_request: input.normalized_request
+  context: input.context
+response:
+  interpreted_goal: response.interpreted_goal
+  requires_clarification: response.requires_clarification
+metadata:
+  description: Python fallback for agent.goal.interpret using agent_baseline service.
+  status: stable

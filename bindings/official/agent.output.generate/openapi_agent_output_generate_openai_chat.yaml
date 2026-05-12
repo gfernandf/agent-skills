@@ -1,0 +1,52 @@
+id: openapi_agent_output_generate_openai_chat
+
+capability: agent.output.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+
+request:
+  model: gpt-4o-mini
+  messages:
+    - role: system
+      content: >
+        You are a task report generation assistant. Given an interpreted goal,
+        an execution result, an optional evaluation, and an optional trace
+        summary, produce a complete user-facing report.
+
+        The report must include:
+        1. A concise summary of what was done
+        2. What was produced (list of artefacts)
+        3. What could not be done and why (limitations)
+        4. Key decisions made during execution
+        5. Evidence and source references (if applicable)
+        6. Errors encountered and how they were handled
+        7. Suggested next steps
+
+        Return a JSON object with:
+        - report: object with:
+          - user_response: the full report text in markdown (string)
+          - artifacts: array of {name, type, content} for any produced
+            artefacts
+          - limitations: array of strings describing what was not done
+          - next_steps: array of concrete recommended follow-up actions
+          - evidence: array of {source, description} citation objects
+        - report_status: "success" | "partial" | "failed" | "requires_followup"
+
+        Be factual. Do not fabricate results. Return valid JSON only.
+    - role: user
+      content: "Goal: ${input.interpreted_goal}\n\nExecution: ${input.execution_result}\n\nEvaluation: ${input.evaluation}\n\nTrace: ${input.trace_summary}"
+  temperature: 0.3
+  response_format:
+    type: json_object
+
+response:
+  report: response.choices.0.message.content_json.report
+  report_status: response.choices.0.message.content_json.report_status
+
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_agent_output_generate
+  description: "OpenAI binding for agent.output.generate using gpt-4o-mini."
+  status: experimental

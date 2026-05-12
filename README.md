@@ -14,8 +14,8 @@
   <a href="https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml"><img src="https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11%2B-blue.svg" alt="Python"></a>
   <img src="https://img.shields.io/badge/Tests-1694_passed-brightgreen.svg" alt="Tests">
-  <img src="https://img.shields.io/badge/Capabilities-141-blueviolet.svg" alt="Capabilities">
-  <img src="https://img.shields.io/badge/Skills-36-blueviolet.svg" alt="Skills">
+  <img src="https://img.shields.io/badge/Capabilities-159-blueviolet.svg" alt="Capabilities">
+  <img src="https://img.shields.io/badge/Skills-37-blueviolet.svg" alt="Skills">
   <a href="https://doi.org/10.5281/zenodo.19438943"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.19438943.svg" alt="DOI"></a>
 </p>
 
@@ -23,7 +23,7 @@
 
 Agent Skills Runtime lets you define agent capabilities as abstract contracts, wire them to any backend (Python, OpenAPI, MCP, OpenRPC), and execute multi-step workflows as declarative DAGs — with built-in safety gates, cognitive state tracking, and full observability.
 
-> **No API keys required.** 141 capabilities ship with deterministic Python baselines.
+> **No API keys required.** 159 capabilities ship with deterministic Python baselines.
 > Install, run your first skill in under 3 minutes.
 
 ---
@@ -154,7 +154,7 @@ See the full ORCA specification:
 | Workflows are imperative code | **Declarative YAML skills** — steps, dependencies, mappings resolved by the runtime |
 | No safety model | **4-tier safety gates** — trust levels, confirmation prompts, scope constraints, side-effect tracking |
 | No structured reasoning state | **CognitiveState v1** — typed Frame/Working/Output/Trace aligned with CoALA |
-| Inconsistent naming | **Controlled vocabulary** — 122 capabilities across 27 domains with governed naming |
+| Inconsistent naming | **Controlled vocabulary** — 159 capabilities across 27 domains with governed naming |
 | Hard to observe | **OTel + metrics + audit** — hash-chain audit trail, Prometheus metrics, SSE streaming |
 
 ---
@@ -384,7 +384,7 @@ Adapters are also available for **CrewAI**, **AutoGen**, and **Semantic Kernel**
 
 ### Use as MCP Server
 
-Expose all 122 capabilities as MCP tools over stdio (or SSE) — any MCP-compatible host (Claude Desktop, VS Code Copilot, etc.) can discover and call them:
+Expose all 159 capabilities as MCP tools over stdio (or SSE) — any MCP-compatible host (Claude Desktop, VS Code Copilot, etc.) can discover and call them:
 
 ```bash
 # stdio transport (default — for Claude Desktop / MCP hosts)
@@ -417,7 +417,7 @@ response = client.messages.create(model="claude-sonnet-4-20250514", tools=tools,
 result = execute_anthropic_tool_call(block.name, block.input)
 
 # ── OpenAI ─────────────────────────────────────
-tools = as_openai_tools()  # all 122 capabilities
+tools = as_openai_tools()  # all 159 capabilities
 response = openai.chat.completions.create(model="gpt-4o", tools=tools, ...)
 result = execute_openai_tool_call(call.function.name, call.function.arguments)
 
