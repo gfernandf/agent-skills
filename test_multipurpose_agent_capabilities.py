@@ -15,8 +15,6 @@ Usage:
   python test_multipurpose_agent_capabilities.py agent.request.normalize ops.trace.summarize
 """
 
-import importlib
-import json
 import sys
 import traceback
 from pathlib import Path
@@ -569,7 +567,7 @@ TESTS = [
     ("agent.plan.reconcile", test_agent_plan_reconcile),
     ("agent.plan.synthesize", test_agent_plan_synthesize),
     ("agent.plan.gate", test_agent_plan_gate),
-    ("agent.plan.run", test_agent_plan_run),
+    ("agent.plan.execute", test_agent_plan_execute),
     ("agent.output.generate", test_agent_output_generate),
     ("agent.output.synthesize", test_agent_output_synthesize),
     ("eval.output.validate", test_eval_output_validate),

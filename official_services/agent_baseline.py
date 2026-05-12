@@ -302,7 +302,6 @@ def interpret_goal(normalized_request, context=None):
         normalized_request = {"raw_request": str(normalized_request)}
 
     raw = normalized_request.get("raw_request", "")
-    intent = normalized_request.get("detected_intent", "general_task")
     constraints = normalized_request.get("explicit_constraints", [])
 
     raw_text = raw if isinstance(raw, str) else str(raw)
@@ -1403,6 +1402,7 @@ def execute_plan(compiled_plan, initial_state=None):
         dict: {"execution_result": object, "failed_steps": list}
     """
     import time as _time
+    import json
 
     # Accept both object and JSON string forms
     if isinstance(compiled_plan, str):
@@ -1539,11 +1539,9 @@ def generate_output_report(interpreted_goal, execution_result, evaluation=None, 
     step_results = execution_result.get("step_results", [])
     steps_done = [s["step_id"] for s in step_results if s.get("status") == "success"]
 
-    passed = True
     failed_criteria = []
     if isinstance(evaluation, dict):
         eval_obj = evaluation.get("evaluation", evaluation)
-        passed = eval_obj.get("passed", True)
         failed_criteria = eval_obj.get("failed_criteria", [])
 
     limitations = []

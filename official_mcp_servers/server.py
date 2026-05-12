@@ -579,7 +579,6 @@ async def list_tools() -> list[Tool]:
         sid = skill_info.get("id", "")
         if not sid:
             continue
-        name = skill_info.get("name") or sid
         desc = skill_info.get("description") or f"Execute skill {sid}."
         desc = f"[SKILL] {desc}"
         tools.append(
@@ -799,7 +798,6 @@ async def run_sse(host: str = "0.0.0.0", port: int = 8765) -> None:
         import uvicorn
         from starlette.applications import Starlette
         from starlette.routing import Mount, Route
-        from starlette.middleware import Middleware
         from contextlib import asynccontextmanager
     except ImportError as exc:
         raise ImportError(

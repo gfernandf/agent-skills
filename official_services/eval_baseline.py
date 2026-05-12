@@ -202,10 +202,6 @@ def validate_output(final_output, success_criteria, evidence=None):
     if not isinstance(success_criteria, list):
         success_criteria = list(success_criteria) if success_criteria else []
 
-    output_str = (
-        str(final_output) if not isinstance(final_output, str) else final_output
-    )
-
     criteria_results = []
     for criterion in success_criteria:
         # Baseline: assign a modest default score - real scoring requires LLM
