@@ -317,6 +317,7 @@ def _parse_ddg_results(html, limit):
                 "url": url,
                 "title": title or f"Result {idx + 1}",
                 "snippet": snippet,
+                "content": f"{title or f'Result {idx + 1}'}. {snippet}".strip(),
                 "rank": idx + 1,
                 "domain": domain,
             }
@@ -356,6 +357,7 @@ def _parse_bing_results(html, limit):
                 "url": url,
                 "title": title or f"Result {idx + 1}",
                 "snippet": snippet,
+                "content": f"{title or f'Result {idx + 1}'}. {snippet}".strip(),
                 "rank": idx + 1,
                 "domain": domain,
             }
@@ -368,14 +370,14 @@ def search_web(query, limit=None):
     """
     Search the web using DuckDuckGo (no API key required).
 
-    Falls back to synthetic results if the network request fails.
+    Returns an empty result set when live search is unavailable.
 
     Args:
         query (str): The search query.
         limit (int, optional): Maximum number of results (default 5, max 20).
 
     Returns:
-        dict: {"results": list} — each item has url, title, snippet, rank, domain.
+        dict: {"results": list} — each item has url, title, snippet, content, rank, domain.
     """
     if limit is None:
         limit = 5
@@ -384,7 +386,7 @@ def search_web(query, limit=None):
     if not query or not query.strip():
         raise RuntimeError("web.source.search requires a non-empty query")
 
-    t0 = time.time()
+    t0 = time.perf_counter()
     try:
         data = urllib.parse.urlencode({"q": query}).encode("utf-8")
         req = urllib.request.Request(
@@ -433,13 +435,14 @@ def search_web(query, limit=None):
             error=str(exc),
             duration_ms=elapsed_ms(t0),
         )
-        raise RuntimeError(
-            "web.source.search failed because live search is unavailable; synthetic fallback is disabled."
-        ) from exc
+        return {"results": []}
 
-    raise RuntimeError(
-        "web.source.search failed because no live results were returned; synthetic fallback is disabled."
+    log_event(
+        "web.source.search.empty",
+        reason="no_live_results",
+        duration_ms=elapsed_ms(t0),
     )
+    return {"results": []}
 
 
 def verify_source(url):

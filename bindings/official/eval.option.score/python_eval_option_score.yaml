@@ -6,6 +6,8 @@ operation: score_options
 request:
   options: input.options
   goal: input.goal
+  criteria: input.criteria
+  risk_tolerance: input.risk_tolerance
 response:
   scored_options: response.scored_options
   criteria_used: response.criteria_used

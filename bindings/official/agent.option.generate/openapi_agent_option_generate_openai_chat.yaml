@@ -37,6 +37,8 @@ response:
 metadata:
   method: POST
   response_mode: json
+  timeout_seconds: 8
+  retry_count: 0
   fallback_binding_id: python_agent_option_generate
   description: "OpenAI binding for agent.option.generate using gpt-4o-mini."
   status: experimental

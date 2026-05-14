@@ -25,6 +25,12 @@ def _error_response(error: Exception, *, trace_id: str | None = None) -> dict[st
     }
 
 
+def _build_step_diagnostics(result) -> dict[str, Any]:
+    from sdk.embedded import _build_skill_execution_meta
+
+    return _build_skill_execution_meta(result)
+
+
 class NeutralRuntimeAPI:
     """
     Protocol-neutral customer-facing facade.
@@ -172,6 +178,7 @@ class NeutralRuntimeAPI:
             "status": result.status,
             "outputs": result.outputs,
             "trace_id": result.state.trace_id,
+            "meta": _build_step_diagnostics(result),
         }
 
         if include_trace:

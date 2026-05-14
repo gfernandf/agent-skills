@@ -354,6 +354,9 @@ class AuditRecorder:
                 "duration_ms": self._duration_ms(result.started_at, result.finished_at),
                 "binding_id": result.binding_id,
                 "service_id": result.service_id,
+                "primary_binding_id": result.primary_binding_id,
+                "fallback_chain": result.fallback_chain,
+                "binding_attempts": self._sanitize_attempts(result.binding_attempts),
                 "attempts_count": result.attempts_count,
                 "fallback_used": result.fallback_used,
                 "conformance_profile": result.conformance_profile,
@@ -494,6 +497,33 @@ class AuditRecorder:
         if len(value) <= _MAX_STR_LEN:
             return value
         return value[:_MAX_STR_LEN] + "...[truncated]"
+
+    def _sanitize_attempts(self, attempts: list | None) -> list | None:
+        if not isinstance(attempts, list):
+            return None
+        sanitized = []
+        for item in attempts:
+            if not isinstance(item, dict):
+                continue
+            sanitized.append(
+                {
+                    "binding_id": item.get("binding_id"),
+                    "service_id": item.get("service_id"),
+                    "status": item.get("status"),
+                    "conformance_profile": item.get("conformance_profile"),
+                    "required_conformance_profile": item.get(
+                        "required_conformance_profile"
+                    ),
+                    "skip_reason": self._truncate_str(item.get("skip_reason"))
+                    if item.get("skip_reason")
+                    else None,
+                    "error_type": item.get("error_type"),
+                    "error_message": self._truncate_str(item.get("error_message"))
+                    if item.get("error_message")
+                    else None,
+                }
+            )
+        return sanitized
 
     def _is_sensitive_key(self, key: str) -> bool:
         key_lc = key.lower()

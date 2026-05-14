@@ -640,6 +640,9 @@ class ExecutionEngine:
             fallback_used = None
             conformance_profile = None
             required_profile = None
+            primary_binding_id = None
+            fallback_chain = None
+            binding_attempts = None
             _while_applied = False
 
             if step.uses.startswith("skill:"):
@@ -785,6 +788,7 @@ class ExecutionEngine:
                     attempts = meta.get("attempts")
                     if isinstance(attempts, list):
                         attempts_count = len(attempts)
+                        binding_attempts = attempts
                     fallback_raw = meta.get("fallback_used")
                     if isinstance(fallback_raw, bool):
                         fallback_used = fallback_raw
@@ -792,6 +796,16 @@ class ExecutionEngine:
                         conformance_profile = meta.get("conformance_profile")
                     if isinstance(meta.get("required_conformance_profile"), str):
                         required_profile = meta.get("required_conformance_profile")
+                    resolution_plan = meta.get("resolution_plan")
+                    if isinstance(resolution_plan, dict):
+                        primary_raw = resolution_plan.get("primary_binding_id")
+                        if isinstance(primary_raw, str):
+                            primary_binding_id = primary_raw
+                    chain_raw = meta.get("fallback_chain")
+                    if isinstance(chain_raw, list):
+                        fallback_chain = [
+                            item for item in chain_raw if isinstance(item, str)
+                        ]
 
             with state_lock:
                 # While loops already apply output each iteration
@@ -871,6 +885,9 @@ class ExecutionEngine:
                 produced_output=produced,
                 binding_id=(meta.get("binding_id") if meta else None),
                 service_id=(meta.get("service_id") if meta else None),
+                primary_binding_id=primary_binding_id,
+                fallback_chain=fallback_chain,
+                binding_attempts=binding_attempts,
                 attempts_count=attempts_count,
                 fallback_used=fallback_used,
                 conformance_profile=conformance_profile,

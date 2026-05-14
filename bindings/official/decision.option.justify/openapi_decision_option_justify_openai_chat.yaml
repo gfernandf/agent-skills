@@ -55,6 +55,8 @@ response:
 metadata:
   method: POST
   response_mode: json
+  timeout_seconds: 8
+  retry_count: 0
   fallback_binding_id: python_decision_option_justify
   description: "OpenAI binding for decision.option.justify using gpt-4o-mini."
   status: experimental

@@ -80,7 +80,7 @@ def route_agent(query, agents=None, routing_strategy=None):
         routing_strategy (str, optional): Strategy hint (keyword, semantic, round-robin).
 
     Returns:
-        dict: {"route": str}
+        dict: {"route": str, "confidence": float}
     """
     if isinstance(agents, list) and agents:
         # Keyword matching: pick first agent whose name appears in query
@@ -88,27 +88,41 @@ def route_agent(query, agents=None, routing_strategy=None):
             query_lower = query.lower()
             for agent in agents:
                 if isinstance(agent, str) and agent.lower() in query_lower:
-                    return {"route": agent}
+                    return {"route": agent, "confidence": 0.9}
         selected = agents[0]
+        confidence = 0.75
     elif isinstance(query, dict):
         selected = str(query.get("task_type", query.get("approach", "default")))
+        confidence = 0.6
     else:
         selected = "default"
-    return {"route": selected}
+        confidence = 0.5
+    return {"route": selected, "confidence": confidence}
 
 
-def generate_options(goal, context=None, constraints=None, max_options=None):
+def generate_options(
+    goal, context=None, constraints=None, max_options=None, options=None
+):
     """
-    Generate plausible options for a decision problem.
+    Generate or normalize plausible options for a decision problem.
 
-    Baseline heuristic: produces 3 generic options derived from the goal text.
+    If explicit options are provided and non-empty, returns them as-is.
+    Otherwise, generates 2-4 baseline options from goal + context.
     """
+    # If options were pre-provided and non-empty, return them
+    if options and isinstance(options, list) and len(options) > 0:
+        return {
+            "options": options,
+            "generation_notes": f"Using {len(options)} provided options.",
+        }
+
+    # Otherwise, generate baseline options
     if max_options is None:
         max_options = 4
     max_options = min(max_options, 6)
 
     prefix = goal[:50] if goal else "goal"
-    options = []
+    generated = []
     templates = [
         ("conservative", "Low-risk incremental approach"),
         ("balanced", "Moderate approach balancing risk and reward"),
@@ -116,7 +130,7 @@ def generate_options(goal, context=None, constraints=None, max_options=None):
         ("alternative", "Non-obvious lateral approach"),
     ]
     for i, (slug, desc) in enumerate(templates[:max_options], 1):
-        options.append(
+        generated.append(
             {
                 "id": f"opt-{slug}",
                 "label": f"Option {i}: {slug.title()}",
@@ -126,8 +140,8 @@ def generate_options(goal, context=None, constraints=None, max_options=None):
         )
 
     return {
-        "options": options,
-        "generation_notes": f"Baseline generation: {len(options)} options from goal text.",
+        "options": generated,
+        "generation_notes": f"Baseline generation: {len(generated)} options from goal text.",
     }
 
 
@@ -1061,7 +1075,7 @@ def split_plan_stage(
                 ):
                     return {"items": prev_output_state, "goal": objective}
                 if ref == "task.frame":
-                    return {"goal": objective, "context": prev_output_state}
+                    return {"task": objective, "context": prev_output_state}
                 for s in candidate_skills:
                     if s.get("ref") == ref:
                         spec = s.get("inputs") or {}

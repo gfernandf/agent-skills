@@ -209,6 +209,9 @@ class StepResult:
     # optional metadata captured during binding execution
     binding_id: str | None = None
     service_id: str | None = None
+    primary_binding_id: str | None = None
+    fallback_chain: list[str] | None = None
+    binding_attempts: list[dict[str, Any]] | None = None
     attempts_count: int | None = None
     fallback_used: bool | None = None
     conformance_profile: str | None = None

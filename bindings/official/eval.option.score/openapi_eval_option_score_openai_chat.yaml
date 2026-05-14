@@ -47,6 +47,8 @@ response:
 metadata:
   method: POST
   response_mode: json
+  timeout_seconds: 8
+  retry_count: 0
   fallback_binding_id: python_eval_option_score
   description: "OpenAI binding for eval.option.score using gpt-4o-mini."
   status: experimental

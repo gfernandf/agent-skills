@@ -518,7 +518,9 @@ def _start_background_run(name: str, args: dict[str, Any]) -> str:
     return run_id
 
 
-def _wait_for_run_result(run_id: str, timeout_ms: int = DEFAULT_TIMEOUT_MS) -> tuple[bool, dict[str, Any]]:
+def _wait_for_run_result(
+    run_id: str, timeout_ms: int = DEFAULT_TIMEOUT_MS
+) -> tuple[bool, dict[str, Any]]:
     with _RUNS_LOCK:
         fut = _RUN_FUTURES.get(run_id)
         tool_name = _RUN_TOOL_NAME.get(run_id, "")

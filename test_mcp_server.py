@@ -72,6 +72,29 @@ _MOCK_CAPABILITIES = [
 
 _MOCK_SKILLS = [
     {
+        "id": "decision.make",
+        "name": "Make Decision",
+        "description": "Structured decision workflow with recommendation and confidence.",
+        "inputs": {
+            "goal": {
+                "type": "string",
+                "required": True,
+                "description": "Decision goal.",
+            },
+            "context_items": {
+                "type": "array",
+                "required": False,
+                "description": "Supporting context items.",
+            },
+        },
+        "outputs": {
+            "recommendation": {"type": "string"},
+            "confidence_level": {"type": "string"},
+            "human_readable": {"type": "string"},
+            "outputs_summary": {"type": "object"},
+        },
+    },
+    {
         "id": "experiment.structured-decision",
         "name": "Structured Decision",
         "description": "Runs a structured decision flow with weighted criteria.",
@@ -142,14 +165,16 @@ class TestListTools:
 
             tools = await list_tools()
 
-        # 2 meta-tools + 3 capabilities + 2 skills
-        assert len(tools) == 7
+        # 3 meta-tools (contract.inspect, skill.inspect, run.status) + 3 capabilities + 3 skills
+        assert len(tools) == 9
         names = {t.name for t in tools}
         assert "contract.inspect" in names
         assert "skill.inspect" in names
+        assert "run.status" in names
         assert "text.content.summarize" in names
         assert "data.schema.validate" in names
         assert "fs.file.read" in names
+        assert "skill.decision.make" in names
         assert "skill.experiment.structured-decision" in names
         assert "skill.research.question.answer" in names
 
@@ -192,10 +217,11 @@ class TestListTools:
 
             tools = await list_tools()
 
-        assert len(tools) == 2
+        assert len(tools) == 3
         names = {t.name for t in tools}
         assert "contract.inspect" in names
         assert "skill.inspect" in names
+        assert "run.status" in names
 
 
 # ────────────────────────────────────────────────────────────────
@@ -227,6 +253,180 @@ class TestCallTool:
         assert parsed["summary"] == "Short version."
         mock_exec.assert_called_once_with(
             "text.content.summarize", {"text": "Hello world", "max_length": 20}
+        )
+
+    @pytest.mark.asyncio
+    async def test_decision_make_sync_success(self):
+        mock_result = {
+            "recommendation": "Proceed with option A.",
+            "confidence_level": "medium",
+            "human_readable": "Option A balances risk and speed.",
+            "outputs_summary": {
+                "recommendation": "Proceed with option A.",
+                "confidence_score": 0.62,
+                "confidence_level": "medium",
+                "decision_quality_score": 72.0,
+                "decision_quality_level": "good",
+            },
+            "meta": {
+                "fallback_used": False,
+                "fallback_steps_count": 0,
+                "step_diagnostics": [],
+            },
+        }
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
+            patch("sdk.embedded.execute", return_value=mock_result) as mock_exec,
+        ):
+            from official_mcp_servers.server import call_tool
+
+            result = await call_tool(
+                "skill.decision.make",
+                {"goal": "Choose infra approach", "context_items": []},
+            )
+
+        parsed = json.loads(result[0].text)
+        assert parsed["recommendation"] == "Proceed with option A."
+        assert parsed["confidence_level"] == "medium"
+        assert parsed["meta"]["fallback_used"] is False
+        mock_exec.assert_called_once_with(
+            "decision.make", {"goal": "Choose infra approach", "context_items": []}
+        )
+
+    @pytest.mark.asyncio
+    async def test_decision_make_sync_timeout_returns_controlled_fallback(self):
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
+            patch(
+                "official_mcp_servers.server._start_background_run",
+                return_value="run-1",
+            ),
+            patch(
+                "official_mcp_servers.server._wait_for_run_result",
+                return_value=(
+                    False,
+                    {
+                        "status": "running",
+                        "run_id": "run-1",
+                        "tool": "skill.decision.make",
+                    },
+                ),
+            ),
+        ):
+            from official_mcp_servers.server import call_tool
+
+            result = await call_tool(
+                "skill.decision.make",
+                {
+                    "goal": "Choose infra approach",
+                    "_max_wait_ms": 1000,
+                    "_execution_mode": "sync_only",
+                },
+            )
+
+        parsed = json.loads(result[0].text)
+        assert parsed["recommendation"] == ""
+        assert parsed["confidence_level"] == ""
+        assert isinstance(parsed["outputs_summary"], dict)
+        assert parsed["meta"]["fallback_used"] is True
+        assert parsed["meta"]["fallback_steps_count"] == 0
+        assert isinstance(parsed["meta"]["step_diagnostics"], list)
+        assert "limitation" in parsed["meta"]
+        assert "run_id" not in json.dumps(parsed)
+
+    @pytest.mark.asyncio
+    async def test_skill_async_start_and_poll_status(self):
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
+            patch(
+                "official_mcp_servers.server._start_background_run",
+                return_value="run-42",
+            ),
+            patch(
+                "official_mcp_servers.server._get_run_status_payload",
+                return_value={
+                    "status": "completed",
+                    "run_id": "run-42",
+                    "tool": "skill.decision.make",
+                    "result": {"recommendation": "Proceed"},
+                },
+            ),
+        ):
+            from official_mcp_servers.server import call_tool
+
+            start = await call_tool(
+                "skill.decision.make",
+                {"goal": "Choose infra approach", "_async": True},
+            )
+            start_parsed = json.loads(start[0].text)
+            assert start_parsed["_run"]["status"] == "running"
+            assert start_parsed["_run"]["run_id"] == "run-42"
+
+            status = await call_tool("run.status", {"run_id": "run-42"})
+            status_parsed = json.loads(status[0].text)
+            assert status_parsed["status"] == "completed"
+            assert status_parsed["result"]["recommendation"] == "Proceed"
+
+    @pytest.mark.asyncio
+    async def test_executes_skill_with_diagnostics(self):
+        """_include_diagnostics=True should route through execute_with_meta and return meta block."""
+        mock_result = {
+            "outputs": {"decision": "Choose A", "rationale": "Best fit."},
+            "meta": {
+                "fallback_used": True,
+                "fallback_steps_count": 1,
+                "fallback_steps": [
+                    {
+                        "step_id": "justify_decision",
+                        "uses": "decision.option.justify",
+                        "binding_id": "python_decision_option_justify",
+                        "primary_binding_id": "openapi_decision_option_justify_openai_chat",
+                        "fallback_used": True,
+                        "attempts_count": 2,
+                        "attempt_failures": [
+                            {
+                                "binding_id": "openapi_decision_option_justify_openai_chat",
+                                "error_type": "RuntimeError",
+                                "error_message": "timeout",
+                            }
+                        ],
+                    }
+                ],
+                "step_diagnostics": [],
+            },
+        }
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
+            patch(
+                "sdk.embedded.execute_with_meta", return_value=mock_result
+            ) as mock_exec,
+        ):
+            from official_mcp_servers.server import call_tool
+
+            result = await call_tool(
+                "skill.experiment.structured-decision",
+                {
+                    "topic": "Launch",
+                    "options": ["A", "B"],
+                    "_include_diagnostics": True,
+                },
+            )
+
+        parsed = json.loads(result[0].text)
+        assert parsed["outputs"]["decision"] == "Choose A"
+        meta = parsed["meta"]
+        assert meta["fallback_used"] is True
+        assert len(meta["fallback_steps"]) == 1
+        assert (
+            meta["fallback_steps"][0]["primary_binding_id"]
+            == "openapi_decision_option_justify_openai_chat"
+        )
+        mock_exec.assert_called_once_with(
+            "experiment.structured-decision", {"topic": "Launch", "options": ["A", "B"]}
         )
 
     @pytest.mark.asyncio

@@ -22,8 +22,9 @@ sys.path.insert(0, ".")
 from cli.main import _build_engine
 from runtime.models import ExecutionRequest
 
-REGISTRY_ROOT = Path("../agent-skill-registry")
-RUNTIME_ROOT = Path(".")
+TEST_ROOT = Path(__file__).resolve().parent
+RUNTIME_ROOT = TEST_ROOT
+REGISTRY_ROOT = RUNTIME_ROOT.parent / "agent-skill-registry"
 
 SKILLS = [
     {
@@ -148,7 +149,7 @@ def main():
     filter_ids = set(sys.argv[1:]) if len(sys.argv) > 1 else None
 
     print("Building execution engine...")
-    engine = _build_engine(REGISTRY_ROOT, RUNTIME_ROOT, None, None)
+    engine = _build_engine(REGISTRY_ROOT, RUNTIME_ROOT, RUNTIME_ROOT, None)
     print("Engine ready.\n")
 
     skills_to_test = SKILLS

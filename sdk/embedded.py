@@ -133,6 +133,87 @@ def execute(
     return _normalize_outputs_to_skill_contract(skill, raw_outputs)
 
 
+def _build_skill_execution_meta(result) -> dict[str, Any]:
+    """Build a diagnostics block from an execution result's step_results."""
+    step_diagnostics: list[dict[str, Any]] = []
+    fallback_steps: list[dict[str, Any]] = []
+
+    for step_id, step_result in result.state.step_results.items():
+        attempts = step_result.binding_attempts or []
+        failed_attempts = [
+            a for a in attempts if isinstance(a, dict) and a.get("status") == "failed"
+        ]
+        diagnostic: dict[str, Any] = {
+            "step_id": step_id,
+            "uses": step_result.uses,
+            "status": step_result.status,
+            "duration_ms": step_result.latency_ms,
+            "binding_id": step_result.binding_id,
+            "service_id": step_result.service_id,
+            "primary_binding_id": step_result.primary_binding_id,
+            "fallback_used": bool(step_result.fallback_used),
+            "attempts_count": step_result.attempts_count,
+        }
+        if failed_attempts:
+            diagnostic["attempt_failures"] = [
+                {
+                    "binding_id": a.get("binding_id"),
+                    "error_type": a.get("error_type"),
+                    "error_message": a.get("error_message"),
+                }
+                for a in failed_attempts
+            ]
+        step_diagnostics.append(diagnostic)
+        if diagnostic["fallback_used"]:
+            fallback_steps.append(diagnostic)
+
+    return {
+        "fallback_used": bool(fallback_steps),
+        "fallback_steps_count": len(fallback_steps),
+        "fallback_steps": fallback_steps,
+        "step_diagnostics": step_diagnostics,
+    }
+
+
+def execute_with_meta(
+    skill_id: str,
+    inputs: dict[str, Any],
+    *,
+    trace_id: str | None = None,
+    channel: str = "embedded",
+) -> dict[str, Any]:
+    """Execute a skill and return outputs together with binding/fallback diagnostics.
+
+    Returns a dict with ``outputs`` (the normal skill outputs) and ``meta``
+    (binding diagnostics per step including fallback causes).
+    """
+    from runtime.models import ExecutionRequest
+
+    engine, _, _ = _get_components()
+    skill = engine.skill_loader.get_skill(skill_id)
+    req = ExecutionRequest(
+        skill_id=skill_id, inputs=inputs, trace_id=trace_id, channel=channel
+    )
+    try:
+        result = engine.execute(req)
+    except Exception as exc:
+        code = _classify_error(exc)
+        raise RuntimeError(
+            f"Skill '{skill_id}' execution failed [{code}]: {exc}"
+        ) from exc
+    if result.status != "completed":
+        msg = getattr(result, "error_message", None) or result.status
+        raise RuntimeError(
+            f"Skill '{skill_id}' finished with status '{result.status}': {msg}"
+        )
+
+    raw_outputs = dict(result.outputs) if result.outputs else {}
+    return {
+        "outputs": _normalize_outputs_to_skill_contract(skill, raw_outputs),
+        "meta": _build_skill_execution_meta(result),
+    }
+
+
 def execute_capability(
     capability_id: str,
     inputs: dict[str, Any],

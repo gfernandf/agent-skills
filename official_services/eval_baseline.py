@@ -11,65 +11,63 @@ def score_output(output, rubric=None, context=None):
     Compute a lightweight quality score based on rubric dimensions.
     """
     if not isinstance(output, dict):
-        return {
-            "score": 0.0,
-            "dimensions": {"valid_output_object": 0.0},
-            "quality_level": "poor",
-        }
-
-    dimensions = {}
-
-    if isinstance(rubric, dict) and isinstance(rubric.get("dimensions"), dict):
-        for name, weight in rubric["dimensions"].items():
-            if isinstance(name, str):
-                dimensions[name] = (
-                    float(weight) if isinstance(weight, (int, float)) else 1.0
-                )
-    else:
-        dimensions = {
-            "completeness": 1.0,
-            "clarity": 1.0,
-            "consistency": 1.0,
-        }
-
-    # Baseline heuristic: check structural quality, not just non-empty.
-    total_fields = max(len(output), 1)
-    non_empty = sum(1 for v in output.values() if v not in (None, "", [], {}))
-    [v for v in output.values() if isinstance(v, list)]
-    # Penalize: arrays with 0 items, or strings shorter than 50 chars
-    shallow_penalty = 0
-    for v in output.values():
-        if isinstance(v, list) and len(v) == 0:
-            shallow_penalty += 1
-        elif isinstance(v, str) and 0 < len(v) < 50:
-            shallow_penalty += 0.5
-    coverage = non_empty / total_fields
-    depth = max(0, 1.0 - (shallow_penalty / total_fields))
-    base_score = round(50.0 * coverage + 50.0 * depth, 2)
-
-    weighted_total = 0.0
-    total_weight = 0.0
-    per_dimension = {}
-
-    for name, weight in dimensions.items():
-        per_dimension[name] = base_score
-        weighted_total += base_score * weight
-        total_weight += weight
-
-    score = round(weighted_total / total_weight, 2) if total_weight else 0.0
-
-    if score >= 90:
-        quality_level = "excellent"
-    elif score >= 70:
-        quality_level = "good"
-    elif score >= 50:
-        quality_level = "fair"
-    else:
+        score_value = 0.0
+        dimensions = {"valid_output_object": 0.0}
         quality_level = "poor"
+    else:
+        dimensions = {}
+
+        if isinstance(rubric, dict) and isinstance(rubric.get("dimensions"), dict):
+            for name, weight in rubric["dimensions"].items():
+                if isinstance(name, str):
+                    dimensions[name] = (
+                        float(weight) if isinstance(weight, (int, float)) else 1.0
+                    )
+        else:
+            dimensions = {
+                "completeness": 1.0,
+                "clarity": 1.0,
+                "consistency": 1.0,
+            }
+
+        # Baseline heuristic: check structural quality, not just non-empty.
+        total_fields = max(len(output), 1)
+        non_empty = sum(1 for v in output.values() if v not in (None, "", [], {}))
+        [v for v in output.values() if isinstance(v, list)]
+        # Penalize: arrays with 0 items, or strings shorter than 50 chars
+        shallow_penalty = 0
+        for v in output.values():
+            if isinstance(v, list) and len(v) == 0:
+                shallow_penalty += 1
+            elif isinstance(v, str) and 0 < len(v) < 50:
+                shallow_penalty += 0.5
+        coverage = non_empty / total_fields
+        depth = max(0, 1.0 - (shallow_penalty / total_fields))
+        base_score = round(50.0 * coverage + 50.0 * depth, 2)
+
+        weighted_total = 0.0
+        total_weight = 0.0
+        per_dimension = {}
+
+        for name, weight in dimensions.items():
+            per_dimension[name] = base_score
+            weighted_total += base_score * weight
+            total_weight += weight
+
+        score_value = round(weighted_total / total_weight, 2) if total_weight else 0.0
+
+        if score_value >= 90:
+            quality_level = "excellent"
+        elif score_value >= 70:
+            quality_level = "good"
+        elif score_value >= 50:
+            quality_level = "fair"
+        else:
+            quality_level = "poor"
 
     return {
-        "score": score,
-        "dimensions": per_dimension,
+        "score": score_value,
+        "dimensions": dimensions,
         "quality_level": quality_level,
         "_fallback": True,
     }
