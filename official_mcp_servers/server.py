@@ -61,6 +61,10 @@ _RUN_STATUS_TOOL = "run.status"
 _SKILL_PREFIX = "skill."
 _ASYNC_ARG = "_async"
 _MAX_WAIT_MS_ARG = "_max_wait_ms"
+_INCLUDE_DIAGNOSTICS_ARG = "_include_diagnostics"
+_EXECUTION_MODE_ARG = "_execution_mode"
+_EXECUTION_MODE_SYNC_ONLY = "sync_only"
+_EXECUTION_MODE_ASYNC_ALLOWED = "async_allowed"
 _DEFAULT_SKILL_WAIT_MS = 55000
 
 _RUN_EXECUTOR = ThreadPoolExecutor(max_workers=8, thread_name_prefix="mcp-tool")
@@ -69,6 +73,10 @@ _RUN_FUTURES: dict[str, Future[Any]] = {}
 _RUN_TOOL_NAME: dict[str, str] = {}
 _PLAN_CACHE_LOCK = Lock()
 _LAST_COMPILED_PLAN: dict[str, Any] | None = None
+
+# Define global timeout and polling interval
+DEFAULT_TIMEOUT_MS = 30000  # 30 seconds
+default_polling_interval = 1.0  # 1 second
 
 # ---------------------------------------------------------------------------
 # Server instance
@@ -240,6 +248,21 @@ def _with_async_controls(schema: dict[str, Any]) -> dict[str, Any]:
         "minimum": 1000,
         "maximum": 120000,
     }
+    props[_INCLUDE_DIAGNOSTICS_ARG] = {
+        "type": "boolean",
+        "description": (
+            "If true, include binding resolution and fallback diagnostics "
+            "in the result (skill tools only)."
+        ),
+    }
+    props[_EXECUTION_MODE_ARG] = {
+        "type": "string",
+        "enum": [_EXECUTION_MODE_SYNC_ONLY, _EXECUTION_MODE_ASYNC_ALLOWED],
+        "description": (
+            "Execution behavior when sync wait window is exceeded. "
+            "sync_only: never return run_id placeholders; async_allowed: allow background run_id fallback."
+        ),
+    }
     out["properties"] = props
     return out
 
@@ -285,6 +308,27 @@ def _build_running_skill_placeholder(
     return payload
 
 
+def _build_sync_timeout_skill_fallback(
+    skill_id: str,
+    message: str,
+    skills: list[dict[str, Any]],
+) -> dict[str, Any]:
+    target = next((s for s in skills if s.get("id") == skill_id), None)
+    outputs = target.get("outputs", {}) if isinstance(target, dict) else {}
+    payload: dict[str, Any] = {}
+    if isinstance(outputs, dict):
+        for name, spec in outputs.items():
+            ftype = spec.get("type", "object") if isinstance(spec, dict) else "object"
+            payload[name] = _default_value_for_type(ftype)
+    payload["meta"] = {
+        "fallback_used": True,
+        "fallback_steps_count": 0,
+        "step_diagnostics": [],
+        "limitation": message,
+    }
+    return payload
+
+
 def _extract_execution_controls(args: dict[str, Any]) -> tuple[bool, int | None]:
     async_requested = bool(args.pop(_ASYNC_ARG, False))
     raw_wait = args.pop(_MAX_WAIT_MS_ARG, None)
@@ -297,6 +341,20 @@ def _extract_execution_controls(args: dict[str, Any]) -> tuple[bool, int | None]
     if wait_ms is not None:
         wait_ms = max(1000, min(wait_ms, 180000))
     return async_requested, wait_ms
+
+
+def _extract_execution_mode(args: dict[str, Any]) -> str:
+    raw_mode = args.pop(_EXECUTION_MODE_ARG, _EXECUTION_MODE_ASYNC_ALLOWED)
+    if not isinstance(raw_mode, str):
+        return _EXECUTION_MODE_ASYNC_ALLOWED
+    normalized = raw_mode.strip().lower()
+    if normalized in {_EXECUTION_MODE_SYNC_ONLY, _EXECUTION_MODE_ASYNC_ALLOWED}:
+        return normalized
+    return _EXECUTION_MODE_ASYNC_ALLOWED
+
+
+def _extract_include_diagnostics(args: dict[str, Any]) -> bool:
+    return bool(args.pop(_INCLUDE_DIAGNOSTICS_ARG, True))  # Default to True
 
 
 def _extract_compiled_plan_candidate(planner_output: str) -> Any:
@@ -441,9 +499,12 @@ def _maybe_cache_planner_result(name: str, result: Any) -> None:
 
 
 def _execute_runtime_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
-    from sdk.embedded import execute_capability, execute
+    from sdk.embedded import execute_capability, execute, execute_with_meta
 
     if name.startswith(_SKILL_PREFIX):
+        include_diagnostics = _extract_include_diagnostics(args)
+        if include_diagnostics:
+            return execute_with_meta(name[len(_SKILL_PREFIX) :], args)
         return execute(name[len(_SKILL_PREFIX) :], args)
     return execute_capability(name, args)
 
@@ -457,7 +518,7 @@ def _start_background_run(name: str, args: dict[str, Any]) -> str:
     return run_id
 
 
-def _wait_for_run_result(run_id: str, timeout_ms: int) -> tuple[bool, dict[str, Any]]:
+def _wait_for_run_result(run_id: str, timeout_ms: int = DEFAULT_TIMEOUT_MS) -> tuple[bool, dict[str, Any]]:
     with _RUNS_LOCK:
         fut = _RUN_FUTURES.get(run_id)
         tool_name = _RUN_TOOL_NAME.get(run_id, "")
@@ -634,6 +695,8 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
     safe_args = dict(arguments) if isinstance(arguments, dict) else {}
     safe_args = _normalize_execute_from_plan_args(name, safe_args)
 
+    execution_mode = _extract_execution_mode(safe_args)
+
     try:
         if name == _CONTRACT_INSPECT_TOOL:
             capability_id = safe_args.get("capability_id")
@@ -667,6 +730,10 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
         elif name.startswith(_SKILL_PREFIX):
             skill_id = name[len(_SKILL_PREFIX) :]
             async_requested, wait_ms = _extract_execution_controls(safe_args)
+            if async_requested and execution_mode == _EXECUTION_MODE_SYNC_ONLY:
+                raise ValueError(
+                    "_async=true is not allowed when _execution_mode='sync_only'."
+                )
             # For execute-from-plan: if plan is missing, force async to get it from cache later.
             # If plan exists, allow sync execution with extended timeout.
             if skill_id == "agent.execute-from-plan":
@@ -700,21 +767,35 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
                     result = payload["result"]
                     _maybe_cache_planner_result(name, result)
                 else:
-                    result = _build_running_skill_placeholder(
-                        skill_id,
-                        run_id,
-                        (
-                            "Execution exceeded max wait window. "
-                            "Poll run.status with this run_id for completion."
-                        ),
-                        skills,
-                    )
+                    if execution_mode == _EXECUTION_MODE_SYNC_ONLY:
+                        result = _build_sync_timeout_skill_fallback(
+                            skill_id,
+                            (
+                                "Execution exceeded max wait window in sync_only mode; "
+                                "no background run id was returned."
+                            ),
+                            skills,
+                        )
+                    else:
+                        result = _build_running_skill_placeholder(
+                            skill_id,
+                            run_id,
+                            (
+                                "Execution exceeded max wait window. "
+                                "Poll run.status with this run_id for completion."
+                            ),
+                            skills,
+                        )
             else:
                 result = _execute_runtime_tool(name, safe_args)
                 _maybe_cache_planner_result(name, result)
 
         else:
             async_requested, wait_ms = _extract_execution_controls(safe_args)
+            if async_requested and execution_mode == _EXECUTION_MODE_SYNC_ONLY:
+                raise ValueError(
+                    "_async=true is not allowed when _execution_mode='sync_only'."
+                )
             if async_requested:
                 run_id = _start_background_run(name, safe_args)
                 result = {
@@ -734,16 +815,27 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
                 if done:
                     result = payload["result"]
                 else:
-                    result = {
-                        "status": "running",
-                        "run_id": run_id,
-                        "tool": name,
-                        "retryable": True,
-                        "message": (
-                            "Execution exceeded max wait window. "
-                            "Poll run.status with this run_id for completion."
-                        ),
-                    }
+                    if execution_mode == _EXECUTION_MODE_SYNC_ONLY:
+                        result = {
+                            "error": (
+                                "Execution exceeded max wait window in sync_only mode; "
+                                "no background run id was returned."
+                            ),
+                            "code": "sync_window_exceeded",
+                            "tool": name,
+                            "retryable": False,
+                        }
+                    else:
+                        result = {
+                            "status": "running",
+                            "run_id": run_id,
+                            "tool": name,
+                            "retryable": True,
+                            "message": (
+                                "Execution exceeded max wait window. "
+                                "Poll run.status with this run_id for completion."
+                            ),
+                        }
             else:
                 result = _execute_runtime_tool(name, safe_args)
             _maybe_cache_planner_result(name, result)
