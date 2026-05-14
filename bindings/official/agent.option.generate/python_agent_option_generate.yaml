@@ -8,7 +8,6 @@ request:
   context: input.context
   constraints: input.constraints
   max_options: input.max_options
-  options: input.options
 response:
   options: response.options
   generation_notes: response.generation_notes
