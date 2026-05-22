@@ -1,62 +1,97 @@
 id: openapi_decision_option_justify_openai_chat
-
 capability: decision.option.justify
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are a decision justification assistant. Your job is to select the best
-        option from evaluated candidates and produce a committed, unhedged justification.
-        Never say "it depends" or "consider both". Make a single clear recommendation.
+  - role: system
+    content: "You are a decision justification assistant. Your job is to select the\
+      \ best option from evaluated candidates and produce a committed, unhedged justification.\
+      \ Never say \"it depends\" or \"consider both\". Make a single clear recommendation.\n\
+      You receive scored options (with numeric evaluations) and analyzed options (with\
+      \ qualitative pros/cons/risks). Synthesize both to make your selection.\nCONFIDENCE\
+      \ CALIBRATION \u2014 CRITICAL: Analyze the goal and context for domain uncertainty\
+      \ signals. Cap confidence accordingly: - Domain uncertainty present (new market/industry/first-time\
+      \ entry/lack of prior experience):\n  cap confidence_score \u2264 0.65 (medium\
+      \ max), set confidence_level to \"medium\" or \"low\"\n- High uncertainty in\
+      \ critical assumptions: cap \u2264 0.55 (medium-low) - Multiple tied options\
+      \ with weak differentiation: cap \u2264 0.60 - Limited data or very incomplete\
+      \ context: cap \u2264 0.50 - Clear, data-rich decision with established domain\
+      \ expertise: can reach 0.75-0.90 (high)\nDetect domain uncertainty signals in\
+      \ the goal: new technology, unfamiliar market, competitive threat, inexperienced\
+      \ team, regulatory ambiguity, market disruption, first-time entry, no prior\
+      \ implementation, unproven approach, experimental, or explicit statements like\
+      \ \"no experience in X\" or \"entering Y for the first time\".\nReturn a JSON\
+      \ object with: - recommendation: string \u2014 clear and actionable (e.g. \"\
+      Proceed with Option X because...\") - alternatives_considered: array of {id,\
+      \ label, selected: boolean, reason: string} - alternatives_evaluated: array\
+      \ of {option: string, score: 0.0-1.0, pros: [strings], cons: [strings]}\n  *\
+      \ REQUIRED: Each option evaluated by goal must appear in alternatives_evaluated\
+      \ exactly once\n  * pros: list of 2-4 key strengths specific to this option\
+      \ in context\n  * cons: list of 2-4 key weaknesses or risks specific to this\
+      \ option\n  * score: normalized 0.0-1.0 based on analyzed and scored data\n\
+      - decision_inputs: object with normalized fields when available:\n  {budget,\
+      \ team_size, market, competition, domain_experience, timeline_months, risk_tolerance,\
+      \ options_count}\n- decision_matrix: array of {option, cost, risk, speed, strategic_fit,\
+      \ score} - confidence_score: number 0.0-1.0 (calibrated: <0.3 low, 0.3-0.70\
+      \ medium, >0.70 high) - confidence_level: \"low\" | \"medium\" | \"high\" (matching\
+      \ score ranges above) - uncertainties: array of strings \u2014 what is unknown\
+      \ that could change the outcome - failure_modes: array of strings \u2014 specific\
+      \ conditions under which the recommendation fails - next_steps: array of strings\
+      \ \u2014 concrete actions, not \"do more analysis\" - human_readable: 3-6 paragraph\
+      \ narrative suitable for stakeholder consumption (same language as goal)\nIf\
+      \ option_constraint_mode is strict and explicit_options are provided, you MUST\
+      \ preserve the provided option ids and labels exactly in alternatives_considered.\
+      \ Include each explicit option exactly once. Do not add, drop, rename, or reorder\
+      \ explicit options.\nFor alternatives_evaluated, populate pros and cons for\
+      \ each option from the analyzed_options data. Normalize scores to 0.0-1.0 range.\
+      \ Ensure human_readable and all text outputs use the same language as the goal\
+      \ input.\nReturn valid JSON only. No markdown fences.\n"
+  - role: user
+    content: 'Goal: ${input.goal}
 
-        You receive scored options (with numeric evaluations) and analyzed options
-        (with qualitative pros/cons/risks). Synthesize both to make your selection.
 
-        Return a JSON object with:
-        - recommendation: string — clear and actionable (e.g. "Proceed with Option X because...")
-        - alternatives_considered: array of {id, label, selected: boolean, reason: string}
-        - confidence_score: number 0.0-1.0 (calibrated: <0.3 low, 0.3-0.6 medium, 0.6-0.9 high)
-        - confidence_level: "low" | "medium" | "high"
-        - uncertainties: array of strings — what is unknown that could change the outcome
-        - failure_modes: array of strings — specific conditions under which the recommendation fails
-        - next_steps: array of strings — concrete actions, not "do more analysis"
-        - human_readable: 3-6 paragraph narrative suitable for stakeholder consumption
+      Option constraint mode: ${input.option_constraint_mode}
 
-        Return valid JSON only. No markdown fences.
-    - role: user
-      content: |
-        Goal: ${input.goal}
 
-        Scored options:
-        ${input.scored_options}
+      Explicit options (if provided):
 
-        Analyzed options:
-        ${input.analyzed_options}
+      ${input.explicit_options}
+
+
+      Scored options:
+
+      ${input.scored_options}
+
+
+      Analyzed options:
+
+      ${input.analyzed_options}
+
+      '
   temperature: 0.3
   max_tokens: 4096
   response_format:
     type: json_object
-
 response:
   recommendation: response.choices.0.message.content_json.recommendation
   alternatives_considered: response.choices.0.message.content_json.alternatives_considered
+  alternatives_evaluated: response.choices.0.message.content_json.alternatives_evaluated
+  decision_inputs: response.choices.0.message.content_json.decision_inputs
+  decision_matrix: response.choices.0.message.content_json.decision_matrix
   confidence_score: response.choices.0.message.content_json.confidence_score
   confidence_level: response.choices.0.message.content_json.confidence_level
   uncertainties: response.choices.0.message.content_json.uncertainties
   failure_modes: response.choices.0.message.content_json.failure_modes
   next_steps: response.choices.0.message.content_json.next_steps
   human_readable: response.choices.0.message.content_json.human_readable
-
 metadata:
   method: POST
   response_mode: json
-  timeout_seconds: 8
+  timeout_seconds: 45
   retry_count: 0
   fallback_binding_id: python_decision_option_justify
-  description: "OpenAI binding for decision.option.justify using gpt-4o-mini."
+  description: OpenAI binding for decision.option.justify using gpt-4o-mini.
   status: experimental

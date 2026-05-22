@@ -7,9 +7,17 @@ request:
   scored_options: input.scored_options
   analyzed_options: input.analyzed_options
   goal: input.goal
+  tradeoffs: input.tradeoffs
+  constraints: input.constraints
+  risk_tolerance: input.risk_tolerance
+  explicit_options: input.explicit_options
+  option_constraint_mode: input.option_constraint_mode
 response:
   recommendation: response.recommendation
   alternatives_considered: response.alternatives_considered
+  alternatives_evaluated: response.alternatives_evaluated
+  decision_inputs: response.decision_inputs
+  decision_matrix: response.decision_matrix
   confidence_score: response.confidence_score
   confidence_level: response.confidence_level
   uncertainties: response.uncertainties
