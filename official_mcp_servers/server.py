@@ -42,9 +42,12 @@ from concurrent.futures import (
 )
 import json
 import logging
+import os
 from threading import Lock
+import time
 from typing import Any
 import uuid
+from datetime import datetime, timezone
 
 import anyio
 from mcp.server import Server
@@ -58,6 +61,8 @@ logger = logging.getLogger(__name__)
 _CONTRACT_INSPECT_TOOL = "contract.inspect"
 _SKILL_INSPECT_TOOL = "skill.inspect"
 _RUN_STATUS_TOOL = "run.status"
+_RUN_CANCEL_TOOL = "run.cancel"
+_RUN_LIST_TOOL = "run.list"
 _SKILL_PREFIX = "skill."
 _ASYNC_ARG = "_async"
 _MAX_WAIT_MS_ARG = "_max_wait_ms"
@@ -65,18 +70,89 @@ _INCLUDE_DIAGNOSTICS_ARG = "_include_diagnostics"
 _EXECUTION_MODE_ARG = "_execution_mode"
 _EXECUTION_MODE_SYNC_ONLY = "sync_only"
 _EXECUTION_MODE_ASYNC_ALLOWED = "async_allowed"
-_DEFAULT_SKILL_WAIT_MS = 55000
+_DEFAULT_SKILL_WAIT_MS = max(
+    1000,
+    int(os.getenv("AGENT_SKILLS_DEFAULT_SKILL_WAIT_MS", "120000")),
+)
+_NON_BLOCKING_SKILL_EXECUTION = (
+    os.getenv("AGENT_SKILLS_NON_BLOCKING_SKILLS", "1").strip().lower()
+    not in {"0", "false", "no", "off"}
+)
 
 _RUN_EXECUTOR = ThreadPoolExecutor(max_workers=8, thread_name_prefix="mcp-tool")
 _RUNS_LOCK = Lock()
 _RUN_FUTURES: dict[str, Future[Any]] = {}
 _RUN_TOOL_NAME: dict[str, str] = {}
+_RUN_RECORDS: dict[str, dict[str, Any]] = {}
+_RUN_TTL_SECONDS = max(60, int(os.getenv("AGENT_SKILLS_RUN_TTL_SECONDS", "3600")))
+_RUN_CLEANUP_INTERVAL_SECONDS = max(
+    10,
+    int(os.getenv("AGENT_SKILLS_RUN_CLEANUP_INTERVAL_SECONDS", "60")),
+)
+_RUN_LAST_CLEANUP_AT = 0.0
 _PLAN_CACHE_LOCK = Lock()
 _LAST_COMPILED_PLAN: dict[str, Any] | None = None
 
 # Define global timeout and polling interval
 DEFAULT_TIMEOUT_MS = 30000  # 30 seconds
 default_polling_interval = 1.0  # 1 second
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _cleanup_runs_if_needed(force: bool = False) -> None:
+    global _RUN_LAST_CLEANUP_AT
+    now = time.time()
+    if not force and (now - _RUN_LAST_CLEANUP_AT) < _RUN_CLEANUP_INTERVAL_SECONDS:
+        return
+
+    with _RUNS_LOCK:
+        expired: list[str] = []
+        for run_id, record in _RUN_RECORDS.items():
+            status = record.get("status")
+            finished_at = record.get("finished_at_ts")
+            if status in {"completed", "failed"} and isinstance(finished_at, (int, float)):
+                if now - float(finished_at) > _RUN_TTL_SECONDS:
+                    expired.append(run_id)
+
+        for run_id in expired:
+            _RUN_RECORDS.pop(run_id, None)
+            _RUN_FUTURES.pop(run_id, None)
+            _RUN_TOOL_NAME.pop(run_id, None)
+
+        _RUN_LAST_CLEANUP_AT = now
+
+
+def _finalize_run(run_id: str, fut: Future[Any]) -> None:
+    now_ts = time.time()
+    now_iso = _utc_now_iso()
+    with _RUNS_LOCK:
+        record = _RUN_RECORDS.get(run_id)
+        if record is None:
+            return
+
+        record["updated_at"] = now_iso
+        record["finished_at"] = now_iso
+        record["finished_at_ts"] = now_ts
+
+        # If already marked terminal (e.g. cancellation), keep existing state.
+        if record.get("status") in {"completed", "failed"}:
+            return
+
+        try:
+            result = fut.result()
+            result = _postprocess_skill_result_payload(record.get("tool", ""), result)
+            record["status"] = "completed"
+            record["result"] = result
+            record.pop("error", None)
+            record.pop("code", None)
+        except Exception as exc:
+            record["status"] = "failed"
+            record["error"] = str(exc)
+            record["code"] = _classify_error(exc)
+            record.pop("result", None)
 
 # ---------------------------------------------------------------------------
 # Server instance
@@ -88,6 +164,259 @@ server = Server("agent-skills")
 Handlers are registered via the ``@server.list_tools()`` and
 ``@server.call_tool()`` decorators below.
 """
+
+
+# ---------------------------------------------------------------------------
+# Output summary builder — for rich summary extraction from skill outputs
+# ---------------------------------------------------------------------------
+
+
+def _build_outputs_summary_for_skill(
+    skill_id: str,
+    outputs: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Extract an outputs_summary from skill outputs for rich summary exposure.
+    
+    For decision.make and similar skills, creates a high-level summary containing:
+    - recommendation
+    - confidence_score and confidence_level
+    - decision_quality_score and decision_quality_level
+    - alternatives_evaluated (per-option scores and trade-offs)
+    
+    Returns None if skill is not recognized for summary extraction.
+    """
+    if not isinstance(outputs, dict):
+        return None
+    
+    # decision.make — include alternatives_evaluated in summary
+    if skill_id == "decision.make":
+        summary: dict[str, Any] = {}
+        
+        # Core recommendation
+        if "recommendation" in outputs:
+            summary["recommendation"] = outputs["recommendation"]
+        
+        # Confidence calibration
+        if "confidence_score" in outputs:
+            summary["confidence_score"] = outputs["confidence_score"]
+        if "confidence_level" in outputs:
+            summary["confidence_level"] = outputs["confidence_level"]
+        
+        # Decision quality
+        if "decision_quality_score" in outputs:
+            summary["decision_quality_score"] = outputs["decision_quality_score"]
+        if "decision_quality_level" in outputs:
+            summary["decision_quality_level"] = outputs["decision_quality_level"]
+        
+        # Per-alternative evaluation (NEW: alternatives_evaluated)
+        if "alternatives_evaluated" in outputs:
+            summary["alternatives_evaluated"] = outputs["alternatives_evaluated"]
+
+        if "decision_inputs" in outputs:
+            summary["decision_inputs"] = outputs["decision_inputs"]
+
+        if "decision_matrix" in outputs:
+            summary["decision_matrix"] = outputs["decision_matrix"]
+        
+        # Per-alternative risks and trade-offs (optional)
+        if "tradeoffs" in outputs:
+            summary["tradeoffs"] = outputs["tradeoffs"]
+        
+        return summary if summary else None
+    
+    # Add other skills here as they need summary extraction
+    # elif skill_id == "some.other.skill":
+    #     ...
+    
+    return None
+
+
+def _normalize_skill_meta_consistency(payload: dict[str, Any]) -> None:
+    """Enforce minimal metadata consistency rules for skill responses.
+
+    This protects auditability when upstream responses include incomplete
+    or inconsistent meta blocks (e.g. fallback_used=false with empty diagnostics).
+    """
+    if not isinstance(payload, dict):
+        return
+
+    meta = payload.get("meta")
+    if not isinstance(meta, dict):
+        return
+
+    step_diagnostics = meta.get("step_diagnostics")
+    if not isinstance(step_diagnostics, list):
+        step_diagnostics = []
+        meta["step_diagnostics"] = step_diagnostics
+
+    warnings = meta.get("execution_warnings")
+    if not isinstance(warnings, list):
+        warnings = []
+        meta["execution_warnings"] = warnings
+
+    # Rule 1: if diagnostics are empty, trace cannot be full.
+    if len(step_diagnostics) == 0:
+        tc = str(meta.get("trace_completeness") or "").strip().lower()
+        if tc not in {"none", "partial"}:
+            meta["trace_completeness"] = "none"
+
+    affected = 0
+    for step in step_diagnostics:
+        if not isinstance(step, dict):
+            continue
+        if bool(step.get("fallback_used")) or step.get("status") in {
+            "failed",
+            "degraded",
+            "skipped",
+        }:
+            affected += 1
+
+    fallback_used = bool(meta.get("fallback_used"))
+    fallback_steps_count = meta.get("fallback_steps_count")
+    if not isinstance(fallback_steps_count, int) or fallback_steps_count < 0:
+        fallback_steps_count = 0
+
+    # Rule 2-4: never expose fallback_used=false with empty diagnostics.
+    if len(step_diagnostics) == 0 and not fallback_used:
+        fallback_used = True
+        warnings.append(
+            "Diagnostics missing; fallback status set to true to avoid false clean-run signal."
+        )
+
+    # Rule 3: count affected steps conservatively.
+    fallback_steps_count = max(fallback_steps_count, affected)
+    if fallback_used and fallback_steps_count < 1:
+        fallback_steps_count = 1
+
+    # Rule 5: warning when diagnostics are missing.
+    if len(step_diagnostics) == 0:
+        missing_msg = "No step_diagnostics available; execution trace is incomplete."
+        if missing_msg not in warnings:
+            warnings.append(missing_msg)
+
+    meta["fallback_used"] = fallback_used
+    meta["fallback_steps_count"] = fallback_steps_count
+    meta["execution_warnings"] = warnings
+    payload["meta"] = meta
+
+
+def _fallback_is_negligible_for_confidence(meta: dict[str, Any]) -> bool:
+    """Return True when fallback impact is negligible for confidence calibration.
+
+    Negligible is restricted to a single fallback in low-impact preprocessing.
+    """
+    fallback_used = bool(meta.get("fallback_used", False))
+    if not fallback_used:
+        return True
+
+    fallback_steps_count = meta.get("fallback_steps_count", 0)
+    if not isinstance(fallback_steps_count, int):
+        try:
+            fallback_steps_count = int(fallback_steps_count)
+        except Exception:
+            fallback_steps_count = 0
+
+    step_diagnostics = meta.get("step_diagnostics", [])
+    if not isinstance(step_diagnostics, list):
+        step_diagnostics = []
+
+    if fallback_steps_count != 1:
+        return False
+
+    fallback_steps = [
+        step for step in step_diagnostics
+        if isinstance(step, dict) and bool(step.get("fallback_used"))
+    ]
+    if len(fallback_steps) != 1:
+        return False
+
+    step = fallback_steps[0]
+    step_id = step.get("step_id")
+    uses = step.get("uses")
+    return step_id == "merge_context" or uses == "text.content.merge"
+
+
+def _apply_decision_confidence_cap(payload: dict[str, Any], skill_id: str) -> None:
+    """Apply final fallback-aware confidence cap for decision.make outputs.
+
+    This runs post-execution and pre-serialization so both top-level and
+    outputs_summary remain coherent.
+    """
+    if skill_id != "decision.make" or not isinstance(payload, dict):
+        return
+
+    meta = payload.get("meta")
+    if not isinstance(meta, dict):
+        return
+
+    if not bool(meta.get("fallback_used", False)):
+        return
+
+    if _fallback_is_negligible_for_confidence(meta):
+        return
+
+    def _normalize(obj: dict[str, Any]) -> None:
+        score = obj.get("confidence_score")
+        level = obj.get("confidence_level")
+        if score is None:
+            return
+        try:
+            score_f = float(score)
+        except Exception:
+            return
+
+        if score_f > 0.69:
+            obj["confidence_score"] = 0.69
+            score_f = 0.69
+
+        if score_f <= 0.70 and level == "high":
+            obj["confidence_level"] = "medium"
+
+    outputs = payload.get("outputs")
+    if isinstance(outputs, dict):
+        _normalize(outputs)
+    else:
+        _normalize(payload)
+
+
+def _postprocess_skill_result_payload(tool_name: str, result: Any) -> Any:
+    """Normalize auditable skill payloads for both sync and async responses."""
+    if not isinstance(result, dict) or not isinstance(tool_name, str):
+        return result
+    if not tool_name.startswith(_SKILL_PREFIX):
+        return result
+
+    skill_id = tool_name[len(_SKILL_PREFIX) :]
+
+    if "meta" in result:
+        _normalize_skill_meta_consistency(result)
+
+    _apply_decision_confidence_cap(result, skill_id)
+
+    if "outputs" in result and isinstance(result["outputs"], dict):
+        summary = _build_outputs_summary_for_skill(skill_id, result["outputs"])
+        if summary is not None:
+            meta = result.get("meta", {})
+            if isinstance(meta, dict):
+                if "execution_health" in meta:
+                    summary["execution_health"] = meta.get("execution_health")
+                if "fallback_severity" in meta:
+                    summary["fallback_severity"] = meta.get("fallback_severity")
+                if "retries_used" in meta:
+                    summary["retries_used"] = meta.get("retries_used")
+                if "trace_completeness" in meta:
+                    summary["trace_completeness"] = meta.get("trace_completeness")
+                if "capabilities_executed" in meta:
+                    summary["capabilities_executed"] = meta.get("capabilities_executed")
+                if "execution_warnings" in meta:
+                    summary["execution_warnings"] = meta.get("execution_warnings")
+            result["outputs_summary"] = summary
+    elif "recommendation" in result or "confidence_score" in result:
+        summary = _build_outputs_summary_for_skill(skill_id, result)
+        if summary is not None:
+            result["outputs_summary"] = summary
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -144,6 +473,16 @@ def reset_skills_cache() -> None:
     """Clear the skill cache (useful for testing)."""
     global _skills_cache
     _skills_cache = None
+
+
+def reset_runs_cache() -> None:
+    """Clear in-memory run registries (useful for testing)."""
+    global _RUN_LAST_CLEANUP_AT
+    with _RUNS_LOCK:
+        _RUN_FUTURES.clear()
+        _RUN_TOOL_NAME.clear()
+        _RUN_RECORDS.clear()
+    _RUN_LAST_CLEANUP_AT = 0.0
 
 
 def _build_skill_inspect_result(
@@ -260,7 +599,8 @@ def _with_async_controls(schema: dict[str, Any]) -> dict[str, Any]:
         "enum": [_EXECUTION_MODE_SYNC_ONLY, _EXECUTION_MODE_ASYNC_ALLOWED],
         "description": (
             "Execution behavior when sync wait window is exceeded. "
-            "sync_only: never return run_id placeholders; async_allowed: allow background run_id fallback."
+            "sync_only: prefer sync response; async_allowed: allow background run_id fallback. "
+            "Skill tools may be promoted to non-blocking mode to avoid dropping in-flight work."
         ),
     }
     out["properties"] = props
@@ -320,11 +660,18 @@ def _build_sync_timeout_skill_fallback(
         for name, spec in outputs.items():
             ftype = spec.get("type", "object") if isinstance(spec, dict) else "object"
             payload[name] = _default_value_for_type(ftype)
+    # NOTE: fallback_used=None and step_diagnostics=None here because this
+    # is a window-timeout stub, NOT a binding-level fallback. Setting
+    # fallback_used=True with step_diagnostics=[] is semantically wrong:
+    # it would claim a fallback occurred but show 0 fallback steps.
+    # Use limitation_type="window_timeout" to distinguish from binding fallback.
     payload["meta"] = {
-        "fallback_used": True,
-        "fallback_steps_count": 0,
-        "step_diagnostics": [],
+        "fallback_used": None,
+        "fallback_steps_count": None,
+        "step_diagnostics": None,
         "limitation": message,
+        "limitation_type": "window_timeout",
+        "diagnostics_available": False,
     }
     return payload
 
@@ -351,6 +698,19 @@ def _extract_execution_mode(args: dict[str, Any]) -> str:
     if normalized in {_EXECUTION_MODE_SYNC_ONLY, _EXECUTION_MODE_ASYNC_ALLOWED}:
         return normalized
     return _EXECUTION_MODE_ASYNC_ALLOWED
+
+
+def _coerce_skill_execution_mode(requested_mode: str) -> tuple[str, str | None]:
+    """Promote skill execution to non-blocking mode when policy is enabled."""
+    if (
+        _NON_BLOCKING_SKILL_EXECUTION
+        and requested_mode == _EXECUTION_MODE_SYNC_ONLY
+    ):
+        return (
+            _EXECUTION_MODE_ASYNC_ALLOWED,
+            "sync_only promoted to async_allowed to keep in-flight skill execution alive",
+        )
+    return requested_mode, None
 
 
 def _extract_include_diagnostics(args: dict[str, Any]) -> bool:
@@ -510,11 +870,30 @@ def _execute_runtime_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _start_background_run(name: str, args: dict[str, Any]) -> str:
+    _cleanup_runs_if_needed()
     run_id = uuid.uuid4().hex
+    now_ts = time.time()
+    now_iso = _utc_now_iso()
+    with _RUNS_LOCK:
+        _RUN_RECORDS[run_id] = {
+            "run_id": run_id,
+            "tool": name,
+            "status": "pending",
+            "created_at": now_iso,
+            "updated_at": now_iso,
+            "created_at_ts": now_ts,
+        }
+
     future = _RUN_EXECUTOR.submit(_execute_runtime_tool, name, dict(args))
+    future.add_done_callback(lambda fut, rid=run_id: _finalize_run(rid, fut))
+
     with _RUNS_LOCK:
         _RUN_FUTURES[run_id] = future
         _RUN_TOOL_NAME[run_id] = name
+        record = _RUN_RECORDS.get(run_id)
+        if record is not None:
+            record["status"] = "running"
+            record["updated_at"] = _utc_now_iso()
     return run_id
 
 
@@ -539,15 +918,43 @@ def _wait_for_run_result(
 
 
 def _get_run_status_payload(run_id: str) -> dict[str, Any]:
+    _cleanup_runs_if_needed()
     with _RUNS_LOCK:
+        record = _RUN_RECORDS.get(run_id)
         fut = _RUN_FUTURES.get(run_id)
         tool_name = _RUN_TOOL_NAME.get(run_id, "")
-    if fut is None:
+
+    if record is None and fut is None:
         raise ValueError(f"Unknown run_id '{run_id}'.")
+
+    if isinstance(record, dict):
+        status = record.get("status")
+        payload: dict[str, Any] = {
+            "status": status,
+            "run_id": run_id,
+            "tool": record.get("tool", tool_name),
+        }
+        if record.get("created_at"):
+            payload["created_at"] = record["created_at"]
+        if record.get("updated_at"):
+            payload["updated_at"] = record["updated_at"]
+        if status == "completed" and "result" in record:
+            record["result"] = _postprocess_skill_result_payload(
+                str(record.get("tool", tool_name)),
+                record["result"],
+            )
+            payload["result"] = record["result"]
+            return payload
+        if status == "failed":
+            payload["error"] = record.get("error", "Unknown run failure")
+            payload["code"] = record.get("code", "internal_error")
+            return payload
+
     if not fut.done():
         return {"status": "running", "run_id": run_id, "tool": tool_name}
     try:
         result = fut.result()
+        result = _postprocess_skill_result_payload(tool_name, result)
         return {
             "status": "completed",
             "run_id": run_id,
@@ -556,12 +963,105 @@ def _get_run_status_payload(run_id: str) -> dict[str, Any]:
         }
     except Exception as exc:
         return {
-            "status": "error",
+            "status": "failed",
             "run_id": run_id,
             "tool": tool_name,
             "error": str(exc),
             "code": _classify_error(exc),
         }
+
+
+def _cancel_run_payload(run_id: str) -> dict[str, Any]:
+    _cleanup_runs_if_needed()
+    with _RUNS_LOCK:
+        fut = _RUN_FUTURES.get(run_id)
+        record = _RUN_RECORDS.get(run_id)
+        tool_name = _RUN_TOOL_NAME.get(run_id, "")
+        if fut is None and record is None:
+            raise ValueError(f"Unknown run_id '{run_id}'.")
+
+        if record is None:
+            record = {
+                "run_id": run_id,
+                "tool": tool_name,
+                "status": "running",
+                "created_at": _utc_now_iso(),
+                "updated_at": _utc_now_iso(),
+                "created_at_ts": time.time(),
+            }
+            _RUN_RECORDS[run_id] = record
+
+        current_status = record.get("status")
+        if current_status in {"completed", "failed"}:
+            return {
+                "status": current_status,
+                "run_id": run_id,
+                "tool": record.get("tool", tool_name),
+                "canceled": False,
+                "message": "Run already finished.",
+            }
+
+        canceled = bool(fut.cancel()) if fut is not None else False
+        now_iso = _utc_now_iso()
+        record["updated_at"] = now_iso
+        if canceled:
+            record["status"] = "failed"
+            record["error"] = "Canceled by client."
+            record["code"] = "canceled"
+            record["finished_at"] = now_iso
+            record["finished_at_ts"] = time.time()
+            record.pop("result", None)
+            return {
+                "status": "failed",
+                "run_id": run_id,
+                "tool": record.get("tool", tool_name),
+                "canceled": True,
+                "error": "Canceled by client.",
+                "code": "canceled",
+            }
+
+        return {
+            "status": "running",
+            "run_id": run_id,
+            "tool": record.get("tool", tool_name),
+            "canceled": False,
+            "message": "Run is already executing and cannot be canceled.",
+        }
+
+
+def _list_runs_payload(limit: int = 20, status: str | None = None) -> dict[str, Any]:
+    _cleanup_runs_if_needed()
+    safe_limit = max(1, min(int(limit), 200))
+    status_filter = status if status in {"pending", "running", "completed", "failed"} else None
+
+    with _RUNS_LOCK:
+        records = list(_RUN_RECORDS.values())
+
+    if status_filter is not None:
+        records = [r for r in records if r.get("status") == status_filter]
+
+    records.sort(key=lambda r: r.get("created_at_ts", 0.0), reverse=True)
+
+    runs: list[dict[str, Any]] = []
+    for rec in records[:safe_limit]:
+        item: dict[str, Any] = {
+            "run_id": rec.get("run_id"),
+            "tool": rec.get("tool"),
+            "status": rec.get("status"),
+            "created_at": rec.get("created_at"),
+            "updated_at": rec.get("updated_at"),
+        }
+        if rec.get("status") == "failed":
+            item["error"] = rec.get("error")
+            item["code"] = rec.get("code")
+        runs.append(item)
+
+    return {
+        "runs": runs,
+        "total": len(records),
+        "limit": safe_limit,
+        "status_filter": status_filter,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -637,6 +1137,44 @@ async def list_tools() -> list[Tool]:
                 "required": ["run_id"],
             },
         ),
+        Tool(
+            name=_RUN_CANCEL_TOOL,
+            description=(
+                "Attempt to cancel a background run by run_id. Returns cancellation result and final status."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "run_id": {
+                        "type": "string",
+                        "description": "Run id returned by a previous tool call.",
+                    }
+                },
+                "required": ["run_id"],
+            },
+        ),
+        Tool(
+            name=_RUN_LIST_TOOL,
+            description=(
+                "List recent background runs for diagnostics and debugging."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 200,
+                        "description": "Maximum number of runs to return (default: 20).",
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": ["pending", "running", "completed", "failed"],
+                        "description": "Optional status filter.",
+                    },
+                },
+            },
+        ),
     ]
 
     for cap_info in caps:
@@ -685,6 +1223,8 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
     known_ids.add(_CONTRACT_INSPECT_TOOL)
     known_ids.add(_SKILL_INSPECT_TOOL)
     known_ids.add(_RUN_STATUS_TOOL)
+    known_ids.add(_RUN_CANCEL_TOOL)
+    known_ids.add(_RUN_LIST_TOOL)
     for s in skills:
         if s.get("id"):
             known_ids.add(f"{_SKILL_PREFIX}{s['id']}")
@@ -729,12 +1269,28 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
                 )
             result = _get_run_status_payload(run_id)
 
+        elif name == _RUN_CANCEL_TOOL:
+            run_id = safe_args.get("run_id")
+            if not isinstance(run_id, str) or not run_id:
+                raise ValueError(
+                    "run.cancel requires non-empty string argument 'run_id'."
+                )
+            result = _cancel_run_payload(run_id)
+
+        elif name == _RUN_LIST_TOOL:
+            limit = safe_args.get("limit", 20)
+            status = safe_args.get("status")
+            result = _list_runs_payload(limit=limit, status=status)
+
         elif name.startswith(_SKILL_PREFIX):
             skill_id = name[len(_SKILL_PREFIX) :]
             async_requested, wait_ms = _extract_execution_controls(safe_args)
+            _, mode_warning = _coerce_skill_execution_mode(execution_mode)
             if async_requested and execution_mode == _EXECUTION_MODE_SYNC_ONLY:
-                raise ValueError(
-                    "_async=true is not allowed when _execution_mode='sync_only'."
+                # Keep the request coherent with the non-blocking policy.
+                mode_warning = (
+                    mode_warning
+                    or "sync_only promoted to async_allowed to honor explicit _async request"
                 )
             # For execute-from-plan: if plan is missing, force async to get it from cache later.
             # If plan exists, allow sync execution with extended timeout.
@@ -769,25 +1325,18 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
                     result = payload["result"]
                     _maybe_cache_planner_result(name, result)
                 else:
-                    if execution_mode == _EXECUTION_MODE_SYNC_ONLY:
-                        result = _build_sync_timeout_skill_fallback(
-                            skill_id,
-                            (
-                                "Execution exceeded max wait window in sync_only mode; "
-                                "no background run id was returned."
-                            ),
-                            skills,
-                        )
-                    else:
-                        result = _build_running_skill_placeholder(
-                            skill_id,
-                            run_id,
-                            (
-                                "Execution exceeded max wait window. "
-                                "Poll run.status with this run_id for completion."
-                            ),
-                            skills,
-                        )
+                    result = _build_running_skill_placeholder(
+                        skill_id,
+                        run_id,
+                        (
+                            "Execution exceeded max wait window. "
+                            "Poll run.status with this run_id for completion."
+                        ),
+                        skills,
+                    )
+                    if mode_warning:
+                        result.setdefault("meta", {})
+                        result["meta"]["execution_warning"] = mode_warning
             else:
                 result = _execute_runtime_tool(name, safe_args)
                 _maybe_cache_planner_result(name, result)
@@ -858,6 +1407,8 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
             )
         ]
 
+    result = _postprocess_skill_result_payload(name, result)
+
     return [TextContent(type="text", text=json.dumps(result, default=str))]
 
 
@@ -926,10 +1477,13 @@ async def run_sse(host: str = "0.0.0.0", port: int = 8765) -> None:
         stateless=True,
     )
 
-    async def handle_sse(request):
-        async with sse.connect_sse(
-            request.scope, request.receive, request._send
-        ) as streams:
+    async def handle_sse_asgi(scope, receive, send):
+        """ASGI wrapper for SSE transport.
+
+        Using Mount() requires an ASGI callable; returning None from a Route
+        endpoint causes Starlette to raise TypeError when it expects a Response.
+        """
+        async with sse.connect_sse(scope, receive, send) as streams:
             await server.run(
                 streams[0],
                 streams[1],
@@ -937,6 +1491,32 @@ async def run_sse(host: str = "0.0.0.0", port: int = 8765) -> None:
             )
 
     async def handle_mcp_asgi(scope, receive, send):
+        # Compatibility shim for clients that send incomplete Accept headers.
+        # StreamableHTTP expects both application/json and text/event-stream.
+        headers = list(scope.get("headers", []))
+        accept_idx = None
+        accept_val = ""
+        for i, (k, v) in enumerate(headers):
+            if k == b"accept":
+                accept_idx = i
+                accept_val = v.decode("latin-1", errors="ignore")
+                break
+
+        required_parts = ["application/json", "text/event-stream"]
+        normalized = accept_val.lower()
+        missing = [p for p in required_parts if p not in normalized]
+        if accept_idx is None:
+            headers.append((b"accept", b"application/json, text/event-stream"))
+            scope = dict(scope)
+            scope["headers"] = headers
+        elif missing:
+            combined = accept_val
+            for part in missing:
+                combined = f"{combined}, {part}" if combined else part
+            headers[accept_idx] = (b"accept", combined.encode("latin-1", errors="ignore"))
+            scope = dict(scope)
+            scope["headers"] = headers
+
         await session_manager.handle_request(scope, receive, send)
 
     async def handle_root(request):
@@ -962,13 +1542,32 @@ async def run_sse(host: str = "0.0.0.0", port: int = 8765) -> None:
         lifespan=lifespan,
         routes=[
             Route("/", endpoint=handle_root),
-            Route("/sse", endpoint=handle_sse),
+            Mount("/sse", app=handle_sse_asgi),
             Mount("/messages/", app=sse.handle_post_message),
             Mount("/mcp", app=handle_mcp_asgi),
         ],
     )
 
-    config = uvicorn.Config(app, host=host, port=port, log_level="info")
+    # Compatibility layer for external clients:
+    # - Some clients post JSON-RPC to "/" instead of "/mcp"
+    # - Some clients do not follow POST redirects from "/mcp" to "/mcp/"
+    # Normalize these paths before routing to avoid 405/424 tool-list failures.
+    async def app_with_compat(scope, receive, send):
+        if scope.get("type") == "http":
+            path = scope.get("path", "")
+            method = scope.get("method", "GET").upper()
+            if path == "/" and method in {"POST", "DELETE"}:
+                scope = dict(scope)
+                scope["path"] = "/mcp/"
+            elif path == "/mcp" and method in {"GET", "POST", "DELETE"}:
+                scope = dict(scope)
+                scope["path"] = "/mcp/"
+            elif path == "/sse" and method == "GET":
+                scope = dict(scope)
+                scope["path"] = "/sse/"
+        await app(scope, receive, send)
+
+    config = uvicorn.Config(app_with_compat, host=host, port=port, log_level="info")
     srv = uvicorn.Server(config)
     await srv.serve()
 

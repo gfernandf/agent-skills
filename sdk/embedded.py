@@ -137,22 +137,31 @@ def _build_skill_execution_meta(result) -> dict[str, Any]:
     """Build a diagnostics block from an execution result's step_results."""
     step_diagnostics: list[dict[str, Any]] = []
     fallback_steps: list[dict[str, Any]] = []
+    failed_steps_count = 0
 
     for step_id, step_result in result.state.step_results.items():
         attempts = step_result.binding_attempts or []
         failed_attempts = [
             a for a in attempts if isinstance(a, dict) and a.get("status") == "failed"
         ]
+        attempts_count = step_result.attempts_count
+        if not isinstance(attempts_count, int) or attempts_count < 1:
+            attempts_count = max(len(attempts), 1)
+
+        status = step_result.status or "unknown"
+        if status != "completed":
+            failed_steps_count += 1
+
         diagnostic: dict[str, Any] = {
             "step_id": step_id,
             "uses": step_result.uses,
-            "status": step_result.status,
-            "duration_ms": step_result.latency_ms,
+            "status": status,
+            "duration_ms": step_result.latency_ms if step_result.latency_ms is not None else 0,
             "binding_id": step_result.binding_id,
             "service_id": step_result.service_id,
             "primary_binding_id": step_result.primary_binding_id,
             "fallback_used": bool(step_result.fallback_used),
-            "attempts_count": step_result.attempts_count,
+            "attempts_count": attempts_count,
         }
         if failed_attempts:
             diagnostic["attempt_failures"] = [
@@ -167,12 +176,282 @@ def _build_skill_execution_meta(result) -> dict[str, Any]:
         if diagnostic["fallback_used"]:
             fallback_steps.append(diagnostic)
 
+    steps_count = len(step_diagnostics)
+    # Reconcile fallback_used with step_diagnostics: if the result object
+    # reports fallback_used=True at the top level but no step recorded it
+    # (e.g. Python baseline ran at service level outside the step machinery),
+    # reflect that in fallback_steps_count so the meta is internally consistent.
+    result_level_fallback = bool(getattr(result, "fallback_used", None))
+    derived_fallback_used = bool(fallback_steps) or result_level_fallback
+    # Count steps affected by fallback OR degraded/failed execution.
+    affected_steps_count = sum(
+        1
+        for step in step_diagnostics
+        if isinstance(step, dict)
+        and (
+            bool(step.get("fallback_used"))
+            or step.get("status") in {"failed", "degraded", "skipped"}
+        )
+    )
+    derived_fallback_count = max(len(fallback_steps), affected_steps_count)
+    if result_level_fallback and not fallback_steps:
+        # Fallback detected at engine level but no per-step record available.
+        # Report it honestly rather than hiding it behind 0 steps.
+        derived_fallback_count = 1  # at least 1 fallback step occurred
+
+    execution_warnings: list[str] = []
+
+    if steps_count == 0:
+        trace_completeness = "none"
+        execution_warnings.append(
+            "No step diagnostics were captured; execution trace is not fully auditable."
+        )
+        # Metadata consistency rule: do not report fallback_used=false with empty diagnostics.
+        # Without diagnostics we cannot prove a clean execution path.
+        if not derived_fallback_used:
+            derived_fallback_used = True
+        if derived_fallback_count < 1:
+            derived_fallback_count = 1
+    else:
+        trace_completeness = "full"
+        if failed_steps_count > 0:
+            trace_completeness = "partial"
+            execution_warnings.append(
+                "One or more steps failed/degraded; trace is partial."
+            )
+
+    if derived_fallback_used and derived_fallback_count < 1:
+        derived_fallback_count = 1
+
+    retries_used = sum(
+        max(int(step.get("attempts_count", 1)) - 1, 0)
+        for step in step_diagnostics
+        if isinstance(step, dict)
+    )
+    capabilities_executed = [
+        step.get("uses")
+        for step in step_diagnostics
+        if isinstance(step, dict) and isinstance(step.get("uses"), str)
+    ]
+    # Preserve execution order but keep unique values.
+    capabilities_executed = list(dict.fromkeys(capabilities_executed))
+
+    fallback_severity = _classify_fallback_severity(
+        step_diagnostics=step_diagnostics,
+        fallback_steps_count=derived_fallback_count,
+        steps_count=steps_count,
+        failed_steps_count=failed_steps_count,
+    )
+    execution_health = _classify_execution_health(
+        status=result.status,
+        failed_steps_count=failed_steps_count,
+        steps_count=steps_count,
+        fallback_severity=fallback_severity,
+        trace_completeness=trace_completeness,
+    )
+
     return {
-        "fallback_used": bool(fallback_steps),
-        "fallback_steps_count": len(fallback_steps),
+        "skill_id": result.skill_id,
+        "trace_id": result.state.trace_id,
+        "status": result.status,
+        "steps_count": steps_count,
+        "completed_steps_count": max(steps_count - failed_steps_count, 0),
+        "failed_steps_count": failed_steps_count,
+        "fallback_used": derived_fallback_used,
+        "fallback_steps_count": derived_fallback_count,
+        "fallback_severity": fallback_severity,
         "fallback_steps": fallback_steps,
         "step_diagnostics": step_diagnostics,
+        "capabilities_executed": capabilities_executed,
+        "retries_used": retries_used,
+        "trace_completeness": trace_completeness,
+        "execution_warnings": execution_warnings,
+        "execution_health": execution_health,
     }
+
+
+def _classify_fallback_severity(
+    *,
+    step_diagnostics: list[dict[str, Any]],
+    fallback_steps_count: int,
+    steps_count: int,
+    failed_steps_count: int,
+) -> dict[str, Any]:
+    if fallback_steps_count <= 0:
+        return {
+            "level": "none",
+            "message": "Execution completed successfully.",
+        }
+
+    ratio = fallback_steps_count / max(steps_count, 1)
+    critical_uses = {
+        "eval.option.analyze",
+        "eval.option.score",
+        "decision.option.justify",
+    }
+    critical_fallback = any(
+        bool(step.get("fallback_used")) and step.get("uses") in critical_uses
+        for step in step_diagnostics
+        if isinstance(step, dict)
+    )
+    scoring_completed = any(
+        step.get("uses") == "eval.option.score" and step.get("status") == "completed"
+        for step in step_diagnostics
+        if isinstance(step, dict)
+    )
+    retries_exhausted = any(
+        step.get("status") != "completed" and int(step.get("attempts_count", 1)) > 1
+        for step in step_diagnostics
+        if isinstance(step, dict)
+    )
+    fallback_steps = [
+        step for step in step_diagnostics
+        if isinstance(step, dict) and bool(step.get("fallback_used"))
+    ]
+    justify_only_fallback = (
+        fallback_steps_count == 1
+        and len(fallback_steps) == 1
+        and fallback_steps[0].get("step_id") == "justify_decision"
+        and fallback_steps[0].get("uses") == "decision.option.justify"
+    )
+
+    if failed_steps_count > 0 or (critical_fallback and not scoring_completed):
+        return {
+            "level": "severe",
+            "message": (
+                "Execution reliability significantly reduced. "
+                "Recommendation should be treated cautiously."
+            ),
+        }
+
+    if justify_only_fallback and not retries_exhausted:
+        return {
+            "level": "minor",
+            "message": (
+                "Execution completed with minor fallback in justify_decision only. "
+                "Recommendation remains reliable."
+            ),
+        }
+
+    if critical_fallback or ratio >= 0.20 or retries_exhausted:
+        return {
+            "level": "moderate",
+            "message": (
+                "Execution completed with moderate degradation. "
+                "Treat recommendation with some caution."
+            ),
+        }
+
+    return {
+        "level": "minor",
+        "message": (
+            "Execution completed with minor fallback in non-critical steps. "
+            "Recommendation remains reliable."
+        ),
+    }
+
+
+def _classify_execution_health(
+    *,
+    status: str,
+    failed_steps_count: int,
+    steps_count: int,
+    fallback_severity: dict[str, Any],
+    trace_completeness: str,
+) -> str:
+    if status != "completed":
+        return "failed"
+    if steps_count == 0 or failed_steps_count >= steps_count:
+        return "failed"
+    if failed_steps_count > 0:
+        return "partial"
+    if trace_completeness != "full":
+        return "degraded"
+    severity_level = fallback_severity.get("level") if isinstance(fallback_severity, dict) else None
+    if severity_level in {"moderate", "severe"}:
+        return "degraded"
+    return "healthy"
+
+
+def apply_execution_reliability_confidence_calibration(
+    *,
+    skill_id: str,
+    outputs: dict[str, Any],
+    meta: dict[str, Any],
+) -> dict[str, Any]:
+    """Apply fallback-aware confidence caps as the final runtime step.
+
+    Rules:
+    - minor fallback: cap score to 0.69 and level to at most medium.
+    - moderate fallback: cap score to 0.65 and level to at most medium.
+    - severe fallback: cap score to 0.40 and level to low.
+
+    Adds ``execution_reliability_adjustment`` to outputs when score is adjusted.
+    """
+    if skill_id != "decision.make":
+        return outputs
+    if not isinstance(outputs, dict) or not isinstance(meta, dict):
+        return outputs
+
+    if not bool(meta.get("fallback_used", False)):
+        return outputs
+
+    raw_score = outputs.get("confidence_score")
+    try:
+        score = float(raw_score)
+    except Exception:
+        return outputs
+
+    severity = meta.get("fallback_severity")
+    level = None
+    if isinstance(severity, dict):
+        level = severity.get("level")
+    if not isinstance(level, str) or not level:
+        level = "moderate"
+    level = level.strip().lower()
+
+    cap_by_level = {
+        "minor": 0.69,
+        "moderate": 0.65,
+        "severe": 0.40,
+    }
+    cap = cap_by_level.get(level)
+    if cap is None:
+        cap = 0.65
+
+    adjusted = min(score, cap)
+    if adjusted != score:
+        reason = "fallback used"
+        fallback_steps = meta.get("fallback_steps")
+        if isinstance(fallback_steps, list) and len(fallback_steps) == 1:
+            step = fallback_steps[0]
+            if isinstance(step, dict) and isinstance(step.get("step_id"), str):
+                reason = f"fallback used in {step['step_id']}"
+
+        outputs["execution_reliability_adjustment"] = {
+            "raw_confidence_score": score,
+            "adjusted_confidence_score": adjusted,
+            "reason": reason,
+        }
+        outputs["confidence_score"] = adjusted
+
+    confidence_level = outputs.get("confidence_level")
+    if not isinstance(confidence_level, str):
+        confidence_level = ""
+    confidence_level = confidence_level.strip().lower()
+
+    final_score = outputs.get("confidence_score")
+    try:
+        final_score_f = float(final_score)
+    except Exception:
+        final_score_f = adjusted
+
+    if level == "severe":
+        outputs["confidence_level"] = "low"
+    elif final_score_f <= 0.70 and confidence_level == "high":
+        outputs["confidence_level"] = "medium"
+
+    return outputs
 
 
 def execute_with_meta(
@@ -208,9 +487,16 @@ def execute_with_meta(
         )
 
     raw_outputs = dict(result.outputs) if result.outputs else {}
+    meta = _build_skill_execution_meta(result)
+    outputs = _normalize_outputs_to_skill_contract(skill, raw_outputs)
+    outputs = apply_execution_reliability_confidence_calibration(
+        skill_id=skill_id,
+        outputs=outputs,
+        meta=meta,
+    )
     return {
-        "outputs": _normalize_outputs_to_skill_contract(skill, raw_outputs),
-        "meta": _build_skill_execution_meta(result),
+        "outputs": outputs,
+        "meta": meta,
     }
 
 

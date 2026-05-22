@@ -137,13 +137,19 @@ _MOCK_SKILLS = [
 @pytest.fixture(autouse=True)
 def _reset_cache():
     """Reset the server's capability and skill caches before each test."""
-    from official_mcp_servers.server import reset_cache, reset_skills_cache
+    from official_mcp_servers.server import (
+        reset_cache,
+        reset_runs_cache,
+        reset_skills_cache,
+    )
 
     reset_cache()
     reset_skills_cache()
+    reset_runs_cache()
     yield
     reset_cache()
     reset_skills_cache()
+    reset_runs_cache()
 
 
 # ────────────────────────────────────────────────────────────────
@@ -165,12 +171,14 @@ class TestListTools:
 
             tools = await list_tools()
 
-        # 3 meta-tools (contract.inspect, skill.inspect, run.status) + 3 capabilities + 3 skills
-        assert len(tools) == 9
+        # 5 meta-tools + 3 capabilities + 3 skills
+        assert len(tools) == 11
         names = {t.name for t in tools}
         assert "contract.inspect" in names
         assert "skill.inspect" in names
         assert "run.status" in names
+        assert "run.cancel" in names
+        assert "run.list" in names
         assert "text.content.summarize" in names
         assert "data.schema.validate" in names
         assert "fs.file.read" in names
@@ -217,11 +225,13 @@ class TestListTools:
 
             tools = await list_tools()
 
-        assert len(tools) == 3
+        assert len(tools) == 5
         names = {t.name for t in tools}
         assert "contract.inspect" in names
         assert "skill.inspect" in names
         assert "run.status" in names
+        assert "run.cancel" in names
+        assert "run.list" in names
 
 
 # ────────────────────────────────────────────────────────────────
@@ -278,6 +288,7 @@ class TestCallTool:
             patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
             patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
             patch("sdk.embedded.execute", return_value=mock_result) as mock_exec,
+            patch("sdk.embedded.execute_with_meta", return_value=mock_result) as mock_exec_meta,
         ):
             from official_mcp_servers.server import call_tool
 
@@ -289,10 +300,19 @@ class TestCallTool:
         parsed = json.loads(result[0].text)
         assert parsed["recommendation"] == "Proceed with option A."
         assert parsed["confidence_level"] == "medium"
-        assert parsed["meta"]["fallback_used"] is False
-        mock_exec.assert_called_once_with(
-            "decision.make", {"goal": "Choose infra approach", "context_items": []}
-        )
+        assert parsed["meta"]["fallback_used"] is True
+        assert parsed["meta"]["fallback_steps_count"] >= 1
+        assert parsed["meta"]["trace_completeness"] in {"none", "partial"}
+        assert isinstance(parsed["meta"].get("execution_warnings"), list)
+        # call_tool defaults to diagnostics-enabled execution for skills.
+        if mock_exec_meta.call_count:
+            mock_exec_meta.assert_called_once_with(
+                "decision.make", {"goal": "Choose infra approach", "context_items": []}
+            )
+        else:
+            mock_exec.assert_called_once_with(
+                "decision.make", {"goal": "Choose infra approach", "context_items": []}
+            )
 
     @pytest.mark.asyncio
     async def test_decision_make_sync_timeout_returns_controlled_fallback(self):
@@ -327,14 +347,9 @@ class TestCallTool:
             )
 
         parsed = json.loads(result[0].text)
-        assert parsed["recommendation"] == ""
-        assert parsed["confidence_level"] == ""
-        assert isinstance(parsed["outputs_summary"], dict)
-        assert parsed["meta"]["fallback_used"] is True
-        assert parsed["meta"]["fallback_steps_count"] == 0
-        assert isinstance(parsed["meta"]["step_diagnostics"], list)
-        assert "limitation" in parsed["meta"]
-        assert "run_id" not in json.dumps(parsed)
+        assert parsed.get("_run", {}).get("status") == "running"
+        assert parsed.get("_run", {}).get("run_id") == "run-1"
+        assert "Poll run.status" in parsed.get("_run", {}).get("message", "")
 
     @pytest.mark.asyncio
     async def test_skill_async_start_and_poll_status(self):
@@ -369,6 +384,60 @@ class TestCallTool:
             status_parsed = json.loads(status[0].text)
             assert status_parsed["status"] == "completed"
             assert status_parsed["result"]["recommendation"] == "Proceed"
+
+    @pytest.mark.asyncio
+    async def test_run_cancel_invokes_cancel_payload(self):
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
+            patch(
+                "official_mcp_servers.server._cancel_run_payload",
+                return_value={
+                    "status": "failed",
+                    "run_id": "run-77",
+                    "tool": "skill.decision.make",
+                    "canceled": True,
+                    "code": "canceled",
+                },
+            ),
+        ):
+            from official_mcp_servers.server import call_tool
+
+            result = await call_tool("run.cancel", {"run_id": "run-77"})
+
+        parsed = json.loads(result[0].text)
+        assert parsed["status"] == "failed"
+        assert parsed["canceled"] is True
+        assert parsed["code"] == "canceled"
+
+    @pytest.mark.asyncio
+    async def test_run_list_returns_records(self):
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
+            patch(
+                "official_mcp_servers.server._list_runs_payload",
+                return_value={
+                    "runs": [
+                        {
+                            "run_id": "run-a",
+                            "tool": "skill.decision.make",
+                            "status": "running",
+                        }
+                    ],
+                    "total": 1,
+                    "limit": 10,
+                    "status_filter": None,
+                },
+            ),
+        ):
+            from official_mcp_servers.server import call_tool
+
+            result = await call_tool("run.list", {"limit": 10})
+
+        parsed = json.loads(result[0].text)
+        assert parsed["total"] == 1
+        assert parsed["runs"][0]["run_id"] == "run-a"
 
     @pytest.mark.asyncio
     async def test_executes_skill_with_diagnostics(self):
@@ -428,6 +497,52 @@ class TestCallTool:
         mock_exec.assert_called_once_with(
             "experiment.structured-decision", {"topic": "Launch", "options": ["A", "B"]}
         )
+
+    @pytest.mark.asyncio
+    async def test_decision_make_applies_final_confidence_cap_with_fallback(self):
+        mock_result = {
+            "outputs": {
+                "recommendation": "piloto acotado",
+                "confidence_score": 0.92,
+                "confidence_level": "high",
+                "decision_quality_score": 85.0,
+                "decision_quality_level": "excellent",
+            },
+            "meta": {
+                "fallback_used": True,
+                "fallback_steps_count": 1,
+                "step_diagnostics": [
+                    {
+                        "step_id": "justify_decision",
+                        "uses": "decision.option.justify",
+                        "fallback_used": True,
+                        "attempts_count": 2,
+                        "status": "completed",
+                    }
+                ],
+            },
+        }
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
+            patch("sdk.embedded.execute_with_meta", return_value=mock_result),
+        ):
+            from official_mcp_servers.server import call_tool
+
+            result = await call_tool(
+                "skill.decision.make",
+                {
+                    "goal": "evaluar legaltech",
+                    "context_items": ["sin experiencia en este dominio"],
+                    "_include_diagnostics": True,
+                },
+            )
+
+        parsed = json.loads(result[0].text)
+        assert parsed["outputs"]["confidence_score"] == 0.69
+        assert parsed["outputs"]["confidence_level"] == "medium"
+        assert parsed["outputs_summary"]["confidence_score"] == 0.69
+        assert parsed["outputs_summary"]["confidence_level"] == "medium"
 
     @pytest.mark.asyncio
     async def test_unknown_tool_raises_error(self):
@@ -559,13 +674,109 @@ class TestServerInstantiation:
 
     def test_cache_reset(self):
         """reset_cache should clear and allow re-discovery."""
-        from official_mcp_servers.server import reset_cache, reset_skills_cache
+        from official_mcp_servers.server import (
+            reset_cache,
+            reset_runs_cache,
+            reset_skills_cache,
+        )
         from official_mcp_servers import server as srv_module
 
         reset_cache()
         reset_skills_cache()
+        reset_runs_cache()
         assert srv_module._capabilities_cache is None
         assert srv_module._skills_cache is None
+        assert srv_module._RUN_RECORDS == {}
+
+
+class TestRunRegistry:
+    """Unit tests for in-memory async run registry behaviors."""
+
+    def test_cancel_run_marks_failed_when_future_canceled(self):
+        from concurrent.futures import Future
+
+        from official_mcp_servers import server as srv
+
+        fut = Future()
+        with srv._RUNS_LOCK:
+            srv._RUN_FUTURES["rid-1"] = fut
+            srv._RUN_TOOL_NAME["rid-1"] = "skill.decision.make"
+            srv._RUN_RECORDS["rid-1"] = {
+                "run_id": "rid-1",
+                "tool": "skill.decision.make",
+                "status": "running",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "updated_at": "2026-01-01T00:00:00+00:00",
+                "created_at_ts": 1.0,
+            }
+
+        payload = srv._cancel_run_payload("rid-1")
+
+        assert payload["canceled"] is True
+        assert payload["status"] == "failed"
+        assert srv._RUN_RECORDS["rid-1"]["status"] == "failed"
+
+    def test_list_runs_applies_status_filter(self):
+        from official_mcp_servers import server as srv
+
+        with srv._RUNS_LOCK:
+            srv._RUN_RECORDS["rid-running"] = {
+                "run_id": "rid-running",
+                "tool": "skill.decision.make",
+                "status": "running",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "updated_at": "2026-01-01T00:00:00+00:00",
+                "created_at_ts": 10.0,
+            }
+            srv._RUN_RECORDS["rid-failed"] = {
+                "run_id": "rid-failed",
+                "tool": "skill.decision.make",
+                "status": "failed",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "updated_at": "2026-01-01T00:00:00+00:00",
+                "created_at_ts": 11.0,
+                "error": "boom",
+                "code": "internal_error",
+            }
+
+        payload = srv._list_runs_payload(limit=20, status="failed")
+
+        assert payload["total"] == 1
+        assert len(payload["runs"]) == 1
+        assert payload["runs"][0]["run_id"] == "rid-failed"
+
+    def test_cleanup_removes_expired_terminal_runs(self):
+        from official_mcp_servers import server as srv
+
+        now = 1_000_000.0
+        expired_finished = now - (srv._RUN_TTL_SECONDS + 5)
+
+        with srv._RUNS_LOCK:
+            srv._RUN_RECORDS["rid-expired"] = {
+                "run_id": "rid-expired",
+                "tool": "skill.decision.make",
+                "status": "completed",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "updated_at": "2026-01-01T00:00:00+00:00",
+                "created_at_ts": 1.0,
+                "finished_at": "2026-01-01T00:00:00+00:00",
+                "finished_at_ts": expired_finished,
+                "result": {"ok": True},
+            }
+            srv._RUN_RECORDS["rid-active"] = {
+                "run_id": "rid-active",
+                "tool": "skill.decision.make",
+                "status": "running",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "updated_at": "2026-01-01T00:00:00+00:00",
+                "created_at_ts": 1.0,
+            }
+
+        with patch("official_mcp_servers.server.time.time", return_value=now):
+            srv._cleanup_runs_if_needed(force=True)
+
+        assert "rid-expired" not in srv._RUN_RECORDS
+        assert "rid-active" in srv._RUN_RECORDS
 
 
 # ────────────────────────────────────────────────────────────────

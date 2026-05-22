@@ -25,10 +25,33 @@ def _error_response(error: Exception, *, trace_id: str | None = None) -> dict[st
     }
 
 
+def _ok_response(payload: dict[str, Any]) -> dict[str, Any]:
+    return {"ok": True, "data": payload}
+
+
 def _build_step_diagnostics(result) -> dict[str, Any]:
     from sdk.embedded import _build_skill_execution_meta
 
     return _build_skill_execution_meta(result)
+
+
+def _calibrate_execution_confidence(
+    *,
+    skill_id: str,
+    outputs: dict[str, Any],
+    meta: dict[str, Any],
+) -> dict[str, Any]:
+    from sdk.embedded import apply_execution_reliability_confidence_calibration
+
+    if not isinstance(outputs, dict):
+        return outputs
+    if not isinstance(meta, dict):
+        return outputs
+    return apply_execution_reliability_confidence_calibration(
+        skill_id=skill_id,
+        outputs=outputs,
+        meta=meta,
+    )
 
 
 class NeutralRuntimeAPI:
@@ -173,12 +196,20 @@ class NeutralRuntimeAPI:
         except Exception as exc:
             return _error_response(exc, trace_id=trace_id)
 
+        outputs = dict(result.outputs) if isinstance(result.outputs, dict) else {}
+        meta = _build_step_diagnostics(result)
+        outputs = _calibrate_execution_confidence(
+            skill_id=result.skill_id,
+            outputs=outputs,
+            meta=meta,
+        )
+
         payload: dict[str, Any] = {
             "skill_id": result.skill_id,
             "status": result.status,
-            "outputs": result.outputs,
+            "outputs": outputs,
             "trace_id": result.state.trace_id,
-            "meta": _build_step_diagnostics(result),
+            "meta": meta,
         }
 
         if include_trace:
@@ -320,6 +351,7 @@ class NeutralRuntimeAPI:
         execution_channel: str | None = None,
         run_store=None,
         async_pool=None,
+        webhook_store=None,
     ) -> dict[str, Any]:
         """Launch skill execution asynchronously.  Returns run metadata immediately."""
         if run_store is None:
@@ -347,8 +379,42 @@ class NeutralRuntimeAPI:
                     execution_channel=execution_channel,
                 )
                 run_store.complete_run(run_id, result_payload)
+                if webhook_store is not None:
+                    try:
+                        from runtime.webhook import deliver_event
+
+                        deliver_event(
+                            webhook_store,
+                            "run.completed",
+                            {
+                                "run_id": run_id,
+                                "skill_id": skill_id,
+                                "status": "completed",
+                                "result": result_payload,
+                            },
+                            trace_id=trace_id,
+                        )
+                    except Exception:
+                        pass
             except Exception as exc:
                 run_store.fail_run(run_id, str(exc))
+                if webhook_store is not None:
+                    try:
+                        from runtime.webhook import deliver_event
+
+                        deliver_event(
+                            webhook_store,
+                            "run.failed",
+                            {
+                                "run_id": run_id,
+                                "skill_id": skill_id,
+                                "status": "failed",
+                                "error": str(exc),
+                            },
+                            trace_id=trace_id,
+                        )
+                    except Exception:
+                        pass
 
         if async_pool is not None:
             async_pool.submit(_background)
@@ -370,9 +436,40 @@ class NeutralRuntimeAPI:
         run = run_store.get_run(run_id)
         if run is None:
             return _error_response(RuntimeError(f"Run '{run_id}' not found"))
-        return run
+        return _ok_response(run)
 
-    def list_runs(self, *, run_store=None, limit: int = 100) -> dict[str, Any]:
+    def cancel_run(self, run_id: str, *, run_store=None) -> dict[str, Any]:
         if run_store is None:
             return _error_response(RuntimeError("RunStore not configured"))
-        return {"runs": run_store.list_runs(limit=limit)}
+        run = run_store.cancel_run(run_id)
+        if run is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+        return _ok_response(run)
+
+    def list_runs(
+        self,
+        *,
+        run_store=None,
+        limit: int = 100,
+        offset: int = 0,
+        status: str | None = None,
+    ) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        runs = run_store.list_runs_page(limit=limit, offset=offset, status=status)
+        total = run_store.count_runs(status=status)
+        has_more = (offset + len(runs)) < total
+        response: dict[str, Any] = {
+            "runs": runs,
+            "pagination": {
+                "offset": offset,
+                "limit": limit,
+                "total": total,
+                "has_more": has_more,
+            },
+        }
+        if has_more:
+            response["pagination"]["next_offset"] = offset + len(runs)
+        if status is not None:
+            response["status"] = status
+        return response
