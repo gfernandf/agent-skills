@@ -24,6 +24,21 @@ from runtime.openapi_error_contract import (
 logger = logging.getLogger(__name__)
 
 
+def _is_not_found_error(response: Any) -> bool:
+    if not isinstance(response, dict):
+        return False
+    error = response.get("error")
+    return isinstance(error, dict) and error.get("code") == "not_found"
+
+
+def _unwrap_run_response(response: Any) -> Any:
+    if not isinstance(response, dict):
+        return response
+    if response.get("ok") is True and isinstance(response.get("data"), dict):
+        return response["data"]
+    return response
+
+
 def _format_prometheus(snapshot: dict[str, Any]) -> str:
     """Convert a metrics snapshot to Prometheus exposition format."""
     lines: list[str] = []
@@ -229,12 +244,24 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     return
                 query = parse_qs(parsed.query or "")
                 limit_raw = query.get("limit", [100])[0]
+                offset_raw = query.get("offset", [0])[0]
+                status_raw = query.get("status", [None])[0]
                 try:
                     limit = int(limit_raw)
                 except Exception:
                     limit = 100
+                try:
+                    offset = int(offset_raw)
+                except Exception:
+                    offset = 0
                 self._write_json(
-                    200, self._api().list_runs(run_store=store, limit=limit)
+                    200,
+                    self._api().list_runs(
+                        run_store=store,
+                        limit=limit,
+                        offset=offset,
+                        status=status_raw if isinstance(status_raw, str) else None,
+                    ),
                 )
                 return
 
@@ -256,10 +283,34 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 run_id = parsed.path[len(runs_prefix) :]
                 response = self._api().get_run(run_id, run_store=store)
                 status = 200
-                if isinstance(response, dict) and "error" in response:
+                if _is_not_found_error(response):
                     status = 404
-                self._write_json(status, response)
+                self._write_json(status, _unwrap_run_response(response))
                 return
+
+            run_status_prefixes = ("/run_status/", "/v1/run_status/")
+            for run_status_prefix in run_status_prefixes:
+                if parsed.path.startswith(run_status_prefix):
+                    store = self.run_store
+                    if store is None:
+                        self._write_json(
+                            501,
+                            {
+                                "error": {
+                                    "code": "not_implemented",
+                                    "message": "Async runs not enabled",
+                                    "type": "NotImplementedError",
+                                }
+                            },
+                        )
+                        return
+                    run_id = parsed.path[len(run_status_prefix) :]
+                    response = self._api().get_run(run_id, run_store=store)
+                    status = 200
+                    if _is_not_found_error(response):
+                        status = 404
+                    self._write_json(status, _unwrap_run_response(response))
+                    return
 
             self._write_json(
                 404,
@@ -323,7 +374,20 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     active=True,
                     created_at=str(_time.time()),
                 )
-                wh_store.register(sub)
+                try:
+                    wh_store.register(sub)
+                except Exception as exc:
+                    self._write_json(
+                        400,
+                        {
+                            "error": {
+                                "code": "bad_request",
+                                "message": str(exc),
+                                "type": type(exc).__name__,
+                            }
+                        },
+                    )
+                    return
                 self._write_json(201, {"id": sub_id, "url": url, "events": events})
                 return
 
@@ -499,6 +563,97 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     execution_channel="http-async",
                     run_store=store,
                     async_pool=self._async_pool,
+                    webhook_store=self.webhook_store,
+                )
+                self._write_json(202, response)
+                return
+
+            runs_prefix = "/v1/runs/"
+            if parsed.path.startswith(runs_prefix) and parsed.path.endswith("/cancel"):
+                store = self.run_store
+                if store is None:
+                    self._write_json(
+                        501,
+                        {
+                            "error": {
+                                "code": "not_implemented",
+                                "message": "Async runs not enabled",
+                                "type": "NotImplementedError",
+                            }
+                        },
+                    )
+                    return
+                run_id = parsed.path[len(runs_prefix) : -len("/cancel")].rstrip("/")
+                response = self._api().cancel_run(run_id, run_store=store)
+                status = 200
+                if _is_not_found_error(response):
+                    status = 404
+                self._write_json(status, _unwrap_run_response(response))
+                return
+
+            run_cancel_prefixes = ("/run_cancel/", "/v1/run_cancel/")
+            for run_cancel_prefix in run_cancel_prefixes:
+                if parsed.path.startswith(run_cancel_prefix):
+                    store = self.run_store
+                    if store is None:
+                        self._write_json(
+                            501,
+                            {
+                                "error": {
+                                    "code": "not_implemented",
+                                    "message": "Async runs not enabled",
+                                    "type": "NotImplementedError",
+                                }
+                            },
+                        )
+                        return
+                    run_id = parsed.path[len(run_cancel_prefix) :]
+                    response = self._api().cancel_run(run_id, run_store=store)
+                    status = 200
+                    if _is_not_found_error(response):
+                        status = 404
+                    self._write_json(status, _unwrap_run_response(response))
+                    return
+
+            if parsed.path in {"/run_async", "/v1/run_async"}:
+                store = self.run_store
+                if store is None:
+                    self._write_json(
+                        501,
+                        {
+                            "error": {
+                                "code": "not_implemented",
+                                "message": "Async runs not enabled",
+                                "type": "NotImplementedError",
+                            }
+                        },
+                    )
+                    return
+                if not isinstance(body, dict):
+                    raise ValueError("Request body must be a JSON object")
+                skill_id = body.get("skill_id")
+                if not isinstance(skill_id, str) or not skill_id:
+                    raise ValueError("run_async requires non-empty string field 'skill_id'")
+                inputs = body.get("inputs") if isinstance(body, dict) else {}
+                trace_id = self._extract_trace_id(body)
+                required_profile = None
+                value = body.get("required_conformance_profile")
+                if isinstance(value, str) and value:
+                    required_profile = value
+                audit_mode = None
+                value = body.get("audit_mode")
+                if isinstance(value, str) and value:
+                    audit_mode = value
+                response = self._api().execute_skill_async(
+                    skill_id=skill_id,
+                    inputs=inputs if isinstance(inputs, dict) else {},
+                    trace_id=trace_id,
+                    required_conformance_profile=required_profile,
+                    audit_mode=audit_mode,
+                    execution_channel="http-async",
+                    run_store=store,
+                    async_pool=self._async_pool,
+                    webhook_store=self.webhook_store,
                 )
                 self._write_json(202, response)
                 return

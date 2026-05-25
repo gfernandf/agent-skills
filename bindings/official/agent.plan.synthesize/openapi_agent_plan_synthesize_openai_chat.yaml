@@ -1,50 +1,41 @@
 id: openapi_agent_plan_synthesize_openai_chat
-
 capability: agent.plan.synthesize
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are a plan compiler for the ORCA execution engine. Given a
-        validated plan, compile it into an executable DAG representation.
+  - role: system
+    content: "You are a plan compiler for the ORCA execution engine. Given a validated\
+      \ plan, compile it into an executable DAG representation.\nReturn a JSON object\
+      \ with: - compiled_plan: object with:\n  - dag: object with nodes (array of\
+      \ {id, ref, type}) and\n    edges (array of {from, to})\n  - execution_order:\
+      \ flat array of step ids in topological order\n  - parallel_groups: array of\
+      \ arrays \u2014 steps within the same group\n    can run in parallel (no mutual\
+      \ dependencies)\n  - gates: array of step ids that require authorization before\n\
+      \    execution\n  - state_bindings: object mapping step ids to their input and\n\
+      \    output $state.* paths\n  - registry_version: string \"current\"\n  - plan_hash:\
+      \ a deterministic hash string derived from step refs\n    and dependencies (use\
+      \ a UUID or sha-like string)\n- step_count: total number of steps - compiled_plan_json:\
+      \ JSON string representation of compiled_plan\nReturn valid JSON only. No markdown\
+      \ fences.\n"
+  - role: user
+    content: 'Validated plan: ${input.validated_plan}
 
-        Return a JSON object with:
-        - compiled_plan: object with:
-          - dag: object with nodes (array of {id, ref, type}) and
-            edges (array of {from, to})
-          - execution_order: flat array of step ids in topological order
-          - parallel_groups: array of arrays — steps within the same group
-            can run in parallel (no mutual dependencies)
-          - gates: array of step ids that require authorization before
-            execution
-          - state_bindings: object mapping step ids to their input and
-            output $state.* paths
-          - registry_version: string "current"
-          - plan_hash: a deterministic hash string derived from step refs
-            and dependencies (use a UUID or sha-like string)
-        - step_count: total number of steps
-        - compiled_plan_json: JSON string representation of compiled_plan
 
-        Return valid JSON only. No markdown fences.
-    - role: user
-      content: "Validated plan: ${input.validated_plan}\n\nRuntime config: ${input.runtime_config}"
+      Runtime config: ${input.runtime_config}'
   temperature: 0.0
   response_format:
     type: json_object
-
 response:
   compiled_plan: response.choices.0.message.content_json.compiled_plan
   step_count: response.choices.0.message.content_json.step_count
   compiled_plan_json: response.choices.0.message.content_json.compiled_plan_json
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_plan_synthesize
-  description: "OpenAI binding for agent.plan.synthesize using gpt-4o-mini."
+  description: OpenAI binding for agent.plan.synthesize using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 45

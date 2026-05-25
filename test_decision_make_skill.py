@@ -66,6 +66,7 @@ def test_decision_make_with_preprovided_options(engine):
                 {"id": "analysis", "content": "Cost analysis shows 3 viable paths."}
             ],
             "options": provided_options,
+            "option_constraint_mode": "strict",
         },
     )
 
@@ -73,16 +74,25 @@ def test_decision_make_with_preprovided_options(engine):
 
     assert result.status == "completed", f"Expected completed, got {result.status}"
 
-    # Verify alternatives match provided options
+    # Strict mode must preserve the exact explicit option set.
     alternatives = result.outputs.get("alternatives_considered", [])
-    assert len(alternatives) >= 3, (
-        f"Expected at least 3 alternatives, got {len(alternatives)}"
+    assert len(alternatives) == len(provided_options), (
+        f"Expected exactly {len(provided_options)} alternatives, got {len(alternatives)}"
     )
 
-    # Check that at least one provided option appears in the result
-    alt_ids = {alt.get("id") for alt in alternatives if isinstance(alt, dict)}
-    provided_ids = {"opt-1", "opt-2", "opt-3"}
-    assert len(alt_ids & provided_ids) >= 1, "No provided options found in result"
+    alt_ids = [alt.get("id") for alt in alternatives if isinstance(alt, dict)]
+    provided_ids = [opt["id"] for opt in provided_options]
+    assert alt_ids == provided_ids, (
+        "Option ids drifted or reordered. "
+        f"expected={provided_ids}, observed={alt_ids}"
+    )
+
+    alt_labels = {alt.get("id"): alt.get("label") for alt in alternatives}
+    provided_labels = {opt["id"]: opt["label"] for opt in provided_options}
+    assert alt_labels == provided_labels, (
+        "Option labels drifted in strict mode. "
+        f"expected={provided_labels}, observed={alt_labels}"
+    )
 
 
 def test_decision_make_with_risk_tolerance(engine):

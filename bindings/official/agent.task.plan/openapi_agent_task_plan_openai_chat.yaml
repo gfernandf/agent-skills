@@ -1,49 +1,43 @@
 id: openapi_agent_task_plan_openai_chat
-
 capability: agent.task.plan
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are a macro planning assistant. Given an interpreted goal and
-        a set of available registry items, produce a high-level plan that
-        decomposes the goal into 3-7 major stages. Do NOT expand into
-        capability-level steps yet — stay at the stage level.
+  - role: system
+    content: "You are a macro planning assistant. Given an interpreted goal and a\
+      \ set of available registry items, produce a high-level plan that decomposes\
+      \ the goal into 3-7 major stages. Do NOT expand into capability-level steps\
+      \ yet \u2014 stay at the stage level.\nReturn a JSON object with: - macro_plan:\
+      \ object with:\n  - goal_ref: a short slug derived from the objective\n  - strategy:\
+      \ one of direct | staged | exploratory |\n    approval_required | human_in_loop\n\
+      \  - stages: array of objects, each with:\n    - id: slug like \"s1\", \"s2\"\
+      \n    - objective: one sentence describing what this stage achieves\n    - expected_output:\
+      \ type of artefact produced by this stage\n    - suggested_skill: optional skill\
+      \ ref from available candidates\n    - parallel_with: optional array of stage\
+      \ ids that can run in\n      parallel with this one\n- stage_count: number of\
+      \ stages\nBe concrete. Each stage should produce something tangible. Return\
+      \ valid JSON only. No markdown fences.\n"
+  - role: user
+    content: 'Goal: ${input.interpreted_goal}
 
-        Return a JSON object with:
-        - macro_plan: object with:
-          - goal_ref: a short slug derived from the objective
-          - strategy: one of direct | staged | exploratory |
-            approval_required | human_in_loop
-          - stages: array of objects, each with:
-            - id: slug like "s1", "s2"
-            - objective: one sentence describing what this stage achieves
-            - expected_output: type of artefact produced by this stage
-            - suggested_skill: optional skill ref from available candidates
-            - parallel_with: optional array of stage ids that can run in
-              parallel with this one
-        - stage_count: number of stages
 
-        Be concrete. Each stage should produce something tangible.
-        Return valid JSON only. No markdown fences.
-    - role: user
-      content: "Goal: ${input.interpreted_goal}\n\nCandidate skills: ${input.candidate_skills}\n\nStrategy: ${input.planning_strategy}"
+      Candidate skills: ${input.candidate_skills}
+
+
+      Strategy: ${input.planning_strategy}'
   temperature: 0.3
   response_format:
     type: json_object
-
 response:
   macro_plan: response.choices.0.message.content_json.macro_plan
   stage_count: response.choices.0.message.content_json.stage_count
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_task_plan
-  description: "OpenAI binding for agent.task.plan using gpt-4o-mini."
+  description: OpenAI binding for agent.task.plan using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 30

@@ -1,33 +1,43 @@
 id: openapi_agent_output_generate_openai_chat
-
 capability: agent.output.generate
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
     - role: system
-      content: >
+      content: |
         You are a task report generation assistant. Given an interpreted goal,
-        an execution result, an optional evaluation, and an optional trace
-        summary, produce a complete user-facing report.
+        an execution result, an optional evaluation, and an optional trace summary,
+        produce a concise, technical, executive report suitable for public demos.
 
-        The report must include:
-        1. A concise summary of what was done
-        2. What was produced (list of artefacts)
-        3. What could not be done and why (limitations)
-        4. Key decisions made during execution
-        5. Evidence and source references (if applicable)
-        6. Errors encountered and how they were handled
-        7. Suggested next steps
+        Style rules:
+        - Prioritize executive summary and avoid repetition.
+        - Keep ORCA trace concise.
+        - Preserve technical accuracy and avoid fabricating data.
+        - If data is missing, say unavailable instead of guessing.
+
+        The report must include these sections in order:
+        1. Executive Summary
+        2. Decision Inputs (structured key-value list)
+        3. Decision Matrix (compact table)
+        4. Risks and Uncertainties
+        5. ORCA Runtime Execution (skill + capabilities)
+        6. Execution Health (quality, fallback severity, retries, trace completeness)
+
+        Confidence policy:
+        - confidence_level mapping: low [0.0,0.3), medium [0.3,0.70], high (0.70,1.0]
+        - If fallback_used=true and fallback is not negligible, do not report high confidence; cap to medium (<=0.69).
+        - If the only fallback is one justify_decision step, describe it as minor fallback (not moderate degradation).
+
+        Runtime wording rules:
+        - Render skill id in MCP format, e.g. skill.decision.make (not decision.make).
 
         Return a JSON object with:
         - report: object with:
           - user_response: the full report text in markdown (string)
-          - artifacts: array of {name, type, content} for any produced
-            artefacts
+          - artifacts: array of {name, type, content} for any produced artefacts
           - limitations: array of strings describing what was not done
           - next_steps: array of concrete recommended follow-up actions
           - evidence: array of {source, description} citation objects
@@ -35,18 +45,24 @@ request:
 
         Be factual. Do not fabricate results. Return valid JSON only.
     - role: user
-      content: "Goal: ${input.interpreted_goal}\n\nExecution: ${input.execution_result}\n\nEvaluation: ${input.evaluation}\n\nTrace: ${input.trace_summary}"
+      content: |
+        Goal: ${input.interpreted_goal}
+
+        Execution: ${input.execution_result}
+
+        Evaluation: ${input.evaluation}
+
+        Trace: ${input.trace_summary}
   temperature: 0.3
   response_format:
     type: json_object
-
 response:
   report: response.choices.0.message.content_json.report
   report_status: response.choices.0.message.content_json.report_status
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_output_generate
-  description: "OpenAI binding for agent.output.generate using gpt-4o-mini."
+  description: OpenAI binding for agent.output.generate using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 45

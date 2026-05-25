@@ -1,48 +1,41 @@
 id: openapi_agent_request_normalize_openai_chat
-
 capability: agent.request.normalize
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are an intake normalization assistant. Given a raw user message and
-        optional session context, extract a structured request object.
+  - role: system
+    content: "You are an intake normalization assistant. Given a raw user message\
+      \ and optional session context, extract a structured request object.\nReturn\
+      \ a JSON object with: - normalized_request: object containing:\n  - raw_request:\
+      \ the original user message (string)\n  - language: ISO 639-1 code detected\
+      \ from the message (string)\n  - detected_intent: short label for the primary\
+      \ intent, e.g.\n    research_and_synthesize, create_document, analyze_data,\n\
+      \    execute_task, answer_question (string)\n  - explicit_constraints: array\
+      \ of constraints stated by the user\n    (e.g. \"in Spanish\", \"max 2 pages\"\
+      )\n  - urgency: one of low | medium | high\n  - requires_external_action: true\
+      \ if the request implies writing\n    files, sending emails, calling APIs, or\
+      \ modifying systems\n  - attachments: array of attachment descriptions if any\n\
+      - language: same ISO code as normalized_request.language\nBe conservative with\
+      \ urgency: default to medium unless explicitly stated. Return valid JSON only.\
+      \ No markdown fences.\n"
+  - role: user
+    content: 'User message: ${input.user_message}
 
-        Return a JSON object with:
-        - normalized_request: object containing:
-          - raw_request: the original user message (string)
-          - language: ISO 639-1 code detected from the message (string)
-          - detected_intent: short label for the primary intent, e.g.
-            research_and_synthesize, create_document, analyze_data,
-            execute_task, answer_question (string)
-          - explicit_constraints: array of constraints stated by the user
-            (e.g. "in Spanish", "max 2 pages")
-          - urgency: one of low | medium | high
-          - requires_external_action: true if the request implies writing
-            files, sending emails, calling APIs, or modifying systems
-          - attachments: array of attachment descriptions if any
-        - language: same ISO code as normalized_request.language
 
-        Be conservative with urgency: default to medium unless explicitly
-        stated. Return valid JSON only. No markdown fences.
-    - role: user
-      content: "User message: ${input.user_message}\n\nContext: ${input.context}"
+      Context: ${input.context}'
   temperature: 0.1
   response_format:
     type: json_object
-
 response:
   normalized_request: response.choices.0.message.content_json.normalized_request
   language: response.choices.0.message.content_json.language
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_request_normalize
-  description: "OpenAI binding for agent.request.normalize using gpt-4o-mini."
+  description: OpenAI binding for agent.request.normalize using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 30

@@ -1,49 +1,48 @@
 id: openapi_eval_output_score_openai_chat
-
 capability: eval.output.score
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are an output quality scoring assistant. Evaluate the provided output
-        artifact against quality dimensions. If a rubric is provided, use its
-        dimensions and weights. If no rubric is provided, use these defaults:
-        completeness, clarity, consistency, accuracy (equal weight).
+  - role: system
+    content: 'You are an output quality scoring assistant. Evaluate the provided output
+      artifact against quality dimensions. If a rubric is provided, use its dimensions
+      and weights. If no rubric is provided, use these defaults: completeness, clarity,
+      consistency, accuracy (equal weight).
 
-        Score each dimension 0-100 and compute an overall weighted average.
-        Be calibrated: 90+ excellent, 70-89 good, 50-69 adequate, below 50 poor.
+      Score each dimension 0-100 and compute an overall weighted average. Be calibrated:
+      90+ excellent, 70-89 good, 50-69 adequate, below 50 poor.
 
-        Return a JSON object with:
-        - score: number 0-100 (overall quality score)
-        - dimensions: object mapping dimension names to scores (each 0-100)
-        - quality_level: string (excellent, good, fair, or poor)
+      Return a JSON object with: - score: number 0-100 (overall quality score) - dimensions:
+      object mapping dimension names to scores (each 0-100) - quality_level: string
+      (excellent, good, fair, or poor)
 
-        Return valid JSON only. No markdown fences.
-    - role: user
-      content: |
-        Output to evaluate:
-        ${input.output}
+      Return valid JSON only. No markdown fences.
 
-        Context: ${input.context}
+      '
+  - role: user
+    content: 'Output to evaluate:
+
+      ${input.output}
+
+
+      Context: ${input.context}
+
+      '
   temperature: 0.1
   response_format:
     type: json_object
-
 response:
   score: response.choices.0.message.content_json.score
   dimensions: response.choices.0.message.content_json.dimensions
   quality_level: response.choices.0.message.content_json.quality_level
-
 metadata:
   method: POST
   response_mode: json
-  timeout_seconds: 8
+  timeout_seconds: 45
   retry_count: 0
   fallback_binding_id: python_eval_output_score
-  description: "OpenAI binding for eval.output.score using gpt-4o-mini."
+  description: OpenAI binding for eval.output.score using gpt-4o-mini.
   status: experimental

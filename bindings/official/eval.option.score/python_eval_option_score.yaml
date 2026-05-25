@@ -8,6 +8,8 @@ request:
   goal: input.goal
   criteria: input.criteria
   risk_tolerance: input.risk_tolerance
+  explicit_options: input.explicit_options
+  option_constraint_mode: input.option_constraint_mode
 response:
   scored_options: response.scored_options
   criteria_used: response.criteria_used

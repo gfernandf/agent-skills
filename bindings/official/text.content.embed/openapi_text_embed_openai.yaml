@@ -3,17 +3,15 @@ capability: text.content.embed
 service: text_openai_chat
 protocol: openapi
 operation: embeddings
-
 request:
   model: text-embedding-3-small
   input: input.text
-
 response:
   embedding: response.data.0.embedding
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_text_embed
-  description: "OpenAI binding for text.content.embed using text-embedding-3-small."
+  description: OpenAI binding for text.content.embed using text-embedding-3-small.
   status: experimental
+  timeout_seconds: 30

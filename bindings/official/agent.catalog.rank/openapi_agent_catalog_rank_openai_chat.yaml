@@ -1,45 +1,37 @@
 id: openapi_agent_catalog_rank_openai_chat
-
 capability: agent.catalog.rank
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are a registry item ranking assistant. Given a list of candidate
-        ORCA registry items and an interpreted goal, rank them by their
-        expected usefulness for accomplishing the goal.
+  - role: system
+    content: "You are a registry item ranking assistant. Given a list of candidate\
+      \ ORCA registry items and an interpreted goal, rank them by their expected usefulness\
+      \ for accomplishing the goal.\nConsider: direct relevance to the goal, composability\
+      \ with other items, trust level (stable > experimental > draft), presence of\
+      \ side effects (prefer items without for non-destructive tasks), and specificity\
+      \ (specific skills outrank generic capabilities when both apply).\nReturn a\
+      \ JSON object with: - ranked_skills: array of skill candidates ordered by rank,\
+      \ each\n  with: rank (number starting at 1), ref (string), score (0-1),\n  rationale\
+      \ (string)\n- ranked_capabilities: same structure for capability candidates\n\
+      Return valid JSON only. No markdown fences.\n"
+  - role: user
+    content: 'Candidates: ${input.candidate_items}
 
-        Consider: direct relevance to the goal, composability with other
-        items, trust level (stable > experimental > draft), presence of side
-        effects (prefer items without for non-destructive tasks), and
-        specificity (specific skills outrank generic capabilities when both
-        apply).
 
-        Return a JSON object with:
-        - ranked_skills: array of skill candidates ordered by rank, each
-          with: rank (number starting at 1), ref (string), score (0-1),
-          rationale (string)
-        - ranked_capabilities: same structure for capability candidates
-
-        Return valid JSON only. No markdown fences.
-    - role: user
-      content: "Candidates: ${input.candidate_items}\n\nGoal: ${input.interpreted_goal}"
+      Goal: ${input.interpreted_goal}'
   temperature: 0.1
   response_format:
     type: json_object
-
 response:
   ranked_skills: response.choices.0.message.content_json.ranked_skills
   ranked_capabilities: response.choices.0.message.content_json.ranked_capabilities
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_catalog_rank
-  description: "OpenAI binding for agent.catalog.rank using gpt-4o-mini."
+  description: OpenAI binding for agent.catalog.rank using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 30

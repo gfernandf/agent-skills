@@ -1828,6 +1828,63 @@ def generate_output_report(
     exec_status = execution_result.get("status", "unknown")
     step_results = execution_result.get("step_results", [])
     steps_done = [s["step_id"] for s in step_results if s.get("status") == "success"]
+    failed_steps = [s["step_id"] for s in step_results if s.get("status") != "success"]
+
+    final_output = execution_result.get("final_output", {})
+    if not isinstance(final_output, dict):
+        final_output = {}
+
+    recommendation = final_output.get("recommendation") or "Not available"
+    confidence_score = final_output.get("confidence_score")
+    confidence_level = final_output.get("confidence_level")
+    decision_inputs = final_output.get("decision_inputs", {})
+    decision_matrix = final_output.get("decision_matrix", [])
+
+    meta = final_output.get("meta", {})
+    if not isinstance(meta, dict):
+        meta = {}
+    fallback_severity = meta.get("fallback_severity", {})
+    if not isinstance(fallback_severity, dict):
+        fallback_severity = {}
+    fallback_used = bool(meta.get("fallback_used", False))
+    trace_completeness = meta.get("trace_completeness", "partial")
+    execution_warnings = meta.get("execution_warnings", [])
+    if not isinstance(execution_warnings, list):
+        execution_warnings = []
+    capabilities_executed = meta.get("capabilities_executed", [])
+    if not isinstance(capabilities_executed, list):
+        capabilities_executed = []
+    fallback_steps_count = meta.get("fallback_steps_count", 0)
+    try:
+        fallback_steps_count = int(fallback_steps_count)
+    except Exception:
+        fallback_steps_count = 0
+    step_diagnostics = meta.get("step_diagnostics", [])
+    if not isinstance(step_diagnostics, list):
+        step_diagnostics = []
+
+    # Normalize confidence display when fallback was used.
+    # For non-negligible fallback, cap reported confidence to medium/high boundary.
+    if confidence_score is not None:
+        try:
+            confidence_score = float(confidence_score)
+        except Exception:
+            confidence_score = None
+    if fallback_used and confidence_score is not None:
+        negligible_fallback = (
+            fallback_steps_count == 1
+            and len(step_diagnostics) > 0
+            and any(
+                isinstance(step, dict)
+                and step.get("step_id") == "justify_decision"
+                and bool(step.get("fallback_used"))
+                for step in step_diagnostics
+            )
+        )
+        if not negligible_fallback and confidence_score >= 0.70:
+            confidence_score = 0.69
+        if confidence_score <= 0.70 and confidence_level == "high":
+            confidence_level = "medium"
 
     failed_criteria = []
     if isinstance(evaluation, dict):
@@ -1838,19 +1895,100 @@ def generate_output_report(
     if failed_criteria:
         limitations = [f"Criterion not fully met: {c}" for c in failed_criteria]
 
-    user_response = (
-        f"# Task Report\n\n"
-        f"**Objective:** {objective}\n\n"
-        f"**Status:** {exec_status}\n\n"
-        f"**Steps completed:** {len(steps_done)}\n\n"
-    )
+    exec_health = meta.get("execution_health")
+    if not exec_health:
+        if exec_status == "success" and not failed_steps:
+            exec_health = "healthy"
+        elif exec_status == "partial":
+            exec_health = "partial"
+        else:
+            exec_health = "degraded"
+
+    user_response = "# Executive Decision Report\n\n"
+    user_response += "## Executive Summary\n\n"
+    user_response += f"- Recommendation: {recommendation}\n"
+    if confidence_score is not None and confidence_level:
+        user_response += f"- Confidence: {confidence_level} ({confidence_score})\n"
+    user_response += f"- Execution status: {exec_status}\n\n"
+
+    user_response += "## Decision Inputs\n\n"
+    if isinstance(decision_inputs, dict) and decision_inputs:
+        for key, value in decision_inputs.items():
+            if value is not None:
+                user_response += f"- {key}: {value}\n"
+    else:
+        user_response += "- Inputs were not fully structured in the execution payload.\n"
+    user_response += "\n"
+
+    user_response += "## Decision Matrix\n\n"
+    if isinstance(decision_matrix, list) and decision_matrix:
+        user_response += "| Option | Cost | Risk | Speed | Strategic Fit | Score |\n"
+        user_response += "|---|---|---|---|---|---|\n"
+        for row in decision_matrix:
+            if not isinstance(row, dict):
+                continue
+            user_response += (
+                f"| {row.get('option', '')} | {row.get('cost', '')} | {row.get('risk', '')} "
+                f"| {row.get('speed', '')} | {row.get('strategic_fit', '')} | {row.get('score', '')} |\n"
+            )
+    else:
+        user_response += "- Decision matrix unavailable for this run.\n"
+    user_response += "\n"
+
+    user_response += "## ORCA Runtime Execution\n\n"
+    user_response += "- Skill: skill.decision.make\n"
+    if capabilities_executed:
+        user_response += "- Capabilities executed:\n"
+        for cap in capabilities_executed:
+            user_response += f"  - {cap}\n"
+    else:
+        user_response += f"- Steps completed: {len(steps_done)}\n"
+
+    execution_trace_state = "execution completed with partial trace"
+    if exec_status in {"failed", "partial"}:
+        execution_trace_state = "execution failed/estimated"
+    elif fallback_used:
+        execution_trace_state = "execution fallback used"
+    elif trace_completeness == "full":
+        execution_trace_state = "execution completed with full trace"
+    elif trace_completeness in {"partial", "none"}:
+        execution_trace_state = "execution completed with partial trace"
+    user_response += f"- Trace status: {execution_trace_state}\n"
+    user_response += "\n"
+
+    user_response += "## Execution Health\n\n"
+    user_response += f"- Execution quality: {exec_health}\n"
+    fallback_level = fallback_severity.get("level", "none")
+    if fallback_used:
+        justify_only = (
+            fallback_steps_count == 1
+            and len(step_diagnostics) > 0
+            and any(
+                isinstance(step, dict)
+                and step.get("step_id") == "justify_decision"
+                and bool(step.get("fallback_used"))
+                for step in step_diagnostics
+            )
+        )
+        if justify_only:
+            fallback_level = "minor (justify_decision only)"
+        elif fallback_level in {"none", "low"}:
+            fallback_level = "moderate"
+    user_response += f"- Fallback severity: {fallback_level}\n"
+    user_response += f"- Retries used: {meta.get('retries_used', 0)}\n"
+    user_response += f"- Trace completeness: {trace_completeness}\n\n"
+
+    if execution_warnings:
+        user_response += "## Execution Warnings\n\n"
+        user_response += "\n".join(f"- {w}" for w in execution_warnings) + "\n\n"
+
     if limitations:
         user_response += (
             "**Limitations:**\n" + "\n".join(f"- {l}" for l in limitations) + "\n\n"
         )
-    user_response += (
-        "_Note: This is a baseline report. Real execution produces richer output._"
-    )
+    if failed_steps:
+        user_response += "**Failed steps:**\n"
+        user_response += "\n".join(f"- {step}" for step in failed_steps) + "\n\n"
 
     report_status_map = {"success": "success", "partial": "partial", "failed": "failed"}
     report_status = report_status_map.get(exec_status, "requires_followup")

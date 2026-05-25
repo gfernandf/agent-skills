@@ -271,22 +271,49 @@ def _normalize_skill_meta_consistency(payload: dict[str, Any]) -> None:
         }:
             affected += 1
 
-    fallback_used = bool(meta.get("fallback_used"))
-    fallback_steps_count = meta.get("fallback_steps_count")
-    if not isinstance(fallback_steps_count, int) or fallback_steps_count < 0:
-        fallback_steps_count = 0
+    fallback_raw = meta.get("fallback_used")
+    if isinstance(fallback_raw, bool):
+        fallback_used: bool | None = fallback_raw
+    elif fallback_raw is None:
+        fallback_used = None
+    else:
+        fallback_raw_s = str(fallback_raw).strip().lower()
+        if fallback_raw_s in {"true", "1", "yes"}:
+            fallback_used = True
+        elif fallback_raw_s in {"false", "0", "no"}:
+            fallback_used = False
+        else:
+            fallback_used = None
 
-    # Rule 2-4: never expose fallback_used=false with empty diagnostics.
-    if len(step_diagnostics) == 0 and not fallback_used:
-        fallback_used = True
+    fallback_steps_count_raw = meta.get("fallback_steps_count")
+    if isinstance(fallback_steps_count_raw, int) and fallback_steps_count_raw >= 0:
+        fallback_steps_count: int | None = fallback_steps_count_raw
+    else:
+        fallback_steps_count = None
+
+    # Rule 2-4: never expose a "clean run" claim when diagnostics are missing.
+    if len(step_diagnostics) == 0 and fallback_used is False:
+        fallback_used = None
         warnings.append(
-            "Diagnostics missing; fallback status set to true to avoid false clean-run signal."
+            "Diagnostics missing; fallback status set to unknown to avoid false clean-run signal."
         )
 
     # Rule 3: count affected steps conservatively.
-    fallback_steps_count = max(fallback_steps_count, affected)
-    if fallback_used and fallback_steps_count < 1:
+    if affected > 0:
+        fallback_used = True
+        fallback_steps_count = max(fallback_steps_count or 0, affected)
+    elif fallback_steps_count is not None and fallback_steps_count < 0:
+        fallback_steps_count = 0
+
+    if fallback_used is True and (fallback_steps_count is None or fallback_steps_count < 1):
         fallback_steps_count = 1
+
+    if fallback_used is None and len(step_diagnostics) == 0:
+        fallback_steps_count = None
+
+    if fallback_used is None and len(step_diagnostics) > 0 and affected == 0:
+        fallback_used = False
+        fallback_steps_count = 0
 
     # Rule 5: warning when diagnostics are missing.
     if len(step_diagnostics) == 0:
@@ -305,8 +332,9 @@ def _fallback_is_negligible_for_confidence(meta: dict[str, Any]) -> bool:
 
     Negligible is restricted to a single fallback in low-impact preprocessing.
     """
-    fallback_used = bool(meta.get("fallback_used", False))
-    if not fallback_used:
+    fallback_raw = meta.get("fallback_used", False)
+    fallback_used = fallback_raw if isinstance(fallback_raw, bool) else False
+    if fallback_used is not True:
         return True
 
     fallback_steps_count = meta.get("fallback_steps_count", 0)
@@ -645,6 +673,7 @@ def _build_running_skill_placeholder(
         "retryable": True,
         "message": message,
     }
+    payload["_phase"] = "initial"
     return payload
 
 
@@ -944,14 +973,21 @@ def _get_run_status_payload(run_id: str) -> dict[str, Any]:
                 record["result"],
             )
             payload["result"] = record["result"]
+            payload["_phase"] = "final"
             return payload
         if status == "failed":
             payload["error"] = record.get("error", "Unknown run failure")
             payload["code"] = record.get("code", "internal_error")
+            payload["_phase"] = "final"
             return payload
 
     if not fut.done():
-        return {"status": "running", "run_id": run_id, "tool": tool_name}
+        return {
+            "status": "running",
+            "run_id": run_id,
+            "tool": tool_name,
+            "_phase": "in_progress",
+        }
     try:
         result = fut.result()
         result = _postprocess_skill_result_payload(tool_name, result)
@@ -960,6 +996,7 @@ def _get_run_status_payload(run_id: str) -> dict[str, Any]:
             "run_id": run_id,
             "tool": tool_name,
             "result": result,
+            "_phase": "final",
         }
     except Exception as exc:
         return {
@@ -968,6 +1005,7 @@ def _get_run_status_payload(run_id: str) -> dict[str, Any]:
             "tool": tool_name,
             "error": str(exc),
             "code": _classify_error(exc),
+            "_phase": "final",
         }
 
 

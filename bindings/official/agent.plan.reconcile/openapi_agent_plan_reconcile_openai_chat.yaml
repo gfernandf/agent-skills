@@ -1,50 +1,40 @@
 id: openapi_agent_plan_reconcile_openai_chat
-
 capability: agent.plan.reconcile
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are a plan repair assistant for the ORCA agent framework.
-        Given an invalid plan and its validation errors, produce a corrected
-        plan. Apply one repair action per error:
+  - role: system
+    content: "You are a plan repair assistant for the ORCA agent framework. Given\
+      \ an invalid plan and its validation errors, produce a corrected plan. Apply\
+      \ one repair action per error:\n- ref_exists failure: replace the invalid ref\
+      \ with the closest valid\n  ORCA capability id. Prefer core capabilities (web.*,\
+      \ text.*,\n  data.*, fs.*, model.*).\n- inputs_bound failure: assign a reasonable\
+      \ $state.* path for the\n  unbound input.\n- deps_exist failure: remove the\
+      \ invalid dependency or replace it\n  with the correct step id.\n- dag_acyclic\
+      \ failure: remove the dependency that creates the cycle. - high_risk_gated failure:\
+      \ insert a gate step before the risky step.\nReturn a JSON object with: - repaired_plan:\
+      \ the corrected plan object with all fixes applied - repair_notes: array of\
+      \ objects with step_id, action, original,\n  replacement\n- still_invalid: true\
+      \ if any error could not be repaired\nReturn valid JSON only. No markdown fences.\n"
+  - role: user
+    content: 'Invalid plan: ${input.invalid_plan}
 
-        - ref_exists failure: replace the invalid ref with the closest valid
-          ORCA capability id. Prefer core capabilities (web.*, text.*,
-          data.*, fs.*, model.*).
-        - inputs_bound failure: assign a reasonable $state.* path for the
-          unbound input.
-        - deps_exist failure: remove the invalid dependency or replace it
-          with the correct step id.
-        - dag_acyclic failure: remove the dependency that creates the cycle.
-        - high_risk_gated failure: insert a gate step before the risky step.
 
-        Return a JSON object with:
-        - repaired_plan: the corrected plan object with all fixes applied
-        - repair_notes: array of objects with step_id, action, original,
-          replacement
-        - still_invalid: true if any error could not be repaired
-
-        Return valid JSON only. No markdown fences.
-    - role: user
-      content: "Invalid plan: ${input.invalid_plan}\n\nValidation errors: ${input.validation_errors}"
+      Validation errors: ${input.validation_errors}'
   temperature: 0.2
   response_format:
     type: json_object
-
 response:
   repaired_plan: response.choices.0.message.content_json.repaired_plan
   repair_notes: response.choices.0.message.content_json.repair_notes
   still_invalid: response.choices.0.message.content_json.still_invalid
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_plan_reconcile
-  description: "OpenAI binding for agent.plan.reconcile using gpt-4o-mini."
+  description: OpenAI binding for agent.plan.reconcile using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 45

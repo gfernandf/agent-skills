@@ -1,4 +1,4 @@
-.PHONY: install bootstrap test lint format check serve mcp clean help
+.PHONY: install bootstrap test lint format check guardrails-openapi-runtime serve mcp clean help
 
 REGISTRY_DIR ?= ../agent-skill-registry
 REGISTRY_URL ?= https://github.com/gfernandf/agent-skill-registry.git
@@ -31,6 +31,9 @@ format: ## Auto-format with ruff
 check: lint ## Lint + format check + tests
 	python -m ruff format --check .
 	python -m pytest -o "addopts=" -q
+
+guardrails-openapi-runtime: ## Audit OpenAPI timeout/retry guardrails
+	python tooling/audit_openapi_runtime_guardrails.py
 
 serve: ## Start HTTP server (localhost:8080)
 	python -m cli.main serve

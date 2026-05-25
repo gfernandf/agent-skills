@@ -5,6 +5,8 @@ Provides baseline implementations for scoring outputs.
 
 from __future__ import annotations
 
+from runtime.entity_integrity import normalize_explicit_options, strict_option_mode
+
 
 def score_output(output, rubric=None, context=None):
     """
@@ -73,14 +75,22 @@ def score_output(output, rubric=None, context=None):
     }
 
 
-def analyze_options(options, goal, context=None):
+def analyze_options(
+    options,
+    goal,
+    context=None,
+    explicit_options=None,
+    option_constraint_mode=None,
+):
     """
     Qualitative analysis: pros, cons, risks, assumptions per option.
 
     Baseline heuristic: generates one pro, one con, one risk, one assumption
     per option based on the option label/description.
     """
-    if not isinstance(options, list):
+    if strict_option_mode(option_constraint_mode, explicit_options):
+        options = normalize_explicit_options(explicit_options)
+    elif not isinstance(options, list):
         options = []
 
     analyzed = []
@@ -110,14 +120,23 @@ def analyze_options(options, goal, context=None):
     }
 
 
-def score_options(options, goal, criteria=None, risk_tolerance=None):
+def score_options(
+    options,
+    goal,
+    criteria=None,
+    risk_tolerance=None,
+    explicit_options=None,
+    option_constraint_mode=None,
+):
     """
     Multi-criteria scoring of options.
 
     Baseline heuristic: assigns equal scores to all options based on how many
     fields they have filled in, generates default criteria if none provided.
     """
-    if not isinstance(options, list):
+    if strict_option_mode(option_constraint_mode, explicit_options):
+        options = normalize_explicit_options(explicit_options)
+    elif not isinstance(options, list):
         options = []
 
     if not criteria or not isinstance(criteria, list):

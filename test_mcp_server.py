@@ -300,8 +300,8 @@ class TestCallTool:
         parsed = json.loads(result[0].text)
         assert parsed["recommendation"] == "Proceed with option A."
         assert parsed["confidence_level"] == "medium"
-        assert parsed["meta"]["fallback_used"] is True
-        assert parsed["meta"]["fallback_steps_count"] >= 1
+        assert parsed["meta"]["fallback_used"] is None
+        assert parsed["meta"]["fallback_steps_count"] is None
         assert parsed["meta"]["trace_completeness"] in {"none", "partial"}
         assert isinstance(parsed["meta"].get("execution_warnings"), list)
         # call_tool defaults to diagnostics-enabled execution for skills.
@@ -366,7 +366,19 @@ class TestCallTool:
                     "status": "completed",
                     "run_id": "run-42",
                     "tool": "skill.decision.make",
-                    "result": {"recommendation": "Proceed"},
+                    "result": {
+                        "outputs": {
+                            "recommendation": "Proceed",
+                            "confidence_score": 0.65,
+                            "confidence_level": "medium",
+                        },
+                        "outputs_summary": {
+                            "recommendation": "Proceed",
+                            "confidence_score": 0.65,
+                            "confidence_level": "medium",
+                        },
+                    },
+                    "_phase": "final",
                 },
             ),
         ):
@@ -379,11 +391,69 @@ class TestCallTool:
             start_parsed = json.loads(start[0].text)
             assert start_parsed["_run"]["status"] == "running"
             assert start_parsed["_run"]["run_id"] == "run-42"
+            assert start_parsed["_phase"] == "initial"
+            # Placeholders on initial async response are provisional by contract.
+            assert start_parsed["recommendation"] == ""
+            assert isinstance(start_parsed.get("outputs_summary"), dict)
 
             status = await call_tool("run.status", {"run_id": "run-42"})
             status_parsed = json.loads(status[0].text)
             assert status_parsed["status"] == "completed"
-            assert status_parsed["result"]["recommendation"] == "Proceed"
+            assert status_parsed["_phase"] == "final"
+            assert status_parsed["result"]["outputs"]["recommendation"] == "Proceed"
+            assert (
+                status_parsed["result"]["outputs"]["confidence_score"]
+                == status_parsed["result"]["outputs_summary"]["confidence_score"]
+            )
+
+    @pytest.mark.asyncio
+    async def test_decision_make_run_status_final_confidence_is_coherent(self):
+        final_result = {
+            "outputs": {
+                "recommendation": "Proceed",
+                "confidence_score": 0.61,
+                "confidence_level": "medium",
+                "decision_quality_score": 78.0,
+                "decision_quality_level": "good",
+            },
+            "outputs_summary": {
+                "recommendation": "Proceed",
+                "confidence_score": 0.61,
+                "confidence_level": "medium",
+                "decision_quality_score": 78.0,
+                "decision_quality_level": "good",
+            },
+            "meta": {
+                "fallback_used": False,
+                "fallback_steps_count": 0,
+                "step_diagnostics": [],
+            },
+        }
+        with (
+            patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
+            patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
+            patch(
+                "official_mcp_servers.server._get_run_status_payload",
+                return_value={
+                    "status": "completed",
+                    "run_id": "run-100",
+                    "tool": "skill.decision.make",
+                    "result": final_result,
+                    "_phase": "final",
+                },
+            ),
+        ):
+            from official_mcp_servers.server import call_tool
+
+            status = await call_tool("run.status", {"run_id": "run-100"})
+
+        parsed = json.loads(status[0].text)
+        assert parsed["status"] == "completed"
+        assert parsed["_phase"] == "final"
+        assert (
+            parsed["result"]["outputs"]["confidence_score"]
+            == parsed["result"]["outputs_summary"]["confidence_score"]
+        )
 
     @pytest.mark.asyncio
     async def test_run_cancel_invokes_cancel_payload(self):

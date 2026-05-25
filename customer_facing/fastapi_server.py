@@ -23,8 +23,25 @@ from __future__ import annotations
 import logging
 import os
 from typing import Any
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+
+def _is_not_found_error(response: Any) -> bool:
+    if not isinstance(response, dict):
+        return False
+    error = response.get("error")
+    return isinstance(error, dict) and error.get("code") == "not_found"
+
+
+def _unwrap_run_response(response: Any) -> Any:
+    if not isinstance(response, dict):
+        return response
+    if response.get("ok") is True and isinstance(response.get("data"), dict):
+        return response["data"]
+    return response
 
 # ── Lazy imports: don't crash if fastapi/uvicorn not installed ──────
 
@@ -85,20 +102,68 @@ def create_app(
     class _State:
         api: Any = api
         gateway: Any = gateway
+        run_store: Any = None
+        async_pool: Any = None
+        webhook_store: Any = None
 
     state = _State()
 
     @app.on_event("startup")
     async def _startup() -> None:
         if state.api is not None:
+            # Ensure async infra is available when API is injected.
+            if state.run_store is None:
+                from runtime.run_store import RunStore
+
+                state.run_store = RunStore(
+                    max_runs=int(os.environ.get("AGENT_SKILLS_MAX_RUNS", "100"))
+                )
+            if state.async_pool is None:
+                state.async_pool = ThreadPoolExecutor(
+                    max_workers=int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
+                )
+            if state.webhook_store is None:
+                from runtime.webhook import WebhookStore
+
+                state.webhook_store = WebhookStore()
             return
+
         # Auto-build runtime from environment (same as legacy server)
         from customer_facing.neutral_api import NeutralRuntimeAPI
         from gateway.core import SkillGateway
+        from runtime.run_store import RunStore
+        from runtime.webhook import WebhookStore
 
-        gw = SkillGateway()
+        runtime_root = Path(
+            os.environ.get("AGENT_SKILLS_RUNTIME_ROOT", Path.cwd())
+        ).resolve()
+        registry_root = Path(
+            os.environ.get(
+                "AGENT_SKILLS_REGISTRY_ROOT", runtime_root.parent / "agent-skill-registry"
+            )
+        ).resolve()
+        host_root = Path(
+            os.environ.get("AGENT_SKILLS_HOST_ROOT", runtime_root)
+        ).resolve()
+
+        gw = SkillGateway(
+            registry_root=registry_root,
+            runtime_root=runtime_root,
+            host_root=host_root,
+        )
         state.gateway = gw
-        state.api = NeutralRuntimeAPI(gateway=gw)
+        state.api = NeutralRuntimeAPI(
+            registry_root=registry_root,
+            runtime_root=runtime_root,
+            host_root=host_root,
+        )
+        state.run_store = RunStore(
+            max_runs=int(os.environ.get("AGENT_SKILLS_MAX_RUNS", "100"))
+        )
+        state.async_pool = ThreadPoolExecutor(
+            max_workers=int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
+        )
+        state.webhook_store = WebhookStore()
         logger.info("FastAPI server started — NeutralRuntimeAPI initialized.")
 
     # ── Security headers middleware ─────────────────────────────
@@ -207,6 +272,26 @@ def create_app(
             execution_channel="http",
         )
 
+    @app.post("/v1/skills/{skill_id}/execute/async", status_code=202)
+    async def execute_skill_async(skill_id: str, request: Request) -> tuple[dict, int]:
+        body = await request.json()
+        inputs = body.get("inputs", {})
+        trace_id = request.headers.get("x-trace-id") or body.get("trace_id")
+        response = _get_api().execute_skill_async(
+            skill_id=skill_id,
+            inputs=inputs,
+            trace_id=trace_id,
+            required_conformance_profile=body.get("required_conformance_profile"),
+            audit_mode=body.get("audit_mode"),
+            execution_channel="http-async",
+            run_store=state.run_store,
+            async_pool=state.async_pool,
+            webhook_store=state.webhook_store,
+        )
+        if "error" in response:
+            raise HTTPException(status_code=500, detail=response["error"])
+        return response
+
     @app.post("/v1/skills/discover")
     async def discover_skills(request: Request) -> dict:
         body = await request.json()
@@ -221,6 +306,128 @@ def create_app(
             limit=body.get("limit", 10),
         )
         return {"intent": intent, "results": [r.to_dict() for r in results]}
+
+    # ── Async run status/list + aliases ─────────────────────────
+
+    @app.get("/v1/runs")
+    async def list_runs(
+        limit: int = 100,
+        offset: int = 0,
+        status: str | None = None,
+    ) -> dict:
+        response = _get_api().list_runs(
+            run_store=state.run_store,
+            limit=limit,
+            offset=offset,
+            status=status,
+        )
+        if "error" in response:
+            raise HTTPException(status_code=500, detail=response["error"])
+        return response
+
+    @app.get("/v1/runs/{run_id}")
+    async def get_run(run_id: str) -> dict:
+        response = _get_api().get_run(run_id, run_store=state.run_store)
+        if _is_not_found_error(response):
+            raise HTTPException(status_code=404, detail=response["error"])
+        return _unwrap_run_response(response)
+
+    @app.post("/v1/runs/{run_id}/cancel")
+    async def cancel_run(run_id: str) -> dict:
+        response = _get_api().cancel_run(run_id, run_store=state.run_store)
+        if _is_not_found_error(response):
+            raise HTTPException(status_code=404, detail=response["error"])
+        return _unwrap_run_response(response)
+
+    @app.post("/run_async", status_code=202)
+    @app.post("/v1/run_async", status_code=202)
+    async def run_async(request: Request) -> tuple[dict, int]:
+        body = await request.json()
+        skill_id = body.get("skill_id")
+        if not isinstance(skill_id, str) or not skill_id:
+            raise HTTPException(status_code=400, detail="'skill_id' is required")
+        inputs = body.get("inputs", {})
+        trace_id = request.headers.get("x-trace-id") or body.get("trace_id")
+        response = _get_api().execute_skill_async(
+            skill_id=skill_id,
+            inputs=inputs if isinstance(inputs, dict) else {},
+            trace_id=trace_id,
+            required_conformance_profile=body.get("required_conformance_profile"),
+            audit_mode=body.get("audit_mode"),
+            execution_channel="http-async",
+            run_store=state.run_store,
+            async_pool=state.async_pool,
+            webhook_store=state.webhook_store,
+        )
+        if "error" in response:
+            raise HTTPException(status_code=500, detail=response["error"])
+        return response
+
+    @app.get("/run_status/{run_id}")
+    @app.get("/v1/run_status/{run_id}")
+    async def run_status(run_id: str) -> dict:
+        response = _get_api().get_run(run_id, run_store=state.run_store)
+        if _is_not_found_error(response):
+            raise HTTPException(status_code=404, detail=response["error"])
+        return _unwrap_run_response(response)
+
+    @app.post("/run_cancel/{run_id}")
+    @app.post("/v1/run_cancel/{run_id}")
+    async def run_cancel(run_id: str) -> dict:
+        response = _get_api().cancel_run(run_id, run_store=state.run_store)
+        if _is_not_found_error(response):
+            raise HTTPException(status_code=404, detail=response["error"])
+        return _unwrap_run_response(response)
+
+    # ── Webhooks (optional callbacks) ───────────────────────────
+
+    @app.get("/v1/webhooks")
+    async def list_webhooks() -> dict:
+        if state.webhook_store is None:
+            raise HTTPException(status_code=501, detail="Webhooks not enabled")
+        return {"subscriptions": state.webhook_store.list_subscriptions()}
+
+    @app.post("/v1/webhooks", status_code=201)
+    async def create_webhook(request: Request) -> tuple[dict, int]:
+        body = await request.json()
+        if not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+        url = body.get("url")
+        if not isinstance(url, str) or not url:
+            raise HTTPException(status_code=400, detail="webhooks require non-empty string field 'url'")
+        events = body.get("events")
+        if not isinstance(events, list) or not events:
+            raise HTTPException(status_code=400, detail="webhooks require non-empty list field 'events'")
+
+        from uuid import uuid4
+        from runtime.webhook import WebhookSubscription
+
+        if state.webhook_store is None:
+            raise HTTPException(status_code=501, detail="Webhooks not enabled")
+
+        sub_id = str(uuid4())
+        sub = WebhookSubscription(
+            id=sub_id,
+            url=url,
+            events=events,
+            secret=body.get("secret", "") if isinstance(body.get("secret", ""), str) else "",
+            active=True,
+            created_at="",
+        )
+        try:
+            state.webhook_store.register(sub)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        return {"id": sub_id, "url": url, "events": events}
+
+    @app.delete("/v1/webhooks/{sub_id}")
+    async def delete_webhook(sub_id: str) -> dict:
+        if state.webhook_store is None:
+            raise HTTPException(status_code=501, detail="Webhooks not enabled")
+        deleted = state.webhook_store.unregister(sub_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail=f"Webhook '{sub_id}' not found")
+        return {"status": "deleted", "id": sub_id}
 
     # ── Capabilities ────────────────────────────────────────────
 

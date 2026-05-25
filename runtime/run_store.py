@@ -110,18 +110,47 @@ class RunStore:
                 return self._backend.list_runs(limit=limit)
             except Exception:
                 pass
+        return self.list_runs_page(limit=limit)
+
+    def list_runs_page(
+        self,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+        status: str | None = None,
+    ) -> list[dict[str, Any]]:
+        safe_limit = max(1, min(int(limit), 500))
+        safe_offset = max(0, int(offset))
+        status_filter = status if status in {"running", "completed", "failed"} else None
+
         with self._lock:
-            ids = self._order[-limit:]
-            return [dict(self._runs[rid]) for rid in reversed(ids) if rid in self._runs]
+            ordered = [dict(self._runs[rid]) for rid in reversed(self._order) if rid in self._runs]
+
+        if status_filter is not None:
+            ordered = [run for run in ordered if run.get("status") == status_filter]
+
+        return ordered[safe_offset : safe_offset + safe_limit]
+
+    def count_runs(self, *, status: str | None = None) -> int:
+        status_filter = status if status in {"running", "completed", "failed"} else None
+        with self._lock:
+            runs = [self._runs[rid] for rid in self._order if rid in self._runs]
+        if status_filter is None:
+            return len(runs)
+        return sum(1 for run in runs if run.get("status") == status_filter)
 
     def complete_run(self, run_id: str, result: dict[str, Any]) -> None:
         with self._lock:
             run = self._runs.get(run_id)
             if run is None:
                 return
+            # Do not overwrite terminal state set earlier (e.g. canceled).
+            if run.get("status") in {"completed", "failed"}:
+                return
             run["status"] = "completed"
             run["finished_at"] = _utc_now_iso()
             run["result"] = result
+            run["error"] = None
         self._persist(run_id)
         if self._backend is not None:
             try:
@@ -134,15 +163,38 @@ class RunStore:
             run = self._runs.get(run_id)
             if run is None:
                 return
+            if run.get("status") in {"completed", "failed"}:
+                return
             run["status"] = "failed"
             run["finished_at"] = _utc_now_iso()
             run["error"] = error
+            run["result"] = None
         self._persist(run_id)
         if self._backend is not None:
             try:
                 self._backend.save_run(dict(run))
             except Exception:
                 pass
+
+    def cancel_run(self, run_id: str, reason: str = "Canceled by client") -> dict[str, Any] | None:
+        with self._lock:
+            run = self._runs.get(run_id)
+            if run is None:
+                return None
+            if run.get("status") in {"completed", "failed"}:
+                return dict(run)
+            run["status"] = "failed"
+            run["finished_at"] = _utc_now_iso()
+            run["error"] = reason
+            run["result"] = None
+            snapshot = dict(run)
+        self._persist(run_id)
+        if self._backend is not None:
+            try:
+                self._backend.save_run(snapshot)
+            except Exception:
+                pass
+        return snapshot
 
     # ── Internal ─────────────────────────────────────────────────────────
 

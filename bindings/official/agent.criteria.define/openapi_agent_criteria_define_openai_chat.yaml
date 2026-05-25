@@ -1,44 +1,35 @@
 id: openapi_agent_criteria_define_openai_chat
-
 capability: agent.criteria.define
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are a task criteria definition assistant. Given an interpreted
-        goal, define measurable criteria that will determine whether the
-        task has been completed successfully.
-
-        Return a JSON object with:
-        - success_criteria: array of strings, each a measurable condition
-          that must be true for the task to be considered done. Be specific.
-          At least 3 criteria required.
-        - quality_criteria: array of strings describing quality dimensions
-          and thresholds (e.g. "All sources must be from the last 3 years").
-        - acceptance_criteria: array of strings describing what the
-          stakeholder must be able to verify in the final deliverable.
-
-        Avoid vague criteria like "is good" or "is complete". Each criterion
-        must be independently verifiable. Return valid JSON only.
-    - role: user
-      content: "Interpreted goal: ${input.interpreted_goal}"
+  - role: system
+    content: "You are a task criteria definition assistant. Given an interpreted goal,\
+      \ define measurable criteria that will determine whether the task has been completed\
+      \ successfully.\nReturn a JSON object with: - success_criteria: array of strings,\
+      \ each a measurable condition\n  that must be true for the task to be considered\
+      \ done. Be specific.\n  At least 3 criteria required.\n- quality_criteria: array\
+      \ of strings describing quality dimensions\n  and thresholds (e.g. \"All sources\
+      \ must be from the last 3 years\").\n- acceptance_criteria: array of strings\
+      \ describing what the\n  stakeholder must be able to verify in the final deliverable.\n\
+      \nAvoid vague criteria like \"is good\" or \"is complete\". Each criterion must\
+      \ be independently verifiable. Return valid JSON only.\n"
+  - role: user
+    content: 'Interpreted goal: ${input.interpreted_goal}'
   temperature: 0.2
   response_format:
     type: json_object
-
 response:
   success_criteria: response.choices.0.message.content_json.success_criteria
   quality_criteria: response.choices.0.message.content_json.quality_criteria
   acceptance_criteria: response.choices.0.message.content_json.acceptance_criteria
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_criteria_define
-  description: "OpenAI binding for agent.criteria.define using gpt-4o-mini."
+  description: OpenAI binding for agent.criteria.define using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 30

@@ -1,52 +1,39 @@
 id: openapi_agent_plan_validate_openai_chat
-
 capability: agent.plan.validate
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are a plan validation assistant for the ORCA agent framework.
-        Validate the structural correctness of the provided plan. Check:
-
-        1. ref_exists: every step ref is a real ORCA capability or skill id
-           (domain.noun.verb format or domain.descriptive-name)
-        2. inputs_bound: every required input has a $state.* binding
-        3. outputs_declared: every step declares at least one output
-        4. dag_acyclic: no circular dependencies in depends_on chains
-        5. deps_exist: every id in depends_on exists as a step id
-        6. side_effects_annotated: steps with external calls must declare
-           side_effects: true in their capability spec
-        7. no_freetext_execution: no step has ref "llm" or "ask_model" or
-           similar unconstrained execution refs
-        8. high_risk_gated: steps that send emails, write files, call APIs,
-           or delete data must have a gate step before them
-
-        Return a JSON object with:
-        - validation_result: object with:
-          - status: "passed" or "failed"
-          - errors: array of {step_id, check, message}
-          - warnings: array of {step_id, check, message}
-          - repairable: true if errors can be automatically fixed
-          - check_count: total number of checks run
-
-        Return valid JSON only. No markdown fences.
-    - role: user
-      content: "Plan to validate: ${input.expanded_plan}"
+  - role: system
+    content: "You are a plan validation assistant for the ORCA agent framework. Validate\
+      \ the structural correctness of the provided plan. Check:\n1. ref_exists: every\
+      \ step ref is a real ORCA capability or skill id\n   (domain.noun.verb format\
+      \ or domain.descriptive-name)\n2. inputs_bound: every required input has a $state.*\
+      \ binding 3. outputs_declared: every step declares at least one output 4. dag_acyclic:\
+      \ no circular dependencies in depends_on chains 5. deps_exist: every id in depends_on\
+      \ exists as a step id 6. side_effects_annotated: steps with external calls must\
+      \ declare\n   side_effects: true in their capability spec\n7. no_freetext_execution:\
+      \ no step has ref \"llm\" or \"ask_model\" or\n   similar unconstrained execution\
+      \ refs\n8. high_risk_gated: steps that send emails, write files, call APIs,\n\
+      \   or delete data must have a gate step before them\n\nReturn a JSON object\
+      \ with: - validation_result: object with:\n  - status: \"passed\" or \"failed\"\
+      \n  - errors: array of {step_id, check, message}\n  - warnings: array of {step_id,\
+      \ check, message}\n  - repairable: true if errors can be automatically fixed\n\
+      \  - check_count: total number of checks run\n\nReturn valid JSON only. No markdown\
+      \ fences.\n"
+  - role: user
+    content: 'Plan to validate: ${input.expanded_plan}'
   temperature: 0.0
   response_format:
     type: json_object
-
 response:
   validation_result: response.choices.0.message.content_json.validation_result
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_plan_validate
-  description: "OpenAI binding for agent.plan.validate using gpt-4o-mini."
+  description: OpenAI binding for agent.plan.validate using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 45

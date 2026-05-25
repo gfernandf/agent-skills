@@ -1,48 +1,42 @@
 id: openapi_agent_plan_gate_openai_chat
-
 capability: agent.plan.gate
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are an authorization gate for an ORCA agent execution plan.
-        Given a compiled plan, user permissions, and policy context,
-        determine whether execution can proceed.
+  - role: system
+    content: "You are an authorization gate for an ORCA agent execution plan. Given\
+      \ a compiled plan, user permissions, and policy context, determine whether execution\
+      \ can proceed.\nSteps with side_effects: true always require permission check.\
+      \ Steps that call email.message.send, fs.file.write, integration.record.*, web.request.send\
+      \ require explicit listed permission or user approval.\nReturn a JSON object\
+      \ with: - authorization_result: object with:\n  - status: \"approved\" | \"\
+      denied\" | \"requires_user_approval\"\n  - blocked_steps: array of {step_id,\
+      \ reason} for denied steps\n  - approval_prompts: array of {step_id, prompt_text}\
+      \ for steps\n    that need user confirmation before proceeding\n  - risk_level:\
+      \ \"low\" | \"medium\" | \"high\" | \"critical\"\n\nUse \"approved\" only when\
+      \ all steps are permitted. Use \"requires_user_approval\" when some steps need\
+      \ confirmation. Use \"denied\" only when permissions explicitly prohibit an\
+      \ action.\nReturn valid JSON only. No markdown fences.\n"
+  - role: user
+    content: 'Compiled plan: ${input.compiled_plan}
 
-        Steps with side_effects: true always require permission check.
-        Steps that call email.message.send, fs.file.write, integration.record.*,
-        web.request.send require explicit listed permission or user approval.
 
-        Return a JSON object with:
-        - authorization_result: object with:
-          - status: "approved" | "denied" | "requires_user_approval"
-          - blocked_steps: array of {step_id, reason} for denied steps
-          - approval_prompts: array of {step_id, prompt_text} for steps
-            that need user confirmation before proceeding
-          - risk_level: "low" | "medium" | "high" | "critical"
+      Permissions: ${input.user_permissions}
 
-        Use "approved" only when all steps are permitted. Use
-        "requires_user_approval" when some steps need confirmation.
-        Use "denied" only when permissions explicitly prohibit an action.
 
-        Return valid JSON only. No markdown fences.
-    - role: user
-      content: "Compiled plan: ${input.compiled_plan}\n\nPermissions: ${input.user_permissions}\n\nPolicy: ${input.policy_context}"
+      Policy: ${input.policy_context}'
   temperature: 0.0
   response_format:
     type: json_object
-
 response:
   authorization_result: response.choices.0.message.content_json.authorization_result
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_agent_plan_gate
-  description: "OpenAI binding for agent.plan.gate using gpt-4o-mini."
+  description: OpenAI binding for agent.plan.gate using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 45

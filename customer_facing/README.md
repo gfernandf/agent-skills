@@ -29,4 +29,42 @@ from customer_facing.neutral_api import NeutralRuntimeAPI
 class MyAPI(NeutralRuntimeAPI):
     def custom_endpoint(self, request):
         ...
+
+## Async execution contract
+
+Both HTTP servers support async start-and-poll semantics.
+
+- Start async run (skill-specific): `POST /v1/skills/{skill_id}/execute/async`
+- Start async run (generic alias): `POST /run_async` or `POST /v1/run_async`
+    - Body: `{ "skill_id": "...", "inputs": { ... } }`
+    - Returns immediately with `run_id` and initial status.
+- Poll run status: `GET /v1/runs/{run_id}`
+- Poll run status (alias): `GET /run_status/{run_id}` or `GET /v1/run_status/{run_id}`
+- List recent runs: `GET /v1/runs?limit=100&offset=0&status=running|completed|failed`
+- Cancel run: `POST /v1/runs/{run_id}/cancel`
+- Cancel run (alias): `POST /run_cancel/{run_id}` or `POST /v1/run_cancel/{run_id}`
+
+Run states:
+
+- `running`
+- `completed`
+- `failed`
+
+Notes:
+
+- The HTTP request timeout does not cancel a run once accepted.
+- Final async result payload preserves the same output/meta diagnostics shape as sync execution.
+
+## Webhook callback (optional)
+
+You can subscribe callback URLs and receive async completion events:
+
+- Register: `POST /v1/webhooks`
+- List: `GET /v1/webhooks`
+- Delete: `DELETE /v1/webhooks/{id}`
+
+Run completion events emitted:
+
+- `run.completed`
+- `run.failed`
 ```

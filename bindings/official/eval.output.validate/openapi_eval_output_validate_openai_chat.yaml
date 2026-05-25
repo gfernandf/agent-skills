@@ -1,48 +1,40 @@
 id: openapi_eval_output_validate_openai_chat
-
 capability: eval.output.validate
 service: model_openai_chat
 protocol: openapi
 operation: chat/completions
-
 request:
   model: gpt-4o-mini
   messages:
-    - role: system
-      content: >
-        You are an output validation assistant. Given a task output and a
-        list of explicit success criteria, evaluate whether each criterion
-        is satisfied.
+  - role: system
+    content: "You are an output validation assistant. Given a task output and a list\
+      \ of explicit success criteria, evaluate whether each criterion is satisfied.\n\
+      For each criterion, assess it independently and assign a score 0.0-1.0. A criterion\
+      \ is \"met\" if its score >= 0.7.\nReturn a JSON object with: - evaluation:\
+      \ object with:\n  - passed: true if ALL criteria have score >= 0.7\n  - score:\
+      \ weighted average of all criterion scores (0.0-1.0)\n  - criteria_results:\
+      \ array of objects with:\n    - criterion: the criterion text\n    - met: boolean\n\
+      \    - score: number 0.0-1.0\n    - rationale: one sentence explaining the score\n\
+      \  - failed_criteria: array of criterion strings that were not met\n  - improvement_suggestions:\
+      \ array of concrete suggestions to fix\n    each failed criterion (one per failed\
+      \ criterion)\n\nBe calibrated. Do not inflate scores. Return valid JSON only.\n"
+  - role: user
+    content: 'Output to evaluate: ${input.final_output}
 
-        For each criterion, assess it independently and assign a score
-        0.0-1.0. A criterion is "met" if its score >= 0.7.
 
-        Return a JSON object with:
-        - evaluation: object with:
-          - passed: true if ALL criteria have score >= 0.7
-          - score: weighted average of all criterion scores (0.0-1.0)
-          - criteria_results: array of objects with:
-            - criterion: the criterion text
-            - met: boolean
-            - score: number 0.0-1.0
-            - rationale: one sentence explaining the score
-          - failed_criteria: array of criterion strings that were not met
-          - improvement_suggestions: array of concrete suggestions to fix
-            each failed criterion (one per failed criterion)
+      Success criteria: ${input.success_criteria}
 
-        Be calibrated. Do not inflate scores. Return valid JSON only.
-    - role: user
-      content: "Output to evaluate: ${input.final_output}\n\nSuccess criteria: ${input.success_criteria}\n\nEvidence: ${input.evidence}"
+
+      Evidence: ${input.evidence}'
   temperature: 0.1
   response_format:
     type: json_object
-
 response:
   evaluation: response.choices.0.message.content_json.evaluation
-
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_eval_output_validate
-  description: "OpenAI binding for eval.output.validate using gpt-4o-mini."
+  description: OpenAI binding for eval.output.validate using gpt-4o-mini.
   status: experimental
+  timeout_seconds: 45

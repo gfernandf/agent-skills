@@ -123,6 +123,40 @@ def test_complete_missing_run():
     _test("complete_missing: no error", True)
 
 
+def test_pagination_and_status_filter():
+    store = RunStore()
+    store.create_run("r1", "skill")
+    store.create_run("r2", "skill")
+    store.create_run("r3", "skill")
+    store.complete_run("r1", {"ok": True})
+    store.fail_run("r2", "boom")
+
+    page = store.list_runs_page(limit=2, offset=0)
+    _test("page: size", len(page) == 2)
+    _test("page: newest first", page[0]["run_id"] == "r3")
+
+    completed = store.list_runs_page(limit=10, status="completed")
+    _test("status filter: completed count", len(completed) == 1)
+    _test("status filter: completed id", completed[0]["run_id"] == "r1")
+
+    running_count = store.count_runs(status="running")
+    _test("count running", running_count == 1)
+    all_count = store.count_runs()
+    _test("count all", all_count == 3)
+
+
+def test_cancel_run():
+    store = RunStore()
+    store.create_run("r1", "skill")
+    canceled = store.cancel_run("r1")
+    _test("cancel: returns run", isinstance(canceled, dict))
+    _test("cancel: status failed", canceled["status"] == "failed")
+    _test("cancel: has error reason", "Canceled by client" in (canceled["error"] or ""))
+
+    missing = store.cancel_run("missing")
+    _test("cancel missing returns None", missing is None)
+
+
 def main():
     global _pass, _fail
 
@@ -134,6 +168,8 @@ def main():
     test_eviction()
     test_thread_safety()
     test_complete_missing_run()
+    test_pagination_and_status_filter()
+    test_cancel_run()
 
     print(f"\n  run_store: {_pass} passed, {_fail} failed")
     if _fail:

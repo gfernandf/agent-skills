@@ -23,10 +23,20 @@ request:
           assumptions (array of strings).
         - analysis_notes: brief string on methodology or evidence gaps.
 
+        If option_constraint_mode is strict and explicit_options are provided,
+        you MUST preserve the provided option ids and labels exactly.
+        Include each explicit option exactly once. Do not add, drop, rename,
+        or reorder explicit options.
+
         Return valid JSON only. No markdown fences.
     - role: user
       content: |
         Goal: ${input.goal}
+
+        Option constraint mode: ${input.option_constraint_mode}
+
+        Explicit options (if provided):
+        ${input.explicit_options}
 
         Options to analyze:
         ${input.options}
@@ -41,8 +51,8 @@ response:
 metadata:
   method: POST
   response_mode: json
-  timeout_seconds: 8
-  retry_count: 0
+  timeout_seconds: 35
+  retry_count: 1
   fallback_binding_id: python_eval_option_analyze
   description: "OpenAI binding for eval.option.analyze using gpt-4o-mini."
   status: experimental

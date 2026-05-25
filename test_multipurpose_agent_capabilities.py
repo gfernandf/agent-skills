@@ -499,6 +499,48 @@ def test_agent_output_generate():
     )
 
 
+def test_agent_output_generate_fallback_confidence_and_skill_format():
+    goal = {"objective": "Decision report", "deliverable_type": "report"}
+    exec_result = {
+        "status": "success",
+        "final_state": {},
+        "step_results": [
+            {
+                "step_id": "s1",
+                "ref": "decision.make",
+                "status": "success",
+                "outputs": {},
+                "error": None,
+                "duration_ms": 120,
+            }
+        ],
+        "total_duration_ms": 120,
+        "final_output": {
+            "recommendation": "Proceed with MVP",
+            "confidence_score": 0.7,
+            "confidence_level": "high",
+            "meta": {
+                "fallback_used": True,
+                "fallback_steps_count": 1,
+                "step_diagnostics": [
+                    {"step_id": "justify_decision", "fallback_used": True}
+                ],
+            },
+        },
+    }
+
+    result = agent_bl.generate_output_report(
+        interpreted_goal=goal,
+        execution_result=exec_result,
+        evaluation=None,
+    )
+
+    user_response = result["report"]["user_response"]
+    assert "- Skill: skill.decision.make" in user_response
+    assert "- Confidence: medium (0.7)" in user_response
+    assert "- Fallback severity: minor (justify_decision only)" in user_response
+
+
 def test_agent_output_synthesize():
     compiled_plan = {
         "dag": {

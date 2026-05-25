@@ -70,6 +70,14 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
             message=sanitize_error_message(error),
         )
 
+    if isinstance(error, (ValueError, TypeError)):
+        return HttpErrorContract(
+            status_code=400,
+            code="invalid_request",
+            type=type(error).__name__,
+            message=sanitize_error_message(error),
+        )
+
     if isinstance(error, InvalidExecutionOptionsError):
         return HttpErrorContract(
             status_code=400,
