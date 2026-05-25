@@ -1,0 +1,27 @@
+id: openapi_decision_option_select_openai_chat
+capability: decision.option.select
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for decision.option.select. Capability description: Select the final option from analyzed and scored candidates under explicit constraints and decision criteria.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'options: ${input.options}\n\noption_analysis: ${input.option_analysis}\n\noption_scores: ${input.option_scores}\n\ncriteria: ${input.criteria}\n\nconstraints: ${input.constraints}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  selected_option: response.choices.0.message.content_json.selected_option
+  selection_rationale: response.choices.0.message.content_json.selection_rationale
+  rejected_options: response.choices.0.message.content_json.rejected_options
+  selection_confidence: response.choices.0.message.content_json.selection_confidence
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_decision_option_select
+  description: OpenAI binding for decision.option.select using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

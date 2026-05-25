@@ -1,0 +1,16 @@
+id: python_reasoning_plan_decompose
+capability: reasoning.plan.decompose
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_plan_decompose
+request:
+  macro_stage: input.macro_stage
+  candidate_skills: input.candidate_skills
+  candidate_capabilities: input.candidate_capabilities
+  current_state: input.current_state
+response:
+  expanded_steps: response.expanded_steps
+  step_count: response.step_count
+metadata:
+  description: Python fallback for reasoning.plan.decompose using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,27 @@
+id: openapi_reasoning_problem_decompose_openai_chat
+capability: reasoning.problem.decompose
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.problem.decompose. Capability description: Decompose a problem into structured sub-problems and dependencies.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'problem: ${input.problem}\n\nstrategy: ${input.strategy}\n\ncontext: ${input.context}\n\nmax_components: ${input.max_components}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  components: response.choices.0.message.content_json.components
+  gaps: response.choices.0.message.content_json.gaps
+  overlaps: response.choices.0.message.content_json.overlaps
+  decomposition_notes: response.choices.0.message.content_json.decomposition_notes
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_problem_decompose
+  description: OpenAI binding for reasoning.problem.decompose using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

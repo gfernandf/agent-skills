@@ -1,0 +1,17 @@
+id: python_evaluation_risk_score
+capability: evaluation.risk.score
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_risk_score
+request:
+  output: input.output
+  context: input.context
+  dimensions: input.dimensions
+response:
+  risk_score: response.risk_score
+  dimension_scores: response.dimension_scores
+  flags: response.flags
+  safe: response.safe
+metadata:
+  description: Python fallback for evaluation.risk.score using cognitive_baseline service.
+  status: stable

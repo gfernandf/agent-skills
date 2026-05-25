@@ -1,0 +1,26 @@
+id: openapi_decision_uncertainty_prioritize_openai_chat
+capability: decision.uncertainty.prioritize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for decision.uncertainty.prioritize. Capability description: Prioritize scored uncertainties into a decision-ready order, highlighting which unknowns must be resolved first and which can be deferred.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'scored_uncertainties: ${input.scored_uncertainties}\n\nrisk_tolerance: ${input.risk_tolerance}\n\ncapacity_limit: ${input.capacity_limit}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  prioritized_uncertainties: response.choices.0.message.content_json.prioritized_uncertainties
+  next_actions: response.choices.0.message.content_json.next_actions
+  prioritization_summary: response.choices.0.message.content_json.prioritization_summary
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_decision_uncertainty_prioritize
+  description: OpenAI binding for decision.uncertainty.prioritize using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

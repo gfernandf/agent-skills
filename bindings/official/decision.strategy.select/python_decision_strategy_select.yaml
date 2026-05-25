@@ -1,0 +1,16 @@
+id: python_decision_strategy_select
+capability: decision.strategy.select
+service: cognitive_baseline
+protocol: pythoncall
+operation: decision_strategy_select
+request:
+  strategies: input.strategies
+  constraints: input.constraints
+  objective: input.objective
+response:
+  selected_strategy: response.selected_strategy
+  rejected_strategies: response.rejected_strategies
+  selection_confidence: response.selection_confidence
+metadata:
+  description: Python fallback for decision.strategy.select using cognitive_baseline service.
+  status: stable

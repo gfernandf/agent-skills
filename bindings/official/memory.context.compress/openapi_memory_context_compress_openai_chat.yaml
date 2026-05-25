@@ -1,0 +1,25 @@
+id: openapi_memory_context_compress_openai_chat
+capability: memory.context.compress
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for memory.context.compress. Capability description: Compress context while preserving constraints, decisions, and signals needed for future cognition.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'context: ${input.context}\n\ntarget_length: ${input.target_length}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  summary_context: response.choices.0.message.content_json.summary_context
+  summary_notes: response.choices.0.message.content_json.summary_notes
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_memory_context_compress
+  description: OpenAI binding for memory.context.compress using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

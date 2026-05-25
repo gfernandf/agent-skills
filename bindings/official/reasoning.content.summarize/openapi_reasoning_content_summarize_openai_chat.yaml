@@ -1,0 +1,24 @@
+id: openapi_reasoning_content_summarize_openai_chat
+capability: reasoning.content.summarize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.content.summarize. Capability description: Produce a condensed version of text preserving key ideas.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'text: ${input.text}\n\nmax_length: ${input.max_length}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  summary: response.choices.0.message.content_json.summary
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_content_summarize
+  description: OpenAI binding for reasoning.content.summarize using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

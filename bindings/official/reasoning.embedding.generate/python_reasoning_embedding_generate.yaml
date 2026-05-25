@@ -1,0 +1,15 @@
+id: python_reasoning_embedding_generate
+capability: reasoning.embedding.generate
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_embedding_generate
+request:
+  text: input.text
+  model: input.model
+  dimensions: input.dimensions
+response:
+  embedding: response.embedding
+  model: response.model
+metadata:
+  description: Python fallback for reasoning.embedding.generate using cognitive_baseline service.
+  status: stable

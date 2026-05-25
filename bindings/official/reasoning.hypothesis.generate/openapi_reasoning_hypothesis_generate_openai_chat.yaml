@@ -1,0 +1,25 @@
+id: openapi_reasoning_hypothesis_generate_openai_chat
+capability: reasoning.hypothesis.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.hypothesis.generate. Capability description: Generate explicit, testable hypotheses from a target artifact and its context. Each hypothesis includes rationale and a confidence hint so downstream evaluation can assess support and counter-evidence transparently.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'target: ${input.target}\n\ncontext: ${input.context}\n\nmax_hypotheses: ${input.max_hypotheses}\n\ngeneration_mode: ${input.generation_mode}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  hypotheses: response.choices.0.message.content_json.hypotheses
+  generation_notes: response.choices.0.message.content_json.generation_notes
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_hypothesis_generate
+  description: OpenAI binding for reasoning.hypothesis.generate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

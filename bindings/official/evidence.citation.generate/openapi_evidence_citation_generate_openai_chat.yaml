@@ -1,0 +1,24 @@
+id: openapi_evidence_citation_generate_openai_chat
+capability: evidence.citation.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evidence.citation.generate. Capability description: Generate a structured citation for a source fragment.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'source: ${input.source}\n\nexcerpt: ${input.excerpt}\n\nlocator: ${input.locator}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  citation: response.choices.0.message.content_json.citation
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evidence_citation_generate
+  description: OpenAI binding for evidence.citation.generate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

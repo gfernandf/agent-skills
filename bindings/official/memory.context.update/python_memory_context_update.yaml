@@ -1,0 +1,15 @@
+id: python_memory_context_update
+capability: memory.context.update
+service: cognitive_baseline
+protocol: pythoncall
+operation: memory_context_update
+request:
+  context_id: input.context_id
+  patch: input.patch
+  merge_strategy: input.merge_strategy
+response:
+  updated: response.updated
+  context_id: response.context_id
+metadata:
+  description: Python fallback for memory.context.update using cognitive_baseline service.
+  status: stable

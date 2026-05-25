@@ -1,0 +1,27 @@
+id: openapi_evaluation_response_validate_openai_chat
+capability: evaluation.response.validate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evaluation.response.validate. Capability description: Validate a model-generated output for semantic coherence, evidence grounding, and structural completeness.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'output: ${input.output}\n\nvalidation_policy: ${input.validation_policy}\n\nevidence_context: ${input.evidence_context}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  valid: response.choices.0.message.content_json.valid
+  issues: response.choices.0.message.content_json.issues
+  confidence_adjustment: response.choices.0.message.content_json.confidence_adjustment
+  rationale: response.choices.0.message.content_json.rationale
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evaluation_response_validate
+  description: OpenAI binding for evaluation.response.validate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

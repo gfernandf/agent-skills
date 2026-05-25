@@ -1,0 +1,15 @@
+id: python_evaluation_hypothesis_compare
+capability: evaluation.hypothesis.compare
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_hypothesis_compare
+request:
+  evaluated_hypotheses: input.evaluated_hypotheses
+  comparison_axes: input.comparison_axes
+response:
+  ranked_hypotheses: response.ranked_hypotheses
+  tradeoffs: response.tradeoffs
+  recommendation: response.recommendation
+metadata:
+  description: Python fallback for evaluation.hypothesis.compare using cognitive_baseline service.
+  status: stable

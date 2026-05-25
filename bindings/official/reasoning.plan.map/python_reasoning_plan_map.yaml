@@ -1,0 +1,14 @@
+id: python_reasoning_plan_map
+capability: reasoning.plan.map
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_plan_map
+request:
+  expanded_steps: input.expanded_steps
+  state_schema: input.state_schema
+response:
+  bound_steps: response.bound_steps
+  unresolved_bindings: response.unresolved_bindings
+metadata:
+  description: Python fallback for reasoning.plan.map using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,25 @@
+id: openapi_memory_context_update_openai_chat
+capability: memory.context.update
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for memory.context.update. Capability description: Update an existing context record with partial or full changes.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'context_id: ${input.context_id}\n\npatch: ${input.patch}\n\nmerge_strategy: ${input.merge_strategy}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  updated: response.choices.0.message.content_json.updated
+  context_id: response.choices.0.message.content_json.context_id
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_memory_context_update
+  description: OpenAI binding for memory.context.update using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

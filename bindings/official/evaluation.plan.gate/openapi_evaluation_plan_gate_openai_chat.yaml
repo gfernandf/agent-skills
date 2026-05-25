@@ -1,0 +1,24 @@
+id: openapi_evaluation_plan_gate_openai_chat
+capability: evaluation.plan.gate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evaluation.plan.gate. Capability description: Determine whether a compiled plan can proceed under current permissions and policy constraints. Checks each step against the user's permission set and applicable policies. Returns an authorization result that is either fully approved, denied, or requires explicit user confirmation before execution can continue.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'compiled_plan: ${input.compiled_plan}\n\nuser_permissions: ${input.user_permissions}\n\npolicy_context: ${input.policy_context}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  authorization_result: response.choices.0.message.content_json.authorization_result
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evaluation_plan_gate
+  description: OpenAI binding for evaluation.plan.gate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

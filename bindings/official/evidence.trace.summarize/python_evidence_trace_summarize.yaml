@@ -1,0 +1,12 @@
+id: python_evidence_trace_summarize
+capability: evidence.trace.summarize
+service: cognitive_baseline
+protocol: pythoncall
+operation: evidence_trace_summarize
+request:
+  execution_trace: input.execution_trace
+response:
+  trace_summary: response.trace_summary
+metadata:
+  description: Python fallback for evidence.trace.summarize using cognitive_baseline service.
+  status: stable

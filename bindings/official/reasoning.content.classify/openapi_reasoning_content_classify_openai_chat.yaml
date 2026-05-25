@@ -1,0 +1,25 @@
+id: openapi_reasoning_content_classify_openai_chat
+capability: reasoning.content.classify
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.content.classify. Capability description: Classify a text into one or more predefined categories.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'text: ${input.text}\n\nlabels: ${input.labels}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  label: response.choices.0.message.content_json.label
+  confidence: response.choices.0.message.content_json.confidence
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_content_classify
+  description: OpenAI binding for reasoning.content.classify using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

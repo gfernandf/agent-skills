@@ -1,0 +1,25 @@
+id: openapi_reasoning_response_generate_openai_chat
+capability: reasoning.response.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.response.generate. Capability description: Generate the final user-facing report from execution outputs, evaluation results, and trace summary. The report describes what was done, what was produced, what could not be done and why, key decisions made, evidence and source references, errors encountered, and suggested next steps. Sanitizes sensitive content before surfacing to the user.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'interpreted_goal: ${input.interpreted_goal}\n\nexecution_result: ${input.execution_result}\n\nevaluation: ${input.evaluation}\n\ntrace_summary: ${input.trace_summary}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  report: response.choices.0.message.content_json.report
+  report_status: response.choices.0.message.content_json.report_status
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_response_generate
+  description: OpenAI binding for reasoning.response.generate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

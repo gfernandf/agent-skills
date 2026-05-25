@@ -1,0 +1,15 @@
+id: python_memory_context_store
+capability: memory.context.store
+service: cognitive_baseline
+protocol: pythoncall
+operation: memory_context_store
+request:
+  context_id: input.context_id
+  context: input.context
+  ttl_seconds: input.ttl_seconds
+response:
+  stored: response.stored
+  context_id: response.context_id
+metadata:
+  description: Python fallback for memory.context.store using cognitive_baseline service.
+  status: stable

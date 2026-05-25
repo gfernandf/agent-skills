@@ -1,0 +1,13 @@
+id: python_reasoning_content_transform
+capability: reasoning.content.transform
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_content_transform
+request:
+  text: input.text
+  goal: input.goal
+response:
+  text: response.text
+metadata:
+  description: Python fallback for reasoning.content.transform using cognitive_baseline service.
+  status: stable

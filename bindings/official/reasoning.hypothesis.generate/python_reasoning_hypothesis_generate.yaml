@@ -1,0 +1,16 @@
+id: python_reasoning_hypothesis_generate
+capability: reasoning.hypothesis.generate
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_hypothesis_generate
+request:
+  target: input.target
+  context: input.context
+  max_hypotheses: input.max_hypotheses
+  generation_mode: input.generation_mode
+response:
+  hypotheses: response.hypotheses
+  generation_notes: response.generation_notes
+metadata:
+  description: Python fallback for reasoning.hypothesis.generate using cognitive_baseline service.
+  status: stable

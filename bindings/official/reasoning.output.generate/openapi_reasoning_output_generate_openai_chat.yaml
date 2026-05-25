@@ -1,0 +1,26 @@
+id: openapi_reasoning_output_generate_openai_chat
+capability: reasoning.output.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.output.generate. Capability description: Generate structured output from a model given an instruction, context items, and an output schema.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'instruction: ${input.instruction}\n\ncontext_items: ${input.context_items}\n\noutput_schema: ${input.output_schema}\n\ndetail_level: ${input.detail_level}\n\nconstraints: ${input.constraints}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  output: response.choices.0.message.content_json.output
+  warnings: response.choices.0.message.content_json.warnings
+  coverage: response.choices.0.message.content_json.coverage
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_output_generate
+  description: OpenAI binding for reasoning.output.generate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

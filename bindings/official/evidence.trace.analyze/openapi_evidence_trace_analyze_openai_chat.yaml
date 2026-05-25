@@ -1,0 +1,33 @@
+id: openapi_evidence_trace_analyze_openai_chat
+capability: evidence.trace.analyze
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evidence.trace.analyze. Capability description: Analyze incremental execution traces as a cognitive interpretation unit. This capability reconstructs the agent's reasoning path from runtime events, infers assumptions, identifies plausible alternatives, estimates confidence, and returns structured views such as decision graphs. It is intended to be called repeatedly during execution (update mode) and once at run closure (finalize mode), without coupling to any specific model provider.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'goal: ${input.goal}\n\ncontext: ${input.context}\n\nevents: ${input.events}\n\ntrace_state: ${input.trace_state}\n\ntrace_session_id: ${input.trace_session_id}\n\nstate_mode: ${input.state_mode}\n\nmode: ${input.mode}\n\noutput_views: ${input.output_views}\n\nthresholds: ${input.thresholds}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  trace_session_id: response.choices.0.message.content_json.trace_session_id
+  updated_trace_state: response.choices.0.message.content_json.updated_trace_state
+  state_checksum: response.choices.0.message.content_json.state_checksum
+  trace_version: response.choices.0.message.content_json.trace_version
+  decision_graph: response.choices.0.message.content_json.decision_graph
+  assumptions: response.choices.0.message.content_json.assumptions
+  alternative_paths: response.choices.0.message.content_json.alternative_paths
+  confidence: response.choices.0.message.content_json.confidence
+  risk_candidates: response.choices.0.message.content_json.risk_candidates
+  summary: response.choices.0.message.content_json.summary
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evidence_trace_analyze
+  description: OpenAI binding for evidence.trace.analyze using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

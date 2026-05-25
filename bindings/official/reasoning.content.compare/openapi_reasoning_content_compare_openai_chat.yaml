@@ -1,0 +1,26 @@
+id: openapi_reasoning_content_compare_openai_chat
+capability: reasoning.content.compare
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.content.compare. Capability description: Compare two text blocks for semantic and structural similarity. Reports overall similarity, specific differences, and a narrative summary. For comparing code versions use code.diff.extract; for comparing records use integration.record.compare.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'text_a: ${input.text_a}\n\ntext_b: ${input.text_b}\n\ndimensions: ${input.dimensions}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  similarity: response.choices.0.message.content_json.similarity
+  differences: response.choices.0.message.content_json.differences
+  summary: response.choices.0.message.content_json.summary
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_content_compare
+  description: OpenAI binding for reasoning.content.compare using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

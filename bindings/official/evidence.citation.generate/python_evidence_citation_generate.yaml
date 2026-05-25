@@ -1,0 +1,14 @@
+id: python_evidence_citation_generate
+capability: evidence.citation.generate
+service: cognitive_baseline
+protocol: pythoncall
+operation: evidence_citation_generate
+request:
+  source: input.source
+  excerpt: input.excerpt
+  locator: input.locator
+response:
+  citation: response.citation
+metadata:
+  description: Python fallback for evidence.citation.generate using cognitive_baseline service.
+  status: stable

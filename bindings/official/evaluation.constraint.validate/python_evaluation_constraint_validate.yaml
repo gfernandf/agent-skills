@@ -1,0 +1,16 @@
+id: python_evaluation_constraint_validate
+capability: evaluation.constraint.validate
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_constraint_validate
+request:
+  artifact: input.artifact
+  constraints: input.constraints
+  validation_policy: input.validation_policy
+response:
+  validation_result: response.validation_result
+  violations: response.violations
+  satisfied_constraints: response.satisfied_constraints
+metadata:
+  description: Python fallback for evaluation.constraint.validate using cognitive_baseline service.
+  status: stable

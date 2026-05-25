@@ -1,0 +1,25 @@
+id: openapi_perception_language_detect_openai_chat
+capability: perception.language.detect
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for perception.language.detect. Capability description: Detect the language of input content as a perception signal.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'text: ${input.text}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  language: response.choices.0.message.content_json.language
+  confidence: response.choices.0.message.content_json.confidence
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_perception_language_detect
+  description: OpenAI binding for perception.language.detect using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

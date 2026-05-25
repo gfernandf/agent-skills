@@ -1,0 +1,24 @@
+id: openapi_reasoning_content_generate_openai_chat
+capability: reasoning.content.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.content.generate. Capability description: Generate new text from an instruction and optional context. Use when the goal is to produce original content (drafts, descriptions, paragraphs, emails, explanations) rather than transforming existing text. For condensing existing text use reasoning.content.summarize; for modifying style/tone of existing text use text.content.rewrite.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'instruction: ${input.instruction}\n\ncontext: ${input.context}\n\nmax_length: ${input.max_length}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  text: response.choices.0.message.content_json.text
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_content_generate
+  description: OpenAI binding for reasoning.content.generate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

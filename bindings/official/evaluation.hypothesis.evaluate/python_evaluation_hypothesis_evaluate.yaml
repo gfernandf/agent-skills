@@ -1,0 +1,16 @@
+id: python_evaluation_hypothesis_evaluate
+capability: evaluation.hypothesis.evaluate
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_hypothesis_evaluate
+request:
+  hypotheses: input.hypotheses
+  evidence: input.evidence
+  criteria: input.criteria
+response:
+  evaluated_hypotheses: response.evaluated_hypotheses
+  evaluation_summary: response.evaluation_summary
+  evidence_gaps: response.evidence_gaps
+metadata:
+  description: Python fallback for evaluation.hypothesis.evaluate using cognitive_baseline service.
+  status: stable

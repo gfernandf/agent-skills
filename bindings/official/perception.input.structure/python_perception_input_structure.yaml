@@ -1,0 +1,17 @@
+id: python_perception_input_structure
+capability: perception.input.structure
+service: cognitive_baseline
+protocol: pythoncall
+operation: perception_input_structure
+request:
+  fields: input.fields
+  instruction: input.instruction
+  context: input.context
+  raw_input: input.raw_input
+response:
+  structured_input: response.structured_input
+  complete: response.complete
+  missing_fields: response.missing_fields
+metadata:
+  description: Python fallback for perception.input.structure using cognitive_baseline service.
+  status: stable

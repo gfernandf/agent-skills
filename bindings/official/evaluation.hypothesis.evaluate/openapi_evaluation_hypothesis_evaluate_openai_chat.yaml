@@ -1,0 +1,26 @@
+id: openapi_evaluation_hypothesis_evaluate_openai_chat
+capability: evaluation.hypothesis.evaluate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evaluation.hypothesis.evaluate. Capability description: Evaluate candidate hypotheses against available evidence and explicit criteria. Produces support and contradiction scores per hypothesis plus a structured status that can be consumed by comparison and decision steps.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'hypotheses: ${input.hypotheses}\n\nevidence: ${input.evidence}\n\ncriteria: ${input.criteria}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  evaluated_hypotheses: response.choices.0.message.content_json.evaluated_hypotheses
+  evaluation_summary: response.choices.0.message.content_json.evaluation_summary
+  evidence_gaps: response.choices.0.message.content_json.evidence_gaps
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evaluation_hypothesis_evaluate
+  description: OpenAI binding for evaluation.hypothesis.evaluate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

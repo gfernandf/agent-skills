@@ -1,0 +1,14 @@
+id: python_reasoning_content_generate
+capability: reasoning.content.generate
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_content_generate
+request:
+  instruction: input.instruction
+  context: input.context
+  max_length: input.max_length
+response:
+  text: response.text
+metadata:
+  description: Python fallback for reasoning.content.generate using cognitive_baseline service.
+  status: stable

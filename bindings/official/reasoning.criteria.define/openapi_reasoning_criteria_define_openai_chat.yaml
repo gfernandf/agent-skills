@@ -1,0 +1,26 @@
+id: openapi_reasoning_criteria_define_openai_chat
+capability: reasoning.criteria.define
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.criteria.define. Capability description: Define measurable success, quality, and acceptance criteria for an interpreted goal. Produces the evaluation contract that plan validation and output evaluation nodes use to determine whether the task has been completed correctly and completely.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'interpreted_goal: ${input.interpreted_goal}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  success_criteria: response.choices.0.message.content_json.success_criteria
+  quality_criteria: response.choices.0.message.content_json.quality_criteria
+  acceptance_criteria: response.choices.0.message.content_json.acceptance_criteria
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_criteria_define
+  description: OpenAI binding for reasoning.criteria.define using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

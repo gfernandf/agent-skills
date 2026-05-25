@@ -1,0 +1,7 @@
+id: cognitive_baseline
+kind: pythoncall
+module: official_services.cognitive_baseline
+
+metadata:
+  description: "Baseline local implementations for cognitive capabilities."
+  maintained_by: "agent-skills"

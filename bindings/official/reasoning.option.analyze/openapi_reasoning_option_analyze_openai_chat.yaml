@@ -1,0 +1,25 @@
+id: openapi_reasoning_option_analyze_openai_chat
+capability: reasoning.option.analyze
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.option.analyze. Capability description: Perform qualitative analysis of each option in a decision set. For every option, identify pros, cons, risks, and underlying assumptions. Does NOT assign numeric scores — that is the responsibility of evaluation.option.score. This capability produces the structured qualitative evidence that scoring and justification steps consume downstream.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'options: ${input.options}\n\ncontext: ${input.context}\n\ngoal: ${input.goal}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  analyzed_options: response.choices.0.message.content_json.analyzed_options
+  analysis_notes: response.choices.0.message.content_json.analysis_notes
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_option_analyze
+  description: OpenAI binding for reasoning.option.analyze using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

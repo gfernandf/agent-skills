@@ -1,0 +1,26 @@
+id: openapi_evaluation_constraint_validate_openai_chat
+capability: evaluation.constraint.validate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evaluation.constraint.validate. Capability description: Validate whether an artifact satisfies known constraints and report violations, coverage, and severity.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'artifact: ${input.artifact}\n\nconstraints: ${input.constraints}\n\nvalidation_policy: ${input.validation_policy}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  validation_result: response.choices.0.message.content_json.validation_result
+  violations: response.choices.0.message.content_json.violations
+  satisfied_constraints: response.choices.0.message.content_json.satisfied_constraints
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evaluation_constraint_validate
+  description: OpenAI binding for evaluation.constraint.validate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

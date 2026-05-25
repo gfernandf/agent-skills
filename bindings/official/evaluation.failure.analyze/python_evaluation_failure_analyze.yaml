@@ -1,0 +1,15 @@
+id: python_evaluation_failure_analyze
+capability: evaluation.failure.analyze
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_failure_analyze
+request:
+  failure: input.failure
+  context: input.context
+response:
+  root_causes: response.root_causes
+  failure_class: response.failure_class
+  recurrence_risk: response.recurrence_risk
+metadata:
+  description: Python fallback for evaluation.failure.analyze using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,24 @@
+id: openapi_evidence_trace_summarize_openai_chat
+capability: evidence.trace.summarize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evidence.trace.summarize. Capability description: Summarize an execution trace into a compact human-readable and machine-parseable report. Extracts the list of steps executed, key decisions made at gates, failures and their causes, and the overall outcome. Used by the reporter node for user-facing output and by post-execution audit and learning nodes.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'execution_trace: ${input.execution_trace}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  trace_summary: response.choices.0.message.content_json.trace_summary
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evidence_trace_summarize
+  description: OpenAI binding for evidence.trace.summarize using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

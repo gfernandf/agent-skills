@@ -1,0 +1,17 @@
+id: python_reasoning_theme_cluster
+capability: reasoning.theme.cluster
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_theme_cluster
+request:
+  items: input.items
+  hint_labels: input.hint_labels
+  max_clusters: input.max_clusters
+  context: input.context
+response:
+  clusters: response.clusters
+  unclustered: response.unclustered
+  cluster_quality: response.cluster_quality
+metadata:
+  description: Python fallback for reasoning.theme.cluster using cognitive_baseline service.
+  status: stable

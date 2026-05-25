@@ -1,0 +1,25 @@
+id: openapi_evaluation_uncertainty_score_openai_chat
+capability: evaluation.uncertainty.score
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evaluation.uncertainty.score. Capability description: Score extracted uncertainties by expected impact and confidence gap. Helps quantify which unknowns are most critical before commitment or execution.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'uncertainties: ${input.uncertainties}\n\nscoring_criteria: ${input.scoring_criteria}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  scored_uncertainties: response.choices.0.message.content_json.scored_uncertainties
+  scoring_summary: response.choices.0.message.content_json.scoring_summary
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evaluation_uncertainty_score
+  description: OpenAI binding for evaluation.uncertainty.score using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

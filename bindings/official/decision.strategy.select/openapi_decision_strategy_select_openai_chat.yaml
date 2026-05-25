@@ -1,0 +1,26 @@
+id: openapi_decision_strategy_select_openai_chat
+capability: decision.strategy.select
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for decision.strategy.select. Capability description: Select the most appropriate reasoning or execution strategy under current constraints and evidence.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'strategies: ${input.strategies}\n\nconstraints: ${input.constraints}\n\nobjective: ${input.objective}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  selected_strategy: response.choices.0.message.content_json.selected_strategy
+  rejected_strategies: response.choices.0.message.content_json.rejected_strategies
+  selection_confidence: response.choices.0.message.content_json.selection_confidence
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_decision_strategy_select
+  description: OpenAI binding for decision.strategy.select using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

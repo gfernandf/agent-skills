@@ -1,0 +1,14 @@
+id: python_evidence_source_assess
+capability: evidence.source.assess
+service: cognitive_baseline
+protocol: pythoncall
+operation: evidence_source_assess
+request:
+  sources: input.sources
+  criteria: input.criteria
+response:
+  source_scores: response.source_scores
+  assessment_summary: response.assessment_summary
+metadata:
+  description: Python fallback for evidence.source.assess using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,25 @@
+id: openapi_reasoning_option_generate_openai_chat
+capability: reasoning.option.generate
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.option.generate. Capability description: Generate a set of plausible, distinct options for a given situation or decision problem. Accepts a goal description and optional contextual constraints. Returns 2-5 structured options, each with a label, description, and key attributes. Designed to avoid combinatorial explosion and hallucinated options by grounding generation in the provided context.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'goal: ${input.goal}\n\ncontext: ${input.context}\n\nconstraints: ${input.constraints}\n\nmax_options: ${input.max_options}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  options: response.choices.0.message.content_json.options
+  generation_notes: response.choices.0.message.content_json.generation_notes
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_option_generate
+  description: OpenAI binding for reasoning.option.generate using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

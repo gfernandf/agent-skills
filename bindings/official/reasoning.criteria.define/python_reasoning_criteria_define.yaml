@@ -1,0 +1,14 @@
+id: python_reasoning_criteria_define
+capability: reasoning.criteria.define
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_criteria_define
+request:
+  interpreted_goal: input.interpreted_goal
+response:
+  success_criteria: response.success_criteria
+  quality_criteria: response.quality_criteria
+  acceptance_criteria: response.acceptance_criteria
+metadata:
+  description: Python fallback for reasoning.criteria.define using cognitive_baseline service.
+  status: stable

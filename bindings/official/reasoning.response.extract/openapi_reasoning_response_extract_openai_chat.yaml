@@ -1,0 +1,25 @@
+id: openapi_reasoning_response_extract_openai_chat
+capability: reasoning.response.extract
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.response.extract. Capability description: Extract an answer to a question from a context passage. The response must be grounded in the provided context and should not fabricate information beyond what the context contains. For open-ended text production use reasoning.content.generate; for condensing a passage use reasoning.content.summarize; for entity and keyword extraction use perception.entity.extract and perception.keyword.extract.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'question: ${input.question}\n\ncontext: ${input.context}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  answer: response.choices.0.message.content_json.answer
+  confidence: response.choices.0.message.content_json.confidence
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_response_extract
+  description: OpenAI binding for reasoning.response.extract using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

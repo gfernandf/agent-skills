@@ -1,0 +1,14 @@
+id: python_reasoning_content_classify
+capability: reasoning.content.classify
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_content_classify
+request:
+  text: input.text
+  labels: input.labels
+response:
+  label: response.label
+  confidence: response.confidence
+metadata:
+  description: Python fallback for reasoning.content.classify using cognitive_baseline service.
+  status: stable

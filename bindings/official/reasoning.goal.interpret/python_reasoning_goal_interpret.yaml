@@ -1,0 +1,14 @@
+id: python_reasoning_goal_interpret
+capability: reasoning.goal.interpret
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_goal_interpret
+request:
+  normalized_request: input.normalized_request
+  context: input.context
+response:
+  interpreted_goal: response.interpreted_goal
+  requires_clarification: response.requires_clarification
+metadata:
+  description: Python fallback for reasoning.goal.interpret using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,25 @@
+id: openapi_evidence_source_assess_openai_chat
+capability: evidence.source.assess
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evidence.source.assess. Capability description: Assess source credibility, relevance, and recency for evidence quality.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'sources: ${input.sources}\n\ncriteria: ${input.criteria}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  source_scores: response.choices.0.message.content_json.source_scores
+  assessment_summary: response.choices.0.message.content_json.assessment_summary
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evidence_source_assess
+  description: OpenAI binding for evidence.source.assess using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

@@ -1,0 +1,14 @@
+id: python_evaluation_assumption_validate
+capability: evaluation.assumption.validate
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_assumption_validate
+request:
+  assumptions: input.assumptions
+  evidence: input.evidence
+response:
+  validated_assumptions: response.validated_assumptions
+  confidence_summary: response.confidence_summary
+metadata:
+  description: Python fallback for evaluation.assumption.validate using cognitive_baseline service.
+  status: stable

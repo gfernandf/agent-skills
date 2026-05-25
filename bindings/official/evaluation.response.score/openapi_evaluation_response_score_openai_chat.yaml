@@ -1,0 +1,26 @@
+id: openapi_evaluation_response_score_openai_chat
+capability: evaluation.response.score
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evaluation.response.score. Capability description: Score a model-generated response on multiple quality dimensions such as relevance, fluency, completeness, and faithfulness.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'output: ${input.output}\n\ninstruction: ${input.instruction}\n\nreference: ${input.reference}\n\ndimensions: ${input.dimensions}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  scores: response.choices.0.message.content_json.scores
+  overall: response.choices.0.message.content_json.overall
+  rationale: response.choices.0.message.content_json.rationale
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evaluation_response_score
+  description: OpenAI binding for evaluation.response.score using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

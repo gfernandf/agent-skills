@@ -1,0 +1,14 @@
+id: python_evaluation_uncertainty_score
+capability: evaluation.uncertainty.score
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_uncertainty_score
+request:
+  uncertainties: input.uncertainties
+  scoring_criteria: input.scoring_criteria
+response:
+  scored_uncertainties: response.scored_uncertainties
+  scoring_summary: response.scoring_summary
+metadata:
+  description: Python fallback for evaluation.uncertainty.score using cognitive_baseline service.
+  status: stable

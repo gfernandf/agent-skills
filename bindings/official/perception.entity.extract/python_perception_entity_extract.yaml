@@ -1,0 +1,12 @@
+id: python_perception_entity_extract
+capability: perception.entity.extract
+service: cognitive_baseline
+protocol: pythoncall
+operation: perception_entity_extract
+request:
+  text: input.text
+response:
+  entities: response.entities
+metadata:
+  description: Python fallback for perception.entity.extract using cognitive_baseline service.
+  status: stable

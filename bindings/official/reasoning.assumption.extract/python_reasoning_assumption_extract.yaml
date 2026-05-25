@@ -1,0 +1,14 @@
+id: python_reasoning_assumption_extract
+capability: reasoning.assumption.extract
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_assumption_extract
+request:
+  target: input.target
+  context: input.context
+response:
+  assumptions: response.assumptions
+  extraction_notes: response.extraction_notes
+metadata:
+  description: Python fallback for reasoning.assumption.extract using cognitive_baseline service.
+  status: stable

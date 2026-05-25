@@ -1,0 +1,26 @@
+id: openapi_reasoning_output_normalize_openai_chat
+capability: reasoning.output.normalize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.output.normalize. Capability description: Normalize output structure and representation for downstream reasoning and evaluation.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'output: ${input.output}\n\npolicy: ${input.policy}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  sanitized_output: response.choices.0.message.content_json.sanitized_output
+  removals: response.choices.0.message.content_json.removals
+  clean: response.choices.0.message.content_json.clean
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_output_normalize
+  description: OpenAI binding for reasoning.output.normalize using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

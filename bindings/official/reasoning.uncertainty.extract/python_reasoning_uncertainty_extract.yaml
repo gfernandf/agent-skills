@@ -1,0 +1,15 @@
+id: python_reasoning_uncertainty_extract
+capability: reasoning.uncertainty.extract
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_uncertainty_extract
+request:
+  target: input.target
+  context: input.context
+response:
+  uncertainties: response.uncertainties
+  clarification_questions: response.clarification_questions
+  extraction_notes: response.extraction_notes
+metadata:
+  description: Python fallback for reasoning.uncertainty.extract using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,15 @@
+id: python_reasoning_option_analyze
+capability: reasoning.option.analyze
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_option_analyze
+request:
+  options: input.options
+  context: input.context
+  goal: input.goal
+response:
+  analyzed_options: response.analyzed_options
+  analysis_notes: response.analysis_notes
+metadata:
+  description: Python fallback for reasoning.option.analyze using cognitive_baseline service.
+  status: stable

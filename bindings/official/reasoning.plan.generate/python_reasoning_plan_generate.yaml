@@ -1,0 +1,15 @@
+id: python_reasoning_plan_generate
+capability: reasoning.plan.generate
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_plan_generate
+request:
+  objective: input.objective
+  context: input.context
+  max_steps: input.max_steps
+response:
+  plan: response.plan
+  step_count: response.step_count
+metadata:
+  description: Python fallback for reasoning.plan.generate using cognitive_baseline service.
+  status: stable

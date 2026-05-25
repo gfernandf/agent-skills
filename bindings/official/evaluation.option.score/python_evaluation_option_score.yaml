@@ -1,0 +1,18 @@
+id: python_evaluation_option_score
+capability: evaluation.option.score
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_option_score
+request:
+  options: input.options
+  criteria: input.criteria
+  goal: input.goal
+  risk_tolerance: input.risk_tolerance
+response:
+  scored_options: response.scored_options
+  criteria_used: response.criteria_used
+  comparative_summary: response.comparative_summary
+  tradeoffs: response.tradeoffs
+metadata:
+  description: Python fallback for evaluation.option.score using cognitive_baseline service.
+  status: stable

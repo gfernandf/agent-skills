@@ -1,0 +1,15 @@
+id: python_reasoning_content_merge
+capability: reasoning.content.merge
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_content_merge
+request:
+  items: input.items
+  separator: input.separator
+  include_headers: input.include_headers
+response:
+  text: response.text
+  item_count: response.item_count
+metadata:
+  description: Python fallback for reasoning.content.merge using cognitive_baseline service.
+  status: stable

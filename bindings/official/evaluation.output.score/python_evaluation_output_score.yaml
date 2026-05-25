@@ -1,0 +1,16 @@
+id: python_evaluation_output_score
+capability: evaluation.output.score
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_output_score
+request:
+  output: input.output
+  rubric: input.rubric
+  context: input.context
+response:
+  score: response.score
+  dimensions: response.dimensions
+  quality_level: response.quality_level
+metadata:
+  description: Python fallback for evaluation.output.score using cognitive_baseline service.
+  status: stable

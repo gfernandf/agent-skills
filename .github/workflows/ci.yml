@@ -201,3 +201,48 @@ jobs:
       - name: Run protocol equivalence tests
         run: |
           python -m pytest test_protocol_equivalence.py -v --tb=short -o "addopts="
+
+  cognitive-quality-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run cognitive contract gate
+        run: |
+          mkdir -p artifacts
+          python -m pytest -q test_cognitive_capabilities_e2e.py -o "addopts="
+
+      - name: Run cognitive semantic golden gate
+        run: |
+          python -m pytest -q test_cognitive_semantic_golden.py -o "addopts="
+
+      - name: Run cognitive semantic all-capabilities gate
+        run: |
+          python -m pytest -q test_cognitive_semantic_all.py -o "addopts="
+
+      - name: Upload cognitive quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cognitive-quality-reports
+          path: |
+            artifacts/cognitive_e2e_contract_report.json
+            artifacts/cognitive_semantic_all_report.json

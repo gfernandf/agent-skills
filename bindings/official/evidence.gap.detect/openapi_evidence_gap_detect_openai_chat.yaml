@@ -1,0 +1,25 @@
+id: openapi_evidence_gap_detect_openai_chat
+capability: evidence.gap.detect
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evidence.gap.detect. Capability description: Detect missing evidence required to support claims or decisions.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'claims: ${input.claims}\n\nevidence_items: ${input.evidence_items}\n\nrequired_dimensions: ${input.required_dimensions}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  evidence_gaps: response.choices.0.message.content_json.evidence_gaps
+  gap_severity: response.choices.0.message.content_json.gap_severity
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evidence_gap_detect
+  description: OpenAI binding for evidence.gap.detect using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

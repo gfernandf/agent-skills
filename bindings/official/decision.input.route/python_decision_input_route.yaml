@@ -1,0 +1,15 @@
+id: python_decision_input_route
+capability: decision.input.route
+service: cognitive_baseline
+protocol: pythoncall
+operation: decision_input_route
+request:
+  query: input.query
+  agents: input.agents
+  routing_strategy: input.routing_strategy
+response:
+  route: response.route
+  confidence: response.confidence
+metadata:
+  description: Python fallback for decision.input.route using cognitive_baseline service.
+  status: stable

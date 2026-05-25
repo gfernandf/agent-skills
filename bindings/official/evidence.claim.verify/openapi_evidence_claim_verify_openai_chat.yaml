@@ -1,0 +1,26 @@
+id: openapi_evidence_claim_verify_openai_chat
+capability: evidence.claim.verify
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evidence.claim.verify. Capability description: Verify whether a claim is supported by provided sources.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'claim: ${input.claim}\n\nsources: ${input.sources}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  verified: response.choices.0.message.content_json.verified
+  evidence: response.choices.0.message.content_json.evidence
+  rationale: response.choices.0.message.content_json.rationale
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evidence_claim_verify
+  description: OpenAI binding for evidence.claim.verify using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

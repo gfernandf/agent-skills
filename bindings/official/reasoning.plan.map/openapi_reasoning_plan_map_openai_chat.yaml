@@ -1,0 +1,25 @@
+id: openapi_reasoning_plan_map_openai_chat
+capability: reasoning.plan.map
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.plan.map. Capability description: Bind the inputs and outputs of expanded plan steps to explicit CognitiveState paths using dollar-prefixed path references such as $state.working.summary. Resolves which step outputs feed which step inputs. Produces a fully wired step list where every input and output has an unambiguous state path, eliminating implicit data flow.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'expanded_steps: ${input.expanded_steps}\n\nstate_schema: ${input.state_schema}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  bound_steps: response.choices.0.message.content_json.bound_steps
+  unresolved_bindings: response.choices.0.message.content_json.unresolved_bindings
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_plan_map
+  description: OpenAI binding for reasoning.plan.map using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

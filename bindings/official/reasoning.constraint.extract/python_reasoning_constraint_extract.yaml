@@ -1,0 +1,14 @@
+id: python_reasoning_constraint_extract
+capability: reasoning.constraint.extract
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_constraint_extract
+request:
+  target: input.target
+  context: input.context
+response:
+  constraints: response.constraints
+  gaps: response.gaps
+metadata:
+  description: Python fallback for reasoning.constraint.extract using cognitive_baseline service.
+  status: stable

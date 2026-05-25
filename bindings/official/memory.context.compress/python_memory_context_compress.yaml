@@ -1,0 +1,14 @@
+id: python_memory_context_compress
+capability: memory.context.compress
+service: cognitive_baseline
+protocol: pythoncall
+operation: memory_context_compress
+request:
+  context: input.context
+  target_length: input.target_length
+response:
+  summary_context: response.summary_context
+  summary_notes: response.summary_notes
+metadata:
+  description: Python fallback for memory.context.compress using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,16 @@
+id: python_decision_uncertainty_prioritize
+capability: decision.uncertainty.prioritize
+service: cognitive_baseline
+protocol: pythoncall
+operation: decision_uncertainty_prioritize
+request:
+  scored_uncertainties: input.scored_uncertainties
+  risk_tolerance: input.risk_tolerance
+  capacity_limit: input.capacity_limit
+response:
+  prioritized_uncertainties: response.prioritized_uncertainties
+  next_actions: response.next_actions
+  prioritization_summary: response.prioritization_summary
+metadata:
+  description: Python fallback for decision.uncertainty.prioritize using cognitive_baseline service.
+  status: stable

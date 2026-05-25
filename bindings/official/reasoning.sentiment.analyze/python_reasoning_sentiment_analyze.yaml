@@ -1,0 +1,16 @@
+id: python_reasoning_sentiment_analyze
+capability: reasoning.sentiment.analyze
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_sentiment_analyze
+request:
+  text: input.text
+  dimensions: input.dimensions
+response:
+  sentiment: response.sentiment
+  score: response.score
+  dimensions: response.dimensions
+  rationale: response.rationale
+metadata:
+  description: Python fallback for reasoning.sentiment.analyze using cognitive_baseline service.
+  status: stable

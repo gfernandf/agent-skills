@@ -1,0 +1,13 @@
+id: python_reasoning_content_template
+capability: reasoning.content.template
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_content_template
+request:
+  template: input.template
+  variables: input.variables
+response:
+  text: response.text
+metadata:
+  description: Python fallback for reasoning.content.template using cognitive_baseline service.
+  status: stable

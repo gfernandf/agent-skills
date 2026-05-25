@@ -1,0 +1,16 @@
+id: python_reasoning_content_compare
+capability: reasoning.content.compare
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_content_compare
+request:
+  text_a: input.text_a
+  text_b: input.text_b
+  dimensions: input.dimensions
+response:
+  similarity: response.similarity
+  differences: response.differences
+  summary: response.summary
+metadata:
+  description: Python fallback for reasoning.content.compare using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,14 @@
+id: python_evidence_conflict_detect
+capability: evidence.conflict.detect
+service: cognitive_baseline
+protocol: pythoncall
+operation: evidence_conflict_detect
+request:
+  evidence_items: input.evidence_items
+  claims: input.claims
+response:
+  conflicts: response.conflicts
+  conflict_severity: response.conflict_severity
+metadata:
+  description: Python fallback for evidence.conflict.detect using cognitive_baseline service.
+  status: stable

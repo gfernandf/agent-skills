@@ -1,0 +1,24 @@
+id: openapi_perception_content_extract_openai_chat
+capability: perception.content.extract
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for perception.content.extract. Capability description: Extract relevant text spans or cleaned plain content from an input text block. Not intended for named entities, keyword lists, or question answering.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'text: ${input.text}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  text: response.choices.0.message.content_json.text
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_perception_content_extract
+  description: OpenAI binding for perception.content.extract using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

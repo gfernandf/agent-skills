@@ -1,0 +1,15 @@
+id: python_evaluation_framework_detect
+capability: evaluation.framework.detect
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_framework_detect
+request:
+  interpreted_goal: input.interpreted_goal
+  candidate_items: input.candidate_items
+response:
+  missing_capabilities: response.missing_capabilities
+  missing_skills: response.missing_skills
+  gap_severity: response.gap_severity
+metadata:
+  description: Python fallback for evaluation.framework.detect using cognitive_baseline service.
+  status: stable

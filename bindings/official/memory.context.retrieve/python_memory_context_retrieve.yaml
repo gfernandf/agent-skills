@@ -1,0 +1,14 @@
+id: python_memory_context_retrieve
+capability: memory.context.retrieve
+service: cognitive_baseline
+protocol: pythoncall
+operation: memory_context_retrieve
+request:
+  context_id: input.context_id
+response:
+  context: response.context
+  found: response.found
+  freshness_hint: response.freshness_hint
+metadata:
+  description: Python fallback for memory.context.retrieve using cognitive_baseline service.
+  status: stable

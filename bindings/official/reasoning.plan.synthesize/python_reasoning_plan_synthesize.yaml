@@ -1,0 +1,15 @@
+id: python_reasoning_plan_synthesize
+capability: reasoning.plan.synthesize
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_plan_synthesize
+request:
+  validated_plan: input.validated_plan
+  runtime_config: input.runtime_config
+response:
+  compiled_plan: response.compiled_plan
+  step_count: response.step_count
+  compiled_plan_json: response.compiled_plan_json
+metadata:
+  description: Python fallback for reasoning.plan.synthesize using cognitive_baseline service.
+  status: stable

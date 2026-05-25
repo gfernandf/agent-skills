@@ -1,0 +1,25 @@
+id: openapi_reasoning_request_normalize_openai_chat
+capability: reasoning.request.normalize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.request.normalize. Capability description: Normalize a raw user request into a structured task object. Extracts intent, language, explicit constraints, urgency level, and attached artifacts. Does not plan or execute — only converts the input into a machine-usable form for downstream goal interpretation and planning nodes.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'user_message: ${input.user_message}\n\ncontext: ${input.context}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  normalized_request: response.choices.0.message.content_json.normalized_request
+  language: response.choices.0.message.content_json.language
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_request_normalize
+  description: OpenAI binding for reasoning.request.normalize using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

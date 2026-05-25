@@ -1,0 +1,15 @@
+id: python_reasoning_priority_classify
+capability: reasoning.priority.classify
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_priority_classify
+request:
+  task: input.task
+  context: input.context
+response:
+  priority: response.priority
+  confidence: response.confidence
+  rationale: response.rationale
+metadata:
+  description: Python fallback for reasoning.priority.classify using cognitive_baseline service.
+  status: stable

@@ -1,0 +1,25 @@
+id: openapi_reasoning_plan_decompose_openai_chat
+capability: reasoning.plan.decompose
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.plan.decompose. Capability description: Decompose a plan into stages, steps, and dependency structure.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'macro_stage: ${input.macro_stage}\n\ncandidate_skills: ${input.candidate_skills}\n\ncandidate_capabilities: ${input.candidate_capabilities}\n\ncurrent_state: ${input.current_state}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  expanded_steps: response.choices.0.message.content_json.expanded_steps
+  step_count: response.choices.0.message.content_json.step_count
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_plan_decompose
+  description: OpenAI binding for reasoning.plan.decompose using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

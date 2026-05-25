@@ -1,0 +1,19 @@
+id: python_decision_option_select
+capability: decision.option.select
+service: cognitive_baseline
+protocol: pythoncall
+operation: decision_option_select
+request:
+  options: input.options
+  option_analysis: input.option_analysis
+  option_scores: input.option_scores
+  criteria: input.criteria
+  constraints: input.constraints
+response:
+  selected_option: response.selected_option
+  selection_rationale: response.selection_rationale
+  rejected_options: response.rejected_options
+  selection_confidence: response.selection_confidence
+metadata:
+  description: Python fallback for decision.option.select using cognitive_baseline service.
+  status: stable

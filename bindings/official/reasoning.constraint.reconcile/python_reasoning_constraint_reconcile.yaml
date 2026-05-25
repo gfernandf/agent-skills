@@ -1,0 +1,14 @@
+id: python_reasoning_constraint_reconcile
+capability: reasoning.constraint.reconcile
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_constraint_reconcile
+request:
+  constraints: input.constraints
+  policy: input.policy
+response:
+  reconciled_constraints: response.reconciled_constraints
+  tradeoffs: response.tradeoffs
+metadata:
+  description: Python fallback for reasoning.constraint.reconcile using cognitive_baseline service.
+  status: stable

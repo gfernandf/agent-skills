@@ -1,0 +1,25 @@
+id: openapi_reasoning_goal_interpret_openai_chat
+capability: reasoning.goal.interpret
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.goal.interpret. Capability description: Convert a normalized user request into an explicit operational goal. Defines what the task must produce, what success looks like, what assumptions are being made, what constraints apply, and what open questions must be resolved before planning can begin.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'normalized_request: ${input.normalized_request}\n\ncontext: ${input.context}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  interpreted_goal: response.choices.0.message.content_json.interpreted_goal
+  requires_clarification: response.choices.0.message.content_json.requires_clarification
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_goal_interpret
+  description: OpenAI binding for reasoning.goal.interpret using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

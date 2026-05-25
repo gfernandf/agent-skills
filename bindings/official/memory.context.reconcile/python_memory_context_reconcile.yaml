@@ -1,0 +1,14 @@
+id: python_memory_context_reconcile
+capability: memory.context.reconcile
+service: cognitive_baseline
+protocol: pythoncall
+operation: memory_context_reconcile
+request:
+  contexts: input.contexts
+  precedence_policy: input.precedence_policy
+response:
+  reconciled_context: response.reconciled_context
+  conflicts: response.conflicts
+metadata:
+  description: Python fallback for memory.context.reconcile using cognitive_baseline service.
+  status: stable

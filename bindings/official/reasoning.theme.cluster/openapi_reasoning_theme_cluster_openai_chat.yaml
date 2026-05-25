@@ -1,0 +1,26 @@
+id: openapi_reasoning_theme_cluster_openai_chat
+capability: reasoning.theme.cluster
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.theme.cluster. Capability description: Group a collection of text items into coherent thematic clusters. Identifies dominant themes, assigns each item to one or more clusters, and produces a summary per cluster with signal strength. Accepts optional hint labels to guide (not force) the thematic structure.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'items: ${input.items}\n\nhint_labels: ${input.hint_labels}\n\nmax_clusters: ${input.max_clusters}\n\ncontext: ${input.context}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  clusters: response.choices.0.message.content_json.clusters
+  unclustered: response.choices.0.message.content_json.unclustered
+  cluster_quality: response.choices.0.message.content_json.cluster_quality
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_theme_cluster
+  description: OpenAI binding for reasoning.theme.cluster using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

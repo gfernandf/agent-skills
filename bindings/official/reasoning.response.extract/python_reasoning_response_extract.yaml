@@ -1,0 +1,14 @@
+id: python_reasoning_response_extract
+capability: reasoning.response.extract
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_response_extract
+request:
+  question: input.question
+  context: input.context
+response:
+  answer: response.answer
+  confidence: response.confidence
+metadata:
+  description: Python fallback for reasoning.response.extract using cognitive_baseline service.
+  status: stable

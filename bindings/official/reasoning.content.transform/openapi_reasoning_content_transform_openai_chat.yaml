@@ -1,0 +1,24 @@
+id: openapi_reasoning_content_transform_openai_chat
+capability: reasoning.content.transform
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.content.transform. Capability description: Transform existing text applying a directive — change tone, simplify, expand, formalize, or adjust style while preserving the original meaning. For producing entirely new content use reasoning.content.generate; for condensing use reasoning.content.summarize.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'text: ${input.text}\n\ngoal: ${input.goal}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  text: response.choices.0.message.content_json.text
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_content_transform
+  description: OpenAI binding for reasoning.content.transform using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

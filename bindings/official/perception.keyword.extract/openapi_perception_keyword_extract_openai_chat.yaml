@@ -1,0 +1,24 @@
+id: openapi_perception_keyword_extract_openai_chat
+capability: perception.keyword.extract
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for perception.keyword.extract. Capability description: Extract salient keywords or keyphrases from a text block. Not intended for typed entity recognition or context-grounded question answering.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'text: ${input.text}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  keywords: response.choices.0.message.content_json.keywords
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_perception_keyword_extract
+  description: OpenAI binding for perception.keyword.extract using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

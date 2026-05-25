@@ -1,0 +1,15 @@
+id: python_evidence_gap_detect
+capability: evidence.gap.detect
+service: cognitive_baseline
+protocol: pythoncall
+operation: evidence_gap_detect
+request:
+  claims: input.claims
+  evidence_items: input.evidence_items
+  required_dimensions: input.required_dimensions
+response:
+  evidence_gaps: response.evidence_gaps
+  gap_severity: response.gap_severity
+metadata:
+  description: Python fallback for evidence.gap.detect using cognitive_baseline service.
+  status: stable

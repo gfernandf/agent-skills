@@ -1,0 +1,26 @@
+id: openapi_memory_context_retrieve_openai_chat
+capability: memory.context.retrieve
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for memory.context.retrieve. Capability description: Retrieve previously stored cognitive context by context_id to ground ongoing reasoning and decision steps.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'context_id: ${input.context_id}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  context: response.choices.0.message.content_json.context
+  found: response.choices.0.message.content_json.found
+  freshness_hint: response.choices.0.message.content_json.freshness_hint
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_memory_context_retrieve
+  description: OpenAI binding for memory.context.retrieve using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

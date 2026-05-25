@@ -1,0 +1,25 @@
+id: openapi_reasoning_content_merge_openai_chat
+capability: reasoning.content.merge
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.content.merge. Capability description: Merge multiple text items into a single consolidated text block. Accepts an array of items with text content and produces a single string with configurable separator. Deterministic, no LLM required.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'items: ${input.items}\n\nseparator: ${input.separator}\n\ninclude_headers: ${input.include_headers}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  text: response.choices.0.message.content_json.text
+  item_count: response.choices.0.message.content_json.item_count
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_content_merge
+  description: OpenAI binding for reasoning.content.merge using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

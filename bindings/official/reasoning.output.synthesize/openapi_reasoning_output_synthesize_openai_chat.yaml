@@ -1,0 +1,25 @@
+id: openapi_reasoning_output_synthesize_openai_chat
+capability: reasoning.output.synthesize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.output.synthesize. Capability description: Convert a successfully completed ORCA plan and its execution trace into a candidate reusable ORCA skill definition. Captures the step sequence, input/output contracts, known constraints, and observed execution characteristics. The generated candidate skill spec can be reviewed and contributed to the registry for future reuse.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'successful_plan: ${input.successful_plan}\n\nexecution_trace: ${input.execution_trace}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  candidate_skill: response.choices.0.message.content_json.candidate_skill
+  confidence: response.choices.0.message.content_json.confidence
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_output_synthesize
+  description: OpenAI binding for reasoning.output.synthesize using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

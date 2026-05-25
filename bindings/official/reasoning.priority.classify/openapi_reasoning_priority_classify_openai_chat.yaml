@@ -1,0 +1,26 @@
+id: openapi_reasoning_priority_classify_openai_chat
+capability: reasoning.priority.classify
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.priority.classify. Capability description: Classify the priority of a task based on its attributes and context.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'task: ${input.task}\n\ncontext: ${input.context}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  priority: response.choices.0.message.content_json.priority
+  confidence: response.choices.0.message.content_json.confidence
+  rationale: response.choices.0.message.content_json.rationale
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_priority_classify
+  description: OpenAI binding for reasoning.priority.classify using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30
