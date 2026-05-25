@@ -7,6 +7,12 @@ from __future__ import annotations
 
 import re
 
+from runtime.entity_integrity import (
+    detect_option_drift,
+    normalize_explicit_options,
+    strict_option_mode,
+)
+
 
 def _confidence_level_from_score(confidence: float) -> str:
     """Map confidence score to level using a non-overlapping boundary contract.
@@ -320,6 +326,18 @@ def _build_alternatives_evaluated(scored_options, analyzed_options):
     return evaluated
 
 
+def _option_tie_priority(label: str) -> int:
+    """Lower value means a more conservative baseline tie-break preference."""
+    label_l = (label or "").strip().lower()
+    if "mvp" in label_l or "pilot" in label_l or "piloto" in label_l:
+        return 0
+    if "defer" in label_l or "postpone" in label_l or "posponer" in label_l:
+        return 1
+    if "full" in label_l or "complete" in label_l or "completo" in label_l:
+        return 3
+    return 2
+
+
 def justify_option(
     scored_options,
     analyzed_options,
@@ -339,16 +357,28 @@ def justify_option(
     """
     risk_tolerance = risk_tolerance or "medium"
 
-    # Pick best option by overall_score
+    # Pick best option by overall_score. On ties, prefer a conservative rollout option.
     best = None
     best_score = -1.0
     all_options = scored_options if isinstance(scored_options, list) else []
 
     for opt in all_options:
-        s = opt.get("overall_score", 0.0) if isinstance(opt, dict) else 0.0
+        if not isinstance(opt, dict):
+            continue
+        s = opt.get("overall_score", 0.0)
+        if not isinstance(s, (int, float)):
+            s = 0.0
+
         if s > best_score:
             best_score = s
             best = opt
+            continue
+
+        if s == best_score and best is not None:
+            current_label = str(opt.get("label", opt.get("option_id", "")))
+            best_label = str(best.get("label", best.get("option_id", "")))
+            if _option_tie_priority(current_label) < _option_tie_priority(best_label):
+                best = opt
 
     if best is None and all_options:
         best = all_options[0]
@@ -356,13 +386,6 @@ def justify_option(
     rec_label = (
         best.get("label", best.get("option_id", "option-1")) if best else "no-option"
     )
-
-    alternatives = []
-    for opt in all_options:
-        oid = opt.get("option_id", opt.get("id", "?"))
-        label = opt.get("label", oid)
-        selected = opt is best
-        alternatives.append({"id": oid, "label": label, "selected": selected})
 
     # Detect domain uncertainty (new market, new tech, no experience)
     has_domain_uncertainty = _detect_domain_uncertainty(goal)
@@ -375,12 +398,20 @@ def justify_option(
         or bool(option_constraint_mode)
     )
     
+    is_strict = strict_option_mode(option_constraint_mode, explicit_options)
+    normalized_explicit = normalize_explicit_options(explicit_options)
+    observed_options = []
+    for opt in all_options:
+        if not isinstance(opt, dict):
+            continue
+        oid = opt.get("option_id", opt.get("id"))
+        observed_options.append({"id": oid, "label": opt.get("label", oid)})
+    drift = detect_option_drift(normalized_explicit, observed_options)
+    drift_detected = is_strict and drift.get("has_drift", False)
+
     # Normalize best_score for confidence calculation
     normalized_best = best_score / 100.0 if best_score > 1.0 else best_score
     high_scale_scores = best_score > 1.0
-    
-    # Detect entity drift (stub - assumes no drift for baseline)
-    drift_detected = False
     
     # Compute multicomponent confidence
     confidence = _compute_multicomponent_confidence(
@@ -397,7 +428,24 @@ def justify_option(
     if has_domain_uncertainty:
         confidence = min(confidence, 0.70)
 
+    if drift_detected:
+        confidence = min(confidence, 0.29)
+
     level = _confidence_level_from_score(confidence)
+
+    alternatives = []
+    if is_strict and normalized_explicit:
+        selected_id = best.get("option_id", best.get("id")) if isinstance(best, dict) else None
+        for opt in normalized_explicit:
+            oid = opt.get("id", "?")
+            label = opt.get("label", oid)
+            alternatives.append({"id": oid, "label": label, "selected": oid == selected_id})
+    else:
+        for opt in all_options:
+            oid = opt.get("option_id", opt.get("id", "?"))
+            label = opt.get("label", oid)
+            selected = opt is best
+            alternatives.append({"id": oid, "label": label, "selected": selected})
 
     alternatives_evaluated = _build_alternatives_evaluated(all_options, analyzed_options)
     decision_inputs = _normalize_decision_inputs(
@@ -412,9 +460,17 @@ def justify_option(
     uncertainties = [
         "Baseline analysis; production confidence improves with richer external evidence."
     ]
+    if high_scale_scores:
+        uncertainties.append(
+            "Using heuristic baseline scoring scale may overstate certainty without calibrated evidence."
+        )
     if has_domain_uncertainty:
         uncertainties.append(
             "Low domain experience increases uncertainty and reduces confidence."
+        )
+    if drift_detected:
+        uncertainties.append(
+            "Strict option integrity mode detected entity drift (missing/new/renamed options); confidence downgraded."
         )
 
     failure_modes = ["Key assumptions may not hold under changing conditions."]

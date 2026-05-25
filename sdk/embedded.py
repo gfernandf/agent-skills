@@ -222,6 +222,9 @@ def _build_skill_execution_meta(result) -> dict[str, Any]:
             derived_fallback_count = None
     else:
         trace_completeness = "full"
+        if derived_fallback_used is None:
+            # With concrete step diagnostics, fallback status must be explicit.
+            derived_fallback_used = False
         if failed_steps_count > 0:
             trace_completeness = "partial"
             execution_warnings.append(
