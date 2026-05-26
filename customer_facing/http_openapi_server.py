@@ -91,6 +91,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
     _rate_state: dict[str, list[float]] = {}
     _RATE_STATE_MAX_CLIENTS = 10_000
     run_store = None  # RunStore instance (set by run_server)
+    checkpoint_manager = None  # CheckpointManager instance (set by run_server)
     _async_pool = None  # ThreadPoolExecutor for async launches
     webhook_store = None  # WebhookStore instance (set by run_server)
     auth_middleware = None  # AuthMiddleware instance (set by run_server)
@@ -280,7 +281,21 @@ class _RequestHandler(BaseHTTPRequestHandler):
                         },
                     )
                     return
-                run_id = parsed.path[len(runs_prefix) :]
+                suffix = parsed.path[len(runs_prefix) :]
+                if suffix.endswith("/checkpoints"):
+                    run_id = suffix[: -len("/checkpoints")].rstrip("/")
+                    response = self._api().list_checkpoints(
+                        run_id,
+                        run_store=store,
+                        checkpoint_manager=self.checkpoint_manager,
+                    )
+                    status = 200
+                    if _is_not_found_error(response):
+                        status = 404
+                    self._write_json(status, _unwrap_run_response(response))
+                    return
+
+                run_id = suffix
                 response = self._api().get_run(run_id, run_store=store)
                 status = 200
                 if _is_not_found_error(response):
@@ -305,7 +320,11 @@ class _RequestHandler(BaseHTTPRequestHandler):
                         )
                         return
                     run_id = parsed.path[len(run_status_prefix) :]
-                    response = self._api().get_run(run_id, run_store=store)
+                    response = self._api().get_run(
+                        run_id,
+                        run_store=store,
+                        legacy_projection=True,
+                    )
                     status = 200
                     if _is_not_found_error(response):
                         status = 404
@@ -562,6 +581,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     audit_mode=audit_mode,
                     execution_channel="http-async",
                     run_store=store,
+                    checkpoint_manager=self.checkpoint_manager,
                     async_pool=self._async_pool,
                     webhook_store=self.webhook_store,
                 )
@@ -591,6 +611,39 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
+            if parsed.path.startswith(runs_prefix) and parsed.path.endswith("/resume"):
+                store = self.run_store
+                if store is None:
+                    self._write_json(
+                        501,
+                        {
+                            "error": {
+                                "code": "not_implemented",
+                                "message": "Async runs not enabled",
+                                "type": "NotImplementedError",
+                            }
+                        },
+                    )
+                    return
+                run_id = parsed.path[len(runs_prefix) : -len("/resume")].rstrip("/")
+                checkpoint_id = (
+                    body.get("checkpoint_id")
+                    if isinstance(body, dict)
+                    and isinstance(body.get("checkpoint_id"), str)
+                    else None
+                )
+                response = self._api().resume_run(
+                    run_id,
+                    run_store=store,
+                    checkpoint_manager=self.checkpoint_manager,
+                    checkpoint_id=checkpoint_id,
+                )
+                status = 200
+                if _is_not_found_error(response):
+                    status = 404
+                self._write_json(status, _unwrap_run_response(response))
+                return
+
             run_cancel_prefixes = ("/run_cancel/", "/v1/run_cancel/")
             for run_cancel_prefix in run_cancel_prefixes:
                 if parsed.path.startswith(run_cancel_prefix):
@@ -608,7 +661,11 @@ class _RequestHandler(BaseHTTPRequestHandler):
                         )
                         return
                     run_id = parsed.path[len(run_cancel_prefix) :]
-                    response = self._api().cancel_run(run_id, run_store=store)
+                    response = self._api().cancel_run(
+                        run_id,
+                        run_store=store,
+                        legacy_projection=True,
+                    )
                     status = 200
                     if _is_not_found_error(response):
                         status = 404
@@ -652,6 +709,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     audit_mode=audit_mode,
                     execution_channel="http-async",
                     run_store=store,
+                    checkpoint_manager=self.checkpoint_manager,
                     async_pool=self._async_pool,
                     webhook_store=self.webhook_store,
                 )
@@ -1223,10 +1281,18 @@ def run_server(
         )
 
     # Async execution infrastructure
+    from runtime.checkpoint_manager import (
+        CheckpointManager,
+        FileCheckpointStoreBackend,
+    )
     from runtime.run_store import RunStore
 
     async_workers = int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
     run_store = RunStore(max_runs=int(os.environ.get("AGENT_SKILLS_MAX_RUNS", "100")))
+    runtime_root = getattr(api, "runtime_root", Path.cwd())
+    checkpoint_manager = CheckpointManager(
+        FileCheckpointStoreBackend(runtime_root / "artifacts" / "run_checkpoints")
+    )
     async_pool = _TP(max_workers=async_workers)
 
     _RequestHandler.api = api
@@ -1235,6 +1301,7 @@ def run_server(
     _RequestHandler.config = config
     _RequestHandler._rate_state = {}
     _RequestHandler.run_store = run_store
+    _RequestHandler.checkpoint_manager = checkpoint_manager
     _RequestHandler._async_pool = async_pool
 
     # Webhook infrastructure

@@ -103,6 +103,7 @@ def create_app(
         api: Any = api
         gateway: Any = gateway
         run_store: Any = None
+        checkpoint_manager: Any = None
         async_pool: Any = None
         webhook_store: Any = None
 
@@ -118,6 +119,20 @@ def create_app(
                 state.run_store = RunStore(
                     max_runs=int(os.environ.get("AGENT_SKILLS_MAX_RUNS", "100"))
                 )
+            if state.checkpoint_manager is None:
+                from runtime.checkpoint_manager import (
+                    CheckpointManager,
+                    FileCheckpointStoreBackend,
+                )
+
+                checkpoints_root = (
+                    Path(os.environ.get("AGENT_SKILLS_RUNTIME_ROOT", Path.cwd()))
+                    / "artifacts"
+                    / "run_checkpoints"
+                )
+                state.checkpoint_manager = CheckpointManager(
+                    FileCheckpointStoreBackend(checkpoints_root)
+                )
             if state.async_pool is None:
                 state.async_pool = ThreadPoolExecutor(
                     max_workers=int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
@@ -131,6 +146,10 @@ def create_app(
         # Auto-build runtime from environment (same as legacy server)
         from customer_facing.neutral_api import NeutralRuntimeAPI
         from gateway.core import SkillGateway
+        from runtime.checkpoint_manager import (
+            CheckpointManager,
+            FileCheckpointStoreBackend,
+        )
         from runtime.run_store import RunStore
         from runtime.webhook import WebhookStore
 
@@ -159,6 +178,9 @@ def create_app(
         )
         state.run_store = RunStore(
             max_runs=int(os.environ.get("AGENT_SKILLS_MAX_RUNS", "100"))
+        )
+        state.checkpoint_manager = CheckpointManager(
+            FileCheckpointStoreBackend(runtime_root / "artifacts" / "run_checkpoints")
         )
         state.async_pool = ThreadPoolExecutor(
             max_workers=int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
@@ -285,6 +307,7 @@ def create_app(
             audit_mode=body.get("audit_mode"),
             execution_channel="http-async",
             run_store=state.run_store,
+            checkpoint_manager=state.checkpoint_manager,
             async_pool=state.async_pool,
             webhook_store=state.webhook_store,
         )
@@ -339,6 +362,31 @@ def create_app(
             raise HTTPException(status_code=404, detail=response["error"])
         return _unwrap_run_response(response)
 
+    @app.get("/v1/runs/{run_id}/checkpoints")
+    async def list_run_checkpoints(run_id: str) -> dict:
+        response = _get_api().list_checkpoints(
+            run_id,
+            run_store=state.run_store,
+            checkpoint_manager=state.checkpoint_manager,
+        )
+        if _is_not_found_error(response):
+            raise HTTPException(status_code=404, detail=response["error"])
+        return _unwrap_run_response(response)
+
+    @app.post("/v1/runs/{run_id}/resume")
+    async def resume_run(run_id: str, request: Request) -> dict:
+        body = await request.json() if request.headers.get("content-length") else {}
+        checkpoint_id = body.get("checkpoint_id") if isinstance(body, dict) else None
+        response = _get_api().resume_run(
+            run_id,
+            run_store=state.run_store,
+            checkpoint_manager=state.checkpoint_manager,
+            checkpoint_id=checkpoint_id if isinstance(checkpoint_id, str) else None,
+        )
+        if _is_not_found_error(response):
+            raise HTTPException(status_code=404, detail=response["error"])
+        return _unwrap_run_response(response)
+
     @app.post("/run_async", status_code=202)
     @app.post("/v1/run_async", status_code=202)
     async def run_async(request: Request) -> tuple[dict, int]:
@@ -356,6 +404,7 @@ def create_app(
             audit_mode=body.get("audit_mode"),
             execution_channel="http-async",
             run_store=state.run_store,
+            checkpoint_manager=state.checkpoint_manager,
             async_pool=state.async_pool,
             webhook_store=state.webhook_store,
         )
@@ -366,7 +415,11 @@ def create_app(
     @app.get("/run_status/{run_id}")
     @app.get("/v1/run_status/{run_id}")
     async def run_status(run_id: str) -> dict:
-        response = _get_api().get_run(run_id, run_store=state.run_store)
+        response = _get_api().get_run(
+            run_id,
+            run_store=state.run_store,
+            legacy_projection=True,
+        )
         if _is_not_found_error(response):
             raise HTTPException(status_code=404, detail=response["error"])
         return _unwrap_run_response(response)
@@ -374,7 +427,11 @@ def create_app(
     @app.post("/run_cancel/{run_id}")
     @app.post("/v1/run_cancel/{run_id}")
     async def run_cancel(run_id: str) -> dict:
-        response = _get_api().cancel_run(run_id, run_store=state.run_store)
+        response = _get_api().cancel_run(
+            run_id,
+            run_store=state.run_store,
+            legacy_projection=True,
+        )
         if _is_not_found_error(response):
             raise HTTPException(status_code=404, detail=response["error"])
         return _unwrap_run_response(response)

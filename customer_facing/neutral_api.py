@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from runtime.engine_factory import RuntimeComponents, build_runtime_components
+from runtime.execution_state import create_execution_state, mark_started
 from runtime.models import ExecutionOptions, ExecutionRequest
 from runtime.openapi_error_contract import map_runtime_error_to_http
 
@@ -27,6 +28,14 @@ def _error_response(error: Exception, *, trace_id: str | None = None) -> dict[st
 
 def _ok_response(payload: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "data": payload}
+
+
+def _project_legacy_run_status(run: dict[str, Any]) -> dict[str, Any]:
+    """Legacy projection for aliases expecting old status taxonomy."""
+    projected = dict(run)
+    if projected.get("status") == "canceled":
+        projected["status"] = "failed"
+    return projected
 
 
 def _build_step_diagnostics(result) -> dict[str, Any]:
@@ -178,6 +187,33 @@ class NeutralRuntimeAPI:
         execution_channel: str | None = None,
         trace_callback=None,
     ) -> dict[str, Any]:
+        try:
+            _, payload = self._execute_skill_with_result(
+                skill_id=skill_id,
+                inputs=inputs,
+                trace_id=trace_id,
+                include_trace=include_trace,
+                required_conformance_profile=required_conformance_profile,
+                audit_mode=audit_mode,
+                execution_channel=execution_channel,
+                trace_callback=trace_callback,
+            )
+            return payload
+        except Exception as exc:
+            return _error_response(exc, trace_id=trace_id)
+
+    def _execute_skill_with_result(
+        self,
+        *,
+        skill_id: str,
+        inputs: dict[str, Any] | None,
+        trace_id: str | None,
+        include_trace: bool,
+        required_conformance_profile: str | None,
+        audit_mode: str | None,
+        execution_channel: str | None,
+        trace_callback=None,
+    ) -> tuple[Any, dict[str, Any]]:
         request = ExecutionRequest(
             skill_id=skill_id,
             inputs=inputs or {},
@@ -188,13 +224,11 @@ class NeutralRuntimeAPI:
             trace_id=trace_id,
             channel=execution_channel,
         )
-        try:
-            result = self.components.engine.execute(
-                request,
-                trace_callback=trace_callback,
-            )
-        except Exception as exc:
-            return _error_response(exc, trace_id=trace_id)
+
+        result = self.components.engine.execute(
+            request,
+            trace_callback=trace_callback,
+        )
 
         outputs = dict(result.outputs) if isinstance(result.outputs, dict) else {}
         meta = _build_step_diagnostics(result)
@@ -225,7 +259,7 @@ class NeutralRuntimeAPI:
                 for ev in result.state.events
             ]
 
-        return payload
+        return result, payload
 
     def execute_capability(
         self,
@@ -356,6 +390,7 @@ class NeutralRuntimeAPI:
         audit_mode: str | None = None,
         execution_channel: str | None = None,
         run_store=None,
+        checkpoint_manager=None,
         async_pool=None,
         webhook_store=None,
     ) -> dict[str, Any]:
@@ -368,22 +403,69 @@ class NeutralRuntimeAPI:
         from uuid import uuid4
 
         run_id = str(uuid4())
-        run_store.create_run(
+        run = run_store.create_run_record(
             run_id=run_id,
             skill_id=skill_id,
             trace_id=trace_id,
+            status="running",
+            metadata={
+                "inputs": dict(inputs or {}),
+                "required_conformance_profile": required_conformance_profile,
+                "audit_mode": audit_mode,
+                "execution_channel": execution_channel,
+            },
         )
+
+        if checkpoint_manager is not None:
+            try:
+                state = create_execution_state(skill_id, inputs or {}, trace_id=trace_id)
+                mark_started(state)
+                checkpoint = checkpoint_manager.save_checkpoint(
+                    run_id=run_id,
+                    state=state,
+                    step_id=None,
+                    kind="run_started",
+                )
+                run_store.patch_run(
+                    run_id,
+                    {
+                        "checkpoint_head": checkpoint.checkpoint_id,
+                    },
+                )
+                run = run_store.get_run(run_id) or run
+            except Exception:
+                pass
 
         def _background():
             try:
-                result_payload = self.execute_skill(
-                    skill_id,
-                    inputs,
+                result, result_payload = self._execute_skill_with_result(
+                    skill_id=skill_id,
+                    inputs=inputs,
                     trace_id=trace_id,
+                    include_trace=False,
                     required_conformance_profile=required_conformance_profile,
                     audit_mode=audit_mode,
                     execution_channel=execution_channel,
                 )
+
+                if checkpoint_manager is not None:
+                    try:
+                        checkpoint = checkpoint_manager.save_checkpoint(
+                            run_id=run_id,
+                            state=result.state,
+                            step_id=result.state.current_step,
+                            kind="run_finished",
+                        )
+                        run_store.patch_run(
+                            run_id,
+                            {
+                                "checkpoint_head": checkpoint.checkpoint_id,
+                                "current_step_id": result.state.current_step,
+                            },
+                        )
+                    except Exception:
+                        pass
+
                 run_store.complete_run(run_id, result_payload)
                 if webhook_store is not None:
                     try:
@@ -403,6 +485,34 @@ class NeutralRuntimeAPI:
                     except Exception:
                         pass
             except Exception as exc:
+                if checkpoint_manager is not None:
+                    try:
+                        existing_run = run_store.get_run(run_id)
+                        fail_state = create_execution_state(
+                            skill_id,
+                            inputs or {},
+                            trace_id=trace_id,
+                        )
+                        fail_state.status = "failed"
+                        checkpoint = checkpoint_manager.save_checkpoint(
+                            run_id=run_id,
+                            state=fail_state,
+                            step_id=(
+                                existing_run.get("current_step_id")
+                                if isinstance(existing_run, dict)
+                                else None
+                            ),
+                            kind="run_failed",
+                        )
+                        run_store.patch_run(
+                            run_id,
+                            {
+                                "checkpoint_head": checkpoint.checkpoint_id,
+                            },
+                        )
+                    except Exception:
+                        pass
+
                 run_store.fail_run(run_id, str(exc))
                 if webhook_store is not None:
                     try:
@@ -434,23 +544,125 @@ class NeutralRuntimeAPI:
             "skill_id": skill_id,
             "status": "running",
             "trace_id": trace_id,
+            "checkpoint_head": run.get("checkpoint_head"),
         }
 
-    def get_run(self, run_id: str, *, run_store=None) -> dict[str, Any]:
+    def get_run(
+        self,
+        run_id: str,
+        *,
+        run_store=None,
+        legacy_projection: bool = False,
+    ) -> dict[str, Any]:
         if run_store is None:
             return _error_response(RuntimeError("RunStore not configured"))
         run = run_store.get_run(run_id)
         if run is None:
             return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+        if legacy_projection:
+            run = _project_legacy_run_status(run)
         return _ok_response(run)
 
-    def cancel_run(self, run_id: str, *, run_store=None) -> dict[str, Any]:
+    def cancel_run(
+        self,
+        run_id: str,
+        *,
+        run_store=None,
+        legacy_projection: bool = False,
+    ) -> dict[str, Any]:
         if run_store is None:
             return _error_response(RuntimeError("RunStore not configured"))
         run = run_store.cancel_run(run_id)
         if run is None:
             return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+        if legacy_projection:
+            run = _project_legacy_run_status(run)
         return _ok_response(run)
+
+    def list_checkpoints(
+        self,
+        run_id: str,
+        *,
+        run_store=None,
+        checkpoint_manager=None,
+    ) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        if checkpoint_manager is None:
+            return _error_response(RuntimeError("CheckpointManager not configured"))
+
+        run = run_store.get_run(run_id)
+        if run is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+
+        checkpoints = checkpoint_manager.list_checkpoints(run_id)
+        return _ok_response(
+            {
+                "run_id": run_id,
+                "checkpoints": checkpoints,
+                "total": len(checkpoints),
+                "checkpoint_head": run.get("checkpoint_head"),
+            }
+        )
+
+    def resume_run(
+        self,
+        run_id: str,
+        *,
+        run_store=None,
+        checkpoint_manager=None,
+        checkpoint_id: str | None = None,
+    ) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        if checkpoint_manager is None:
+            return _error_response(RuntimeError("CheckpointManager not configured"))
+
+        run = run_store.get_run(run_id)
+        if run is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+
+        selected_checkpoint_id = checkpoint_id or run.get("checkpoint_head")
+        if not isinstance(selected_checkpoint_id, str) or not selected_checkpoint_id:
+            return _error_response(
+                RuntimeError(
+                    f"Run '{run_id}' has no checkpoint to resume from"
+                )
+            )
+
+        checkpoint = checkpoint_manager.load_checkpoint(
+            run_id=run_id,
+            checkpoint_id=selected_checkpoint_id,
+        )
+        if checkpoint is None:
+            return _error_response(
+                RuntimeError(
+                    f"Checkpoint '{selected_checkpoint_id}' not found for run '{run_id}'"
+                )
+            )
+
+        try:
+            updated = run_store.resume_run(
+                run_id,
+                resume_from_checkpoint_id=selected_checkpoint_id,
+            )
+        except Exception as exc:
+            return _error_response(exc)
+
+        if updated is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+
+        # Slice 2 note: execution continuation from checkpoint is integrated in next slice.
+        return _ok_response(
+            {
+                "run": updated,
+                "resume": {
+                    "accepted": True,
+                    "mode": "state_only",
+                    "checkpoint_id": selected_checkpoint_id,
+                },
+            }
+        )
 
     def list_runs(
         self,
