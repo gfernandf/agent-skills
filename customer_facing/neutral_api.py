@@ -1016,8 +1016,10 @@ class NeutralRuntimeAPI:
                 RuntimeError(f"Run '{run_id}' is missing skill metadata for replay")
             )
 
+        from uuid import uuid4
+
         source_trace_id = source_run.get("trace_id") if isinstance(source_run.get("trace_id"), str) else restored_state.trace_id
-        replay_run_id = f"replay_{run_id}"
+        replay_run_id = f"replay_{run_id}_{uuid4().hex[:12]}"
         replay_run = run_store.replay_run(
             replay_run_id,
             skill_id=source_skill_id,

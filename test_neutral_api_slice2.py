@@ -366,6 +366,61 @@ def test_replay_run_executes_from_checkpoint() -> None:
     assert run.get("metadata", {}).get("source_run_id") == "r-source"
 
 
+def test_replay_run_uses_unique_run_ids() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    source_state = create_execution_state("x.y", {"n": 1}, trace_id="t-13")
+    mark_started(source_state)
+    source_state.vars["mid"] = "cached"
+    record = checkpoints.save_checkpoint(
+        run_id="r-replay-unique",
+        state=source_state,
+        step_id="s-1",
+        kind="run_finished",
+    )
+    store.create_run_record(
+        run_id="r-replay-unique",
+        skill_id="x.y",
+        trace_id="t-13",
+        status="completed",
+        checkpoint_head=record.checkpoint_id,
+        metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
+    )
+
+    def _fake_execute(*, skill_id, inputs, trace_id, initial_state=None, **_kwargs):
+        assert initial_state is not None
+        initial_state.outputs["ok"] = True
+        mark_finished(initial_state, "completed")
+        return SimpleNamespace(state=initial_state), {
+            "skill_id": skill_id,
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": trace_id,
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        first = api.replay_run(
+            "r-replay-unique",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+        second = api.replay_run(
+            "r-replay-unique",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+
+    assert first["ok"] is True
+    assert second["ok"] is True
+    assert first["data"]["run"]["run_id"] != second["data"]["run"]["run_id"]
+
+
 def test_fork_run_creates_new_pending_run() -> None:
     api = _build_api_without_init()
     store = RunStoreV2(max_runs=10)
