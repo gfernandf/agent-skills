@@ -401,7 +401,10 @@ def apply_execution_reliability_confidence_calibration(
 
     Adds ``execution_reliability_adjustment`` to outputs when score is adjusted.
     """
-    if skill_id != "decision.make":
+    # Reuse the same fallback-aware confidence policy for direct execution of
+    # the decision justification capability to keep behavior consistent across
+    # skill and capability entrypoints.
+    if skill_id not in {"decision.make", "decision.option.justify"}:
         return outputs
     if not isinstance(outputs, dict) or not isinstance(meta, dict):
         return outputs
@@ -524,9 +527,19 @@ def execute_capability(
     _, cap_loader, cap_executor = _get_components()
     cap = cap_loader.get_capability(capability_id)
     raw = cap_executor.execute(cap, inputs)
+    meta: dict[str, Any] = {}
     if isinstance(raw, tuple):
-        raw = raw[0]
-    return dict(raw) if isinstance(raw, dict) else {"result": raw}
+        raw, raw_meta = raw
+        if isinstance(raw_meta, dict):
+            meta = raw_meta
+
+    outputs = dict(raw) if isinstance(raw, dict) else {"result": raw}
+    outputs = apply_execution_reliability_confidence_calibration(
+        skill_id=capability_id,
+        outputs=outputs,
+        meta=meta,
+    )
+    return outputs
 
 
 def list_capabilities() -> list[dict[str, Any]]:

@@ -251,6 +251,12 @@ class NeutralRuntimeAPI:
         else:
             outputs, meta = result, {}
 
+        outputs = _calibrate_execution_confidence(
+            skill_id=capability_id,
+            outputs=outputs if isinstance(outputs, dict) else {},
+            meta=meta if isinstance(meta, dict) else {},
+        )
+
         return {
             "capability_id": capability_id,
             "outputs": outputs,
