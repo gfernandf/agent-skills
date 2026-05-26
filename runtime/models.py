@@ -293,6 +293,7 @@ class ExecutionRequest:
     options: ExecutionOptions = field(default_factory=ExecutionOptions)
     trace_id: str | None = None
     channel: str | None = None
+    initial_state: ExecutionState | None = None
 
 
 @dataclass

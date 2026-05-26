@@ -212,6 +212,7 @@ class NeutralRuntimeAPI:
         required_conformance_profile: str | None,
         audit_mode: str | None,
         execution_channel: str | None,
+        initial_state=None,
         trace_callback=None,
     ) -> tuple[Any, dict[str, Any]]:
         request = ExecutionRequest(
@@ -223,6 +224,7 @@ class NeutralRuntimeAPI:
             ),
             trace_id=trace_id,
             channel=execution_channel,
+            initial_state=initial_state,
         )
 
         result = self.components.engine.execute(
@@ -612,6 +614,8 @@ class NeutralRuntimeAPI:
         run_store=None,
         checkpoint_manager=None,
         checkpoint_id: str | None = None,
+        async_pool=None,
+        webhook_store=None,
     ) -> dict[str, Any]:
         if run_store is None:
             return _error_response(RuntimeError("RunStore not configured"))
@@ -641,6 +645,37 @@ class NeutralRuntimeAPI:
                 )
             )
 
+        restored_state = checkpoint_manager.load_state(
+            run_id=run_id,
+            checkpoint_id=selected_checkpoint_id,
+        )
+        if restored_state is None:
+            return _error_response(
+                RuntimeError(
+                    f"Checkpoint state '{selected_checkpoint_id}' not found for run '{run_id}'"
+                )
+            )
+
+        metadata = run.get("metadata") if isinstance(run.get("metadata"), dict) else {}
+        skill_id = run.get("skill_id")
+        if not isinstance(skill_id, str) or not skill_id:
+            return _error_response(
+                RuntimeError(f"Run '{run_id}' is missing skill metadata for resume")
+            )
+        inputs = metadata.get("inputs") if isinstance(metadata.get("inputs"), dict) else dict(restored_state.inputs)
+        trace_id = run.get("trace_id") if isinstance(run.get("trace_id"), str) else restored_state.trace_id
+        required_conformance_profile = (
+            metadata.get("required_conformance_profile")
+            if isinstance(metadata.get("required_conformance_profile"), str)
+            else None
+        )
+        audit_mode = metadata.get("audit_mode") if isinstance(metadata.get("audit_mode"), str) else None
+        execution_channel = (
+            metadata.get("execution_channel")
+            if isinstance(metadata.get("execution_channel"), str)
+            else "http-resume"
+        )
+
         try:
             updated = run_store.resume_run(
                 run_id,
@@ -652,13 +687,117 @@ class NeutralRuntimeAPI:
         if updated is None:
             return _error_response(RuntimeError(f"Run '{run_id}' not found"))
 
-        # Slice 2 note: execution continuation from checkpoint is integrated in next slice.
+        try:
+            resumed_checkpoint = checkpoint_manager.save_checkpoint(
+                run_id=run_id,
+                state=restored_state,
+                step_id=restored_state.current_step,
+                kind="run_resumed",
+            )
+            updated = run_store.patch_run(
+                run_id,
+                {
+                    "checkpoint_head": resumed_checkpoint.checkpoint_id,
+                    "current_step_id": restored_state.current_step,
+                },
+            ) or updated
+        except Exception:
+            pass
+
+        def _background_resume() -> None:
+            try:
+                result, result_payload = self._execute_skill_with_result(
+                    skill_id=skill_id,
+                    inputs=inputs,
+                    trace_id=trace_id,
+                    include_trace=False,
+                    required_conformance_profile=required_conformance_profile,
+                    audit_mode=audit_mode,
+                    execution_channel=execution_channel,
+                    initial_state=restored_state,
+                )
+
+                try:
+                    checkpoint_record = checkpoint_manager.save_checkpoint(
+                        run_id=run_id,
+                        state=result.state,
+                        step_id=result.state.current_step,
+                        kind="run_finished",
+                    )
+                    run_store.patch_run(
+                        run_id,
+                        {
+                            "checkpoint_head": checkpoint_record.checkpoint_id,
+                            "current_step_id": result.state.current_step,
+                        },
+                    )
+                except Exception:
+                    pass
+
+                run_store.complete_run(run_id, result_payload)
+                if webhook_store is not None:
+                    try:
+                        webhook_store.notify(
+                            "run.completed",
+                            {
+                                "run_id": run_id,
+                                "skill_id": skill_id,
+                                "status": "completed",
+                                "trace_id": trace_id,
+                                "resumed_from_checkpoint_id": selected_checkpoint_id,
+                            },
+                        )
+                    except Exception:
+                        pass
+            except Exception as exc:
+                try:
+                    checkpoint_record = checkpoint_manager.save_checkpoint(
+                        run_id=run_id,
+                        state=restored_state,
+                        step_id=restored_state.current_step,
+                        kind="run_failed",
+                    )
+                    run_store.patch_run(
+                        run_id,
+                        {
+                            "checkpoint_head": checkpoint_record.checkpoint_id,
+                            "current_step_id": restored_state.current_step,
+                        },
+                    )
+                except Exception:
+                    pass
+
+                run_store.fail_run(run_id, str(exc))
+                if webhook_store is not None:
+                    try:
+                        webhook_store.notify(
+                            "run.failed",
+                            {
+                                "run_id": run_id,
+                                "skill_id": skill_id,
+                                "status": "failed",
+                                "error": str(exc),
+                                "trace_id": trace_id,
+                                "resumed_from_checkpoint_id": selected_checkpoint_id,
+                            },
+                        )
+                    except Exception:
+                        pass
+
+        if async_pool is not None:
+            async_pool.submit(_background_resume)
+        else:
+            import threading
+
+            thread = threading.Thread(target=_background_resume, daemon=True)
+            thread.start()
+
         return _ok_response(
             {
                 "run": updated,
                 "resume": {
                     "accepted": True,
-                    "mode": "state_only",
+                    "mode": "checkpoint_resume",
                     "checkpoint_id": selected_checkpoint_id,
                 },
             }

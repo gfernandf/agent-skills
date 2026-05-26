@@ -637,6 +637,8 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     run_store=store,
                     checkpoint_manager=self.checkpoint_manager,
                     checkpoint_id=checkpoint_id,
+                    async_pool=self._async_pool,
+                    webhook_store=self.webhook_store,
                 )
                 status = 200
                 if _is_not_found_error(response):

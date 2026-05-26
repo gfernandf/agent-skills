@@ -93,6 +93,8 @@ class Scheduler:
         context,
         step_executor: Callable,
         trace_callback=None,
+        *,
+        precompleted_step_ids: set[str] | None = None,
     ) -> List[Any]:
         if not plan:
             return []
@@ -148,7 +150,9 @@ class Scheduler:
         state_lock = _StateLock()
         # Attach lock to context so engine can use it around state mutations
         context.state_lock = state_lock
-        completed: set[str] = set()
+        completed: set[str] = {
+            sid for sid in (precompleted_step_ids or set()) if sid in step_map
+        }
         failed: set[str] = set()
         results: list = []
         running: set[str] = set()

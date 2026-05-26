@@ -60,18 +60,40 @@ def test_list_checkpoints_and_resume_state_only() -> None:
         run_store=store,
         checkpoint_manager=checkpoints,
     )
-    resumed = api.resume_run(
-        "r-check",
-        run_store=store,
-        checkpoint_manager=checkpoints,
-    )
+    def _fake_execute(*, skill_id, inputs, trace_id, initial_state=None, **_kwargs):
+        assert initial_state is not None
+        initial_state.outputs["ok"] = True
+        mark_finished(initial_state, "completed")
+        return SimpleNamespace(state=initial_state), {
+            "skill_id": skill_id,
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": trace_id,
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        resumed = api.resume_run(
+            "r-check",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run("r-check")
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
 
     assert listed["ok"] is True
     assert listed["data"]["total"] == 1
     assert listed["data"]["checkpoint_head"] == record.checkpoint_id
     assert resumed["ok"] is True
-    assert resumed["data"]["resume"]["mode"] == "state_only"
-    assert store.get_run("r-check")["status"] == "running"
+    assert resumed["data"]["resume"]["mode"] == "checkpoint_resume"
+    assert store.get_run("r-check")["status"] == "completed"
 
 
 def test_execute_skill_async_updates_checkpoint_head() -> None:
@@ -116,3 +138,65 @@ def test_execute_skill_async_updates_checkpoint_head() -> None:
     assert run.get("status") == "completed"
     assert isinstance(run.get("checkpoint_head"), str)
     assert run["checkpoint_head"]
+
+
+def test_resume_run_executes_from_checkpoint() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    state = create_execution_state("x.y", {"n": 1}, trace_id="t-4")
+    mark_started(state)
+    state.vars["mid"] = "cached"
+
+    store.create_run_record(
+        run_id="r-resume",
+        skill_id="x.y",
+        trace_id="t-4",
+        status="waiting_for_human",
+        metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
+    )
+    record = checkpoints.save_checkpoint(
+        run_id="r-resume",
+        state=state,
+        step_id="s-1",
+        kind="run_waiting",
+    )
+    store.patch_run("r-resume", {"checkpoint_head": record.checkpoint_id})
+
+    def _fake_execute(*, skill_id, inputs, trace_id, initial_state=None, **_kwargs):
+        assert initial_state is not None
+        assert initial_state.vars.get("mid") == "cached"
+        initial_state.outputs["ok"] = True
+        mark_finished(initial_state, "completed")
+        return SimpleNamespace(state=initial_state), {
+            "skill_id": skill_id,
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": trace_id,
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        response = api.resume_run(
+            "r-resume",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+        assert response["ok"] is True
+        assert response["data"]["resume"]["mode"] == "checkpoint_resume"
+
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run("r-resume")
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
+
+    run = store.get_run("r-resume")
+    assert isinstance(run, dict)
+    assert run.get("status") == "completed"
+    assert run.get("resume_from_checkpoint_id") == record.checkpoint_id
+    assert isinstance(run.get("checkpoint_head"), str)

@@ -379,7 +379,23 @@ class ExecutionEngine:
         execution_error: Exception | None = None
 
         try:
-            state = create_execution_state(skill.id, request.inputs, trace_id=trace_id)
+            state = request.initial_state
+            resumed_step_ids: set[str] = set()
+            if state is None:
+                state = create_execution_state(skill.id, request.inputs, trace_id=trace_id)
+            else:
+                if state.skill_id != skill.id:
+                    raise ValueError(
+                        f"Initial state skill_id '{state.skill_id}' does not match request skill_id '{skill.id}'."
+                    )
+                state.inputs = dict(request.inputs)
+                state.trace_id = trace_id
+                state.finished_at = None
+                resumed_step_ids = {
+                    step_id
+                    for step_id, result in state.step_results.items()
+                    if result.status in ("completed", "degraded", "skipped")
+                }
 
             context = ExecutionContext(
                 state=state,
@@ -408,11 +424,19 @@ class ExecutionEngine:
                 lineage=list(context.lineage),
             )
 
-            emit_event(
-                state,
-                "skill_start",
-                f"Executing skill '{skill.id}'.",
-            )
+            if resumed_step_ids:
+                emit_event(
+                    state,
+                    "skill_resumed",
+                    f"Resuming skill '{skill.id}' from checkpoint.",
+                    data={"precompleted_steps": sorted(resumed_step_ids)},
+                )
+            else:
+                emit_event(
+                    state,
+                    "skill_start",
+                    f"Executing skill '{skill.id}'.",
+                )
 
             if trace_callback:
                 trace_callback(state.events[-1])
@@ -433,7 +457,11 @@ class ExecutionEngine:
                 self.scheduler.max_workers = opts_workers
 
             results = self.scheduler.schedule(
-                plan, context, step_executor, trace_callback
+                plan,
+                context,
+                step_executor,
+                trace_callback,
+                precompleted_step_ids=resumed_step_ids,
             )
             for result in results:
                 record_step_result(state, result)

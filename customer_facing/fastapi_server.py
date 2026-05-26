@@ -382,6 +382,8 @@ def create_app(
             run_store=state.run_store,
             checkpoint_manager=state.checkpoint_manager,
             checkpoint_id=checkpoint_id if isinstance(checkpoint_id, str) else None,
+            async_pool=state.async_pool,
+            webhook_store=state.webhook_store,
         )
         if _is_not_found_error(response):
             raise HTTPException(status_code=404, detail=response["error"])

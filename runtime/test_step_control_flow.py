@@ -32,12 +32,14 @@ from runtime.step_control import (
     ScatterConfig,
 )
 from runtime.execution_engine import ExecutionEngine
+from runtime.execution_state import create_execution_state, mark_started, record_step_result
 from runtime.models import (
     CapabilitySpec,
     ExecutionRequest,
     FieldSpec,
     SkillSpec,
     StepSpec,
+    StepResult,
 )
 
 # ---------------------------------------------------------------------------
@@ -590,6 +592,58 @@ def test_engine_no_control_flow():
     result = engine.execute(request)
     _test("engine: no control flow → completed", result.status == "completed")
     _test("engine: no control flow → single call", executor.call_count == 1)
+
+
+def test_engine_resume_skips_completed_steps():
+    step1 = StepSpec(
+        id="s1",
+        uses="test.cap",
+        input_mapping={"text": "inputs.text"},
+        output_mapping={"result": "vars.mid"},
+        config={},
+    )
+    step2 = StepSpec(
+        id="s2",
+        uses="test.cap",
+        input_mapping={"text": "vars.mid"},
+        output_mapping={"result": "outputs.result"},
+        config={"depends_on": ["s1"]},
+    )
+    skill = _make_skill(steps=[step1, step2])
+    executor = _CountingExecutor(results=[{"result": "final"}])
+    engine = _build_engine(executor=executor, skill=skill)
+
+    state = create_execution_state("test.skill", {"text": "hello"}, trace_id="trace-1")
+    mark_started(state)
+    state.vars["mid"] = "cached-mid"
+    state.written_targets.add("vars.mid")
+    record_step_result(
+        state,
+        StepResult(
+            step_id="s1",
+            uses="test.cap",
+            status="completed",
+            resolved_input={"text": "hello"},
+            produced_output={"result": "cached-mid"},
+            started_at=None,
+            finished_at=None,
+        ),
+    )
+
+    request = ExecutionRequest(
+        skill_id="test.skill",
+        inputs={"text": "hello"},
+        trace_id="trace-1",
+        initial_state=state,
+    )
+    result = engine.execute(request)
+    _test("engine: resume → completed", result.status == "completed")
+    _test("engine: resume skips prior step", executor.call_count == 1)
+    _test("engine: resume final output", result.outputs.get("result") == "final")
+    _test(
+        "engine: resume emits resumed event",
+        any(ev.type == "skill_resumed" for ev in result.state.events),
+    )
 
 
 # ═══════════════════════════════════════════════════════════════

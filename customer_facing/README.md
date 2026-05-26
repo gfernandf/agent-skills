@@ -57,7 +57,7 @@ Notes:
 
 - The HTTP request timeout does not cancel a run once accepted.
 - Final async result payload preserves the same output/meta diagnostics shape as sync execution.
-- `resume` in this slice is `state_only` acceptance (status/lifecycle resume); full checkpoint continuation is implemented in next slice.
+- `resume` now performs checkpoint-backed continuation and only re-executes the remaining steps after the restored checkpoint state.
 
 ## Webhook callback (optional)
 

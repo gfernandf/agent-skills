@@ -76,7 +76,7 @@ Checkpoint and resume contract:
 
 - `GET /v1/runs/{run_id}/checkpoints` returns checkpoint list + `checkpoint_head`.
 - `POST /v1/runs/{run_id}/resume` accepts optional `checkpoint_id`.
-- Current slice behavior: resume mode is `state_only` (run lifecycle/state acceptance); full execution continuation from checkpoint is scheduled for the next slice.
+- Current slice behavior: resume mode is `checkpoint_resume`; the runtime restores the checkpointed state and continues execution from the remaining steps.
 
 Security model (configurable):
 

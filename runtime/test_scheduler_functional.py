@@ -189,10 +189,54 @@ def test_explicit_empty_enables_parallelism():
     print("test_explicit_empty_enables_parallelism PASSED")
 
 
+def test_precompleted_steps_enable_resume():
+    steps = [
+        make_step("A"),
+        make_step("B", depends_on=["A"]),
+    ]
+    executed = []
+
+    def tracking_executor(step, skill_id, context, trace_callback):
+        executed.append(step.id)
+        return StepResult(
+            step_id=step.id,
+            uses=step.uses,
+            status="completed",
+            resolved_input={},
+            produced_output={"out": step.id},
+            started_at=None,
+            finished_at=None,
+        )
+
+    context = ExecutionContext(
+        state=ExecutionState(
+            skill_id="test",
+            inputs={},
+            vars={},
+            outputs={},
+            step_results={},
+            written_targets=set(),
+            events=[],
+        ),
+        options=ExecutionOptions(fail_fast=True),
+    )
+    scheduler = Scheduler(max_workers=2)
+    results = scheduler.schedule(
+        steps,
+        context,
+        tracking_executor,
+        precompleted_step_ids={"A"},
+    )
+    assert [r.step_id for r in results] == ["B"]
+    assert executed == ["B"]
+    print("test_precompleted_steps_enable_resume PASSED")
+
+
 if __name__ == "__main__":
     test_parallel_and_dependencies()
     test_fail_fast()
     test_sequential_fallback()
     test_implicit_sequential_no_depends_on()
     test_explicit_empty_enables_parallelism()
+    test_precompleted_steps_enable_resume()
     print("All Scheduler functional tests PASSED.")
