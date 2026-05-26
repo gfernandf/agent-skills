@@ -7,7 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from runtime.engine_factory import RuntimeComponents, build_runtime_components
-from runtime.errors import SafetyConfirmationRequiredError
+from runtime.errors import (
+    CheckpointNotFoundError,
+    RunNotFoundError,
+    SafetyConfirmationRequiredError,
+)
 from runtime.execution_state import create_execution_state, mark_started
 from runtime.models import ExecutionOptions, ExecutionRequest
 from runtime.openapi_error_contract import map_runtime_error_to_http
@@ -632,7 +636,7 @@ class NeutralRuntimeAPI:
             return _error_response(RuntimeError("RunStore not configured"))
         run = run_store.get_run(run_id)
         if run is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
         if legacy_projection:
             run = _project_legacy_run_status(run)
         return _ok_response(run)
@@ -648,7 +652,7 @@ class NeutralRuntimeAPI:
             return _error_response(RuntimeError("RunStore not configured"))
         run = run_store.cancel_run(run_id)
         if run is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
         if legacy_projection:
             run = _project_legacy_run_status(run)
         return _ok_response(run)
@@ -667,7 +671,7 @@ class NeutralRuntimeAPI:
 
         run = run_store.get_run(run_id)
         if run is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
 
         checkpoints = checkpoint_manager.list_checkpoints(run_id)
         return _ok_response(
@@ -697,7 +701,7 @@ class NeutralRuntimeAPI:
 
         run = run_store.get_run(run_id)
         if run is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
 
         selected_checkpoint_id = checkpoint_id or run.get("checkpoint_head")
         if not isinstance(selected_checkpoint_id, str) or not selected_checkpoint_id:
@@ -713,7 +717,7 @@ class NeutralRuntimeAPI:
         )
         if checkpoint is None:
             return _error_response(
-                RuntimeError(
+                CheckpointNotFoundError(
                     f"Checkpoint '{selected_checkpoint_id}' not found for run '{run_id}'"
                 )
             )
@@ -724,7 +728,7 @@ class NeutralRuntimeAPI:
         )
         if restored_state is None:
             return _error_response(
-                RuntimeError(
+                CheckpointNotFoundError(
                     f"Checkpoint state '{selected_checkpoint_id}' not found for run '{run_id}'"
                 )
             )
@@ -768,7 +772,7 @@ class NeutralRuntimeAPI:
             return _error_response(exc)
 
         if updated is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
 
         try:
             resumed_checkpoint = checkpoint_manager.save_checkpoint(
@@ -903,7 +907,7 @@ class NeutralRuntimeAPI:
             return _error_response(RuntimeError("RunStore not configured"))
         run = run_store.get_run(run_id)
         if run is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
         if run.get("status") != "waiting_for_human":
             return _error_response(
                 RuntimeError(f"Run '{run_id}' is not waiting for human approval")
@@ -925,7 +929,7 @@ class NeutralRuntimeAPI:
             resume_from_checkpoint_id=run.get("checkpoint_head"),
         )
         if updated is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
 
         return self.resume_run(
             run_id,
@@ -954,7 +958,7 @@ class NeutralRuntimeAPI:
             notes=notes,
         )
         if run is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
         if legacy_projection:
             run = _project_legacy_run_status(run)
         return _ok_response(run)
@@ -976,7 +980,7 @@ class NeutralRuntimeAPI:
 
         source_run = run_store.get_run(run_id)
         if source_run is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
 
         selected_checkpoint_id = checkpoint_id or source_run.get("checkpoint_head")
         if not isinstance(selected_checkpoint_id, str) or not selected_checkpoint_id:
@@ -990,7 +994,7 @@ class NeutralRuntimeAPI:
         )
         if checkpoint is None:
             return _error_response(
-                RuntimeError(
+                CheckpointNotFoundError(
                     f"Checkpoint '{selected_checkpoint_id}' not found for run '{run_id}'"
                 )
             )
@@ -1001,7 +1005,7 @@ class NeutralRuntimeAPI:
         )
         if restored_state is None:
             return _error_response(
-                RuntimeError(
+                CheckpointNotFoundError(
                     f"Checkpoint state '{selected_checkpoint_id}' not found for run '{run_id}'"
                 )
             )
@@ -1138,7 +1142,7 @@ class NeutralRuntimeAPI:
 
         source_run = run_store.get_run(run_id)
         if source_run is None:
-            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+            return _error_response(RunNotFoundError(f"Run '{run_id}' not found"))
 
         selected_checkpoint_id = checkpoint_id or source_run.get("checkpoint_head")
         if not isinstance(selected_checkpoint_id, str) or not selected_checkpoint_id:
@@ -1152,7 +1156,7 @@ class NeutralRuntimeAPI:
         )
         if checkpoint is None:
             return _error_response(
-                ValueError(
+                CheckpointNotFoundError(
                     f"Checkpoint '{selected_checkpoint_id}' not found for run '{run_id}'"
                 )
             )
@@ -1163,7 +1167,7 @@ class NeutralRuntimeAPI:
         )
         if restored_state is None:
             return _error_response(
-                ValueError(
+                CheckpointNotFoundError(
                     f"Checkpoint state '{selected_checkpoint_id}' not found for run '{run_id}'"
                 )
             )

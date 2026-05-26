@@ -36,6 +36,22 @@ def _is_not_found_error(response: Any) -> bool:
     return isinstance(error, dict) and error.get("code") == "not_found"
 
 
+def _error_status_from_response(response: Any) -> int | None:
+    if not isinstance(response, dict):
+        return None
+    error = response.get("error")
+    if not isinstance(error, dict):
+        return None
+    status = error.get("status")
+    if isinstance(status, int):
+        return status
+    if isinstance(status, str) and status.isdigit():
+        return int(status)
+    if error.get("code") == "not_found":
+        return 404
+    return 500
+
+
 def _unwrap_run_response(response: Any) -> Any:
     if not isinstance(response, dict):
         return response
@@ -219,6 +235,13 @@ def create_app(
             raise HTTPException(status_code=503, detail="Gateway not initialized")
         return state.gateway
 
+    def _unwrap_or_raise(response: Any) -> Any:  # type: ignore[no-untyped-def]
+        status = _error_status_from_response(response)
+        if status is not None:
+            detail = response.get("error") if isinstance(response, dict) else response
+            raise HTTPException(status_code=status, detail=detail)
+        return _unwrap_run_response(response)
+
     # ── Health ──────────────────────────────────────────────────
 
     @app.get("/v1/health")
@@ -311,9 +334,7 @@ def create_app(
             async_pool=state.async_pool,
             webhook_store=state.webhook_store,
         )
-        if "error" in response:
-            raise HTTPException(status_code=500, detail=response["error"])
-        return response
+        return _unwrap_or_raise(response)
 
     @app.post("/v1/skills/discover")
     async def discover_skills(request: Request) -> dict:
@@ -344,23 +365,17 @@ def create_app(
             offset=offset,
             status=status,
         )
-        if "error" in response:
-            raise HTTPException(status_code=500, detail=response["error"])
-        return response
+        return _unwrap_or_raise(response)
 
     @app.get("/v1/runs/{run_id}")
     async def get_run(run_id: str) -> dict:
         response = _get_api().get_run(run_id, run_store=state.run_store)
-        if _is_not_found_error(response):
-            raise HTTPException(status_code=404, detail=response["error"])
-        return _unwrap_run_response(response)
+        return _unwrap_or_raise(response)
 
     @app.post("/v1/runs/{run_id}/cancel")
     async def cancel_run(run_id: str) -> dict:
         response = _get_api().cancel_run(run_id, run_store=state.run_store)
-        if _is_not_found_error(response):
-            raise HTTPException(status_code=404, detail=response["error"])
-        return _unwrap_run_response(response)
+        return _unwrap_or_raise(response)
 
     @app.get("/v1/runs/{run_id}/checkpoints")
     async def list_run_checkpoints(run_id: str) -> dict:
@@ -369,9 +384,7 @@ def create_app(
             run_store=state.run_store,
             checkpoint_manager=state.checkpoint_manager,
         )
-        if _is_not_found_error(response):
-            raise HTTPException(status_code=404, detail=response["error"])
-        return _unwrap_run_response(response)
+        return _unwrap_or_raise(response)
 
     @app.post("/v1/runs/{run_id}/resume")
     async def resume_run(run_id: str, request: Request) -> dict:
@@ -385,9 +398,7 @@ def create_app(
             async_pool=state.async_pool,
             webhook_store=state.webhook_store,
         )
-        if _is_not_found_error(response):
-            raise HTTPException(status_code=404, detail=response["error"])
-        return _unwrap_run_response(response)
+        return _unwrap_or_raise(response)
 
     @app.post("/v1/runs/{run_id}/approve")
     async def approve_run(run_id: str, request: Request) -> dict:
@@ -401,9 +412,7 @@ def create_app(
             async_pool=state.async_pool,
             webhook_store=state.webhook_store,
         )
-        if _is_not_found_error(response):
-            raise HTTPException(status_code=404, detail=response["error"])
-        return _unwrap_run_response(response)
+        return _unwrap_or_raise(response)
 
     @app.post("/v1/runs/{run_id}/deny")
     async def deny_run(run_id: str, request: Request) -> dict:
@@ -414,9 +423,7 @@ def create_app(
             notes=body.get("notes") if isinstance(body, dict) else None,
             run_store=state.run_store,
         )
-        if _is_not_found_error(response):
-            raise HTTPException(status_code=404, detail=response["error"])
-        return _unwrap_run_response(response)
+        return _unwrap_or_raise(response)
 
     @app.post("/v1/runs/{run_id}/replay")
     async def replay_run(run_id: str, request: Request) -> dict:
@@ -430,9 +437,7 @@ def create_app(
             async_pool=state.async_pool,
             webhook_store=state.webhook_store,
         )
-        if _is_not_found_error(response):
-            raise HTTPException(status_code=404, detail=response["error"])
-        return _unwrap_run_response(response)
+        return _unwrap_or_raise(response)
 
     @app.post("/v1/runs/{run_id}/fork")
     async def fork_run(run_id: str, request: Request) -> dict:
@@ -444,9 +449,7 @@ def create_app(
             checkpoint_manager=state.checkpoint_manager,
             checkpoint_id=checkpoint_id if isinstance(checkpoint_id, str) else None,
         )
-        if _is_not_found_error(response):
-            raise HTTPException(status_code=404, detail=response["error"])
-        return _unwrap_run_response(response)
+        return _unwrap_or_raise(response)
 
     @app.post("/run_async", status_code=202)
     @app.post("/v1/run_async", status_code=202)

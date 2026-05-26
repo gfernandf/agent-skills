@@ -62,6 +62,14 @@ class CapabilityNotFoundError(RuntimeErrorBase):
     """Raised when a requested capability cannot be found."""
 
 
+class RunNotFoundError(RuntimeErrorBase):
+    """Raised when a requested async run cannot be found."""
+
+
+class CheckpointNotFoundError(RuntimeErrorBase):
+    """Raised when a requested run checkpoint cannot be found."""
+
+
 class InvalidSkillSpecError(RuntimeErrorBase):
     """Raised when a skill source file cannot be normalized into a valid SkillSpec."""
 

@@ -460,3 +460,75 @@ def test_fork_run_requires_checkpoint_head_or_checkpoint_id() -> None:
     )
 
     assert response["error"]["code"] == "invalid_request"
+
+
+def test_resume_run_missing_run_returns_not_found() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    response = api.resume_run(
+        "r-does-not-exist",
+        run_store=store,
+        checkpoint_manager=checkpoints,
+    )
+
+    assert response["error"]["code"] == "not_found"
+    assert response["error"]["status"] == 404
+
+
+def test_replay_run_missing_checkpoint_returns_not_found() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    store.create_run_record(
+        run_id="r-replay-missing-checkpoint",
+        skill_id="x.y",
+        trace_id="t-11",
+        status="completed",
+        checkpoint_head="missing-checkpoint",
+        metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
+    )
+
+    response = api.replay_run(
+        "r-replay-missing-checkpoint",
+        run_store=store,
+        checkpoint_manager=checkpoints,
+    )
+
+    assert response["error"]["code"] == "not_found"
+    assert response["error"]["status"] == 404
+
+
+def test_fork_run_missing_checkpoint_returns_not_found() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    source_state = create_execution_state("x.y", {"n": 1}, trace_id="t-12")
+    mark_started(source_state)
+    record = checkpoints.save_checkpoint(
+        run_id="r-fork-missing-selected",
+        state=source_state,
+        step_id="s-1",
+        kind="run_finished",
+    )
+    store.create_run_record(
+        run_id="r-fork-missing-selected",
+        skill_id="x.y",
+        trace_id="t-12",
+        status="completed",
+        checkpoint_head=record.checkpoint_id,
+        metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
+    )
+
+    response = api.fork_run(
+        "r-fork-missing-selected",
+        run_store=store,
+        checkpoint_manager=checkpoints,
+        checkpoint_id="missing-checkpoint",
+    )
+
+    assert response["error"]["code"] == "not_found"
+    assert response["error"]["status"] == 404

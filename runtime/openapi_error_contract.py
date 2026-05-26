@@ -7,6 +7,7 @@ from runtime.errors import (
     AttachValidationError,
     CapabilityExecutionError,
     CapabilityNotFoundError,
+    CheckpointNotFoundError,
     FinalOutputValidationError,
     GateDeniedError,
     GateExecutionError,
@@ -23,6 +24,7 @@ from runtime.errors import (
     SafetyGateFailedError,
     SafetyTrustLevelError,
     SkillNotFoundError,
+    RunNotFoundError,
     StepExecutionError,
     StepTimeoutError,
 )
@@ -46,7 +48,15 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
     - no stack traces
     - no nested cause details
     """
-    if isinstance(error, (SkillNotFoundError, CapabilityNotFoundError)):
+    if isinstance(
+        error,
+        (
+            SkillNotFoundError,
+            CapabilityNotFoundError,
+            RunNotFoundError,
+            CheckpointNotFoundError,
+        ),
+    ):
         return HttpErrorContract(
             status_code=404,
             code="not_found",

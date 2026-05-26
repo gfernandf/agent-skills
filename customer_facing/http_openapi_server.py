@@ -31,12 +31,33 @@ def _is_not_found_error(response: Any) -> bool:
     return isinstance(error, dict) and error.get("code") == "not_found"
 
 
+def _error_status_from_response(response: Any) -> int | None:
+    if not isinstance(response, dict):
+        return None
+    error = response.get("error")
+    if not isinstance(error, dict):
+        return None
+    status = error.get("status")
+    if isinstance(status, int):
+        return status
+    if isinstance(status, str) and status.isdigit():
+        return int(status)
+    if error.get("code") == "not_found":
+        return 404
+    return 500
+
+
 def _unwrap_run_response(response: Any) -> Any:
     if not isinstance(response, dict):
         return response
     if response.get("ok") is True and isinstance(response.get("data"), dict):
         return response["data"]
     return response
+
+
+def _http_status_for_run_response(response: Any, *, success_status: int = 200) -> int:
+    error_status = _error_status_from_response(response)
+    return error_status if isinstance(error_status, int) else success_status
 
 
 def _format_prometheus(snapshot: dict[str, Any]) -> str:
@@ -289,17 +310,13 @@ class _RequestHandler(BaseHTTPRequestHandler):
                         run_store=store,
                         checkpoint_manager=self.checkpoint_manager,
                     )
-                    status = 200
-                    if _is_not_found_error(response):
-                        status = 404
+                    status = _http_status_for_run_response(response)
                     self._write_json(status, _unwrap_run_response(response))
                     return
 
                 run_id = suffix
                 response = self._api().get_run(run_id, run_store=store)
-                status = 200
-                if _is_not_found_error(response):
-                    status = 404
+                status = _http_status_for_run_response(response)
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
@@ -325,9 +342,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                         run_store=store,
                         legacy_projection=True,
                     )
-                    status = 200
-                    if _is_not_found_error(response):
-                        status = 404
+                    status = _http_status_for_run_response(response)
                     self._write_json(status, _unwrap_run_response(response))
                     return
 
@@ -585,7 +600,10 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     async_pool=self._async_pool,
                     webhook_store=self.webhook_store,
                 )
-                self._write_json(202, response)
+                self._write_json(
+                    _http_status_for_run_response(response, success_status=202),
+                    response,
+                )
                 return
 
             runs_prefix = "/v1/runs/"
@@ -605,9 +623,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     return
                 run_id = parsed.path[len(runs_prefix) : -len("/cancel")].rstrip("/")
                 response = self._api().cancel_run(run_id, run_store=store)
-                status = 200
-                if _is_not_found_error(response):
-                    status = 404
+                status = _http_status_for_run_response(response)
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
@@ -640,9 +656,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     async_pool=self._async_pool,
                     webhook_store=self.webhook_store,
                 )
-                status = 200
-                if _is_not_found_error(response):
-                    status = 404
+                status = _http_status_for_run_response(response)
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
@@ -670,9 +684,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     async_pool=self._async_pool,
                     webhook_store=self.webhook_store,
                 )
-                status = 200
-                if _is_not_found_error(response):
-                    status = 404
+                status = _http_status_for_run_response(response)
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
@@ -697,9 +709,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     notes=(body.get("notes") if isinstance(body, dict) else None),
                     run_store=store,
                 )
-                status = 200
-                if _is_not_found_error(response):
-                    status = 404
+                status = _http_status_for_run_response(response)
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
@@ -732,9 +742,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     async_pool=self._async_pool,
                     webhook_store=self.webhook_store,
                 )
-                status = 200
-                if _is_not_found_error(response):
-                    status = 404
+                status = _http_status_for_run_response(response)
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
@@ -765,9 +773,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     checkpoint_manager=self.checkpoint_manager,
                     checkpoint_id=checkpoint_id,
                 )
-                status = 200
-                if _is_not_found_error(response):
-                    status = 404
+                status = _http_status_for_run_response(response)
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
@@ -793,9 +799,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                         run_store=store,
                         legacy_projection=True,
                     )
-                    status = 200
-                    if _is_not_found_error(response):
-                        status = 404
+                    status = _http_status_for_run_response(response)
                     self._write_json(status, _unwrap_run_response(response))
                     return
 
@@ -840,7 +844,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     async_pool=self._async_pool,
                     webhook_store=self.webhook_store,
                 )
-                self._write_json(202, response)
+                self._write_json(_http_status_for_run_response(response, success_status=202), response)
                 return
 
             if parsed.path.startswith(skill_prefix) and parsed.path.endswith(
