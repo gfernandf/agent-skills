@@ -230,6 +230,29 @@ def test_replay_run():
     _test("replay: checkpoint head", replay.get("checkpoint_head") == "chk-1")
 
 
+def test_fork_run():
+    store = RunStore()
+    fork = store.fork_run(
+        "fork-r1",
+        skill_id="skill.a",
+        trace_id="trace-2",
+        source_run_id="r1",
+        source_checkpoint_id="chk-2",
+        checkpoint_head="chk-2",
+        metadata={"confirmed_capabilities": ["cap.confirm"]},
+    )
+    _test("fork: status pending", fork["status"] == "pending")
+    _test(
+        "fork: source run metadata",
+        fork.get("metadata", {}).get("source_run_id") == "r1",
+    )
+    _test(
+        "fork: source checkpoint metadata",
+        fork.get("metadata", {}).get("source_checkpoint_id") == "chk-2",
+    )
+    _test("fork: checkpoint head", fork.get("checkpoint_head") == "chk-2")
+
+
 def main():
     global _pass, _fail
 
@@ -246,6 +269,7 @@ def main():
     test_pagination_and_status_filter()
     test_cancel_run()
     test_replay_run()
+    test_fork_run()
 
     print(f"\n  run_store: {_pass} passed, {_fail} failed")
     if _fail:

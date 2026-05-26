@@ -1123,6 +1123,97 @@ class NeutralRuntimeAPI:
             }
         )
 
+    def fork_run(
+        self,
+        run_id: str,
+        *,
+        run_store=None,
+        checkpoint_manager=None,
+        checkpoint_id: str | None = None,
+    ) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        if checkpoint_manager is None:
+            return _error_response(RuntimeError("CheckpointManager not configured"))
+
+        source_run = run_store.get_run(run_id)
+        if source_run is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+
+        selected_checkpoint_id = checkpoint_id or source_run.get("checkpoint_head")
+        if not isinstance(selected_checkpoint_id, str) or not selected_checkpoint_id:
+            return _error_response(
+                RuntimeError(f"Run '{run_id}' has no checkpoint to fork from")
+            )
+
+        checkpoint = checkpoint_manager.load_checkpoint(
+            run_id=run_id,
+            checkpoint_id=selected_checkpoint_id,
+        )
+        if checkpoint is None:
+            return _error_response(
+                RuntimeError(
+                    f"Checkpoint '{selected_checkpoint_id}' not found for run '{run_id}'"
+                )
+            )
+
+        restored_state = checkpoint_manager.load_state(
+            run_id=run_id,
+            checkpoint_id=selected_checkpoint_id,
+        )
+        if restored_state is None:
+            return _error_response(
+                RuntimeError(
+                    f"Checkpoint state '{selected_checkpoint_id}' not found for run '{run_id}'"
+                )
+            )
+
+        source_skill_id = source_run.get("skill_id")
+        if not isinstance(source_skill_id, str) or not source_skill_id:
+            return _error_response(
+                RuntimeError(f"Run '{run_id}' is missing skill metadata for fork")
+            )
+
+        source_trace_id = (
+            source_run.get("trace_id")
+            if isinstance(source_run.get("trace_id"), str)
+            else restored_state.trace_id
+        )
+        fork_run_id = f"fork_{run_id}"
+        fork_run = run_store.fork_run(
+            fork_run_id,
+            skill_id=source_skill_id,
+            trace_id=source_trace_id,
+            source_run_id=run_id,
+            source_checkpoint_id=selected_checkpoint_id,
+            checkpoint_head=selected_checkpoint_id,
+            metadata={
+                "inputs": dict(restored_state.inputs),
+                "execution_channel": (
+                    source_run.get("execution_channel")
+                    if isinstance(source_run.get("execution_channel"), str)
+                    else "http-fork"
+                ),
+                "confirmed_capabilities": (
+                    list((source_run.get("metadata") or {}).get("confirmed_capabilities", []))
+                    if isinstance(source_run.get("metadata"), dict)
+                    else []
+                ),
+            },
+        )
+
+        return _ok_response(
+            {
+                "run": fork_run,
+                "fork": {
+                    "accepted": True,
+                    "mode": "checkpoint_fork",
+                    "checkpoint_id": selected_checkpoint_id,
+                    "source_run_id": run_id,
+                },
+            }
+        )
+
     def list_runs(
         self,
         *,

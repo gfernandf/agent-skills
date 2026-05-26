@@ -51,6 +51,8 @@ Both HTTP servers support async start-and-poll semantics.
 - Deny waiting run: `POST /v1/runs/{run_id}/deny`
 - Replay run from checkpoint: `POST /v1/runs/{run_id}/replay`
     - Body (optional): `{ "checkpoint_id": "<checkpoint-id>" }`
+- Fork run from checkpoint: `POST /v1/runs/{run_id}/fork`
+    - Body (optional): `{ "checkpoint_id": "<checkpoint-id>" }`
 
 Run states:
 
@@ -63,6 +65,7 @@ Notes:
 - Final async result payload preserves the same output/meta diagnostics shape as sync execution.
 - `resume` now performs checkpoint-backed continuation and only re-executes the remaining steps after the restored checkpoint state.
 - `replay` creates a new replay run linked to the source run and checkpoint, then re-executes from the restored checkpoint state.
+- `fork` creates a new pending run linked to the source run and checkpoint without mutating or reusing the source run record.
 
 ## Webhook callback (optional)
 

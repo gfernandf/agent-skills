@@ -404,6 +404,30 @@ class RunStoreV2:
             metadata=replay_metadata,
         )
 
+    def fork_run(
+        self,
+        run_id: str,
+        *,
+        skill_id: str,
+        trace_id: str | None = None,
+        source_run_id: str | None = None,
+        source_checkpoint_id: str | None = None,
+        checkpoint_head: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        fork_metadata = dict(metadata or {})
+        fork_metadata["source_run_id"] = source_run_id
+        fork_metadata["source_checkpoint_id"] = source_checkpoint_id
+        fork_metadata["fork_mode"] = "checkpoint_fork"
+        return self.create_run_record(
+            run_id=run_id,
+            skill_id=skill_id,
+            trace_id=trace_id,
+            status=RUN_STATUS_PENDING,
+            checkpoint_head=checkpoint_head,
+            metadata=fork_metadata,
+        )
+
     # ── Internal ─────────────────────────────────────────────────────────
 
     def _evict(self) -> None:

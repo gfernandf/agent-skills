@@ -364,3 +364,39 @@ def test_replay_run_executes_from_checkpoint() -> None:
     assert isinstance(run, dict)
     assert run.get("status") == "completed"
     assert run.get("metadata", {}).get("source_run_id") == "r-source"
+
+
+def test_fork_run_creates_new_pending_run() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    source_state = create_execution_state("x.y", {"n": 1}, trace_id="t-8")
+    mark_started(source_state)
+    record = checkpoints.save_checkpoint(
+        run_id="r-fork-source",
+        state=source_state,
+        step_id="s-1",
+        kind="run_finished",
+    )
+    store.create_run_record(
+        run_id="r-fork-source",
+        skill_id="x.y",
+        trace_id="t-8",
+        status="completed",
+        checkpoint_head=record.checkpoint_id,
+        metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
+    )
+
+    response = api.fork_run(
+        "r-fork-source",
+        run_store=store,
+        checkpoint_manager=checkpoints,
+    )
+
+    assert response["ok"] is True
+    fork_run = response["data"]["run"]
+    assert fork_run["status"] == "pending"
+    assert fork_run["metadata"]["source_run_id"] == "r-fork-source"
+    assert fork_run["metadata"]["source_checkpoint_id"] == record.checkpoint_id
+    assert fork_run["checkpoint_head"] == record.checkpoint_id

@@ -434,6 +434,20 @@ def create_app(
             raise HTTPException(status_code=404, detail=response["error"])
         return _unwrap_run_response(response)
 
+    @app.post("/v1/runs/{run_id}/fork")
+    async def fork_run(run_id: str, request: Request) -> dict:
+        body = await request.json() if request.headers.get("content-length") else {}
+        checkpoint_id = body.get("checkpoint_id") if isinstance(body, dict) else None
+        response = _get_api().fork_run(
+            run_id,
+            run_store=state.run_store,
+            checkpoint_manager=state.checkpoint_manager,
+            checkpoint_id=checkpoint_id if isinstance(checkpoint_id, str) else None,
+        )
+        if _is_not_found_error(response):
+            raise HTTPException(status_code=404, detail=response["error"])
+        return _unwrap_run_response(response)
+
     @app.post("/run_async", status_code=202)
     @app.post("/v1/run_async", status_code=202)
     async def run_async(request: Request) -> tuple[dict, int]:

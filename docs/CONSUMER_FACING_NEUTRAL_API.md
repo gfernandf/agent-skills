@@ -66,9 +66,10 @@ Base version: `/v1`
 18. `POST /v1/runs/{run_id}/approve`
 19. `POST /v1/runs/{run_id}/deny`
 20. `POST /v1/runs/{run_id}/replay`
-21. `GET /run_status/{run_id}` and `GET /v1/run_status/{run_id}` (legacy aliases)
-22. `POST /run_cancel/{run_id}` and `POST /v1/run_cancel/{run_id}` (legacy aliases)
-23. `GET /openapi.json`
+21. `POST /v1/runs/{run_id}/fork`
+22. `GET /run_status/{run_id}` and `GET /v1/run_status/{run_id}` (legacy aliases)
+23. `POST /run_cancel/{run_id}` and `POST /v1/run_cancel/{run_id}` (legacy aliases)
+24. `GET /openapi.json`
 
 Async run status model:
 
@@ -83,6 +84,7 @@ Checkpoint and resume contract:
 - `POST /v1/runs/{run_id}/approve` accepts optional `approver` and `notes`, then resumes a run that is waiting for human approval.
 - `POST /v1/runs/{run_id}/deny` accepts optional `approver` and `notes`, then cancels the run canonically.
 - `POST /v1/runs/{run_id}/replay` accepts optional `checkpoint_id`, creates a new replay run, and continues from the restored checkpoint state.
+- `POST /v1/runs/{run_id}/fork` accepts optional `checkpoint_id`, creates a new pending run, and preserves source linkage without re-executing.
 
 Security model (configurable):
 
