@@ -703,6 +703,41 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 self._write_json(status, _unwrap_run_response(response))
                 return
 
+            if parsed.path.startswith(runs_prefix) and parsed.path.endswith("/replay"):
+                store = self.run_store
+                if store is None:
+                    self._write_json(
+                        501,
+                        {
+                            "error": {
+                                "code": "not_implemented",
+                                "message": "Async runs not enabled",
+                                "type": "NotImplementedError",
+                            }
+                        },
+                    )
+                    return
+                run_id = parsed.path[len(runs_prefix) : -len("/replay")].rstrip("/")
+                checkpoint_id = (
+                    body.get("checkpoint_id")
+                    if isinstance(body, dict)
+                    and isinstance(body.get("checkpoint_id"), str)
+                    else None
+                )
+                response = self._api().replay_run(
+                    run_id,
+                    run_store=store,
+                    checkpoint_manager=self.checkpoint_manager,
+                    checkpoint_id=checkpoint_id,
+                    async_pool=self._async_pool,
+                    webhook_store=self.webhook_store,
+                )
+                status = 200
+                if _is_not_found_error(response):
+                    status = 404
+                self._write_json(status, _unwrap_run_response(response))
+                return
+
             run_cancel_prefixes = ("/run_cancel/", "/v1/run_cancel/")
             for run_cancel_prefix in run_cancel_prefixes:
                 if parsed.path.startswith(run_cancel_prefix):

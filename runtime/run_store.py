@@ -380,6 +380,30 @@ class RunStoreV2:
             self._persist(run_id)
         return snapshot
 
+    def replay_run(
+        self,
+        run_id: str,
+        *,
+        skill_id: str,
+        trace_id: str | None = None,
+        source_run_id: str | None = None,
+        source_checkpoint_id: str | None = None,
+        checkpoint_head: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        replay_metadata = dict(metadata or {})
+        replay_metadata["source_run_id"] = source_run_id
+        replay_metadata["source_checkpoint_id"] = source_checkpoint_id
+        replay_metadata["replay_mode"] = "checkpoint_replay"
+        return self.create_run_record(
+            run_id=run_id,
+            skill_id=skill_id,
+            trace_id=trace_id,
+            status=RUN_STATUS_REPLAYING,
+            checkpoint_head=checkpoint_head,
+            metadata=replay_metadata,
+        )
+
     # ── Internal ─────────────────────────────────────────────────────────
 
     def _evict(self) -> None:

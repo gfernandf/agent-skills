@@ -49,6 +49,8 @@ Both HTTP servers support async start-and-poll semantics.
     - Body (optional): `{ "checkpoint_id": "<checkpoint-id>" }`
 - Approve waiting run: `POST /v1/runs/{run_id}/approve`
 - Deny waiting run: `POST /v1/runs/{run_id}/deny`
+- Replay run from checkpoint: `POST /v1/runs/{run_id}/replay`
+    - Body (optional): `{ "checkpoint_id": "<checkpoint-id>" }`
 
 Run states:
 
@@ -60,6 +62,7 @@ Notes:
 - The HTTP request timeout does not cancel a run once accepted.
 - Final async result payload preserves the same output/meta diagnostics shape as sync execution.
 - `resume` now performs checkpoint-backed continuation and only re-executes the remaining steps after the restored checkpoint state.
+- `replay` creates a new replay run linked to the source run and checkpoint, then re-executes from the restored checkpoint state.
 
 ## Webhook callback (optional)
 

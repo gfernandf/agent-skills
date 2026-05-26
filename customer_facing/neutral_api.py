@@ -959,6 +959,170 @@ class NeutralRuntimeAPI:
             run = _project_legacy_run_status(run)
         return _ok_response(run)
 
+    def replay_run(
+        self,
+        run_id: str,
+        *,
+        run_store=None,
+        checkpoint_manager=None,
+        checkpoint_id: str | None = None,
+        async_pool=None,
+        webhook_store=None,
+    ) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        if checkpoint_manager is None:
+            return _error_response(RuntimeError("CheckpointManager not configured"))
+
+        source_run = run_store.get_run(run_id)
+        if source_run is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+
+        selected_checkpoint_id = checkpoint_id or source_run.get("checkpoint_head")
+        if not isinstance(selected_checkpoint_id, str) or not selected_checkpoint_id:
+            return _error_response(
+                RuntimeError(f"Run '{run_id}' has no checkpoint to replay from")
+            )
+
+        checkpoint = checkpoint_manager.load_checkpoint(
+            run_id=run_id,
+            checkpoint_id=selected_checkpoint_id,
+        )
+        if checkpoint is None:
+            return _error_response(
+                RuntimeError(
+                    f"Checkpoint '{selected_checkpoint_id}' not found for run '{run_id}'"
+                )
+            )
+
+        restored_state = checkpoint_manager.load_state(
+            run_id=run_id,
+            checkpoint_id=selected_checkpoint_id,
+        )
+        if restored_state is None:
+            return _error_response(
+                RuntimeError(
+                    f"Checkpoint state '{selected_checkpoint_id}' not found for run '{run_id}'"
+                )
+            )
+
+        source_skill_id = source_run.get("skill_id")
+        if not isinstance(source_skill_id, str) or not source_skill_id:
+            return _error_response(
+                RuntimeError(f"Run '{run_id}' is missing skill metadata for replay")
+            )
+
+        source_trace_id = source_run.get("trace_id") if isinstance(source_run.get("trace_id"), str) else restored_state.trace_id
+        replay_run_id = f"replay_{run_id}"
+        replay_run = run_store.replay_run(
+            replay_run_id,
+            skill_id=source_skill_id,
+            trace_id=source_trace_id,
+            source_run_id=run_id,
+            source_checkpoint_id=selected_checkpoint_id,
+            checkpoint_head=selected_checkpoint_id,
+            metadata={
+                "inputs": dict(restored_state.inputs),
+                "audit_mode": "replay",
+                "execution_channel": source_run.get("execution_channel") if isinstance(source_run.get("execution_channel"), str) else "http-replay",
+                "confirmed_capabilities": list((source_run.get("metadata") or {}).get("confirmed_capabilities", [])) if isinstance(source_run.get("metadata"), dict) else [],
+            },
+        )
+
+        def _background_replay() -> None:
+            try:
+                updated = run_store.resume_run(
+                    replay_run_id,
+                    resume_from_checkpoint_id=selected_checkpoint_id,
+                )
+                if updated is None:
+                    raise RuntimeError(f"Replay run '{replay_run_id}' not found")
+
+                result, result_payload = self._execute_skill_with_result(
+                    skill_id=source_skill_id,
+                    inputs=dict(restored_state.inputs),
+                    trace_id=source_trace_id,
+                    include_trace=False,
+                    required_conformance_profile=(
+                        (source_run.get("metadata") or {}).get("required_conformance_profile")
+                        if isinstance(source_run.get("metadata"), dict)
+                        else None
+                    ),
+                    audit_mode="replay",
+                    execution_channel=source_run.get("execution_channel") if isinstance(source_run.get("execution_channel"), str) else "http-replay",
+                    confirmed_capabilities=(source_run.get("metadata") or {}).get("confirmed_capabilities") if isinstance(source_run.get("metadata"), dict) else [],
+                    initial_state=restored_state,
+                )
+
+                try:
+                    checkpoint_record = checkpoint_manager.save_checkpoint(
+                        run_id=replay_run_id,
+                        state=result.state,
+                        step_id=result.state.current_step,
+                        kind="run_finished",
+                    )
+                    run_store.patch_run(
+                        replay_run_id,
+                        {
+                            "checkpoint_head": checkpoint_record.checkpoint_id,
+                            "current_step_id": result.state.current_step,
+                        },
+                    )
+                except Exception:
+                    pass
+
+                run_store.complete_run(replay_run_id, result_payload)
+                if webhook_store is not None:
+                    try:
+                        webhook_store.notify(
+                            "run.replayed",
+                            {
+                                "run_id": replay_run_id,
+                                "source_run_id": run_id,
+                                "source_checkpoint_id": selected_checkpoint_id,
+                                "skill_id": source_skill_id,
+                                "status": "completed",
+                            },
+                        )
+                    except Exception:
+                        pass
+            except Exception as exc:
+                run_store.fail_run(replay_run_id, str(exc))
+                if webhook_store is not None:
+                    try:
+                        webhook_store.notify(
+                            "run.failed",
+                            {
+                                "run_id": replay_run_id,
+                                "source_run_id": run_id,
+                                "source_checkpoint_id": selected_checkpoint_id,
+                                "skill_id": source_skill_id,
+                                "status": "failed",
+                                "error": str(exc),
+                            },
+                        )
+                    except Exception:
+                        pass
+
+        if async_pool is not None:
+            async_pool.submit(_background_replay)
+        else:
+            import threading
+
+            threading.Thread(target=_background_replay, daemon=True).start()
+
+        return _ok_response(
+            {
+                "run": replay_run,
+                "replay": {
+                    "accepted": True,
+                    "mode": "checkpoint_replay",
+                    "checkpoint_id": selected_checkpoint_id,
+                    "source_run_id": run_id,
+                },
+            }
+        )
+
     def list_runs(
         self,
         *,

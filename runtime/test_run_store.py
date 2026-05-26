@@ -207,6 +207,29 @@ def test_cancel_run():
     _test("cancel missing returns None", missing is None)
 
 
+def test_replay_run():
+    store = RunStore()
+    replay = store.replay_run(
+        "replay-r1",
+        skill_id="skill.a",
+        trace_id="trace-1",
+        source_run_id="r1",
+        source_checkpoint_id="chk-1",
+        checkpoint_head="chk-1",
+        metadata={"confirmed_capabilities": ["cap.confirm"]},
+    )
+    _test("replay: status replaying", replay["status"] == "replaying")
+    _test(
+        "replay: source run metadata",
+        replay.get("metadata", {}).get("source_run_id") == "r1",
+    )
+    _test(
+        "replay: source checkpoint metadata",
+        replay.get("metadata", {}).get("source_checkpoint_id") == "chk-1",
+    )
+    _test("replay: checkpoint head", replay.get("checkpoint_head") == "chk-1")
+
+
 def main():
     global _pass, _fail
 
@@ -222,6 +245,7 @@ def main():
     test_complete_missing_run()
     test_pagination_and_status_filter()
     test_cancel_run()
+    test_replay_run()
 
     print(f"\n  run_store: {_pass} passed, {_fail} failed")
     if _fail:

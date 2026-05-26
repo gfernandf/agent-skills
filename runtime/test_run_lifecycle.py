@@ -44,6 +44,10 @@ def test_valid_transitions() -> None:
         sm.can_transition("waiting_for_human", "running").allowed,
     )
     _test(
+        "replaying->running",
+        sm.can_transition("replaying", "running").allowed,
+    )
+    _test(
         "running->completed",
         sm.can_transition("running", "completed").allowed,
     )

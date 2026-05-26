@@ -303,3 +303,64 @@ def test_deny_run_cancels_waiting_run() -> None:
     assert denied["data"]["status"] == "canceled"
     assert denied["data"]["approval_request"]["status"] == "denied"
     assert store.get_run("r-deny")["status"] == "canceled"
+
+
+def test_replay_run_executes_from_checkpoint() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    source_state = create_execution_state("x.y", {"n": 1}, trace_id="t-7")
+    mark_started(source_state)
+    source_state.vars["mid"] = "cached"
+    record = checkpoints.save_checkpoint(
+        run_id="r-source",
+        state=source_state,
+        step_id="s-1",
+        kind="run_finished",
+    )
+    store.create_run_record(
+        run_id="r-source",
+        skill_id="x.y",
+        trace_id="t-7",
+        status="completed",
+        checkpoint_head=record.checkpoint_id,
+        metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
+    )
+
+    def _fake_execute(*, skill_id, inputs, trace_id, initial_state=None, **_kwargs):
+        assert initial_state is not None
+        assert initial_state.vars.get("mid") == "cached"
+        initial_state.outputs["ok"] = True
+        mark_finished(initial_state, "completed")
+        return SimpleNamespace(state=initial_state), {
+            "skill_id": skill_id,
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": trace_id,
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        response = api.replay_run(
+            "r-source",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+        assert response["ok"] is True
+        assert response["data"]["replay"]["mode"] == "checkpoint_replay"
+
+        replay_id = response["data"]["run"]["run_id"]
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run(replay_id)
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
+
+    run = store.get_run(replay_id)
+    assert isinstance(run, dict)
+    assert run.get("status") == "completed"
+    assert run.get("metadata", {}).get("source_run_id") == "r-source"
