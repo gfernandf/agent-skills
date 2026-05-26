@@ -400,3 +400,63 @@ def test_fork_run_creates_new_pending_run() -> None:
     assert fork_run["metadata"]["source_run_id"] == "r-fork-source"
     assert fork_run["metadata"]["source_checkpoint_id"] == record.checkpoint_id
     assert fork_run["checkpoint_head"] == record.checkpoint_id
+
+
+def test_fork_run_uses_unique_run_ids() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    source_state = create_execution_state("x.y", {"n": 1}, trace_id="t-9")
+    mark_started(source_state)
+    record = checkpoints.save_checkpoint(
+        run_id="r-fork-unique",
+        state=source_state,
+        step_id="s-1",
+        kind="run_finished",
+    )
+    store.create_run_record(
+        run_id="r-fork-unique",
+        skill_id="x.y",
+        trace_id="t-9",
+        status="completed",
+        checkpoint_head=record.checkpoint_id,
+        metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
+    )
+
+    first = api.fork_run(
+        "r-fork-unique",
+        run_store=store,
+        checkpoint_manager=checkpoints,
+    )
+    second = api.fork_run(
+        "r-fork-unique",
+        run_store=store,
+        checkpoint_manager=checkpoints,
+    )
+
+    assert first["ok"] is True
+    assert second["ok"] is True
+    assert first["data"]["run"]["run_id"] != second["data"]["run"]["run_id"]
+
+
+def test_fork_run_requires_checkpoint_head_or_checkpoint_id() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    store.create_run_record(
+        run_id="r-fork-missing",
+        skill_id="x.y",
+        trace_id="t-10",
+        status="completed",
+        metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
+    )
+
+    response = api.fork_run(
+        "r-fork-missing",
+        run_store=store,
+        checkpoint_manager=checkpoints,
+    )
+
+    assert response["error"]["code"] == "invalid_request"

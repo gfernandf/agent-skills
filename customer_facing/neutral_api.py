@@ -1143,7 +1143,7 @@ class NeutralRuntimeAPI:
         selected_checkpoint_id = checkpoint_id or source_run.get("checkpoint_head")
         if not isinstance(selected_checkpoint_id, str) or not selected_checkpoint_id:
             return _error_response(
-                RuntimeError(f"Run '{run_id}' has no checkpoint to fork from")
+                ValueError(f"Run '{run_id}' has no checkpoint to fork from")
             )
 
         checkpoint = checkpoint_manager.load_checkpoint(
@@ -1152,7 +1152,7 @@ class NeutralRuntimeAPI:
         )
         if checkpoint is None:
             return _error_response(
-                RuntimeError(
+                ValueError(
                     f"Checkpoint '{selected_checkpoint_id}' not found for run '{run_id}'"
                 )
             )
@@ -1163,7 +1163,7 @@ class NeutralRuntimeAPI:
         )
         if restored_state is None:
             return _error_response(
-                RuntimeError(
+                ValueError(
                     f"Checkpoint state '{selected_checkpoint_id}' not found for run '{run_id}'"
                 )
             )
@@ -1174,12 +1174,14 @@ class NeutralRuntimeAPI:
                 RuntimeError(f"Run '{run_id}' is missing skill metadata for fork")
             )
 
+        from uuid import uuid4
+
         source_trace_id = (
             source_run.get("trace_id")
             if isinstance(source_run.get("trace_id"), str)
             else restored_state.trace_id
         )
-        fork_run_id = f"fork_{run_id}"
+        fork_run_id = f"fork_{run_id}_{uuid4().hex[:12]}"
         fork_run = run_store.fork_run(
             fork_run_id,
             skill_id=source_skill_id,
