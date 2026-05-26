@@ -405,6 +405,7 @@ class NeutralRuntimeAPI:
         inputs: dict[str, Any] | None,
         *,
         trace_id: str | None = None,
+        idempotency_key: str | None = None,
         required_conformance_profile: str | None = None,
         audit_mode: str | None = None,
         execution_channel: str | None = None,
@@ -418,6 +419,26 @@ class NeutralRuntimeAPI:
             return _error_response(
                 RuntimeError("RunStore not configured"), trace_id=trace_id
             )
+
+        normalized_idempotency_key = (
+            idempotency_key.strip()
+            if isinstance(idempotency_key, str) and idempotency_key.strip()
+            else None
+        )
+
+        if normalized_idempotency_key is not None:
+            existing_run = run_store.find_run_by_idempotency_key(
+                normalized_idempotency_key,
+                skill_id=skill_id,
+            )
+            if isinstance(existing_run, dict):
+                return {
+                    "run_id": existing_run.get("run_id"),
+                    "status": existing_run.get("status"),
+                    "trace_id": existing_run.get("trace_id"),
+                    "checkpoint_head": existing_run.get("checkpoint_head"),
+                    "idempotent_replay": True,
+                }
 
         from uuid import uuid4
 
@@ -433,6 +454,7 @@ class NeutralRuntimeAPI:
                 "audit_mode": audit_mode,
                 "execution_channel": execution_channel,
                 "confirmed_capabilities": [],
+                "idempotency_key": normalized_idempotency_key,
             },
         )
 

@@ -322,10 +322,20 @@ def create_app(
         body = await request.json()
         inputs = body.get("inputs", {})
         trace_id = request.headers.get("x-trace-id") or body.get("trace_id")
+        idempotency_key_raw = (
+            request.headers.get("x-idempotency-key")
+            or body.get("idempotency_key")
+        )
+        idempotency_key = (
+            idempotency_key_raw
+            if isinstance(idempotency_key_raw, str) and idempotency_key_raw.strip()
+            else None
+        )
         response = _get_api().execute_skill_async(
             skill_id=skill_id,
             inputs=inputs,
             trace_id=trace_id,
+            idempotency_key=idempotency_key,
             required_conformance_profile=body.get("required_conformance_profile"),
             audit_mode=body.get("audit_mode"),
             execution_channel="http-async",
@@ -460,10 +470,20 @@ def create_app(
             raise HTTPException(status_code=400, detail="'skill_id' is required")
         inputs = body.get("inputs", {})
         trace_id = request.headers.get("x-trace-id") or body.get("trace_id")
+        idempotency_key_raw = (
+            request.headers.get("x-idempotency-key")
+            or body.get("idempotency_key")
+        )
+        idempotency_key = (
+            idempotency_key_raw
+            if isinstance(idempotency_key_raw, str) and idempotency_key_raw.strip()
+            else None
+        )
         response = _get_api().execute_skill_async(
             skill_id=skill_id,
             inputs=inputs if isinstance(inputs, dict) else {},
             trace_id=trace_id,
+            idempotency_key=idempotency_key,
             required_conformance_profile=body.get("required_conformance_profile"),
             audit_mode=body.get("audit_mode"),
             execution_channel="http-async",

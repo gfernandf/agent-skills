@@ -86,6 +86,11 @@ Checkpoint and resume contract:
 - `POST /v1/runs/{run_id}/replay` accepts optional `checkpoint_id`, creates a new replay run, and continues from the restored checkpoint state.
 - `POST /v1/runs/{run_id}/fork` accepts optional `checkpoint_id`, creates a new pending run, and preserves source linkage without re-executing.
 
+Async launch idempotency:
+
+- `POST /v1/run_async` and `POST /run_async` accept optional `idempotency_key` (or `x-idempotency-key` header).
+- Repeating the same async launch with the same `skill_id` + `idempotency_key` returns the existing run instead of creating a duplicate.
+
 Security model (configurable):
 
 1. `GET /v1/health` and `GET /openapi.json` can remain unauthenticated.

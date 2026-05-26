@@ -1444,6 +1444,10 @@
           "inputs": {
             "type": "object"
           },
+          "idempotency_key": {
+            "type": "string",
+            "description": "Optional idempotency key. Repeated async launch requests with the same key and skill reuse the existing run."
+          },
           "trace_id": {
             "type": "string"
           },

@@ -38,6 +38,9 @@ def test_consumer_openapi_includes_async_run_routes() -> None:
     assert "ReplayRunResponse" in schemas
     assert "CheckpointsListResponse" in schemas
 
+    run_async_props = schemas["RunAsyncRequest"]["properties"]
+    assert "idempotency_key" in run_async_props
+
     run_status_enum = schemas["RunStatus"]["properties"]["status"]["enum"]
     assert "waiting_for_human" in run_status_enum
     assert "replaying" in run_status_enum

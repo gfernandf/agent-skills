@@ -578,6 +578,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 skill_id = parsed.path[len(skill_prefix) : -len("/execute/async")]
                 inputs = body.get("inputs") if isinstance(body, dict) else {}
                 trace_id = self._extract_trace_id(body)
+                idempotency_key = self._extract_idempotency_key(body)
                 required_profile = None
                 if isinstance(body, dict):
                     value = body.get("required_conformance_profile")
@@ -592,6 +593,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     skill_id=skill_id,
                     inputs=inputs if isinstance(inputs, dict) else {},
                     trace_id=trace_id,
+                    idempotency_key=idempotency_key,
                     required_conformance_profile=required_profile,
                     audit_mode=audit_mode,
                     execution_channel="http-async",
@@ -824,6 +826,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     raise ValueError("run_async requires non-empty string field 'skill_id'")
                 inputs = body.get("inputs") if isinstance(body, dict) else {}
                 trace_id = self._extract_trace_id(body)
+                idempotency_key = self._extract_idempotency_key(body)
                 required_profile = None
                 value = body.get("required_conformance_profile")
                 if isinstance(value, str) and value:
@@ -836,6 +839,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     skill_id=skill_id,
                     inputs=inputs if isinstance(inputs, dict) else {},
                     trace_id=trace_id,
+                    idempotency_key=idempotency_key,
                     required_conformance_profile=required_profile,
                     audit_mode=audit_mode,
                     execution_channel="http-async",
@@ -1147,6 +1151,16 @@ class _RequestHandler(BaseHTTPRequestHandler):
             trace = body.get("trace_id")
             if isinstance(trace, str) and trace:
                 return trace
+        return None
+
+    def _extract_idempotency_key(self, body: Any) -> str | None:
+        header_key = self.headers.get("x-idempotency-key")
+        if isinstance(header_key, str) and header_key.strip():
+            return header_key.strip()
+        if isinstance(body, dict):
+            body_key = body.get("idempotency_key")
+            if isinstance(body_key, str) and body_key.strip():
+                return body_key.strip()
         return None
 
     def _read_json_body(self) -> dict[str, Any]:

@@ -253,6 +253,27 @@ def test_fork_run():
     _test("fork: checkpoint head", fork.get("checkpoint_head") == "chk-2")
 
 
+def test_find_run_by_idempotency_key():
+    store = RunStore()
+    store.create_run_record(
+        run_id="r-idem-1",
+        skill_id="skill.a",
+        trace_id="trace-idem",
+        status="running",
+        metadata={"idempotency_key": "idem-key-1"},
+    )
+
+    found = store.find_run_by_idempotency_key("idem-key-1", skill_id="skill.a")
+    _test("idempotency lookup: found", isinstance(found, dict))
+    _test(
+        "idempotency lookup: run id",
+        isinstance(found, dict) and found.get("run_id") == "r-idem-1",
+    )
+
+    not_found = store.find_run_by_idempotency_key("idem-key-1", skill_id="skill.b")
+    _test("idempotency lookup: skill scoped", not_found is None)
+
+
 def main():
     global _pass, _fail
 
@@ -270,6 +291,7 @@ def main():
     test_cancel_run()
     test_replay_run()
     test_fork_run()
+    test_find_run_by_idempotency_key()
 
     print(f"\n  run_store: {_pass} passed, {_fail} failed")
     if _fail:

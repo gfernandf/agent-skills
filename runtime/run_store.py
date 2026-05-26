@@ -240,6 +240,30 @@ class RunStoreV2:
 
         return ordered[safe_offset : safe_offset + safe_limit]
 
+    def find_run_by_idempotency_key(
+        self,
+        idempotency_key: str,
+        *,
+        skill_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        key = idempotency_key.strip()
+        if not key:
+            return None
+
+        with self._lock:
+            for run_id in reversed(self._order):
+                run = self._runs.get(run_id)
+                if run is None:
+                    continue
+                if skill_id is not None and run.get("skill_id") != skill_id:
+                    continue
+                metadata = run.get("metadata")
+                if not isinstance(metadata, dict):
+                    continue
+                if metadata.get("idempotency_key") == key:
+                    return dict(run)
+        return None
+
     def count_runs(self, *, status: str | None = None) -> int:
         status_filter = status if status in RUN_STATUSES else None
         with self._lock:
