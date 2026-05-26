@@ -724,6 +724,96 @@
         }
       }
     },
+    "/v1/run_async": {
+      "post": {
+        "operationId": "runAsyncV1",
+        "summary": "Launch asynchronous run (canonical alias).",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunAsyncRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted — execution launched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncRunCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Skill not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/run_async": {
+      "post": {
+        "operationId": "runAsyncLegacy",
+        "summary": "Launch asynchronous run (legacy alias).",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunAsyncRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted — execution launched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncRunCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Skill not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
     "/v1/runs/{run_id}": {
       "get": {
         "operationId": "getRun",
@@ -759,6 +849,310 @@
           },
           "404": {
             "description": "Run not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancelRun",
+        "summary": "Cancel an asynchronous run.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Run not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/checkpoints": {
+      "get": {
+        "operationId": "listRunCheckpoints",
+        "summary": "List checkpoints for an asynchronous run.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Checkpoint list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckpointsListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Run not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/resume": {
+      "post": {
+        "operationId": "resumeRun",
+        "summary": "Resume an asynchronous run from checkpoint.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckpointSelectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resume accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeRunResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Run or checkpoint not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/approve": {
+      "post": {
+        "operationId": "approveRun",
+        "summary": "Approve a run waiting for human confirmation.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval accepted and resume triggered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeRunResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Run not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/deny": {
+      "post": {
+        "operationId": "denyRun",
+        "summary": "Deny a run waiting for human confirmation.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Run denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Run not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/replay": {
+      "post": {
+        "operationId": "replayRun",
+        "summary": "Replay an asynchronous run from checkpoint.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckpointSelectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Replay accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayRunResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Run or checkpoint not found"
           },
           "429": {
             "description": "Rate limited"
@@ -1031,13 +1425,37 @@
           "status": {
             "type": "string",
             "enum": [
-              "pending"
+              "pending",
+              "running"
             ]
           }
         },
         "required": [
           "run_id",
           "status"
+        ]
+      },
+      "RunAsyncRequest": {
+        "type": "object",
+        "properties": {
+          "skill_id": {
+            "type": "string"
+          },
+          "inputs": {
+            "type": "object"
+          },
+          "trace_id": {
+            "type": "string"
+          },
+          "required_conformance_profile": {
+            "type": "string"
+          },
+          "audit_mode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id"
         ]
       },
       "RunStatus": {
@@ -1051,8 +1469,12 @@
             "enum": [
               "pending",
               "running",
+              "waiting_for_human",
+              "waiting_for_signal",
+              "replaying",
               "completed",
-              "failed"
+              "failed",
+              "canceled"
             ]
           },
           "skill_id": {
@@ -1079,6 +1501,117 @@
         "required": [
           "run_id",
           "status"
+        ]
+      },
+      "CheckpointSelectionRequest": {
+        "type": "object",
+        "properties": {
+          "checkpoint_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ApprovalRequest": {
+        "type": "object",
+        "properties": {
+          "approver": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "ResumeRunResponse": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "resume": {
+            "type": "object",
+            "properties": {
+              "accepted": {
+                "type": "boolean"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "checkpoint_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "accepted",
+              "mode",
+              "checkpoint_id"
+            ]
+          }
+        },
+        "required": [
+          "run",
+          "resume"
+        ]
+      },
+      "ReplayRunResponse": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "replay": {
+            "type": "object",
+            "properties": {
+              "accepted": {
+                "type": "boolean"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "checkpoint_id": {
+                "type": "string"
+              },
+              "source_run_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "accepted",
+              "mode",
+              "checkpoint_id",
+              "source_run_id"
+            ]
+          }
+        },
+        "required": [
+          "run",
+          "replay"
+        ]
+      },
+      "CheckpointsListResponse": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string"
+          },
+          "checkpoints": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "checkpoint_head": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "run_id",
+          "checkpoints",
+          "total"
         ]
       },
       "ForkRunRequest": {

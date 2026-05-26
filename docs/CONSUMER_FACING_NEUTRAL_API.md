@@ -73,7 +73,7 @@ Base version: `/v1`
 
 Async run status model:
 
-- Canonical (`/v1/runs/*`): `pending`, `running`, `waiting_for_human`, `replaying`, `completed`, `failed`, `canceled`.
+- Canonical (`/v1/runs/*`): `pending`, `running`, `waiting_for_human`, `waiting_for_signal`, `replaying`, `completed`, `failed`, `canceled`.
 - Legacy aliases project `canceled` to `failed` for compatibility with older clients.
 
 Checkpoint and resume contract:
