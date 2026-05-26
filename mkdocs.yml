@@ -24,6 +24,12 @@ nav:
       - Step Control Flow: STEP_CONTROL_FLOW.md
       - CognitiveState v1: COGNITIVE_STATE_V1.md
       - Gateway ADR: AGENT_GATEWAY_ADR.md
+      - RFC 0001 Runtime Blueprint: rfcs/RFC-0001-ORCA-RUNTIME-BLUEPRINT.md
+      - RFC 0002 Durable State Machine: rfcs/RFC-0002-DURABLE-EXECUTION-STATE-MACHINE.md
+      - RFC 0003 Side-Effect Safety: rfcs/RFC-0003-SIDE-EFFECT-LEDGER-AND-REPLAY-SAFETY.md
+      - RFC 0004 Runtime APIs and Events: rfcs/RFC-0004-RUNTIME-APIS-AND-EVENT-CONTRACT.md
+      - RFC 0005 Integration Pseudocode: rfcs/RFC-0005-INTEGRATION-PSEUDOCODE-AND-MIGRATION.md
+    - RFC 0006 Legacy Retirement Matrix: rfcs/RFC-0006-LEGACY-RETIREMENT-MATRIX.md
   - Bindings & Services:
       - Binding Guide: BINDING_GUIDE.md
       - Binding Selection: BINDING_SELECTION.md

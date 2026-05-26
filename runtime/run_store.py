@@ -18,6 +18,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
+from runtime.run_lifecycle import (
+    RUN_STATUSES,
+    RUN_STATUS_CANCELED,
+    RUN_STATUS_COMPLETED,
+    RUN_STATUS_FAILED,
+    RUN_STATUS_PENDING,
+    RUN_STATUS_REPLAYING,
+    RUN_STATUS_RUNNING,
+    TERMINAL_RUN_STATUSES,
+    RunStateMachine,
+)
+
 
 # ── Pluggable backend protocol ────────────────────────────────────
 
@@ -46,8 +58,8 @@ class RunStoreBackend(Protocol):
     def delete_run(self, run_id: str) -> bool: ...
 
 
-class RunStore:
-    """Thread-safe in-memory run store with optional JSONL persistence."""
+class RunStoreV2:
+    """Thread-safe canonical run store with lifecycle-aware transitions."""
 
     def __init__(
         self,
@@ -62,6 +74,62 @@ class RunStore:
         self._max_runs = max(1, max_runs)
         self._persist_path = persist_path
         self._backend = backend
+        self._state_machine = RunStateMachine()
+
+    def create_run_record(
+        self,
+        *,
+        run_id: str,
+        skill_id: str,
+        trace_id: str | None = None,
+        thread_id: str | None = None,
+        session_id: str | None = None,
+        status: str = RUN_STATUS_PENDING,
+        skill_version: str | None = None,
+        checkpoint_head: str | None = None,
+        resume_from_checkpoint_id: str | None = None,
+        current_step_id: str | None = None,
+        tenant_id: str | None = None,
+        environment: str | None = None,
+        policy_snapshot_id: str | None = None,
+        versions: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if not self._state_machine.is_valid_status(status):
+            raise ValueError(f"Invalid run status '{status}'.")
+
+        now = _utc_now_iso()
+        run = {
+            "run_id": run_id,
+            "thread_id": thread_id,
+            "session_id": session_id,
+            "skill_id": skill_id,
+            "skill_version": skill_version,
+            "status": status,
+            "trace_id": trace_id,
+            "created_at": now,
+            "started_at": now if status in {RUN_STATUS_RUNNING, RUN_STATUS_REPLAYING} else None,
+            "finished_at": now if status in TERMINAL_RUN_STATUSES else None,
+            "current_step_id": current_step_id,
+            "checkpoint_head": checkpoint_head,
+            "resume_from_checkpoint_id": resume_from_checkpoint_id,
+            "tenant_id": tenant_id,
+            "environment": environment,
+            "policy_snapshot_id": policy_snapshot_id,
+            "versions": versions or {},
+            "metadata": metadata or {},
+            # Legacy-compatible fields
+            "result": None,
+            "error": None,
+        }
+
+        with self._lock:
+            self._runs[run_id] = run
+            self._order.append(run_id)
+            self._evict()
+
+        self._save_backend(run)
+        return dict(run)
 
     def create_run(
         self,
@@ -69,26 +137,13 @@ class RunStore:
         skill_id: str,
         trace_id: str | None = None,
     ) -> dict[str, Any]:
-        run = {
-            "run_id": run_id,
-            "skill_id": skill_id,
-            "status": "running",
-            "trace_id": trace_id,
-            "created_at": _utc_now_iso(),
-            "finished_at": None,
-            "result": None,
-            "error": None,
-        }
-        with self._lock:
-            self._runs[run_id] = run
-            self._order.append(run_id)
-            self._evict()
-        if self._backend is not None:
-            try:
-                self._backend.save_run(run)
-            except Exception:
-                pass  # backend persistence is best-effort
-        return run
+        # Legacy compatibility entrypoint: starts in running state.
+        return self.create_run_record(
+            run_id=run_id,
+            skill_id=skill_id,
+            trace_id=trace_id,
+            status=RUN_STATUS_RUNNING,
+        )
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
         with self._lock:
@@ -98,16 +153,70 @@ class RunStore:
         # Fallback to backend if not in memory
         if self._backend is not None:
             try:
-                return self._backend.load_run(run_id)
+                loaded = self._backend.load_run(run_id)
+                if loaded is None:
+                    return None
+                normalized = self._normalize_run(loaded)
+                with self._lock:
+                    self._runs[run_id] = normalized
+                    if run_id not in self._order:
+                        self._order.append(run_id)
+                return dict(normalized)
             except Exception:
                 pass
         return None
+
+    def patch_run(self, run_id: str, fields: dict[str, Any]) -> dict[str, Any] | None:
+        with self._lock:
+            run = self._runs.get(run_id)
+            if run is None:
+                return None
+            for key, value in fields.items():
+                run[key] = value
+            snapshot = dict(run)
+        self._save_backend(snapshot)
+        return snapshot
+
+    def update_status(
+        self,
+        run_id: str,
+        new_status: str,
+        **fields: Any,
+    ) -> dict[str, Any] | None:
+        if not self._state_machine.is_valid_status(new_status):
+            raise ValueError(f"Invalid run status '{new_status}'.")
+
+        with self._lock:
+            run = self._runs.get(run_id)
+            if run is None:
+                return None
+
+            current_status = str(run.get("status", RUN_STATUS_PENDING))
+            self._state_machine.ensure_transition(current_status, new_status)
+
+            now = _utc_now_iso()
+            run["status"] = new_status
+
+            if new_status in {RUN_STATUS_RUNNING, RUN_STATUS_REPLAYING}:
+                run["started_at"] = run.get("started_at") or now
+                run["finished_at"] = None
+            if new_status in TERMINAL_RUN_STATUSES:
+                run["finished_at"] = now
+
+            for key, value in fields.items():
+                run[key] = value
+
+            snapshot = dict(run)
+
+        self._save_backend(snapshot)
+        return snapshot
 
     def list_runs(self, *, limit: int = 100) -> list[dict[str, Any]]:
         # Prefer backend if available (has full history)
         if self._backend is not None:
             try:
-                return self._backend.list_runs(limit=limit)
+                rows = self._backend.list_runs(limit=limit)
+                return [self._normalize_run(row) for row in rows]
             except Exception:
                 pass
         return self.list_runs_page(limit=limit)
@@ -121,7 +230,7 @@ class RunStore:
     ) -> list[dict[str, Any]]:
         safe_limit = max(1, min(int(limit), 500))
         safe_offset = max(0, int(offset))
-        status_filter = status if status in {"running", "completed", "failed"} else None
+        status_filter = status if status in RUN_STATUSES else None
 
         with self._lock:
             ordered = [dict(self._runs[rid]) for rid in reversed(self._order) if rid in self._runs]
@@ -132,7 +241,7 @@ class RunStore:
         return ordered[safe_offset : safe_offset + safe_limit]
 
     def count_runs(self, *, status: str | None = None) -> int:
-        status_filter = status if status in {"running", "completed", "failed"} else None
+        status_filter = status if status in RUN_STATUSES else None
         with self._lock:
             runs = [self._runs[rid] for rid in self._order if rid in self._runs]
         if status_filter is None:
@@ -140,61 +249,64 @@ class RunStore:
         return sum(1 for run in runs if run.get("status") == status_filter)
 
     def complete_run(self, run_id: str, result: dict[str, Any]) -> None:
-        with self._lock:
-            run = self._runs.get(run_id)
-            if run is None:
-                return
-            # Do not overwrite terminal state set earlier (e.g. canceled).
-            if run.get("status") in {"completed", "failed"}:
-                return
-            run["status"] = "completed"
-            run["finished_at"] = _utc_now_iso()
-            run["result"] = result
-            run["error"] = None
-        self._persist(run_id)
-        if self._backend is not None:
-            try:
-                self._backend.save_run(dict(run))
-            except Exception:
-                pass
+        run = self.update_status(
+            run_id,
+            RUN_STATUS_COMPLETED,
+            result=result,
+            error=None,
+        )
+        if run is not None:
+            self._persist(run_id)
 
     def fail_run(self, run_id: str, error: str) -> None:
-        with self._lock:
-            run = self._runs.get(run_id)
-            if run is None:
-                return
-            if run.get("status") in {"completed", "failed"}:
-                return
-            run["status"] = "failed"
-            run["finished_at"] = _utc_now_iso()
-            run["error"] = error
-            run["result"] = None
-        self._persist(run_id)
-        if self._backend is not None:
-            try:
-                self._backend.save_run(dict(run))
-            except Exception:
-                pass
+        run = self.update_status(
+            run_id,
+            RUN_STATUS_FAILED,
+            error=error,
+            result=None,
+        )
+        if run is not None:
+            self._persist(run_id)
 
     def cancel_run(self, run_id: str, reason: str = "Canceled by client") -> dict[str, Any] | None:
-        with self._lock:
-            run = self._runs.get(run_id)
-            if run is None:
-                return None
-            if run.get("status") in {"completed", "failed"}:
-                return dict(run)
-            run["status"] = "failed"
-            run["finished_at"] = _utc_now_iso()
-            run["error"] = reason
-            run["result"] = None
-            snapshot = dict(run)
+        snapshot = self.update_status(
+            run_id,
+            RUN_STATUS_CANCELED,
+            error=reason,
+            result=None,
+        )
+        if snapshot is None:
+            return None
         self._persist(run_id)
-        if self._backend is not None:
-            try:
-                self._backend.save_run(snapshot)
-            except Exception:
-                pass
         return snapshot
+
+    def mark_waiting_for_human(
+        self,
+        run_id: str,
+        *,
+        current_step_id: str | None = None,
+        checkpoint_head: str | None = None,
+        approval_request: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        return self.update_status(
+            run_id,
+            "waiting_for_human",
+            current_step_id=current_step_id,
+            checkpoint_head=checkpoint_head,
+            approval_request=approval_request or {},
+        )
+
+    def resume_run(
+        self,
+        run_id: str,
+        *,
+        resume_from_checkpoint_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        return self.update_status(
+            run_id,
+            RUN_STATUS_RUNNING,
+            resume_from_checkpoint_id=resume_from_checkpoint_id,
+        )
 
     # ── Internal ─────────────────────────────────────────────────────────
 
@@ -203,6 +315,38 @@ class RunStore:
         while len(self._order) > self._max_runs:
             oldest = self._order.pop(0)
             self._runs.pop(oldest, None)
+
+    def _normalize_run(self, run: dict[str, Any]) -> dict[str, Any]:
+        normalized = dict(run)
+        status = str(normalized.get("status") or RUN_STATUS_RUNNING)
+        if status not in RUN_STATUSES:
+            status = RUN_STATUS_RUNNING
+        normalized["status"] = status
+        normalized.setdefault("thread_id", None)
+        normalized.setdefault("session_id", None)
+        normalized.setdefault("skill_version", None)
+        normalized.setdefault("started_at", normalized.get("created_at"))
+        normalized.setdefault("finished_at", None)
+        normalized.setdefault("current_step_id", None)
+        normalized.setdefault("checkpoint_head", None)
+        normalized.setdefault("resume_from_checkpoint_id", None)
+        normalized.setdefault("tenant_id", None)
+        normalized.setdefault("environment", None)
+        normalized.setdefault("policy_snapshot_id", None)
+        normalized.setdefault("versions", {})
+        normalized.setdefault("metadata", {})
+        normalized.setdefault("result", None)
+        normalized.setdefault("error", None)
+        return normalized
+
+    def _save_backend(self, run: dict[str, Any]) -> None:
+        if self._backend is None:
+            return
+        try:
+            self._backend.save_run(run)
+        except Exception:
+            # backend persistence is best-effort
+            pass
 
     def _persist(self, run_id: str) -> None:
         if self._persist_path is None:
@@ -218,6 +362,11 @@ class RunStore:
                 f.write(json.dumps(snapshot, ensure_ascii=False, default=str) + "\n")
         except Exception:
             pass  # persistence is best-effort
+
+
+class RunStore(RunStoreV2):
+    """Compatibility alias preserving existing imports while using v2 internals."""
+
 
 
 def _utc_now_iso() -> str:

@@ -37,6 +37,56 @@ def test_create_run():
     _test("create: trace_id", run["trace_id"] == "t1")
     _test("create: created_at present", run["created_at"] is not None)
     _test("create: result None", run["result"] is None)
+    _test("create: thread_id default None", run.get("thread_id") is None)
+    _test("create: versions default mapping", isinstance(run.get("versions"), dict))
+
+
+def test_create_run_record_v2():
+    store = RunStore()
+    run = store.create_run_record(
+        run_id="rv2",
+        skill_id="my.skill",
+        trace_id="tv2",
+        status="pending",
+        thread_id="thr-1",
+        skill_version="0.3.1",
+        tenant_id="tenant-1",
+        environment="prod",
+        versions={"registry_ref": "git:abc123"},
+    )
+    _test("create_v2: status pending", run["status"] == "pending")
+    _test("create_v2: thread_id", run["thread_id"] == "thr-1")
+    _test("create_v2: skill_version", run["skill_version"] == "0.3.1")
+    _test("create_v2: tenant", run["tenant_id"] == "tenant-1")
+    _test("create_v2: env", run["environment"] == "prod")
+    _test(
+        "create_v2: registry_ref",
+        run.get("versions", {}).get("registry_ref") == "git:abc123",
+    )
+
+
+def test_status_transitions_v2():
+    store = RunStore()
+    store.create_run_record(run_id="rsm", skill_id="my.skill", status="pending")
+    running = store.update_status("rsm", "running")
+    _test("transition pending->running", running is not None and running["status"] == "running")
+
+    waiting = store.mark_waiting_for_human(
+        "rsm",
+        current_step_id="send_email",
+        checkpoint_head="chk_001",
+        approval_request={"reason": "requires_confirmation"},
+    )
+    _test(
+        "transition running->waiting_for_human",
+        waiting is not None and waiting["status"] == "waiting_for_human",
+    )
+
+    resumed = store.resume_run("rsm", resume_from_checkpoint_id="chk_001")
+    _test(
+        "transition waiting_for_human->running",
+        resumed is not None and resumed["status"] == "running",
+    )
 
 
 def test_get_run():
@@ -150,7 +200,7 @@ def test_cancel_run():
     store.create_run("r1", "skill")
     canceled = store.cancel_run("r1")
     _test("cancel: returns run", isinstance(canceled, dict))
-    _test("cancel: status failed", canceled["status"] == "failed")
+    _test("cancel: status canceled", canceled["status"] == "canceled")
     _test("cancel: has error reason", "Canceled by client" in (canceled["error"] or ""))
 
     missing = store.cancel_run("missing")
@@ -161,6 +211,8 @@ def main():
     global _pass, _fail
 
     test_create_run()
+    test_create_run_record_v2()
+    test_status_transitions_v2()
     test_get_run()
     test_complete_run()
     test_fail_run()
