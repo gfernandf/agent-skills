@@ -308,6 +308,78 @@ class RunStoreV2:
             resume_from_checkpoint_id=resume_from_checkpoint_id,
         )
 
+    def approve_run(
+        self,
+        run_id: str,
+        *,
+        approver: str | None = None,
+        notes: str | None = None,
+        confirmed_capabilities: list[str] | None = None,
+        resume_from_checkpoint_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        run = self.get_run(run_id)
+        if run is None:
+            return None
+        metadata = dict(run.get("metadata") or {})
+        existing_confirmed = metadata.get("confirmed_capabilities")
+        merged_confirmed: list[str] = []
+        if isinstance(existing_confirmed, list):
+            merged_confirmed.extend(
+                item for item in existing_confirmed if isinstance(item, str)
+            )
+        if isinstance(confirmed_capabilities, list):
+            for item in confirmed_capabilities:
+                if isinstance(item, str) and item not in merged_confirmed:
+                    merged_confirmed.append(item)
+        metadata["confirmed_capabilities"] = merged_confirmed
+
+        approval_request = dict(run.get("approval_request") or {})
+        approval_request.update(
+            {
+                "status": "approved",
+                "approver": approver,
+                "notes": notes,
+            }
+        )
+
+        return self.update_status(
+            run_id,
+            RUN_STATUS_RUNNING,
+            metadata=metadata,
+            approval_request=approval_request,
+            resume_from_checkpoint_id=resume_from_checkpoint_id,
+        )
+
+    def deny_run(
+        self,
+        run_id: str,
+        *,
+        approver: str | None = None,
+        notes: str | None = None,
+        reason: str = "Denied by approver",
+    ) -> dict[str, Any] | None:
+        run = self.get_run(run_id)
+        if run is None:
+            return None
+        approval_request = dict(run.get("approval_request") or {})
+        approval_request.update(
+            {
+                "status": "denied",
+                "approver": approver,
+                "notes": notes,
+            }
+        )
+        snapshot = self.update_status(
+            run_id,
+            RUN_STATUS_CANCELED,
+            approval_request=approval_request,
+            error=reason,
+            result=None,
+        )
+        if snapshot is not None:
+            self._persist(run_id)
+        return snapshot
+
     # ── Internal ─────────────────────────────────────────────────────────
 
     def _evict(self) -> None:

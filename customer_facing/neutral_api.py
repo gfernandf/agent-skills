@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from runtime.engine_factory import RuntimeComponents, build_runtime_components
+from runtime.errors import SafetyConfirmationRequiredError
 from runtime.execution_state import create_execution_state, mark_started
 from runtime.models import ExecutionOptions, ExecutionRequest
 from runtime.openapi_error_contract import map_runtime_error_to_http
@@ -212,8 +213,10 @@ class NeutralRuntimeAPI:
         required_conformance_profile: str | None,
         audit_mode: str | None,
         execution_channel: str | None,
+        confirmed_capabilities: list[str] | None = None,
         initial_state=None,
         trace_callback=None,
+        propagate_safety_confirmation: bool = False,
     ) -> tuple[Any, dict[str, Any]]:
         request = ExecutionRequest(
             skill_id=skill_id,
@@ -221,16 +224,26 @@ class NeutralRuntimeAPI:
             options=ExecutionOptions(
                 required_conformance_profile=required_conformance_profile,
                 audit_mode=audit_mode,
+                confirmed_capabilities=frozenset(
+                    item
+                    for item in (confirmed_capabilities or [])
+                    if isinstance(item, str)
+                ),
             ),
             trace_id=trace_id,
             channel=execution_channel,
             initial_state=initial_state,
         )
 
-        result = self.components.engine.execute(
-            request,
-            trace_callback=trace_callback,
-        )
+        try:
+            result = self.components.engine.execute(
+                request,
+                trace_callback=trace_callback,
+            )
+        except SafetyConfirmationRequiredError:
+            if propagate_safety_confirmation:
+                raise
+            raise
 
         outputs = dict(result.outputs) if isinstance(result.outputs, dict) else {}
         meta = _build_step_diagnostics(result)
@@ -415,6 +428,7 @@ class NeutralRuntimeAPI:
                 "required_conformance_profile": required_conformance_profile,
                 "audit_mode": audit_mode,
                 "execution_channel": execution_channel,
+                "confirmed_capabilities": [],
             },
         )
 
@@ -487,6 +501,64 @@ class NeutralRuntimeAPI:
                     except Exception:
                         pass
             except Exception as exc:
+                if isinstance(exc, SafetyConfirmationRequiredError):
+                    approval_state = getattr(exc, "execution_state", None)
+                    if approval_state is None:
+                        approval_state = create_execution_state(
+                            skill_id,
+                            inputs or {},
+                            trace_id=trace_id,
+                        )
+                        mark_started(approval_state)
+                        approval_state.current_step = exc.step_id
+
+                    checkpoint_id = None
+                    if checkpoint_manager is not None:
+                        try:
+                            checkpoint = checkpoint_manager.save_checkpoint(
+                                run_id=run_id,
+                                state=approval_state,
+                                step_id=approval_state.current_step,
+                                kind="run_waiting_for_human",
+                            )
+                            checkpoint_id = checkpoint.checkpoint_id
+                        except Exception:
+                            checkpoint_id = None
+
+                    waiting = run_store.mark_waiting_for_human(
+                        run_id,
+                        current_step_id=approval_state.current_step,
+                        checkpoint_head=checkpoint_id,
+                        approval_request={
+                            "reason": "requires_confirmation",
+                            "message": str(exc),
+                            "capability_id": exc.capability_id,
+                            "step_id": exc.step_id,
+                        },
+                    )
+                    if webhook_store is not None:
+                        try:
+                            from runtime.webhook import deliver_event
+
+                            deliver_event(
+                                webhook_store,
+                                "run.waiting_for_human",
+                                {
+                                    "run_id": run_id,
+                                    "skill_id": skill_id,
+                                    "status": "waiting_for_human",
+                                    "approval_request": (
+                                        waiting.get("approval_request")
+                                        if isinstance(waiting, dict)
+                                        else {}
+                                    ),
+                                },
+                                trace_id=trace_id,
+                            )
+                        except Exception:
+                            pass
+                    return
+
                 if checkpoint_manager is not None:
                     try:
                         existing_run = run_store.get_run(run_id)
@@ -614,6 +686,7 @@ class NeutralRuntimeAPI:
         run_store=None,
         checkpoint_manager=None,
         checkpoint_id: str | None = None,
+        confirmed_capabilities: list[str] | None = None,
         async_pool=None,
         webhook_store=None,
     ) -> dict[str, Any]:
@@ -669,6 +742,16 @@ class NeutralRuntimeAPI:
             if isinstance(metadata.get("required_conformance_profile"), str)
             else None
         )
+        confirmed_existing = metadata.get("confirmed_capabilities")
+        combined_confirmed: list[str] = []
+        if isinstance(confirmed_existing, list):
+            combined_confirmed.extend(
+                item for item in confirmed_existing if isinstance(item, str)
+            )
+        if isinstance(confirmed_capabilities, list):
+            for item in confirmed_capabilities:
+                if isinstance(item, str) and item not in combined_confirmed:
+                    combined_confirmed.append(item)
         audit_mode = metadata.get("audit_mode") if isinstance(metadata.get("audit_mode"), str) else None
         execution_channel = (
             metadata.get("execution_channel")
@@ -714,7 +797,9 @@ class NeutralRuntimeAPI:
                     required_conformance_profile=required_conformance_profile,
                     audit_mode=audit_mode,
                     execution_channel=execution_channel,
+                    confirmed_capabilities=combined_confirmed,
                     initial_state=restored_state,
+                    propagate_safety_confirmation=True,
                 )
 
                 try:
@@ -802,6 +887,77 @@ class NeutralRuntimeAPI:
                 },
             }
         )
+
+    def approve_run(
+        self,
+        run_id: str,
+        *,
+        approver: str | None = None,
+        notes: str | None = None,
+        run_store=None,
+        checkpoint_manager=None,
+        async_pool=None,
+        webhook_store=None,
+    ) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        run = run_store.get_run(run_id)
+        if run is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+        if run.get("status") != "waiting_for_human":
+            return _error_response(
+                RuntimeError(f"Run '{run_id}' is not waiting for human approval")
+            )
+
+        approval_request = run.get("approval_request")
+        capability_id = (
+            approval_request.get("capability_id")
+            if isinstance(approval_request, dict)
+            and isinstance(approval_request.get("capability_id"), str)
+            else None
+        )
+        confirmed_capabilities = [capability_id] if capability_id else []
+        updated = run_store.approve_run(
+            run_id,
+            approver=approver,
+            notes=notes,
+            confirmed_capabilities=confirmed_capabilities,
+            resume_from_checkpoint_id=run.get("checkpoint_head"),
+        )
+        if updated is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+
+        return self.resume_run(
+            run_id,
+            run_store=run_store,
+            checkpoint_manager=checkpoint_manager,
+            checkpoint_id=run.get("checkpoint_head"),
+            confirmed_capabilities=confirmed_capabilities,
+            async_pool=async_pool,
+            webhook_store=webhook_store,
+        )
+
+    def deny_run(
+        self,
+        run_id: str,
+        *,
+        approver: str | None = None,
+        notes: str | None = None,
+        run_store=None,
+        legacy_projection: bool = False,
+    ) -> dict[str, Any]:
+        if run_store is None:
+            return _error_response(RuntimeError("RunStore not configured"))
+        run = run_store.deny_run(
+            run_id,
+            approver=approver,
+            notes=notes,
+        )
+        if run is None:
+            return _error_response(RuntimeError(f"Run '{run_id}' not found"))
+        if legacy_projection:
+            run = _project_legacy_run_status(run)
+        return _ok_response(run)
 
     def list_runs(
         self,

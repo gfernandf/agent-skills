@@ -526,28 +526,52 @@ class ExecutionEngine:
         except Exception as e:
             execution_error = e
             record_exception(_otel_span, e)
-            if state is not None and state.status != "completed":
-                mark_finished(state, "failed")
             if state is not None:
-                log_event(
-                    "skill.execute.failed",
-                    level="error",
-                    trace_id=trace_id,
-                    skill_id=skill.id,
-                    depth=(context.depth if context is not None else 0),
-                    duration_ms=elapsed_ms(start_time),
-                    error_type=type(e).__name__,
-                    error_message=str(e),
-                )
-                self._emit_webhook(
-                    "skill.failed",
-                    {
-                        "skill_id": skill.id,
-                        "error_type": type(e).__name__,
-                        "error_message": str(e),
-                    },
-                    trace_id=trace_id,
-                )
+                if isinstance(e, SafetyConfirmationRequiredError):
+                    state.status = "waiting_for_human"
+                    state.finished_at = None
+                    emit_event(
+                        state,
+                        "skill_waiting_for_human",
+                        f"Skill '{skill.id}' is waiting for approval.",
+                        step_id=state.current_step,
+                        data={
+                            "capability_id": e.capability_id,
+                            "step_id": e.step_id,
+                        },
+                    )
+                    log_event(
+                        "skill.execute.waiting_for_human",
+                        trace_id=trace_id,
+                        skill_id=skill.id,
+                        depth=(context.depth if context is not None else 0),
+                        duration_ms=elapsed_ms(start_time),
+                        capability_id=e.capability_id,
+                        step_id=e.step_id,
+                    )
+                else:
+                    if state.status != "completed":
+                        mark_finished(state, "failed")
+                    log_event(
+                        "skill.execute.failed",
+                        level="error",
+                        trace_id=trace_id,
+                        skill_id=skill.id,
+                        depth=(context.depth if context is not None else 0),
+                        duration_ms=elapsed_ms(start_time),
+                        error_type=type(e).__name__,
+                        error_message=str(e),
+                    )
+                    self._emit_webhook(
+                        "skill.failed",
+                        {
+                            "skill_id": skill.id,
+                            "error_type": type(e).__name__,
+                            "error_message": str(e),
+                        },
+                        trace_id=trace_id,
+                    )
+                setattr(e, "execution_state", state)
             raise
         finally:
             if state is not None and context is not None:

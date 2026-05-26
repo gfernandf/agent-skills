@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 from customer_facing.neutral_api import NeutralRuntimeAPI
 from runtime.checkpoint_manager import CheckpointManager, InMemoryCheckpointStoreBackend
+from runtime.errors import SafetyConfirmationRequiredError
 from runtime.execution_state import create_execution_state, mark_finished, mark_started
 from runtime.run_store import RunStoreV2
 
@@ -200,3 +201,105 @@ def test_resume_run_executes_from_checkpoint() -> None:
     assert run.get("status") == "completed"
     assert run.get("resume_from_checkpoint_id") == record.checkpoint_id
     assert isinstance(run.get("checkpoint_head"), str)
+
+
+def test_async_approval_flow_runs_after_waiting() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    waiting_state = create_execution_state("x.y", {"n": 1}, trace_id="t-5")
+    mark_started(waiting_state)
+
+    def _fake_execute(*, skill_id, inputs, trace_id, confirmed_capabilities=None, initial_state=None, **_kwargs):
+        if initial_state is None:
+            error = SafetyConfirmationRequiredError(
+                "confirmation needed",
+                skill_id=skill_id,
+                step_id="step-1",
+                capability_id="cap.confirm",
+            )
+            error.execution_state = waiting_state  # type: ignore[attr-defined]
+            raise error
+        assert "cap.confirm" in set(confirmed_capabilities or [])
+        initial_state.outputs["ok"] = True
+        mark_finished(initial_state, "completed")
+        return SimpleNamespace(state=initial_state), {
+            "skill_id": skill_id,
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": trace_id,
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        launch = api.execute_skill_async(
+            skill_id="x.y",
+            inputs={"n": 1},
+            trace_id="t-5",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+        assert launch["status"] == "running"
+
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run(launch["run_id"])
+            if isinstance(run, dict) and run.get("status") == "waiting_for_human":
+                break
+            time.sleep(0.05)
+
+        run = store.get_run(launch["run_id"])
+        assert isinstance(run, dict)
+        assert run.get("status") == "waiting_for_human"
+
+        approval = api.approve_run(
+            launch["run_id"],
+            approver="lead-1",
+            notes="approved",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+        assert approval["ok"] is True
+        assert approval["data"]["resume"]["mode"] == "checkpoint_resume"
+
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run(launch["run_id"])
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
+
+    run = store.get_run(launch["run_id"])
+    assert isinstance(run, dict)
+    assert run.get("status") == "completed"
+    assert run.get("error") is None
+
+
+def test_deny_run_cancels_waiting_run() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+
+    store.create_run_record(
+        run_id="r-deny",
+        skill_id="x.y",
+        trace_id="t-6",
+        status="waiting_for_human",
+        metadata={"inputs": {"n": 1}},
+    )
+
+    denied = api.deny_run(
+        "r-deny",
+        approver="lead-2",
+        notes="not now",
+        run_store=store,
+        legacy_projection=False,
+    )
+
+    assert denied["ok"] is True
+    assert denied["data"]["status"] == "canceled"
+    assert denied["data"]["approval_request"]["status"] == "denied"
+    assert store.get_run("r-deny")["status"] == "canceled"

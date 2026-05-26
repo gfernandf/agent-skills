@@ -47,6 +47,8 @@ Both HTTP servers support async start-and-poll semantics.
 - List run checkpoints: `GET /v1/runs/{run_id}/checkpoints`
 - Resume run from latest checkpoint: `POST /v1/runs/{run_id}/resume`
     - Body (optional): `{ "checkpoint_id": "<checkpoint-id>" }`
+- Approve waiting run: `POST /v1/runs/{run_id}/approve`
+- Deny waiting run: `POST /v1/runs/{run_id}/deny`
 
 Run states:
 
