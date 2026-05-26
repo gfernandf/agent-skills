@@ -29,6 +29,7 @@ from customer_facing.neutral_api import NeutralRuntimeAPI
 class MyAPI(NeutralRuntimeAPI):
     def custom_endpoint(self, request):
         ...
+```
 
 ## Async execution contract
 
@@ -43,17 +44,20 @@ Both HTTP servers support async start-and-poll semantics.
 - List recent runs: `GET /v1/runs?limit=100&offset=0&status=running|completed|failed`
 - Cancel run: `POST /v1/runs/{run_id}/cancel`
 - Cancel run (alias): `POST /run_cancel/{run_id}` or `POST /v1/run_cancel/{run_id}`
+- List run checkpoints: `GET /v1/runs/{run_id}/checkpoints`
+- Resume run from latest checkpoint: `POST /v1/runs/{run_id}/resume`
+    - Body (optional): `{ "checkpoint_id": "<checkpoint-id>" }`
 
 Run states:
 
-- `running`
-- `completed`
-- `failed`
+- Canonical (`/v1/runs/*`): `pending`, `running`, `waiting_for_human`, `replaying`, `completed`, `failed`, `canceled`
+- Legacy aliases (`/run_status/*`, `/run_cancel/*`): `canceled` is projected as `failed` for backward compatibility
 
 Notes:
 
 - The HTTP request timeout does not cancel a run once accepted.
 - Final async result payload preserves the same output/meta diagnostics shape as sync execution.
+- `resume` in this slice is `state_only` acceptance (status/lifecycle resume); full checkpoint continuation is implemented in next slice.
 
 ## Webhook callback (optional)
 

@@ -26,7 +26,7 @@ Core modules:
 
 2. `customer_facing/neutral_api.py`
 - Protocol-neutral domain facade.
-- Operations: health, describe_skill, execute_skill, execute_capability.
+- Operations: health, describe_skill, execute_skill, execute_capability, async runs, run status/cancel, checkpoints, resume.
 
 3. `gateway/core.py`
 - Agent-facing gateway layer.
@@ -56,7 +56,27 @@ Base version: `/v1`
 8. `POST /v1/skills/{skill_id}/execute`
 9. `POST /v1/capabilities/{capability_id}/execute`
 10. `POST /v1/capabilities/{capability_id}/explain`
-11. `GET /openapi.json`
+11. `POST /v1/skills/{skill_id}/execute/async`
+12. `POST /v1/run_async` (alias) and `POST /run_async` (alias)
+13. `GET /v1/runs`
+14. `GET /v1/runs/{run_id}`
+15. `POST /v1/runs/{run_id}/cancel`
+16. `GET /v1/runs/{run_id}/checkpoints`
+17. `POST /v1/runs/{run_id}/resume`
+18. `GET /run_status/{run_id}` and `GET /v1/run_status/{run_id}` (legacy aliases)
+19. `POST /run_cancel/{run_id}` and `POST /v1/run_cancel/{run_id}` (legacy aliases)
+20. `GET /openapi.json`
+
+Async run status model:
+
+- Canonical (`/v1/runs/*`): `pending`, `running`, `waiting_for_human`, `replaying`, `completed`, `failed`, `canceled`.
+- Legacy aliases project `canceled` to `failed` for compatibility with older clients.
+
+Checkpoint and resume contract:
+
+- `GET /v1/runs/{run_id}/checkpoints` returns checkpoint list + `checkpoint_head`.
+- `POST /v1/runs/{run_id}/resume` accepts optional `checkpoint_id`.
+- Current slice behavior: resume mode is `state_only` (run lifecycle/state acceptance); full execution continuation from checkpoint is scheduled for the next slice.
 
 Security model (configurable):
 
