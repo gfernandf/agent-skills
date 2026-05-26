@@ -766,6 +766,61 @@
         }
       }
     },
+    "/v1/runs/{run_id}/fork": {
+      "post": {
+        "operationId": "forkRun",
+        "summary": "Fork an asynchronous run from a checkpoint.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForkRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Forked run created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForkRunResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing API key"
+          },
+          "404": {
+            "description": "Run or checkpoint not found"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
     "/v1/runs": {
       "get": {
         "operationId": "listRuns",
@@ -1024,6 +1079,75 @@
         "required": [
           "run_id",
           "status"
+        ]
+      },
+      "ForkRunRequest": {
+        "type": "object",
+        "properties": {
+          "checkpoint_id": {
+            "type": "string",
+            "description": "Optional checkpoint to fork from. Defaults to the run's checkpoint_head."
+          }
+        }
+      },
+      "ForkRunResponse": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "type": "object",
+            "properties": {
+              "run_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending"
+                ]
+              },
+              "skill_id": {
+                "type": "string"
+              },
+              "checkpoint_head": {
+                "type": "string",
+                "nullable": true
+              },
+              "metadata": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "run_id",
+              "status"
+            ]
+          },
+          "fork": {
+            "type": "object",
+            "properties": {
+              "accepted": {
+                "type": "boolean"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "checkpoint_id": {
+                "type": "string"
+              },
+              "source_run_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "accepted",
+              "mode",
+              "checkpoint_id",
+              "source_run_id"
+            ]
+          }
+        },
+        "required": [
+          "run",
+          "fork"
         ]
       },
       "WebhookCreateRequest": {
