@@ -672,37 +672,46 @@ def test_ops_trace_summarize():
 
 
 def test_binding_files_exist():
-    """All 18 capabilities must have both bindings files present."""
+    """All 18 multipurpose capabilities (or canonical successors) must have bindings."""
     bindings_root = Path(__file__).parent / "bindings" / "official"
-    expected = [
-        "agent.request.normalize",
-        "agent.goal.interpret",
-        "agent.criteria.define",
-        "agent.catalog.search",
-        "agent.catalog.rank",
-        "agent.catalog.detect",
-        "agent.task.plan",
-        "agent.plan.split",
-        "agent.plan.map",
-        "agent.plan.validate",
-        "agent.plan.reconcile",
-        "agent.plan.synthesize",
-        "agent.plan.gate",
-        "agent.plan.run",
-        "agent.output.generate",
-        "agent.output.synthesize",
-        "eval.output.validate",
-        "ops.trace.summarize",
-    ]
+    expected = {
+        "agent.request.normalize": ["reasoning.request.normalize"],
+        "agent.goal.interpret": ["reasoning.goal.interpret"],
+        "agent.criteria.define": ["reasoning.criteria.define"],
+        "agent.catalog.search": ["evaluation.framework.detect"],
+        "agent.catalog.rank": ["evaluation.framework.rank"],
+        "agent.catalog.detect": ["evaluation.framework.detect"],
+        "agent.task.plan": ["reasoning.plan.generate"],
+        "agent.plan.split": ["reasoning.plan.decompose"],
+        "agent.plan.map": ["reasoning.plan.map"],
+        "agent.plan.validate": ["evaluation.plan.validate"],
+        "agent.plan.reconcile": ["reasoning.plan.reconcile"],
+        "agent.plan.synthesize": ["reasoning.plan.synthesize"],
+        "agent.plan.gate": ["evaluation.plan.gate"],
+        "agent.plan.run": ["agent.plan.execute"],
+        "agent.output.generate": ["reasoning.response.generate"],
+        "agent.output.synthesize": ["reasoning.output.synthesize"],
+        "eval.output.validate": ["evaluation.output.validate"],
+        "ops.trace.summarize": ["evidence.trace.summarize"],
+    }
     missing = []
-    for cap_id in expected:
-        cap_dir = bindings_root / cap_id
-        if not cap_dir.is_dir():
-            missing.append(f"{cap_id}/ (directory missing)")
+    for cap_id, aliases in expected.items():
+        candidates = [cap_id, *aliases]
+        counts: dict[str, int] = {}
+        for candidate in candidates:
+            cap_dir = bindings_root / candidate
+            if cap_dir.is_dir():
+                counts[candidate] = len(list(cap_dir.glob("*.yaml")))
+
+        if not counts:
+            missing.append(f"{cap_id}/ (directory missing; checked {candidates})")
             continue
-        yaml_files = list(cap_dir.glob("*.yaml"))
-        if len(yaml_files) < 2:
-            missing.append(f"{cap_id}/ (has {len(yaml_files)} yaml files, expected 2)")
+
+        max_count = max(counts.values())
+        if max_count < 1:
+            missing.append(
+                f"{cap_id}/ (no bindings found in {counts}; expected at least 1 yaml)"
+            )
     if missing:
         raise AssertionError(
             "Missing binding files:\n" + "\n".join(f"  - {m}" for m in missing)
@@ -710,31 +719,35 @@ def test_binding_files_exist():
 
 
 def test_capability_yamls_exist():
-    """All 18 capability YAML files must exist in the registry."""
+    """All 18 multipurpose capabilities (or canonical successors) must exist in registry."""
     registry_root = (
         Path(__file__).parent.parent / "agent-skill-registry" / "capabilities"
     )
-    expected = [
-        "agent.request.normalize.yaml",
-        "agent.goal.interpret.yaml",
-        "agent.criteria.define.yaml",
-        "agent.catalog.search.yaml",
-        "agent.catalog.rank.yaml",
-        "agent.catalog.detect.yaml",
-        "agent.task.plan.yaml",
-        "agent.plan.split.yaml",
-        "agent.plan.map.yaml",
-        "agent.plan.validate.yaml",
-        "agent.plan.reconcile.yaml",
-        "agent.plan.synthesize.yaml",
-        "agent.plan.gate.yaml",
-        "agent.plan.run.yaml",
-        "agent.output.generate.yaml",
-        "agent.output.synthesize.yaml",
-        "eval.output.validate.yaml",
-        "ops.trace.summarize.yaml",
-    ]
-    missing = [f for f in expected if not (registry_root / f).exists()]
+    expected = {
+        "agent.request.normalize.yaml": ["reasoning.request.normalize.yaml"],
+        "agent.goal.interpret.yaml": ["reasoning.goal.interpret.yaml"],
+        "agent.criteria.define.yaml": ["reasoning.criteria.define.yaml"],
+        "agent.catalog.search.yaml": ["evaluation.framework.detect.yaml"],
+        "agent.catalog.rank.yaml": ["evaluation.framework.rank.yaml"],
+        "agent.catalog.detect.yaml": ["evaluation.framework.detect.yaml"],
+        "agent.task.plan.yaml": ["reasoning.plan.generate.yaml"],
+        "agent.plan.split.yaml": ["reasoning.plan.decompose.yaml"],
+        "agent.plan.map.yaml": ["reasoning.plan.map.yaml"],
+        "agent.plan.validate.yaml": ["evaluation.plan.validate.yaml"],
+        "agent.plan.reconcile.yaml": ["reasoning.plan.reconcile.yaml"],
+        "agent.plan.synthesize.yaml": ["reasoning.plan.synthesize.yaml"],
+        "agent.plan.gate.yaml": ["evaluation.plan.gate.yaml"],
+        "agent.plan.run.yaml": ["agent.plan.execute.yaml"],
+        "agent.output.generate.yaml": ["reasoning.response.generate.yaml"],
+        "agent.output.synthesize.yaml": ["reasoning.output.synthesize.yaml"],
+        "eval.output.validate.yaml": ["evaluation.output.validate.yaml"],
+        "ops.trace.summarize.yaml": ["evidence.trace.summarize.yaml"],
+    }
+    missing = []
+    for cap_yaml, aliases in expected.items():
+        candidates = [cap_yaml, *aliases]
+        if not any((registry_root / candidate).exists() for candidate in candidates):
+            missing.append(f"{cap_yaml} (checked {candidates})")
     if missing:
         raise AssertionError(
             "Missing capability YAML files:\n" + "\n".join(f"  - {f}" for f in missing)

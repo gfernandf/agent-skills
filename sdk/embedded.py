@@ -525,7 +525,45 @@ def execute_capability(
     >>> result = execute_capability("text.content.summarize", {"text": "Hello world", "max_length": 20})
     """
     _, cap_loader, cap_executor = _get_components()
-    cap = cap_loader.get_capability(capability_id)
+
+    def _capability_alias_candidates(cap_id: str) -> list[str]:
+        candidates: list[str] = []
+        prefix_aliases = {
+            "text.content.": "reasoning.content.",
+            "eval.": "evaluation.",
+            "ops.trace.": "evidence.trace.",
+        }
+        for old_prefix, new_prefix in prefix_aliases.items():
+            if cap_id.startswith(old_prefix):
+                candidates.append(new_prefix + cap_id[len(old_prefix) :])
+
+        explicit_aliases = {
+            "agent.plan.run": "agent.plan.execute",
+            "agent.task.plan": "reasoning.plan.generate",
+            "agent.plan.split": "reasoning.plan.decompose",
+        }
+        mapped = explicit_aliases.get(cap_id)
+        if mapped:
+            candidates.append(mapped)
+
+        # Keep order but remove duplicates.
+        return list(dict.fromkeys(candidates))
+
+    resolved_capability_id = capability_id
+    try:
+        cap = cap_loader.get_capability(resolved_capability_id)
+    except Exception:
+        cap = None
+        for candidate in _capability_alias_candidates(capability_id):
+            try:
+                cap = cap_loader.get_capability(candidate)
+                resolved_capability_id = candidate
+                break
+            except Exception:
+                continue
+        if cap is None:
+            raise
+
     raw = cap_executor.execute(cap, inputs)
     meta: dict[str, Any] = {}
     if isinstance(raw, tuple):
@@ -535,7 +573,7 @@ def execute_capability(
 
     outputs = dict(raw) if isinstance(raw, dict) else {"result": raw}
     outputs = apply_execution_reliability_confidence_calibration(
-        skill_id=capability_id,
+        skill_id=resolved_capability_id,
         outputs=outputs,
         meta=meta,
     )
@@ -1143,11 +1181,12 @@ def _normalize_outputs_to_skill_contract(
     - filling missing required fields with safe type defaults,
     - coercing values to the declared top-level field type.
     """
-    if not getattr(skill, "outputs", None):
+    outputs_spec = getattr(skill, "outputs", None)
+    if not isinstance(outputs_spec, dict) or not outputs_spec:
         return dict(outputs)
 
     normalized: dict[str, Any] = {}
-    for name, spec in skill.outputs.items():
+    for name, spec in outputs_spec.items():
         has_value = name in outputs
 
         if has_value:

@@ -84,6 +84,13 @@ def _discover_bindings():
 
 _CAPABILITIES = _load_capabilities()
 
+# Control-plane fields may be passed through bindings to preserve runtime behavior
+# in strict-option decision flows even when not modeled as capability business inputs.
+_ALLOWED_CONTROL_INPUT_REFS = {
+    "explicit_options",
+    "option_constraint_mode",
+}
+
 
 def _binding_ids():
     """Return list of (test_id, binding_path, binding_data) for parametrize."""
@@ -158,7 +165,7 @@ class TestBindingContract:
 
         refs: Set[str] = set()
         _collect_input_refs(data.get("request", {}), refs)
-        phantom = refs - cap_input_names
+        phantom = (refs - cap_input_names) - _ALLOWED_CONTROL_INPUT_REFS
         assert not phantom, (
             f"{path.name}: binding references inputs not declared in capability: {sorted(phantom)}"
         )

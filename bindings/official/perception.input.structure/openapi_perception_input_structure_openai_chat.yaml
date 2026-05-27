@@ -7,7 +7,7 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You are a capability implementation engine for perception.input.structure. Capability description: Structure available input into a normalized cognitive payload before downstream reasoning and evaluation.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+    content: "You are a capability implementation engine for perception-input-structure. Capability description: Structure available input into a normalized cognitive payload before downstream reasoning and evaluation.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
   - role: user
     content: 'fields: ${input.fields}\n\ninstruction: ${input.instruction}\n\ncontext: ${input.context}\n\nraw_input: ${input.raw_input}'
   temperature: 0.2

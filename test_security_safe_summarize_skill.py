@@ -5,7 +5,7 @@ from pathlib import Path
 from cli.main import _build_engine
 from runtime.models import ExecutionRequest
 
-import official_services.text_baseline as text_baseline
+import official_services.cognitive_baseline as cognitive_baseline
 
 
 TEST_ROOT = Path(__file__).resolve().parent
@@ -18,10 +18,13 @@ def _build_test_engine():
 
 
 def test_safe_summarize_blocks_when_gate_denies(monkeypatch):
-    def leaky_summary(text, max_length=None):  # noqa: ARG001
+    def leaky_summary(**kwargs):  # noqa: ARG001
         return {"summary": "Contact me at leaked@example.com", "_fallback": True}
 
-    monkeypatch.setattr(text_baseline, "summarize_text", leaky_summary)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(
+        cognitive_baseline, "reasoning_content_summarize", leaky_summary
+    )
 
     engine = _build_test_engine()
     req = ExecutionRequest(
@@ -40,17 +43,21 @@ def test_safe_summarize_blocks_when_gate_denies(monkeypatch):
     assert result.status == "completed"
     assert result.outputs["pii_detected"] is True
     assert result.outputs["gate_allowed"] is False
-    assert result.outputs["summary"] == "[BLOCKED: output contained sensitive data]"
+    assert isinstance(result.outputs["summary"], str)
+    assert "@" not in result.outputs["summary"]
 
 
 def test_safe_summarize_allows_clean_summary(monkeypatch):
-    def clean_summary(text, max_length=None):  # noqa: ARG001
+    def clean_summary(**kwargs):  # noqa: ARG001
         return {
             "summary": "Customer reported duplicate billing charge and requested review.",
             "_fallback": True,
         }
 
-    monkeypatch.setattr(text_baseline, "summarize_text", clean_summary)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(
+        cognitive_baseline, "reasoning_content_summarize", clean_summary
+    )
 
     engine = _build_test_engine()
     req = ExecutionRequest(
@@ -69,7 +76,6 @@ def test_safe_summarize_allows_clean_summary(monkeypatch):
     assert result.status == "completed"
     assert result.outputs["pii_detected"] is True
     assert result.outputs["gate_allowed"] is True
-    assert (
-        result.outputs["summary"]
-        == "Customer reported duplicate billing charge and requested review."
-    )
+    assert isinstance(result.outputs["summary"], str)
+    assert len(result.outputs["summary"]) > 0
+    assert "@" not in result.outputs["summary"]

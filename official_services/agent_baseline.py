@@ -1229,15 +1229,14 @@ def map_plan_inputs(expanded_steps, state_schema=None):
         if not isinstance(step, dict):
             continue
         step_id = step.get("id", "unknown")
-        # Preserve literal inputs (e.g., objective/query) and keep explicit
-        # state references unchanged. This prevents generating plans with
-        # unresolved placeholder-only parameters.
+        # Keep explicit state references; bind all other inputs to working-state
+        # slots so the plan uses consistent $state.* wiring.
         bound_inputs = {}
         for k, v in (step.get("inputs") or {}).items():
             if isinstance(v, str) and v.startswith("$state."):
                 bound_inputs[k] = v
             else:
-                bound_inputs[k] = v
+                bound_inputs[k] = f"$state.working.{step_id}_{k}"
         # Map outputs to $state.working.* paths
         bound_outputs = {
             k: f"$state.working.{step_id}_{k}"
@@ -1390,7 +1389,19 @@ def validate_plan(expanded_plan, registry=None, state_schema=None):
             if not isinstance(step, dict):
                 continue
             ref = step.get("ref")
-            if ref and ref not in known_refs:
+            if not ref:
+                continue
+
+            # Allow a small set of legacy namespace aliases used by older plans.
+            ref_candidates = [ref]
+            if isinstance(ref, str) and ref.startswith("text.content."):
+                ref_candidates.append(
+                    f"reasoning.content.{ref[len('text.content.') :]}"
+                )
+            if isinstance(ref, str) and ref.startswith("eval."):
+                ref_candidates.append(f"evaluation.{ref[len('eval.') :]}")
+
+            if not any(candidate in known_refs for candidate in ref_candidates):
                 errors.append(
                     {
                         "step_id": step.get("id"),

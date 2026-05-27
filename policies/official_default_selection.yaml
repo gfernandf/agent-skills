@@ -1,15 +1,5 @@
 defaults:
-  agent.task.delegate: python_agent_delegate
-  agent.plan.create: python_agent_plan_create
   agent.plan.execute: python_agent_plan_execute
-  agent.plan.gate: python_agent_plan_gate
-  agent.plan.generate: openapi_agent_plan_generate_openai_chat
-  agent.plan.map: python_agent_plan_map
-  agent.plan.reconcile: python_agent_plan_reconcile
-  agent.plan.split: python_agent_plan_split
-  agent.plan.synthesize: python_agent_plan_synthesize
-  agent.plan.validate: python_agent_plan_validate
-  agent.input.route: openapi_agent_route_openai_chat
   audio.speech.transcribe: python_audio_transcribe
   audio.speech.synthesize: python_audio_synthesize
   code.diff.extract: python_code_diff_extract
@@ -37,9 +27,6 @@ defaults:
   message.priority.classify: python_message_priority_classify
   ops.budget.estimate: python_ops_budget_estimate
   ops.event.acknowledge: python_ops_event_acknowledge
-  ops.event.monitor: python_ops_event_monitor
-  ops.trace.analyze: python_ops_trace_analyze
-  ops.trace.monitor: python_ops_trace_monitor
   research.source.retrieve: python_research_source_retrieve
   pdf.document.read: python_pdf_read
   policy.constraint.validate: python_policy_constraint_validate
@@ -47,9 +34,6 @@ defaults:
   policy.decision.justify: python_policy_decision_justify
   policy.risk.classify: python_policy_risk_classify
   policy.risk.score: python_policy_risk_score
-  provenance.citation.generate: python_provenance_citation_generate
-  provenance.claim.verify: openapi_provenance_claim_verify_openai_chat
-  eval.output.score: openapi_eval_output_score_openai_chat
   security.output.gate: python_security_output_gate
   security.pii.detect: python_security_pii_detect
   security.pii.redact: python_security_pii_redact
@@ -57,40 +41,13 @@ defaults:
   table.row.filter: python_table_filter
   table.row.sort: python_table_sort
   table.column.aggregate: python_table_aggregate
-  text.content.classify: openapi_text_classify_openai_chat
-  text.content.embed: openapi_text_embed_openai
-  text.content.generate: openapi_text_generate_openai_chat
-  text.entity.extract: openapi_text_entity_extract_openai_chat
-  text.content.extract: python_text_extract
-  text.keyword.extract: openapi_text_keyword_extract_openai_chat
-  text.language.detect: openapi_text_language_detect_openai_chat
-  text.content.summarize: python_text_summarize
-  text.content.template: python_text_template
-  text.content.translate: openapi_text_translate_openai_chat
-  text.content.transform: openapi_text_transform_openai_chat
-  text.response.extract: openapi_text_response_extract_openai_chat
   video.frame.extract: python_video_frame_extract
   web.page.fetch: python_web_fetch
   web.page.extract: python_web_page_extract
   web.source.verify: python_web_source_verify
   web.source.search: python_web_source_search
-  agent.option.generate: openapi_agent_option_generate_openai_chat
-  analysis.risk.extract: openapi_analysis_risk_extract_openai_chat
-  analysis.problem.split: openapi_analysis_split_openai_chat
   decision.option.justify: openapi_decision_option_justify_openai_chat
-  eval.option.analyze: openapi_eval_option_analyze_openai_chat
-  eval.option.score: openapi_eval_option_score_openai_chat
-  model.output.generate: python_model_output_generate
-  model.response.validate: python_model_response_validate
-  model.embedding.generate: openapi_model_embedding_generate_openai
-  model.output.classify: openapi_model_output_classify_openai_chat
-  model.output.score: openapi_model_output_score_openai_chat
-  model.output.sanitize: python_model_output_sanitize
-  model.prompt.template: python_model_prompt_template
-  model.risk.score: openapi_model_risk_score_openai_chat
-  analysis.theme.cluster: openapi_analysis_theme_cluster_openai_chat
   web.source.normalize: python_web_source_normalize
-  text.content.merge: python_text_merge
   identity.assignee.identify: python_identity_assignee_identify
   identity.decision.justify: python_identity_decision_justify
   identity.permission.gate: python_identity_permission_gate
@@ -118,21 +75,13 @@ defaults:
   task.assignee.assign: python_task_assignee_assign
   task.case.close: python_task_case_close
   task.case.create: python_task_case_create
-  task.case.get: python_task_case_get
-  task.case.list: python_task_case_list
-  task.case.search: python_task_case_search
   task.case.update: python_task_case_update
   task.event.acknowledge: python_task_event_acknowledge
   task.incident.create: python_task_incident_create
   task.milestone.schedule: python_task_milestone_schedule
-  task.priority.classify: python_task_priority_classify
-  task.sla.monitor: python_task_sla_monitor
   task.state.transition: python_task_state_transition
-  agent.flow.branch: openapi_agent_flow_branch_openai_chat
-  agent.flow.catch: python_agent_flow_catch
   agent.flow.iterate: python_agent_flow_iterate
   agent.flow.wait: python_agent_flow_wait
-  agent.input.collect: openapi_agent_input_collect_openai_chat
   audio.speaker.diarize: python_audio_speaker_diarize
   data.array.map: python_data_array_map
   data.field.map: python_data_field_map
@@ -144,20 +93,7 @@ defaults:
   table.sheet.read: python_table_sheet_read
   table.sheet.write: python_table_sheet_write
   task.event.schedule: python_task_event_schedule
-  text.content.compare: openapi_text_compare_openai_chat
-  text.sentiment.analyze: openapi_text_sentiment_openai_chat
   web.request.send: python_web_request_send
-  agent.request.normalize: python_agent_request_normalize
-  agent.goal.interpret: python_agent_goal_interpret
-  agent.criteria.define: python_agent_criteria_define
-  agent.catalog.search: python_agent_catalog_search
-  agent.catalog.rank: python_agent_catalog_rank
-  agent.catalog.detect: python_agent_catalog_detect
-  agent.task.plan: python_agent_task_plan
-  agent.output.generate: python_agent_output_generate
-  agent.output.synthesize: python_agent_output_synthesize
-  eval.output.validate: python_eval_output_validate
-  ops.trace.summarize: python_ops_trace_summarize
   decision.input.route: openapi_decision_input_route_openai_chat
   decision.option.select: openapi_decision_option_select_openai_chat
   decision.strategy.select: openapi_decision_strategy_select_openai_chat

@@ -915,6 +915,8 @@ class TestSkillTools:
             patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
             patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
             patch("sdk.embedded.execute", return_value=mock_result) as mock_exec,
+            patch("sdk.embedded.execute_with_meta", return_value=mock_result)
+            as mock_exec_meta,
         ):
             from official_mcp_servers.server import call_tool
 
@@ -925,10 +927,16 @@ class TestSkillTools:
 
         parsed = json.loads(result[0].text)
         assert parsed["decision"] == "Option A"
-        mock_exec.assert_called_once_with(
-            "experiment.structured-decision",
-            {"topic": "Buy laptop", "options": ["A", "B"]},
-        )
+        if mock_exec_meta.call_count:
+            mock_exec_meta.assert_called_once_with(
+                "experiment.structured-decision",
+                {"topic": "Buy laptop", "options": ["A", "B"]},
+            )
+        else:
+            mock_exec.assert_called_once_with(
+                "experiment.structured-decision",
+                {"topic": "Buy laptop", "options": ["A", "B"]},
+            )
 
     @pytest.mark.asyncio
     async def test_skill_execution_error_returns_error_json(self):

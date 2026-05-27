@@ -743,7 +743,7 @@ def _coerce_skill_execution_mode(requested_mode: str) -> tuple[str, str | None]:
 
 
 def _extract_include_diagnostics(args: dict[str, Any]) -> bool:
-    return bool(args.pop(_INCLUDE_DIAGNOSTICS_ARG, True))  # Default to True
+    return bool(args.pop(_INCLUDE_DIAGNOSTICS_ARG, False))  # Default to False
 
 
 def _extract_compiled_plan_candidate(planner_output: str) -> Any:

@@ -328,6 +328,77 @@ def _evaluation_option_score(**kwargs: Any) -> dict[str, Any]:
     }
 
 
+def _evaluation_output_score(**kwargs: Any) -> dict[str, Any]:
+    output = _as_dict(kwargs.get("output"))
+    rubric = _as_dict(kwargs.get("rubric"))
+
+    if not output:
+        score = 0.0
+        dimensions = {
+            "coverage": {
+                "score": 0.0,
+                "rationale": "No structured output provided for evaluation.",
+            }
+        }
+    else:
+        total_fields = max(len(output), 1)
+        non_empty = sum(1 for v in output.values() if v not in (None, "", [], {}))
+        coverage = non_empty / total_fields
+
+        shallow_penalty = 0.0
+        for value in output.values():
+            if isinstance(value, list) and len(value) == 0:
+                shallow_penalty += 1.0
+            elif isinstance(value, str) and 0 < len(value.strip()) < 50:
+                shallow_penalty += 0.5
+
+        depth = max(0.0, 1.0 - (shallow_penalty / total_fields))
+        coherence = round(min(1.0, max(0.0, (coverage + depth) / 2)), 2)
+
+        score = round((coverage + depth + coherence) / 3, 2)
+
+        default_dimensions = {
+            "coverage": {
+                "score": round(coverage, 2),
+                "rationale": "Fraction of non-empty required decision fields.",
+            },
+            "depth": {
+                "score": round(depth, 2),
+                "rationale": "Penalizes shallow content such as empty arrays or short strings.",
+            },
+            "coherence": {
+                "score": coherence,
+                "rationale": "Consistency estimate derived from coverage/depth balance.",
+            },
+        }
+
+        if isinstance(rubric.get("dimensions"), dict) and rubric["dimensions"]:
+            dimensions = {
+                name: default_dimensions.get(name, {"score": score, "rationale": "Rubric dimension scored by baseline aggregate."})
+                for name in rubric["dimensions"].keys()
+                if isinstance(name, str) and name
+            }
+            if not dimensions:
+                dimensions = default_dimensions
+        else:
+            dimensions = default_dimensions
+
+    if score >= 0.9:
+        quality_level = "excellent"
+    elif score >= 0.7:
+        quality_level = "good"
+    elif score >= 0.5:
+        quality_level = "fair"
+    else:
+        quality_level = "poor"
+
+    return {
+        "score": score,
+        "dimensions": dimensions,
+        "quality_level": quality_level,
+    }
+
+
 def _decision_option_select(**kwargs: Any) -> dict[str, Any]:
     options = kwargs.get("options") if isinstance(kwargs.get("options"), list) else []
     scores = kwargs.get("option_scores") if isinstance(kwargs.get("option_scores"), list) else []
@@ -1220,6 +1291,7 @@ _SPECIALS = {
     "reasoning_plan_reconcile": _reasoning_plan_reconcile,
     "reasoning_problem_decompose": _reasoning_problem_decompose,
     "evaluation_option_score": _evaluation_option_score,
+    "evaluation_output_score": _evaluation_output_score,
     "evaluation_assumption_validate": _evaluation_assumption_validate,
     "evaluation_failure_analyze": _evaluation_failure_analyze,
     "evaluation_framework_detect": _evaluation_framework_detect,

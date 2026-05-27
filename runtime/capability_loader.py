@@ -81,6 +81,12 @@ class YamlCapabilityLoader:
 
         path = self._capability_index.get(capability_id)
         if path is None:
+            for alias in self._legacy_alias_candidates(capability_id):
+                alias_path = self._capability_index.get(alias)
+                if alias_path is not None:
+                    path = alias_path
+                    break
+        if path is None:
             msg = f"Capability '{capability_id}' not found."
             similar = suggest_similar(
                 capability_id, list(self._capability_index.keys())
@@ -89,6 +95,30 @@ class YamlCapabilityLoader:
                 msg += f" Did you mean: {', '.join(similar)}?"
             raise CapabilityNotFoundError(msg, capability_id=capability_id)
         return path
+
+    @staticmethod
+    def _legacy_alias_candidates(capability_id: str) -> list[str]:
+        candidates: list[str] = []
+
+        prefix_aliases = {
+            "text.content.": "reasoning.content.",
+            "eval.": "evaluation.",
+            "ops.trace.": "evidence.trace.",
+        }
+        for old_prefix, new_prefix in prefix_aliases.items():
+            if capability_id.startswith(old_prefix):
+                candidates.append(new_prefix + capability_id[len(old_prefix) :])
+
+        explicit_aliases = {
+            "agent.task.plan": "reasoning.plan.generate",
+            "agent.plan.split": "reasoning.plan.decompose",
+            "agent.plan.run": "agent.plan.execute",
+        }
+        mapped = explicit_aliases.get(capability_id)
+        if mapped:
+            candidates.append(mapped)
+
+        return list(dict.fromkeys(candidates))
 
     def get_all_capabilities(self) -> dict[str, CapabilitySpec]:
         """
