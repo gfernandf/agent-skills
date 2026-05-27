@@ -229,28 +229,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Run cognitive contract gate
+      - name: Run cognitive quality gates
         run: |
-          mkdir -p artifacts
-          python -m pytest -q test_cognitive_capabilities_e2e.py -o "addopts="
-
-      - name: Run cognitive semantic golden gate
-        run: |
-          python -m pytest -q test_cognitive_semantic_golden.py -o "addopts="
-
-      - name: Run cognitive semantic all-capabilities gate
-        run: |
-          python -m pytest -q test_cognitive_semantic_all.py -o "addopts="
-
-      - name: Run decision hardening regressions
-        run: |
-          python -m pytest -q test_option_integrity_phase1.py -o "addopts="
-          python -m pytest -q test_confidence_redesign.py -o "addopts="
-          python -m pytest -q test_confidence_calibration_production.py -o "addopts="
-          python -m pytest -q test_decision_make_audit_contract.py -o "addopts="
-          python -m pytest -q test_openapi_runtime_guardrails.py -o "addopts="
-          python -m pytest -q test_alternatives_evaluated.py -o "addopts="
-          python test_alternatives_simple.py
+          python tooling/run_cognitive_quality_gates.py --report-file artifacts/cognitive_quality_gates_local_report.json
 
       - name: Upload cognitive quality reports
         if: always()
@@ -260,3 +241,4 @@ jobs:
           path: |
             artifacts/cognitive_e2e_contract_report.json
             artifacts/cognitive_semantic_all_report.json
+            artifacts/cognitive_quality_gates_local_report.json

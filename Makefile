@@ -1,4 +1,4 @@
-.PHONY: install bootstrap test lint format check guardrails-openapi-runtime serve mcp clean help
+.PHONY: install bootstrap test lint format check guardrails-openapi-runtime cognitive-quality-gates legacy-bindings-report serve mcp clean help
 
 REGISTRY_DIR ?= ../agent-skill-registry
 REGISTRY_URL ?= https://github.com/gfernandf/agent-skill-registry.git
@@ -34,6 +34,12 @@ check: lint ## Lint + format check + tests
 
 guardrails-openapi-runtime: ## Audit OpenAPI timeout/retry guardrails
 	python tooling/audit_openapi_runtime_guardrails.py
+
+cognitive-quality-gates: ## Run CI-equivalent cognitive quality gates locally
+	python tooling/run_cognitive_quality_gates.py
+
+legacy-bindings-report: ## Generate report for archived legacy bindings
+	python tooling/report_legacy_bindings.py
 
 serve: ## Start HTTP server (localhost:8080)
 	python -m cli.main serve

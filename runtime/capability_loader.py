@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import Counter
+import logging
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -11,6 +13,9 @@ from runtime.errors import (
     suggest_similar,
 )
 from runtime.models import CapabilitySpec, FieldSpec
+
+
+logger = logging.getLogger(__name__)
 
 
 class CapabilityLoader(Protocol):
@@ -38,6 +43,7 @@ class YamlCapabilityLoader:
         self.capabilities_root = self.repo_root / "capabilities"
         self._capability_index: dict[str, Path] | None = None
         self._cognitive_types: dict[str, Any] | None = None
+        self._legacy_alias_hits: Counter[str] = Counter()
 
     def get_capability(self, capability_id: str) -> CapabilitySpec:
         path = self._get_capability_path(capability_id)
@@ -85,6 +91,13 @@ class YamlCapabilityLoader:
                 alias_path = self._capability_index.get(alias)
                 if alias_path is not None:
                     path = alias_path
+                    alias_key = f"{capability_id} -> {alias}"
+                    self._legacy_alias_hits[alias_key] += 1
+                    logger.debug(
+                        "Resolved legacy capability alias '%s' -> '%s'.",
+                        capability_id,
+                        alias,
+                    )
                     break
         if path is None:
             msg = f"Capability '{capability_id}' not found."
@@ -119,6 +132,10 @@ class YamlCapabilityLoader:
             candidates.append(mapped)
 
         return list(dict.fromkeys(candidates))
+
+    def get_legacy_alias_hit_counts(self) -> dict[str, int]:
+        """Return in-memory counter of legacy capability alias resolutions."""
+        return dict(self._legacy_alias_hits)
 
     def get_all_capabilities(self) -> dict[str, CapabilitySpec]:
         """
