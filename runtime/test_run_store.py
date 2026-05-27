@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sys
 import threading
+from datetime import datetime, timedelta, timezone
 
 from runtime.run_store import RunStore
 
@@ -274,6 +275,28 @@ def test_find_run_by_idempotency_key():
     _test("idempotency lookup: skill scoped", not_found is None)
 
 
+def test_prune_expired_idempotency_keys():
+    store = RunStore()
+    run = store.create_run_record(
+        run_id="r-idem-old",
+        skill_id="skill.a",
+        trace_id="trace-idem-old",
+        status="running",
+        metadata={"idempotency_key": "idem-old", "idempotency_fingerprint": "fp-1"},
+    )
+
+    old_created_at = (
+        datetime.now(timezone.utc) - timedelta(days=2)
+    ).isoformat().replace("+00:00", "Z")
+    store.patch_run(run["run_id"], {"created_at": old_created_at})
+
+    removed = store.prune_expired_idempotency_keys(ttl_seconds=60)
+    _test("idempotency prune: removed count", removed == 1)
+
+    lookup = store.find_run_by_idempotency_key("idem-old", skill_id="skill.a", ttl_seconds=60)
+    _test("idempotency prune: key unavailable", lookup is None)
+
+
 def main():
     global _pass, _fail
 
@@ -292,6 +315,7 @@ def main():
     test_replay_run()
     test_fork_run()
     test_find_run_by_idempotency_key()
+    test_prune_expired_idempotency_keys()
 
     print(f"\n  run_store: {_pass} passed, {_fail} failed")
     if _fail:

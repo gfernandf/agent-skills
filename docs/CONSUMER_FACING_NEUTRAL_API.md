@@ -91,6 +91,7 @@ Async launch idempotency:
 - `POST /v1/run_async` and `POST /run_async` accept optional `idempotency_key` (or `x-idempotency-key` header).
 - Repeating the same async launch with the same `skill_id` + `idempotency_key` returns the existing run instead of creating a duplicate.
 - Reusing the same `idempotency_key` with a different async request payload returns `409 idempotency_conflict`.
+- Server-side TTL for idempotency keys is configured with `AGENT_SKILLS_IDEMPOTENCY_TTL_SECONDS` (default `86400`). After expiry, the same key can create a new run.
 
 Security model (configurable):
 

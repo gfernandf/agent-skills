@@ -122,6 +122,7 @@ def create_app(
         checkpoint_manager: Any = None
         async_pool: Any = None
         webhook_store: Any = None
+        idempotency_ttl_seconds: int = 86400
 
     state = _State()
 
@@ -157,6 +158,9 @@ def create_app(
                 from runtime.webhook import WebhookStore
 
                 state.webhook_store = WebhookStore()
+            state.idempotency_ttl_seconds = int(
+                os.environ.get("AGENT_SKILLS_IDEMPOTENCY_TTL_SECONDS", "86400")
+            )
             return
 
         # Auto-build runtime from environment (same as legacy server)
@@ -202,6 +206,9 @@ def create_app(
             max_workers=int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
         )
         state.webhook_store = WebhookStore()
+        state.idempotency_ttl_seconds = int(
+            os.environ.get("AGENT_SKILLS_IDEMPOTENCY_TTL_SECONDS", "86400")
+        )
         logger.info("FastAPI server started — NeutralRuntimeAPI initialized.")
 
     # ── Security headers middleware ─────────────────────────────
@@ -336,6 +343,7 @@ def create_app(
             inputs=inputs,
             trace_id=trace_id,
             idempotency_key=idempotency_key,
+            idempotency_ttl_seconds=state.idempotency_ttl_seconds,
             required_conformance_profile=body.get("required_conformance_profile"),
             audit_mode=body.get("audit_mode"),
             execution_channel="http-async",
@@ -484,6 +492,7 @@ def create_app(
             inputs=inputs if isinstance(inputs, dict) else {},
             trace_id=trace_id,
             idempotency_key=idempotency_key,
+            idempotency_ttl_seconds=state.idempotency_ttl_seconds,
             required_conformance_profile=body.get("required_conformance_profile"),
             audit_mode=body.get("audit_mode"),
             execution_channel="http-async",

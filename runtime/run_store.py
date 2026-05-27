@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
@@ -245,10 +246,14 @@ class RunStoreV2:
         idempotency_key: str,
         *,
         skill_id: str | None = None,
+        ttl_seconds: int | None = None,
     ) -> dict[str, Any] | None:
         key = idempotency_key.strip()
         if not key:
             return None
+
+        now_ts = time.time()
+        expired_snapshots: list[dict[str, Any]] = []
 
         with self._lock:
             for run_id in reversed(self._order):
@@ -261,8 +266,63 @@ class RunStoreV2:
                 if not isinstance(metadata, dict):
                     continue
                 if metadata.get("idempotency_key") == key:
+                    if self._is_idempotency_expired(
+                        run,
+                        ttl_seconds=ttl_seconds,
+                        now_ts=now_ts,
+                    ):
+                        cleaned = dict(metadata)
+                        cleaned.pop("idempotency_key", None)
+                        cleaned.pop("idempotency_fingerprint", None)
+                        run["metadata"] = cleaned
+                        expired_snapshots.append(dict(run))
+                        continue
                     return dict(run)
+
+        for snapshot in expired_snapshots:
+            self._save_backend(snapshot)
+
         return None
+
+    def prune_expired_idempotency_keys(
+        self,
+        ttl_seconds: int,
+        *,
+        now_ts: float | None = None,
+    ) -> int:
+        if ttl_seconds < 0:
+            return 0
+
+        current_ts = time.time() if now_ts is None else now_ts
+        expired_snapshots: list[dict[str, Any]] = []
+
+        with self._lock:
+            for run_id in self._order:
+                run = self._runs.get(run_id)
+                if run is None:
+                    continue
+                metadata = run.get("metadata")
+                if not isinstance(metadata, dict):
+                    continue
+                if "idempotency_key" not in metadata:
+                    continue
+                if not self._is_idempotency_expired(
+                    run,
+                    ttl_seconds=ttl_seconds,
+                    now_ts=current_ts,
+                ):
+                    continue
+
+                cleaned = dict(metadata)
+                cleaned.pop("idempotency_key", None)
+                cleaned.pop("idempotency_fingerprint", None)
+                run["metadata"] = cleaned
+                expired_snapshots.append(dict(run))
+
+        for snapshot in expired_snapshots:
+            self._save_backend(snapshot)
+
+        return len(expired_snapshots)
 
     def count_runs(self, *, status: str | None = None) -> int:
         status_filter = status if status in RUN_STATUSES else None
@@ -507,6 +567,25 @@ class RunStoreV2:
         except Exception:
             pass  # persistence is best-effort
 
+    def _is_idempotency_expired(
+        self,
+        run: dict[str, Any],
+        *,
+        ttl_seconds: int | None,
+        now_ts: float,
+    ) -> bool:
+        if ttl_seconds is None:
+            return False
+        if ttl_seconds < 0:
+            return False
+        created_at_raw = run.get("created_at")
+        if not isinstance(created_at_raw, str) or not created_at_raw:
+            return False
+        created_ts = _parse_iso8601_to_unix(created_at_raw)
+        if created_ts is None:
+            return False
+        return (now_ts - created_ts) >= float(ttl_seconds)
+
 
 class RunStore(RunStoreV2):
     """Compatibility alias preserving existing imports while using v2 internals."""
@@ -515,3 +594,11 @@ class RunStore(RunStoreV2):
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _parse_iso8601_to_unix(value: str) -> float | None:
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt.timestamp()

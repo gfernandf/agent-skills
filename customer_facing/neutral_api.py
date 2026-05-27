@@ -427,6 +427,7 @@ class NeutralRuntimeAPI:
         *,
         trace_id: str | None = None,
         idempotency_key: str | None = None,
+        idempotency_ttl_seconds: int | None = 86400,
         required_conformance_profile: str | None = None,
         audit_mode: str | None = None,
         execution_channel: str | None = None,
@@ -446,6 +447,14 @@ class NeutralRuntimeAPI:
             if isinstance(idempotency_key, str) and idempotency_key.strip()
             else None
         )
+        normalized_idempotency_ttl_seconds = None
+        if idempotency_ttl_seconds is not None:
+            try:
+                normalized_idempotency_ttl_seconds = max(
+                    0, int(idempotency_ttl_seconds)
+                )
+            except (TypeError, ValueError):
+                normalized_idempotency_ttl_seconds = 86400
 
         normalized_inputs = dict(inputs or {})
         request_fingerprint = _build_async_idempotency_fingerprint(
@@ -457,9 +466,18 @@ class NeutralRuntimeAPI:
         )
 
         if normalized_idempotency_key is not None:
+            if normalized_idempotency_ttl_seconds is not None:
+                try:
+                    run_store.prune_expired_idempotency_keys(
+                        normalized_idempotency_ttl_seconds
+                    )
+                except Exception:
+                    pass
+
             existing_run = run_store.find_run_by_idempotency_key(
                 normalized_idempotency_key,
                 skill_id=skill_id,
+                ttl_seconds=normalized_idempotency_ttl_seconds,
             )
             if isinstance(existing_run, dict):
                 existing_metadata = (

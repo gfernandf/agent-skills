@@ -114,6 +114,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
     run_store = None  # RunStore instance (set by run_server)
     checkpoint_manager = None  # CheckpointManager instance (set by run_server)
     _async_pool = None  # ThreadPoolExecutor for async launches
+    idempotency_ttl_seconds = 86400  # TTL for async idempotency key reuse
     webhook_store = None  # WebhookStore instance (set by run_server)
     auth_middleware = None  # AuthMiddleware instance (set by run_server)
     _runtime_metrics = None  # RuntimeMetrics instance (set by run_server)
@@ -594,6 +595,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     inputs=inputs if isinstance(inputs, dict) else {},
                     trace_id=trace_id,
                     idempotency_key=idempotency_key,
+                    idempotency_ttl_seconds=self.idempotency_ttl_seconds,
                     required_conformance_profile=required_profile,
                     audit_mode=audit_mode,
                     execution_channel="http-async",
@@ -840,6 +842,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     inputs=inputs if isinstance(inputs, dict) else {},
                     trace_id=trace_id,
                     idempotency_key=idempotency_key,
+                    idempotency_ttl_seconds=self.idempotency_ttl_seconds,
                     required_conformance_profile=required_profile,
                     audit_mode=audit_mode,
                     execution_channel="http-async",
@@ -1433,6 +1436,9 @@ def run_server(
     from runtime.run_store import RunStore
 
     async_workers = int(os.environ.get("AGENT_SKILLS_ASYNC_WORKERS", "4"))
+    idempotency_ttl_seconds = int(
+        os.environ.get("AGENT_SKILLS_IDEMPOTENCY_TTL_SECONDS", "86400")
+    )
     run_store = RunStore(max_runs=int(os.environ.get("AGENT_SKILLS_MAX_RUNS", "100")))
     runtime_root = getattr(api, "runtime_root", Path.cwd())
     checkpoint_manager = CheckpointManager(
@@ -1448,6 +1454,7 @@ def run_server(
     _RequestHandler.run_store = run_store
     _RequestHandler.checkpoint_manager = checkpoint_manager
     _RequestHandler._async_pool = async_pool
+    _RequestHandler.idempotency_ttl_seconds = idempotency_ttl_seconds
 
     # Webhook infrastructure
     from runtime.webhook import WebhookStore
