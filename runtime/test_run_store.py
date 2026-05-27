@@ -11,6 +11,7 @@ import threading
 from datetime import datetime, timedelta, timezone
 
 from runtime.run_store import RunStore
+from runtime.metrics import METRICS
 
 
 _pass = 0
@@ -277,6 +278,8 @@ def test_find_run_by_idempotency_key():
 
 def test_prune_expired_idempotency_keys():
     store = RunStore()
+    before_counters = METRICS.snapshot().get("counters", {})
+    before_expired = int(before_counters.get("runtime.idempotency.expired", 0))
     run = store.create_run_record(
         run_id="r-idem-old",
         skill_id="skill.a",
@@ -295,6 +298,9 @@ def test_prune_expired_idempotency_keys():
 
     lookup = store.find_run_by_idempotency_key("idem-old", skill_id="skill.a", ttl_seconds=60)
     _test("idempotency prune: key unavailable", lookup is None)
+    after_counters = METRICS.snapshot().get("counters", {})
+    after_expired = int(after_counters.get("runtime.idempotency.expired", 0))
+    _test("idempotency prune: expired counter", (after_expired - before_expired) >= 1)
 
 
 def main():

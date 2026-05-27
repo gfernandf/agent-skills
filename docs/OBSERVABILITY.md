@@ -31,6 +31,10 @@ Emitted from the execution pipeline:
 - `capability.execute.start`
 - `capability.execute.completed`
 - `capability.execute.failed`
+- `idempotency.request.created`
+- `idempotency.request.reused`
+- `idempotency.request.conflict`
+- `idempotency.keys.expired`
 
 Common fields:
 
@@ -43,6 +47,25 @@ Common fields:
 - `duration_ms`
 - `error_type`
 - `error_message`
+
+## Idempotency Telemetry
+
+The async run launch path emits idempotency observability via both structured
+events and runtime counters.
+
+Runtime counters (`/v1/metrics`):
+
+- `runtime.idempotency.created`
+- `runtime.idempotency.reused`
+- `runtime.idempotency.conflict`
+- `runtime.idempotency.expired`
+
+Counter semantics:
+
+- `created`: a new async run was created with a non-empty idempotency key.
+- `reused`: an existing run was returned for the same key + same request fingerprint.
+- `conflict`: the key matched an existing run but fingerprint changed (HTTP 409).
+- `expired`: idempotency keys removed due to TTL expiration during prune/lookup.
 
 ### Parallel Step Events
 

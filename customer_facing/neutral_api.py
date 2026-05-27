@@ -15,7 +15,9 @@ from runtime.errors import (
     SafetyConfirmationRequiredError,
 )
 from runtime.execution_state import create_execution_state, mark_started
+from runtime.metrics import METRICS
 from runtime.models import ExecutionOptions, ExecutionRequest
+from runtime.observability import log_event
 from runtime.openapi_error_contract import map_runtime_error_to_http
 
 
@@ -87,6 +89,31 @@ def _build_async_idempotency_fingerprint(
     }
     normalized = json.dumps(payload, sort_keys=True, ensure_ascii=True, default=str)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _record_idempotency_observation(
+    *,
+    counter: str,
+    event: str,
+    trace_id: str | None,
+    skill_id: str,
+    idempotency_key: str | None,
+    **fields: Any,
+) -> None:
+    try:
+        METRICS.inc(counter)
+    except Exception:
+        pass
+    try:
+        log_event(
+            event,
+            trace_id=trace_id,
+            skill_id=skill_id,
+            idempotency_key=idempotency_key,
+            **fields,
+        )
+    except Exception:
+        pass
 
 
 class NeutralRuntimeAPI:
@@ -468,9 +495,20 @@ class NeutralRuntimeAPI:
         if normalized_idempotency_key is not None:
             if normalized_idempotency_ttl_seconds is not None:
                 try:
-                    run_store.prune_expired_idempotency_keys(
+                    removed_count = run_store.prune_expired_idempotency_keys(
                         normalized_idempotency_ttl_seconds
                     )
+                    if isinstance(removed_count, int) and removed_count > 0:
+                        try:
+                            log_event(
+                                "idempotency.keys.expired",
+                                trace_id=trace_id,
+                                skill_id=skill_id,
+                                removed_count=removed_count,
+                                ttl_seconds=normalized_idempotency_ttl_seconds,
+                            )
+                        except Exception:
+                            pass
                 except Exception:
                     pass
 
@@ -491,12 +529,27 @@ class NeutralRuntimeAPI:
                     else None
                 )
                 if existing_fingerprint and existing_fingerprint != request_fingerprint:
+                    _record_idempotency_observation(
+                        counter="runtime.idempotency.conflict",
+                        event="idempotency.request.conflict",
+                        trace_id=trace_id,
+                        skill_id=skill_id,
+                        idempotency_key=normalized_idempotency_key,
+                    )
                     return _error_response(
                         IdempotencyConflictError(
                             f"Idempotency key '{normalized_idempotency_key}' conflicts with an existing async request"
                         ),
                         trace_id=trace_id,
                     )
+                _record_idempotency_observation(
+                    counter="runtime.idempotency.reused",
+                    event="idempotency.request.reused",
+                    trace_id=trace_id,
+                    skill_id=skill_id,
+                    idempotency_key=normalized_idempotency_key,
+                    run_id=existing_run.get("run_id"),
+                )
                 return {
                     "run_id": existing_run.get("run_id"),
                     "status": existing_run.get("status"),
@@ -523,6 +576,16 @@ class NeutralRuntimeAPI:
                 "idempotency_fingerprint": request_fingerprint,
             },
         )
+
+        if normalized_idempotency_key is not None:
+            _record_idempotency_observation(
+                counter="runtime.idempotency.created",
+                event="idempotency.request.created",
+                trace_id=trace_id,
+                skill_id=skill_id,
+                idempotency_key=normalized_idempotency_key,
+                run_id=run_id,
+            )
 
         if checkpoint_manager is not None:
             try:

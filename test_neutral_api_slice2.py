@@ -8,6 +8,7 @@ from customer_facing.neutral_api import NeutralRuntimeAPI
 from runtime.checkpoint_manager import CheckpointManager, InMemoryCheckpointStoreBackend
 from runtime.errors import SafetyConfirmationRequiredError
 from runtime.execution_state import create_execution_state, mark_finished, mark_started
+from runtime.metrics import METRICS
 from runtime.run_store import RunStoreV2
 
 
@@ -291,6 +292,79 @@ def test_execute_skill_async_idempotency_key_ttl_expiry_creates_new_run() -> Non
 
     assert first["run_id"] != second["run_id"]
     assert second.get("idempotent_replay") is not True
+
+
+def test_execute_skill_async_idempotency_observability_counters() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    before = METRICS.snapshot().get("counters", {})
+    before_created = int(before.get("runtime.idempotency.created", 0))
+    before_reused = int(before.get("runtime.idempotency.reused", 0))
+    before_conflict = int(before.get("runtime.idempotency.conflict", 0))
+
+    def _fake_execute(*, skill_id, inputs, trace_id, **_kwargs):
+        state = create_execution_state(skill_id, inputs or {}, trace_id=trace_id)
+        mark_started(state)
+        mark_finished(state, "completed")
+        return SimpleNamespace(state=state), {
+            "skill_id": skill_id,
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": trace_id,
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        first = api.execute_skill_async(
+            skill_id="x.y",
+            inputs={"n": 10},
+            trace_id="t-idem-metrics",
+            idempotency_key="idem-metrics-1",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+
+        replay = api.execute_skill_async(
+            skill_id="x.y",
+            inputs={"n": 10},
+            trace_id="t-idem-metrics",
+            idempotency_key="idem-metrics-1",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+
+        conflict = api.execute_skill_async(
+            skill_id="x.y",
+            inputs={"n": 11},
+            trace_id="t-idem-metrics",
+            idempotency_key="idem-metrics-1",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run(first["run_id"])
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
+
+    after = METRICS.snapshot().get("counters", {})
+    after_created = int(after.get("runtime.idempotency.created", 0))
+    after_reused = int(after.get("runtime.idempotency.reused", 0))
+    after_conflict = int(after.get("runtime.idempotency.conflict", 0))
+
+    assert replay.get("idempotent_replay") is True
+    assert conflict["error"]["code"] == "idempotency_conflict"
+    assert after_created - before_created >= 1
+    assert after_reused - before_reused >= 1
+    assert after_conflict - before_conflict >= 1
 
 
 def test_resume_run_executes_from_checkpoint() -> None:

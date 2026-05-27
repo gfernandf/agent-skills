@@ -30,6 +30,8 @@ from runtime.run_lifecycle import (
     TERMINAL_RUN_STATUSES,
     RunStateMachine,
 )
+from runtime.metrics import METRICS
+from runtime.observability import log_event
 
 
 # ── Pluggable backend protocol ────────────────────────────────────
@@ -282,6 +284,17 @@ class RunStoreV2:
         for snapshot in expired_snapshots:
             self._save_backend(snapshot)
 
+        if expired_snapshots:
+            METRICS.inc("runtime.idempotency.expired", len(expired_snapshots))
+            try:
+                log_event(
+                    "idempotency.keys.expired",
+                    removed_count=len(expired_snapshots),
+                    source="run_store.find_run_by_idempotency_key",
+                )
+            except Exception:
+                pass
+
         return None
 
     def prune_expired_idempotency_keys(
@@ -321,6 +334,18 @@ class RunStoreV2:
 
         for snapshot in expired_snapshots:
             self._save_backend(snapshot)
+
+        if expired_snapshots:
+            METRICS.inc("runtime.idempotency.expired", len(expired_snapshots))
+            try:
+                log_event(
+                    "idempotency.keys.expired",
+                    removed_count=len(expired_snapshots),
+                    ttl_seconds=ttl_seconds,
+                    source="run_store.prune_expired_idempotency_keys",
+                )
+            except Exception:
+                pass
 
         return len(expired_snapshots)
 
