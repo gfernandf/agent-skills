@@ -565,7 +565,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Metrics snapshot with counters and histograms"
+            "description": "Metrics snapshot with counters and histograms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsSnapshot"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing API key"
@@ -1514,6 +1521,58 @@
         "required": [
           "run_id",
           "status"
+        ]
+      },
+      "MetricHistogramSummary": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "number"
+          },
+          "min": {
+            "type": "number",
+            "nullable": true
+          },
+          "max": {
+            "type": "number",
+            "nullable": true
+          },
+          "avg": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "total"
+        ]
+      },
+      "MetricsSnapshot": {
+        "type": "object",
+        "properties": {
+          "uptime_seconds": {
+            "type": "number"
+          },
+          "counters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "histograms": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetricHistogramSummary"
+            }
+          }
+        },
+        "required": [
+          "uptime_seconds",
+          "counters",
+          "histograms"
         ]
       },
       "CheckpointSelectionRequest": {

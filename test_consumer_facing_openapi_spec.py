@@ -54,3 +54,27 @@ def test_consumer_openapi_includes_async_run_routes() -> None:
     assert "waiting_for_human" in run_status_enum
     assert "replaying" in run_status_enum
     assert "canceled" in run_status_enum
+
+
+def test_consumer_openapi_metrics_contract_is_explicit() -> None:
+    spec = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
+    paths = spec.get("paths", {})
+    schemas = spec["components"]["schemas"]
+
+    metrics_get = paths["/v1/metrics"]["get"]
+    metrics_200 = metrics_get["responses"]["200"]
+    assert "content" in metrics_200
+    assert "application/json" in metrics_200["content"]
+    assert (
+        metrics_200["content"]["application/json"]["schema"]["$ref"]
+        == "#/components/schemas/MetricsSnapshot"
+    )
+
+    prom_get = paths["/v1/metrics/prometheus"]["get"]
+    prom_200 = prom_get["responses"]["200"]
+    assert "content" in prom_200
+    assert "text/plain" in prom_200["content"]
+    assert prom_200["content"]["text/plain"]["schema"]["type"] == "string"
+
+    assert "MetricsSnapshot" in schemas
+    assert "MetricHistogramSummary" in schemas
