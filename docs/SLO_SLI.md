@@ -74,6 +74,59 @@ SLIs are collected automatically by the runtime:
 | `capability_execution_errors_total` | Counter | `capability_id`, `error_code` |
 | `step_execution_duration_ms` | Histogram | `skill_id`, `step_id` |
 
+## Async Idempotency SLI Set
+
+For customer-facing async launch endpoints, track idempotency behavior as a
+first-class reliability signal.
+
+Runtime counters (`/v1/metrics`):
+
+- `runtime.idempotency.created`
+- `runtime.idempotency.reused`
+- `runtime.idempotency.conflict`
+- `runtime.idempotency.expired`
+
+Derived SLIs:
+
+1. Idempotency conflict rate:
+  - `conflict_rate = conflict / max(created + reused + conflict, 1)`
+  - Suggested SLO: `< 0.5%` over rolling 30m for stable clients.
+2. Retry dedup effectiveness:
+  - `dedup_rate = reused / max(created + reused, 1)`
+  - No universal target; baseline by client profile and retry policy.
+3. Expiration pressure indicator:
+  - `expiration_ratio = expired / max(created + reused, 1)`
+  - Use as tuning input for `AGENT_SKILLS_IDEMPOTENCY_TTL_SECONDS`.
+
+Suggested alert thresholds:
+
+- Warning: `conflict_rate > 1%` for 10m.
+- Critical: `conflict_rate > 3%` for 10m.
+- Warning: `expiration_ratio > 20%` for 30m (potentially short TTL vs retry horizon).
+
+Prometheus query examples:
+
+```promql
+sum(rate(agent_skills_runtime_idempotency_conflict_total[10m]))
+/
+clamp_min(
+  sum(rate(agent_skills_runtime_idempotency_created_total[10m]))
+  + sum(rate(agent_skills_runtime_idempotency_reused_total[10m]))
+  + sum(rate(agent_skills_runtime_idempotency_conflict_total[10m])),
+  1
+)
+```
+
+```promql
+sum(rate(agent_skills_runtime_idempotency_expired_total[30m]))
+/
+clamp_min(
+  sum(rate(agent_skills_runtime_idempotency_created_total[30m]))
+  + sum(rate(agent_skills_runtime_idempotency_reused_total[30m])),
+  1
+)
+```
+
 ## SLO Violation Alerting
 
 When a capability exceeds its SLO target, the runtime emits:

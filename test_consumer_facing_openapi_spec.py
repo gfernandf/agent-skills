@@ -21,6 +21,8 @@ def test_consumer_openapi_includes_async_run_routes() -> None:
         "/v1/runs/{run_id}/deny",
         "/v1/runs/{run_id}/replay",
         "/v1/runs/{run_id}/fork",
+        "/v1/metrics",
+        "/v1/metrics/prometheus",
     }
     assert expected_paths.issubset(paths.keys())
 

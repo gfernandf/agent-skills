@@ -70,6 +70,8 @@ Base version: `/v1`
 22. `GET /run_status/{run_id}` and `GET /v1/run_status/{run_id}` (legacy aliases)
 23. `POST /run_cancel/{run_id}` and `POST /v1/run_cancel/{run_id}` (legacy aliases)
 24. `GET /openapi.json`
+25. `GET /v1/metrics`
+26. `GET /v1/metrics/prometheus`
 
 Async run status model:
 
@@ -92,6 +94,19 @@ Async launch idempotency:
 - Repeating the same async launch with the same `skill_id` + `idempotency_key` returns the existing run instead of creating a duplicate.
 - Reusing the same `idempotency_key` with a different async request payload returns `409 idempotency_conflict`.
 - Server-side TTL for idempotency keys is configured with `AGENT_SKILLS_IDEMPOTENCY_TTL_SECONDS` (default `86400`). After expiry, the same key can create a new run.
+
+Idempotency observability:
+
+- Runtime counters are available via `GET /v1/metrics`:
+  - `runtime.idempotency.created`
+  - `runtime.idempotency.reused`
+  - `runtime.idempotency.conflict`
+  - `runtime.idempotency.expired`
+- Prometheus exposition is available via `GET /v1/metrics/prometheus` with normalized names:
+  - `agent_skills_runtime_idempotency_created_total`
+  - `agent_skills_runtime_idempotency_reused_total`
+  - `agent_skills_runtime_idempotency_conflict_total`
+  - `agent_skills_runtime_idempotency_expired_total`
 
 Security model (configurable):
 
@@ -191,6 +206,27 @@ python tooling/verify_customer_http_controls.py
 ```bash
 python tooling/verify_customer_facing_parity_snapshot.py
 ```
+
+### Inspect idempotency telemetry
+
+JSON metrics snapshot:
+
+```bash
+curl -s http://127.0.0.1:8080/v1/metrics
+```
+
+Prometheus counters only:
+
+```bash
+curl -s http://127.0.0.1:8080/v1/metrics/prometheus | grep idempotency
+```
+
+Operational interpretation:
+
+1. High `created` with low `reused` is expected for unique client requests.
+2. Rising `reused` confirms retries are being deduplicated successfully.
+3. Rising `conflict` indicates clients are reusing keys with changed payloads and should be investigated.
+4. Rising `expired` indicates key cleanup is active; if too high, review retry windows and `AGENT_SKILLS_IDEMPOTENCY_TTL_SECONDS`.
 
 ## Design Invariants
 

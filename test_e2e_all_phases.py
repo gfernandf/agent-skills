@@ -189,10 +189,20 @@ class TestPhase11:
     def test_prometheus_format_function(self):
         from customer_facing.http_openapi_server import _format_prometheus
 
-        snap = {"uptime_seconds": 42, "counters": {"test": 1}, "histograms": {}}
+        snap = {
+            "uptime_seconds": 42,
+            "counters": {
+                "test": 1,
+                "runtime.idempotency.created": 3,
+                "runtime.idempotency.reused": 2,
+            },
+            "histograms": {},
+        }
         text = _format_prometheus(snap)
         assert "agent_skills_uptime_seconds 42" in text
         assert "agent_skills_test_total 1" in text
+        assert "agent_skills_runtime_idempotency_created_total 3" in text
+        assert "agent_skills_runtime_idempotency_reused_total 2" in text
 
     def test_grafana_dashboard_exists(self):
         assert (_ROOT / "docs" / "grafana" / "agent_skills_dashboard.json").exists()
