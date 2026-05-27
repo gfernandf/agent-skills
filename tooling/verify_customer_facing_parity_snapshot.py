@@ -136,7 +136,9 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
     http_health = _http_get_json(f"{base_url}/v1/health")
     mcp_health = bridge.call_tool("runtime.health", {})
 
-    http_desc = _http_get_json(f"{base_url}/v1/skills/{skill_id}/describe", headers=headers)
+    http_desc = _http_get_json(
+        f"{base_url}/v1/skills/{skill_id}/describe", headers=headers
+    )
     mcp_desc = bridge.call_tool("skill.describe", {"skill_id": skill_id})
 
     skill_inputs = {"objective": "Build a policy-compliant execution plan."}
@@ -205,10 +207,14 @@ def _stable_projection(snapshot: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(payload, dict):
             return {"type": type(payload).__name__}
 
-        outputs = payload.get("outputs") if isinstance(payload.get("outputs"), dict) else {}
+        outputs = (
+            payload.get("outputs") if isinstance(payload.get("outputs"), dict) else {}
+        )
         meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
         return {
-            "id": payload.get("id") or payload.get("skill_id") or payload.get("capability_id"),
+            "id": payload.get("id")
+            or payload.get("skill_id")
+            or payload.get("capability_id"),
             "status": payload.get("status"),
             "top_level_keys": sorted(payload.keys()),
             "output_keys": sorted(outputs.keys()),

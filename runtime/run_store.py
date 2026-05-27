@@ -111,7 +111,9 @@ class RunStoreV2:
             "status": status,
             "trace_id": trace_id,
             "created_at": now,
-            "started_at": now if status in {RUN_STATUS_RUNNING, RUN_STATUS_REPLAYING} else None,
+            "started_at": now
+            if status in {RUN_STATUS_RUNNING, RUN_STATUS_REPLAYING}
+            else None,
             "finished_at": now if status in TERMINAL_RUN_STATUSES else None,
             "current_step_id": current_step_id,
             "checkpoint_head": checkpoint_head,
@@ -236,7 +238,11 @@ class RunStoreV2:
         status_filter = status if status in RUN_STATUSES else None
 
         with self._lock:
-            ordered = [dict(self._runs[rid]) for rid in reversed(self._order) if rid in self._runs]
+            ordered = [
+                dict(self._runs[rid])
+                for rid in reversed(self._order)
+                if rid in self._runs
+            ]
 
         if status_filter is not None:
             ordered = [run for run in ordered if run.get("status") == status_filter]
@@ -377,7 +383,9 @@ class RunStoreV2:
         if run is not None:
             self._persist(run_id)
 
-    def cancel_run(self, run_id: str, reason: str = "Canceled by client") -> dict[str, Any] | None:
+    def cancel_run(
+        self, run_id: str, reason: str = "Canceled by client"
+    ) -> dict[str, Any] | None:
         snapshot = self.update_status(
             run_id,
             RUN_STATUS_CANCELED,
@@ -614,7 +622,6 @@ class RunStoreV2:
 
 class RunStore(RunStoreV2):
     """Compatibility alias preserving existing imports while using v2 internals."""
-
 
 
 def _utc_now_iso() -> str:

@@ -1927,7 +1927,9 @@ def generate_output_report(
             if value is not None:
                 user_response += f"- {key}: {value}\n"
     else:
-        user_response += "- Inputs were not fully structured in the execution payload.\n"
+        user_response += (
+            "- Inputs were not fully structured in the execution payload.\n"
+        )
     user_response += "\n"
 
     user_response += "## Decision Matrix\n\n"

@@ -32,7 +32,11 @@ from runtime.step_control import (
     ScatterConfig,
 )
 from runtime.execution_engine import ExecutionEngine
-from runtime.execution_state import create_execution_state, mark_started, record_step_result
+from runtime.execution_state import (
+    create_execution_state,
+    mark_started,
+    record_step_result,
+)
 from runtime.models import (
     CapabilitySpec,
     ExecutionRequest,

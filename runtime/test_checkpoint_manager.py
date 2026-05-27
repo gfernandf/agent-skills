@@ -39,13 +39,24 @@ def test_save_and_load_state() -> None:
         kind="step_completed",
         pending_writes=["outputs.summary"],
     )
-    _test("record id exists", isinstance(record.checkpoint_id, str) and len(record.checkpoint_id) > 0)
+    _test(
+        "record id exists",
+        isinstance(record.checkpoint_id, str) and len(record.checkpoint_id) > 0,
+    )
     _test("record run id", record.run_id == "run-1")
 
-    loaded_state = manager.load_state(run_id="run-1", checkpoint_id=record.checkpoint_id)
+    loaded_state = manager.load_state(
+        run_id="run-1", checkpoint_id=record.checkpoint_id
+    )
     _test("load state exists", loaded_state is not None)
-    _test("load state skill", loaded_state is not None and loaded_state.skill_id == "demo.skill")
-    _test("load state current_step", loaded_state is not None and loaded_state.current_step == "step_a")
+    _test(
+        "load state skill",
+        loaded_state is not None and loaded_state.skill_id == "demo.skill",
+    )
+    _test(
+        "load state current_step",
+        loaded_state is not None and loaded_state.current_step == "step_a",
+    )
 
 
 def test_list_checkpoints() -> None:
@@ -53,11 +64,18 @@ def test_list_checkpoints() -> None:
     manager = CheckpointManager(backend)
     state = create_execution_state("demo.skill", {})
 
-    manager.save_checkpoint(run_id="run-2", state=state, step_id="a", kind="step_completed")
-    manager.save_checkpoint(run_id="run-2", state=state, step_id="b", kind="step_completed")
+    manager.save_checkpoint(
+        run_id="run-2", state=state, step_id="a", kind="step_completed"
+    )
+    manager.save_checkpoint(
+        run_id="run-2", state=state, step_id="b", kind="step_completed"
+    )
     records = manager.list_checkpoints("run-2")
     _test("list count", len(records) == 2)
-    _test("list has ids", all(isinstance(item.get("checkpoint_id"), str) for item in records))
+    _test(
+        "list has ids",
+        all(isinstance(item.get("checkpoint_id"), str) for item in records),
+    )
 
 
 def main() -> None:

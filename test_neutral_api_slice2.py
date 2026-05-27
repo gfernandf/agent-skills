@@ -62,6 +62,7 @@ def test_list_checkpoints_and_resume_state_only() -> None:
         run_store=store,
         checkpoint_manager=checkpoints,
     )
+
     def _fake_execute(*, skill_id, inputs, trace_id, initial_state=None, **_kwargs):
         assert initial_state is not None
         initial_state.outputs["ok"] = True
@@ -437,7 +438,15 @@ def test_async_approval_flow_runs_after_waiting() -> None:
     waiting_state = create_execution_state("x.y", {"n": 1}, trace_id="t-5")
     mark_started(waiting_state)
 
-    def _fake_execute(*, skill_id, inputs, trace_id, confirmed_capabilities=None, initial_state=None, **_kwargs):
+    def _fake_execute(
+        *,
+        skill_id,
+        inputs,
+        trace_id,
+        confirmed_capabilities=None,
+        initial_state=None,
+        **_kwargs,
+    ):
         if initial_state is None:
             error = SafetyConfirmationRequiredError(
                 "confirmation needed",

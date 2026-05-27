@@ -589,7 +589,9 @@ class NeutralRuntimeAPI:
 
         if checkpoint_manager is not None:
             try:
-                state = create_execution_state(skill_id, inputs or {}, trace_id=trace_id)
+                state = create_execution_state(
+                    skill_id, inputs or {}, trace_id=trace_id
+                )
                 mark_started(state)
                 checkpoint = checkpoint_manager.save_checkpoint(
                     run_id=run_id,
@@ -857,9 +859,7 @@ class NeutralRuntimeAPI:
         selected_checkpoint_id = checkpoint_id or run.get("checkpoint_head")
         if not isinstance(selected_checkpoint_id, str) or not selected_checkpoint_id:
             return _error_response(
-                RuntimeError(
-                    f"Run '{run_id}' has no checkpoint to resume from"
-                )
+                RuntimeError(f"Run '{run_id}' has no checkpoint to resume from")
             )
 
         checkpoint = checkpoint_manager.load_checkpoint(
@@ -890,8 +890,16 @@ class NeutralRuntimeAPI:
             return _error_response(
                 RuntimeError(f"Run '{run_id}' is missing skill metadata for resume")
             )
-        inputs = metadata.get("inputs") if isinstance(metadata.get("inputs"), dict) else dict(restored_state.inputs)
-        trace_id = run.get("trace_id") if isinstance(run.get("trace_id"), str) else restored_state.trace_id
+        inputs = (
+            metadata.get("inputs")
+            if isinstance(metadata.get("inputs"), dict)
+            else dict(restored_state.inputs)
+        )
+        trace_id = (
+            run.get("trace_id")
+            if isinstance(run.get("trace_id"), str)
+            else restored_state.trace_id
+        )
         required_conformance_profile = (
             metadata.get("required_conformance_profile")
             if isinstance(metadata.get("required_conformance_profile"), str)
@@ -907,7 +915,11 @@ class NeutralRuntimeAPI:
             for item in confirmed_capabilities:
                 if isinstance(item, str) and item not in combined_confirmed:
                     combined_confirmed.append(item)
-        audit_mode = metadata.get("audit_mode") if isinstance(metadata.get("audit_mode"), str) else None
+        audit_mode = (
+            metadata.get("audit_mode")
+            if isinstance(metadata.get("audit_mode"), str)
+            else None
+        )
         execution_channel = (
             metadata.get("execution_channel")
             if isinstance(metadata.get("execution_channel"), str)
@@ -932,13 +944,16 @@ class NeutralRuntimeAPI:
                 step_id=restored_state.current_step,
                 kind="run_resumed",
             )
-            updated = run_store.patch_run(
-                run_id,
-                {
-                    "checkpoint_head": resumed_checkpoint.checkpoint_id,
-                    "current_step_id": restored_state.current_step,
-                },
-            ) or updated
+            updated = (
+                run_store.patch_run(
+                    run_id,
+                    {
+                        "checkpoint_head": resumed_checkpoint.checkpoint_id,
+                        "current_step_id": restored_state.current_step,
+                    },
+                )
+                or updated
+            )
         except Exception:
             pass
 
@@ -1169,7 +1184,11 @@ class NeutralRuntimeAPI:
 
         from uuid import uuid4
 
-        source_trace_id = source_run.get("trace_id") if isinstance(source_run.get("trace_id"), str) else restored_state.trace_id
+        source_trace_id = (
+            source_run.get("trace_id")
+            if isinstance(source_run.get("trace_id"), str)
+            else restored_state.trace_id
+        )
         replay_run_id = f"replay_{run_id}_{uuid4().hex[:12]}"
         replay_run = run_store.replay_run(
             replay_run_id,
@@ -1181,8 +1200,14 @@ class NeutralRuntimeAPI:
             metadata={
                 "inputs": dict(restored_state.inputs),
                 "audit_mode": "replay",
-                "execution_channel": source_run.get("execution_channel") if isinstance(source_run.get("execution_channel"), str) else "http-replay",
-                "confirmed_capabilities": list((source_run.get("metadata") or {}).get("confirmed_capabilities", [])) if isinstance(source_run.get("metadata"), dict) else [],
+                "execution_channel": source_run.get("execution_channel")
+                if isinstance(source_run.get("execution_channel"), str)
+                else "http-replay",
+                "confirmed_capabilities": list(
+                    (source_run.get("metadata") or {}).get("confirmed_capabilities", [])
+                )
+                if isinstance(source_run.get("metadata"), dict)
+                else [],
             },
         )
 
@@ -1201,13 +1226,21 @@ class NeutralRuntimeAPI:
                     trace_id=source_trace_id,
                     include_trace=False,
                     required_conformance_profile=(
-                        (source_run.get("metadata") or {}).get("required_conformance_profile")
+                        (source_run.get("metadata") or {}).get(
+                            "required_conformance_profile"
+                        )
                         if isinstance(source_run.get("metadata"), dict)
                         else None
                     ),
                     audit_mode="replay",
-                    execution_channel=source_run.get("execution_channel") if isinstance(source_run.get("execution_channel"), str) else "http-replay",
-                    confirmed_capabilities=(source_run.get("metadata") or {}).get("confirmed_capabilities") if isinstance(source_run.get("metadata"), dict) else [],
+                    execution_channel=source_run.get("execution_channel")
+                    if isinstance(source_run.get("execution_channel"), str)
+                    else "http-replay",
+                    confirmed_capabilities=(source_run.get("metadata") or {}).get(
+                        "confirmed_capabilities"
+                    )
+                    if isinstance(source_run.get("metadata"), dict)
+                    else [],
                     initial_state=restored_state,
                 )
 
@@ -1354,7 +1387,11 @@ class NeutralRuntimeAPI:
                     else "http-fork"
                 ),
                 "confirmed_capabilities": (
-                    list((source_run.get("metadata") or {}).get("confirmed_capabilities", []))
+                    list(
+                        (source_run.get("metadata") or {}).get(
+                            "confirmed_capabilities", []
+                        )
+                    )
                     if isinstance(source_run.get("metadata"), dict)
                     else []
                 ),

@@ -59,6 +59,7 @@ def _unwrap_run_response(response: Any) -> Any:
         return response["data"]
     return response
 
+
 # ── Lazy imports: don't crash if fastapi/uvicorn not installed ──────
 
 
@@ -178,7 +179,8 @@ def create_app(
         ).resolve()
         registry_root = Path(
             os.environ.get(
-                "AGENT_SKILLS_REGISTRY_ROOT", runtime_root.parent / "agent-skill-registry"
+                "AGENT_SKILLS_REGISTRY_ROOT",
+                runtime_root.parent / "agent-skill-registry",
             )
         ).resolve()
         host_root = Path(
@@ -329,9 +331,8 @@ def create_app(
         body = await request.json()
         inputs = body.get("inputs", {})
         trace_id = request.headers.get("x-trace-id") or body.get("trace_id")
-        idempotency_key_raw = (
-            request.headers.get("x-idempotency-key")
-            or body.get("idempotency_key")
+        idempotency_key_raw = request.headers.get("x-idempotency-key") or body.get(
+            "idempotency_key"
         )
         idempotency_key = (
             idempotency_key_raw
@@ -478,9 +479,8 @@ def create_app(
             raise HTTPException(status_code=400, detail="'skill_id' is required")
         inputs = body.get("inputs", {})
         trace_id = request.headers.get("x-trace-id") or body.get("trace_id")
-        idempotency_key_raw = (
-            request.headers.get("x-idempotency-key")
-            or body.get("idempotency_key")
+        idempotency_key_raw = request.headers.get("x-idempotency-key") or body.get(
+            "idempotency_key"
         )
         idempotency_key = (
             idempotency_key_raw
@@ -541,13 +541,19 @@ def create_app(
     async def create_webhook(request: Request) -> tuple[dict, int]:
         body = await request.json()
         if not isinstance(body, dict):
-            raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+            raise HTTPException(
+                status_code=400, detail="Request body must be a JSON object"
+            )
         url = body.get("url")
         if not isinstance(url, str) or not url:
-            raise HTTPException(status_code=400, detail="webhooks require non-empty string field 'url'")
+            raise HTTPException(
+                status_code=400, detail="webhooks require non-empty string field 'url'"
+            )
         events = body.get("events")
         if not isinstance(events, list) or not events:
-            raise HTTPException(status_code=400, detail="webhooks require non-empty list field 'events'")
+            raise HTTPException(
+                status_code=400, detail="webhooks require non-empty list field 'events'"
+            )
 
         from uuid import uuid4
         from runtime.webhook import WebhookSubscription
@@ -560,7 +566,9 @@ def create_app(
             id=sub_id,
             url=url,
             events=events,
-            secret=body.get("secret", "") if isinstance(body.get("secret", ""), str) else "",
+            secret=body.get("secret", "")
+            if isinstance(body.get("secret", ""), str)
+            else "",
             active=True,
             created_at="",
         )

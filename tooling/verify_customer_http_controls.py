@@ -133,9 +133,7 @@ def main() -> int:
             headers={"x-api-key": "wrong-key"},
         )
         if status not in {401, 403}:
-            raise RuntimeError(
-                f"expected 401/403 with wrong api key, got {status}"
-            )
+            raise RuntimeError(f"expected 401/403 with wrong api key, got {status}")
         if body.get("error", {}).get("code") not in {"unauthorized", "forbidden"}:
             raise RuntimeError("missing unauthorized/forbidden error code")
 

@@ -14,7 +14,9 @@ from test_cognitive_capabilities_e2e import (
 )
 
 
-REPORT_PATH = Path(__file__).resolve().parent / "artifacts" / "cognitive_semantic_all_report.json"
+REPORT_PATH = (
+    Path(__file__).resolve().parent / "artifacts" / "cognitive_semantic_all_report.json"
+)
 
 
 @dataclass
@@ -41,14 +43,23 @@ def _is_placeholder_text(value: str) -> bool:
     return any(token in low for token in _PLACEHOLDER_TOKENS)
 
 
-def _validate_number_semantics(field_name: str, value: float, errors: list[str]) -> None:
+def _validate_number_semantics(
+    field_name: str, value: float, errors: list[str]
+) -> None:
     name = field_name.lower()
-    if any(tok in name for tok in ("score", "confidence", "similarity", "ratio", "coverage")):
+    if any(
+        tok in name
+        for tok in ("score", "confidence", "similarity", "ratio", "coverage")
+    ):
         if not (0.0 <= value <= 1.0):
-            errors.append(f"numeric range violation for {field_name}: expected [0,1], got {value}")
+            errors.append(
+                f"numeric range violation for {field_name}: expected [0,1], got {value}"
+            )
 
 
-def _validate_array_semantics(field_name: str, value: list[Any], output_payload: dict[str, Any], errors: list[str]) -> None:
+def _validate_array_semantics(
+    field_name: str, value: list[Any], output_payload: dict[str, Any], errors: list[str]
+) -> None:
     allow_empty_arrays = {
         "conflicts",
         "unresolved_bindings",
@@ -115,7 +126,9 @@ def _validate_array_semantics(field_name: str, value: list[Any], output_payload:
             errors.append("selected_option appears in rejected_options")
 
 
-def _validate_object_semantics(field_name: str, value: dict[str, Any], errors: list[str]) -> None:
+def _validate_object_semantics(
+    field_name: str, value: dict[str, Any], errors: list[str]
+) -> None:
     if not value:
         errors.append(f"empty object for {field_name}")
         return
@@ -137,7 +150,9 @@ def _validate_object_semantics(field_name: str, value: dict[str, Any], errors: l
             errors.append("report.artifacts is empty")
 
 
-def _validate_semantics(capability: dict[str, Any], output_payload: dict[str, Any]) -> list[str]:
+def _validate_semantics(
+    capability: dict[str, Any], output_payload: dict[str, Any]
+) -> list[str]:
     outputs = capability.get("outputs") or {}
     errors: list[str] = []
 
@@ -166,7 +181,11 @@ def _validate_semantics(capability: dict[str, Any], output_payload: dict[str, An
                 "sentiment",
                 "freshness_hint",
             )
-            min_len = 3 if any(token in field_name.lower() for token in enum_like_fields) else 8
+            min_len = (
+                3
+                if any(token in field_name.lower() for token in enum_like_fields)
+                else 8
+            )
             if len(value.strip()) < min_len:
                 errors.append(f"string too short for {field_name}")
             if _is_placeholder_text(value):
@@ -197,10 +216,14 @@ def _validate_semantics(capability: dict[str, Any], output_payload: dict[str, An
     if "embedding" in output_payload:
         emb = output_payload["embedding"]
         if not isinstance(emb, list) or len(emb) < 8:
-            errors.append("embedding quality issue: expected numeric vector with length >= 8")
+            errors.append(
+                "embedding quality issue: expected numeric vector with length >= 8"
+            )
         else:
             if not all(isinstance(x, (int, float)) for x in emb):
-                errors.append("embedding quality issue: vector contains non-numeric values")
+                errors.append(
+                    "embedding quality issue: vector contains non-numeric values"
+                )
 
     return errors
 
@@ -269,7 +292,9 @@ def _write_report(results: list[SemanticResult]) -> None:
             for r in results
         ],
     }
-    REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    REPORT_PATH.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def test_all_cognitive_capabilities_semantic_quality() -> None:

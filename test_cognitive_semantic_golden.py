@@ -141,7 +141,9 @@ def test_semantic_pipeline_decision_reasoning_perception() -> None:
         ),
     )
     selected_option = selected["selected_option"]
-    selected_id = selected_option.get("id") if isinstance(selected_option, dict) else None
+    selected_id = (
+        selected_option.get("id") if isinstance(selected_option, dict) else None
+    )
     assert isinstance(selected_id, str)
     assert selected_id in option_ids
 
@@ -181,7 +183,10 @@ def test_semantic_pipeline_evidence_uncertainty_hypotheses() -> None:
                 "hypotheses": hypotheses,
                 "evidence": [
                     {"id": "e-1", "text": "Dropoff subio de 18% a 41% en el paso 2"},
-                    {"id": "e-2", "text": "No hubo cambios en pricing durante el periodo"},
+                    {
+                        "id": "e-2",
+                        "text": "No hubo cambios en pricing durante el periodo",
+                    },
                 ],
             },
         ),
@@ -213,7 +218,11 @@ def test_semantic_pipeline_evidence_uncertainty_hypotheses() -> None:
     ]
     assert ranked_ids
     recommendation = compared_out["recommendation"]
-    lead = recommendation.get("lead_hypothesis") if isinstance(recommendation, dict) else None
+    lead = (
+        recommendation.get("lead_hypothesis")
+        if isinstance(recommendation, dict)
+        else None
+    )
     assert lead in ranked_ids
 
     uncertainties_out = execute_capability(
@@ -264,7 +273,11 @@ def test_semantic_pipeline_evidence_uncertainty_hypotheses() -> None:
     )
     prioritized = prioritized_out["prioritized_uncertainties"]
     assert 1 <= len(prioritized) <= 1
-    top_uid = prioritized[0].get("uncertainty_id") if isinstance(prioritized[0], dict) else None
+    top_uid = (
+        prioritized[0].get("uncertainty_id")
+        if isinstance(prioritized[0], dict)
+        else None
+    )
     assert top_uid in scored_ids
 
     source_assessment_out = execute_capability(
@@ -321,7 +334,12 @@ def test_semantic_pipeline_output_packaging_and_memory() -> None:
     assert report.get("user_response", "").strip() != ""
     assert isinstance(report.get("artifacts"), list)
     assert report["artifacts"]
-    assert response_out["report_status"] in {"success", "partial", "failed", "requires_followup"}
+    assert response_out["report_status"] in {
+        "success",
+        "partial",
+        "failed",
+        "requires_followup",
+    }
 
     store_out = execute_capability(
         "memory.context.store",

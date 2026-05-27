@@ -139,9 +139,7 @@ def main() -> int:
     metrics_content = metrics_200.get("content", {})
     checks += 1
     _assert(
-        metrics_content.get("application/json", {})
-        .get("schema", {})
-        .get("$ref")
+        metrics_content.get("application/json", {}).get("schema", {}).get("$ref")
         == "#/components/schemas/MetricsSnapshot",
         "openapi /v1/metrics application/json contract mismatch",
     )
@@ -156,8 +154,7 @@ def main() -> int:
     prom_content = prom_200.get("content", {})
     checks += 1
     _assert(
-        prom_content.get("text/plain", {}).get("schema", {}).get("type")
-        == "string",
+        prom_content.get("text/plain", {}).get("schema", {}).get("type") == "string",
         "openapi /v1/metrics/prometheus text/plain contract mismatch",
     )
     checks += _assert_common_auth_responses(

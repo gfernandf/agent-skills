@@ -4,7 +4,12 @@ import json
 from pathlib import Path
 
 
-SPEC_PATH = Path(__file__).resolve().parent / "docs" / "specs" / "consumer_facing_v1_openapi.json"
+SPEC_PATH = (
+    Path(__file__).resolve().parent
+    / "docs"
+    / "specs"
+    / "consumer_facing_v1_openapi.json"
+)
 
 
 def test_consumer_openapi_includes_async_run_routes() -> None:
@@ -43,7 +48,9 @@ def test_consumer_openapi_includes_async_run_routes() -> None:
     run_async_props = schemas["RunAsyncRequest"]["properties"]
     assert "idempotency_key" in run_async_props
 
-    execute_async_responses = paths["/v1/skills/{skill_id}/execute/async"]["post"]["responses"]
+    execute_async_responses = paths["/v1/skills/{skill_id}/execute/async"]["post"][
+        "responses"
+    ]
     run_async_v1_responses = paths["/v1/run_async"]["post"]["responses"]
     run_async_legacy_responses = paths["/run_async"]["post"]["responses"]
     assert "409" in execute_async_responses

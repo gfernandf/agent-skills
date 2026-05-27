@@ -88,7 +88,9 @@ def main() -> int:
         candidate_dirs: list[dict[str, object]] = []
         for candidate in _candidate_capability_dirs(capability_id):
             candidate_path = OFFICIAL_ROOT / candidate
-            files = sorted([p.name for p in candidate_path.glob("*.yaml") if p.is_file()])
+            files = sorted(
+                [p.name for p in candidate_path.glob("*.yaml") if p.is_file()]
+            )
             if files:
                 with_candidate += 1
                 candidate_dirs.append(

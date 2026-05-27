@@ -21,14 +21,21 @@ DEFAULT_WEBHOOK_PORT = 8091
 DEFAULT_API_KEY = "test-secret-key"
 
 
-def request_json(method: str, url: str, body: dict[str, Any] | None = None, headers: dict[str, str] | None = None) -> tuple[int, dict[str, Any]]:
+def request_json(
+    method: str,
+    url: str,
+    body: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, dict[str, Any]]:
     raw = b""
     req_headers = {"Content-Type": "application/json"}
     if headers:
         req_headers.update(headers)
     if body is not None:
         raw = json.dumps(body).encode("utf-8")
-    req = Request(url, data=raw if body is not None else None, method=method, headers=req_headers)
+    req = Request(
+        url, data=raw if body is not None else None, method=method, headers=req_headers
+    )
     try:
         with urlopen(req, timeout=10) as resp:
             data = resp.read().decode("utf-8")
@@ -110,13 +117,17 @@ def main() -> int:
     parser.add_argument("--host", default=DEFAULT_SERVER_HOST)
     parser.add_argument("--port", type=int, default=DEFAULT_SERVER_PORT)
     parser.add_argument("--webhook-port", type=int, default=DEFAULT_WEBHOOK_PORT)
-    parser.add_argument("--api-key", default=os.environ.get("CUSTOMER_API_KEY", DEFAULT_API_KEY))
+    parser.add_argument(
+        "--api-key", default=os.environ.get("CUSTOMER_API_KEY", DEFAULT_API_KEY)
+    )
     args = parser.parse_args()
 
     base_url = f"http://{args.host}:{args.port}"
     api_key = args.api_key
 
-    webhook_server = ThreadingHTTPServer(("127.0.0.1", args.webhook_port), _WebhookHandler)
+    webhook_server = ThreadingHTTPServer(
+        ("127.0.0.1", args.webhook_port), _WebhookHandler
+    )
     webhook_thread = threading.Thread(target=webhook_server.serve_forever, daemon=True)
     webhook_thread.start()
 
@@ -156,7 +167,9 @@ def main() -> int:
         if status != 200:
             raise RuntimeError(f"skills/list failed: {status} {skills}")
 
-        skill_ids = [s.get("id") for s in skills.get("skills", []) if isinstance(s, dict)]
+        skill_ids = [
+            s.get("id") for s in skills.get("skills", []) if isinstance(s, dict)
+        ]
         preferred = ["agent.request.normalize", "agent.goal.interpret", "decision.make"]
         skill_id = next((s for s in preferred if s in skill_ids), None)
         if skill_id is None:
@@ -246,7 +259,9 @@ def main() -> int:
         if not _WebhookHandler.events:
             raise RuntimeError("No webhook events received")
 
-        event_names = {evt.get("event") for evt in _WebhookHandler.events if isinstance(evt, dict)}
+        event_names = {
+            evt.get("event") for evt in _WebhookHandler.events if isinstance(evt, dict)
+        }
         if not ({"run.completed", "run.failed"} & event_names):
             raise RuntimeError(f"Unexpected webhook events: {sorted(event_names)}")
 
@@ -254,7 +269,9 @@ def main() -> int:
         print(f"skill_id={skill_id}")
         print(f"run1={run1.get('status')} run_id={launch['run_id']}")
         print(f"run2={run2.get('status')} run_id={launch2['run_id']}")
-        print(f"webhook_events={sorted(event_names)} total={len(_WebhookHandler.events)}")
+        print(
+            f"webhook_events={sorted(event_names)} total={len(_WebhookHandler.events)}"
+        )
         print(f"runs_page_size={len(runs_all.get('runs', []))}")
         return 0
     finally:

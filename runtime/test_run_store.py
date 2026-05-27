@@ -71,7 +71,10 @@ def test_status_transitions_v2():
     store = RunStore()
     store.create_run_record(run_id="rsm", skill_id="my.skill", status="pending")
     running = store.update_status("rsm", "running")
-    _test("transition pending->running", running is not None and running["status"] == "running")
+    _test(
+        "transition pending->running",
+        running is not None and running["status"] == "running",
+    )
 
     waiting = store.mark_waiting_for_human(
         "rsm",
@@ -289,14 +292,18 @@ def test_prune_expired_idempotency_keys():
     )
 
     old_created_at = (
-        datetime.now(timezone.utc) - timedelta(days=2)
-    ).isoformat().replace("+00:00", "Z")
+        (datetime.now(timezone.utc) - timedelta(days=2))
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
     store.patch_run(run["run_id"], {"created_at": old_created_at})
 
     removed = store.prune_expired_idempotency_keys(ttl_seconds=60)
     _test("idempotency prune: removed count", removed == 1)
 
-    lookup = store.find_run_by_idempotency_key("idem-old", skill_id="skill.a", ttl_seconds=60)
+    lookup = store.find_run_by_idempotency_key(
+        "idem-old", skill_id="skill.a", ttl_seconds=60
+    )
     _test("idempotency prune: key unavailable", lookup is None)
     after_counters = METRICS.snapshot().get("counters", {})
     after_expired = int(after_counters.get("runtime.idempotency.expired", 0))

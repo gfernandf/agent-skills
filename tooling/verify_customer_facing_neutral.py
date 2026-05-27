@@ -38,9 +38,7 @@ def _http_post_json(
     request_headers = {"Content-Type": "application/json"}
     if headers:
         request_headers.update(headers)
-    req = urllib.request.Request(
-        url, data=data, headers=request_headers, method="POST"
-    )
+    req = urllib.request.Request(url, data=data, headers=request_headers, method="POST")
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode("utf-8"))
 

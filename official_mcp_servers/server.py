@@ -74,10 +74,9 @@ _DEFAULT_SKILL_WAIT_MS = max(
     1000,
     int(os.getenv("AGENT_SKILLS_DEFAULT_SKILL_WAIT_MS", "120000")),
 )
-_NON_BLOCKING_SKILL_EXECUTION = (
-    os.getenv("AGENT_SKILLS_NON_BLOCKING_SKILLS", "1").strip().lower()
-    not in {"0", "false", "no", "off"}
-)
+_NON_BLOCKING_SKILL_EXECUTION = os.getenv(
+    "AGENT_SKILLS_NON_BLOCKING_SKILLS", "1"
+).strip().lower() not in {"0", "false", "no", "off"}
 
 _RUN_EXECUTOR = ThreadPoolExecutor(max_workers=8, thread_name_prefix="mcp-tool")
 _RUNS_LOCK = Lock()
@@ -113,7 +112,9 @@ def _cleanup_runs_if_needed(force: bool = False) -> None:
         for run_id, record in _RUN_RECORDS.items():
             status = record.get("status")
             finished_at = record.get("finished_at_ts")
-            if status in {"completed", "failed"} and isinstance(finished_at, (int, float)):
+            if status in {"completed", "failed"} and isinstance(
+                finished_at, (int, float)
+            ):
                 if now - float(finished_at) > _RUN_TTL_SECONDS:
                     expired.append(run_id)
 
@@ -154,6 +155,7 @@ def _finalize_run(run_id: str, fut: Future[Any]) -> None:
             record["code"] = _classify_error(exc)
             record.pop("result", None)
 
+
 # ---------------------------------------------------------------------------
 # Server instance
 # ---------------------------------------------------------------------------
@@ -176,38 +178,38 @@ def _build_outputs_summary_for_skill(
     outputs: dict[str, Any],
 ) -> dict[str, Any] | None:
     """Extract an outputs_summary from skill outputs for rich summary exposure.
-    
+
     For decision.make and similar skills, creates a high-level summary containing:
     - recommendation
     - confidence_score and confidence_level
     - decision_quality_score and decision_quality_level
     - alternatives_evaluated (per-option scores and trade-offs)
-    
+
     Returns None if skill is not recognized for summary extraction.
     """
     if not isinstance(outputs, dict):
         return None
-    
+
     # decision.make — include alternatives_evaluated in summary
     if skill_id == "decision.make":
         summary: dict[str, Any] = {}
-        
+
         # Core recommendation
         if "recommendation" in outputs:
             summary["recommendation"] = outputs["recommendation"]
-        
+
         # Confidence calibration
         if "confidence_score" in outputs:
             summary["confidence_score"] = outputs["confidence_score"]
         if "confidence_level" in outputs:
             summary["confidence_level"] = outputs["confidence_level"]
-        
+
         # Decision quality
         if "decision_quality_score" in outputs:
             summary["decision_quality_score"] = outputs["decision_quality_score"]
         if "decision_quality_level" in outputs:
             summary["decision_quality_level"] = outputs["decision_quality_level"]
-        
+
         # Per-alternative evaluation (NEW: alternatives_evaluated)
         if "alternatives_evaluated" in outputs:
             summary["alternatives_evaluated"] = outputs["alternatives_evaluated"]
@@ -217,17 +219,17 @@ def _build_outputs_summary_for_skill(
 
         if "decision_matrix" in outputs:
             summary["decision_matrix"] = outputs["decision_matrix"]
-        
+
         # Per-alternative risks and trade-offs (optional)
         if "tradeoffs" in outputs:
             summary["tradeoffs"] = outputs["tradeoffs"]
-        
+
         return summary if summary else None
-    
+
     # Add other skills here as they need summary extraction
     # elif skill_id == "some.other.skill":
     #     ...
-    
+
     return None
 
 
@@ -305,7 +307,9 @@ def _normalize_skill_meta_consistency(payload: dict[str, Any]) -> None:
     elif fallback_steps_count is not None and fallback_steps_count < 0:
         fallback_steps_count = 0
 
-    if fallback_used is True and (fallback_steps_count is None or fallback_steps_count < 1):
+    if fallback_used is True and (
+        fallback_steps_count is None or fallback_steps_count < 1
+    ):
         fallback_steps_count = 1
 
     if fallback_used is None and len(step_diagnostics) == 0:
@@ -352,7 +356,8 @@ def _fallback_is_negligible_for_confidence(meta: dict[str, Any]) -> bool:
         return False
 
     fallback_steps = [
-        step for step in step_diagnostics
+        step
+        for step in step_diagnostics
         if isinstance(step, dict) and bool(step.get("fallback_used"))
     ]
     if len(fallback_steps) != 1:
@@ -731,10 +736,7 @@ def _extract_execution_mode(args: dict[str, Any]) -> str:
 
 def _coerce_skill_execution_mode(requested_mode: str) -> tuple[str, str | None]:
     """Promote skill execution to non-blocking mode when policy is enabled."""
-    if (
-        _NON_BLOCKING_SKILL_EXECUTION
-        and requested_mode == _EXECUTION_MODE_SYNC_ONLY
-    ):
+    if _NON_BLOCKING_SKILL_EXECUTION and requested_mode == _EXECUTION_MODE_SYNC_ONLY:
         return (
             _EXECUTION_MODE_ASYNC_ALLOWED,
             "sync_only promoted to async_allowed to keep in-flight skill execution alive",
@@ -1070,7 +1072,9 @@ def _cancel_run_payload(run_id: str) -> dict[str, Any]:
 def _list_runs_payload(limit: int = 20, status: str | None = None) -> dict[str, Any]:
     _cleanup_runs_if_needed()
     safe_limit = max(1, min(int(limit), 200))
-    status_filter = status if status in {"pending", "running", "completed", "failed"} else None
+    status_filter = (
+        status if status in {"pending", "running", "completed", "failed"} else None
+    )
 
     with _RUNS_LOCK:
         records = list(_RUN_RECORDS.values())
@@ -1193,9 +1197,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name=_RUN_LIST_TOOL,
-            description=(
-                "List recent background runs for diagnostics and debugging."
-            ),
+            description=("List recent background runs for diagnostics and debugging."),
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -1551,7 +1553,10 @@ async def run_sse(host: str = "0.0.0.0", port: int = 8765) -> None:
             combined = accept_val
             for part in missing:
                 combined = f"{combined}, {part}" if combined else part
-            headers[accept_idx] = (b"accept", combined.encode("latin-1", errors="ignore"))
+            headers[accept_idx] = (
+                b"accept",
+                combined.encode("latin-1", errors="ignore"),
+            )
             scope = dict(scope)
             scope["headers"] = headers
 

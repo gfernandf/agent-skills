@@ -156,7 +156,9 @@ def _build_skill_execution_meta(result) -> dict[str, Any]:
             "step_id": step_id,
             "uses": step_result.uses,
             "status": status,
-            "duration_ms": step_result.latency_ms if step_result.latency_ms is not None else 0,
+            "duration_ms": step_result.latency_ms
+            if step_result.latency_ms is not None
+            else 0,
             "binding_id": step_result.binding_id,
             "service_id": step_result.service_id,
             "primary_binding_id": step_result.primary_binding_id,
@@ -318,7 +320,8 @@ def _classify_fallback_severity(
         if isinstance(step, dict)
     )
     fallback_steps = [
-        step for step in step_diagnostics
+        step
+        for step in step_diagnostics
         if isinstance(step, dict) and bool(step.get("fallback_used"))
     ]
     justify_only_fallback = (
@@ -380,7 +383,9 @@ def _classify_execution_health(
         return "partial"
     if trace_completeness != "full":
         return "degraded"
-    severity_level = fallback_severity.get("level") if isinstance(fallback_severity, dict) else None
+    severity_level = (
+        fallback_severity.get("level") if isinstance(fallback_severity, dict) else None
+    )
     if severity_level in {"moderate", "severe"}:
         return "degraded"
     return "healthy"

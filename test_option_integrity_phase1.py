@@ -45,12 +45,18 @@ def test_justify_option_downgrades_confidence_on_strict_drift() -> None:
     assert alt_ids == ["opt-1", "opt-2"]
     assert result["confidence_level"] == "low"
     assert result["confidence_score"] <= 0.3
-    assert any("Strict option integrity mode" in text for text in result["uncertainties"])
+    assert any(
+        "Strict option integrity mode" in text for text in result["uncertainties"]
+    )
 
 
 def test_justify_option_uses_conservative_tie_break_for_equal_scores() -> None:
     scored_options = [
-        {"option_id": "opt-1", "label": "construir producto completo", "overall_score": 90.0},
+        {
+            "option_id": "opt-1",
+            "label": "construir producto completo",
+            "overall_score": 90.0,
+        },
         {"option_id": "opt-2", "label": "lanzar piloto/MVP", "overall_score": 90.0},
         {"option_id": "opt-3", "label": "posponer", "overall_score": 90.0},
     ]

@@ -39,15 +39,39 @@ def _detect_domain_uncertainty(goal: str) -> bool:
     goal_lower = goal.lower()
     uncertainty_signals = [
         # Spanish: Market/Domain Entry
-        "nuevo mercado", "nuevo dominio", "nueva industria", "nuevas tecnología",
-        "primer", "primera vez", "primera entrada", "sin experiencia", "no tenemos experiencia",
-        "no tenemos conocimiento", "inexperiencia", "desconocido", "incertidumbre",
+        "nuevo mercado",
+        "nuevo dominio",
+        "nueva industria",
+        "nuevas tecnología",
+        "primer",
+        "primera vez",
+        "primera entrada",
+        "sin experiencia",
+        "no tenemos experiencia",
+        "no tenemos conocimiento",
+        "inexperiencia",
+        "desconocido",
+        "incertidumbre",
         # English: Market/Domain Entry
-        "new market", "new domain", "new industry", "new technology", "first time",
-        "first entry", "no experience", "inexperience", "unfamiliar", "unknown",
-        "no prior experience", "prior experience", "entering",
-        "legaltech", "medtech", "fintech", "deeptech",
-        "blockchain", "ai integration",
+        "new market",
+        "new domain",
+        "new industry",
+        "new technology",
+        "first time",
+        "first entry",
+        "no experience",
+        "inexperience",
+        "unfamiliar",
+        "unknown",
+        "no prior experience",
+        "prior experience",
+        "entering",
+        "legaltech",
+        "medtech",
+        "fintech",
+        "deeptech",
+        "blockchain",
+        "ai integration",
     ]
     return any(signal in goal_lower for signal in uncertainty_signals)
 
@@ -66,20 +90,24 @@ def _compute_execution_reliability(best_score, high_scale_scores, drift_detected
     return base
 
 
-def _compute_information_completeness(scored_options, analyzed_options, context_provided):
+def _compute_information_completeness(
+    scored_options, analyzed_options, context_provided
+):
     """
     Calculate information completeness score (0.0-1.0).
     Based on: analysis presence, context, option count.
     """
     if not isinstance(scored_options, list) or len(scored_options) == 0:
         return 0.2
-    
+
     has_analysis = isinstance(analyzed_options, list) and len(analyzed_options) > 0
     analysis_score = 0.7 if has_analysis else 0.35
     context_score = 0.7 if context_provided else 0.3
     option_count_score = min(len(scored_options) / 4.0, 1.0)
-    
-    completeness = 0.4 * analysis_score + 0.35 * context_score + 0.25 * option_count_score
+
+    completeness = (
+        0.4 * analysis_score + 0.35 * context_score + 0.25 * option_count_score
+    )
     return round(min(completeness, 1.0), 2)
 
 
@@ -90,7 +118,7 @@ def _compute_option_separation_strength(scored_options):
     """
     if not isinstance(scored_options, list) or len(scored_options) < 2:
         return 0.5
-    
+
     normalized = []
     for opt in scored_options:
         if not isinstance(opt, dict):
@@ -99,25 +127,25 @@ def _compute_option_separation_strength(scored_options):
         if isinstance(score, (int, float)):
             norm = min(score / 100.0, 1.0) if score > 1.0 else max(0.0, score)
             normalized.append(norm)
-    
+
     if len(normalized) < 2:
         return 0.5
-    
+
     sorted_scores = sorted(normalized, reverse=True)
     top, second = sorted_scores[0], sorted_scores[1]
-    
+
     if top <= 0:
         return 0.5
-    
+
     margin = (top - second) / top
-    
+
     if margin > 0.3:
         separation = 0.95
     elif margin > 0.15:
         separation = 0.65
     else:
         separation = 0.40
-    
+
     return round(separation, 2)
 
 
@@ -152,12 +180,16 @@ def _compute_multicomponent_confidence(
     Components: Execution Reliability (28%), Info Completeness (22%),
     Option Separation (24%), Uncertainty Level (16%), Fallback Severity (10%).
     """
-    exec_reliability = _compute_execution_reliability(best_score, high_scale_scores, drift_detected)
-    info_completeness = _compute_information_completeness(scored_options, analyzed_options, context_provided)
+    exec_reliability = _compute_execution_reliability(
+        best_score, high_scale_scores, drift_detected
+    )
+    info_completeness = _compute_information_completeness(
+        scored_options, analyzed_options, context_provided
+    )
     option_separation = _compute_option_separation_strength(scored_options)
     uncertainty = _compute_uncertainty_level(goal, has_domain_uncertainty)
     fallback_severity = _compute_fallback_severity(high_scale_scores)
-    
+
     composite = (
         0.28 * exec_reliability
         + 0.22 * info_completeness
@@ -216,7 +248,9 @@ def _normalize_decision_inputs(
     has_domain_uncertainty,
 ):
     constraints = constraints if isinstance(constraints, dict) else {}
-    budget = constraints.get("budget") or _extract_number(goal, r"(\d[\d\.,]{3,})\s*EUR")
+    budget = constraints.get("budget") or _extract_number(
+        goal, r"(\d[\d\.,]{3,})\s*EUR"
+    )
     team_size = constraints.get("team_size") or _extract_number(
         goal, r"(?:equipo|team)\s*(?:disponible)?\s*:?\s*(\d{1,2})"
     )
@@ -230,7 +264,10 @@ def _normalize_decision_inputs(
     competition = constraints.get("competition")
     if not competition:
         goal_lower = (goal or "").lower()
-        if "competencia establecida" in goal_lower or "established competition" in goal_lower:
+        if (
+            "competencia establecida" in goal_lower
+            or "established competition" in goal_lower
+        ):
             competition = "high"
 
     domain_experience = constraints.get("domain_experience")
@@ -245,13 +282,17 @@ def _normalize_decision_inputs(
         "domain_experience": domain_experience,
         "timeline_months": timeline_months,
         "risk_tolerance": risk_tolerance,
-        "options_count": len(explicit_options) if isinstance(explicit_options, list) else None,
+        "options_count": len(explicit_options)
+        if isinstance(explicit_options, list)
+        else None,
     }
 
 
 def _build_decision_matrix(alternatives_evaluated):
     matrix = []
-    for alt in alternatives_evaluated if isinstance(alternatives_evaluated, list) else []:
+    for alt in (
+        alternatives_evaluated if isinstance(alternatives_evaluated, list) else []
+    ):
         if not isinstance(alt, dict):
             continue
         option = str(alt.get("option", "Option"))
@@ -274,7 +315,9 @@ def _build_decision_matrix(alternatives_evaluated):
                 "risk": risk,
                 "speed": speed,
                 "strategic_fit": fit,
-                "score": round(float(score), 2) if isinstance(score, (int, float)) else 0.0,
+                "score": round(float(score), 2)
+                if isinstance(score, (int, float))
+                else 0.0,
             }
         )
     return matrix
@@ -389,7 +432,7 @@ def justify_option(
 
     # Detect domain uncertainty (new market, new tech, no experience)
     has_domain_uncertainty = _detect_domain_uncertainty(goal)
-    
+
     # Check if we have context/tradeoffs
     context_provided = (
         bool(tradeoffs)
@@ -397,7 +440,7 @@ def justify_option(
         or bool(explicit_options)
         or bool(option_constraint_mode)
     )
-    
+
     is_strict = strict_option_mode(option_constraint_mode, explicit_options)
     normalized_explicit = normalize_explicit_options(explicit_options)
     observed_options = []
@@ -412,7 +455,7 @@ def justify_option(
     # Normalize best_score for confidence calculation
     normalized_best = best_score / 100.0 if best_score > 1.0 else best_score
     high_scale_scores = best_score > 1.0
-    
+
     # Compute multicomponent confidence
     confidence = _compute_multicomponent_confidence(
         scored_options=all_options,
@@ -435,11 +478,15 @@ def justify_option(
 
     alternatives = []
     if is_strict and normalized_explicit:
-        selected_id = best.get("option_id", best.get("id")) if isinstance(best, dict) else None
+        selected_id = (
+            best.get("option_id", best.get("id")) if isinstance(best, dict) else None
+        )
         for opt in normalized_explicit:
             oid = opt.get("id", "?")
             label = opt.get("label", oid)
-            alternatives.append({"id": oid, "label": label, "selected": oid == selected_id})
+            alternatives.append(
+                {"id": oid, "label": label, "selected": oid == selected_id}
+            )
     else:
         for opt in all_options:
             oid = opt.get("option_id", opt.get("id", "?"))
@@ -447,7 +494,9 @@ def justify_option(
             selected = opt is best
             alternatives.append({"id": oid, "label": label, "selected": selected})
 
-    alternatives_evaluated = _build_alternatives_evaluated(all_options, analyzed_options)
+    alternatives_evaluated = _build_alternatives_evaluated(
+        all_options, analyzed_options
+    )
     decision_inputs = _normalize_decision_inputs(
         goal,
         constraints,

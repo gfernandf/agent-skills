@@ -319,7 +319,8 @@ class TestProductionScenarios:
         # Should have alternatives_evaluated
         assert len(result["alternatives_evaluated"]) == 3
         recommended_option = [
-            a for a in result["alternatives_evaluated"]
+            a
+            for a in result["alternatives_evaluated"]
             if "mvp" in a["option"].lower() or "pilot" in a["option"].lower()
         ]
         assert recommended_option
@@ -380,7 +381,11 @@ class TestProductionScenarios:
                 "pros": ["Performance", "Security updates"],
                 "cons": ["Testing required"],
             },
-            {"option_id": "stay", "pros": ["Stability"], "cons": ["EOL risk", "Tech debt"]},
+            {
+                "option_id": "stay",
+                "pros": ["Stability"],
+                "cons": ["EOL risk", "Tech debt"],
+            },
         ]
 
         result = justify_option(

@@ -382,7 +382,9 @@ class ExecutionEngine:
             state = request.initial_state
             resumed_step_ids: set[str] = set()
             if state is None:
-                state = create_execution_state(skill.id, request.inputs, trace_id=trace_id)
+                state = create_execution_state(
+                    skill.id, request.inputs, trace_id=trace_id
+                )
             else:
                 if state.skill_id != skill.id:
                     raise ValueError(

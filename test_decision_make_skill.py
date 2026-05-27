@@ -83,8 +83,7 @@ def test_decision_make_with_preprovided_options(engine):
     alt_ids = [alt.get("id") for alt in alternatives if isinstance(alt, dict)]
     provided_ids = [opt["id"] for opt in provided_options]
     assert alt_ids == provided_ids, (
-        "Option ids drifted or reordered. "
-        f"expected={provided_ids}, observed={alt_ids}"
+        f"Option ids drifted or reordered. expected={provided_ids}, observed={alt_ids}"
     )
 
     alt_labels = {alt.get("id"): alt.get("label") for alt in alternatives}

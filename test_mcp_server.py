@@ -288,7 +288,9 @@ class TestCallTool:
             patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
             patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
             patch("sdk.embedded.execute", return_value=mock_result) as mock_exec,
-            patch("sdk.embedded.execute_with_meta", return_value=mock_result) as mock_exec_meta,
+            patch(
+                "sdk.embedded.execute_with_meta", return_value=mock_result
+            ) as mock_exec_meta,
         ):
             from official_mcp_servers.server import call_tool
 
@@ -915,8 +917,9 @@ class TestSkillTools:
             patch("sdk.embedded.list_capabilities", return_value=_MOCK_CAPABILITIES),
             patch("sdk.embedded.list_skills", return_value=_MOCK_SKILLS),
             patch("sdk.embedded.execute", return_value=mock_result) as mock_exec,
-            patch("sdk.embedded.execute_with_meta", return_value=mock_result)
-            as mock_exec_meta,
+            patch(
+                "sdk.embedded.execute_with_meta", return_value=mock_result
+            ) as mock_exec_meta,
         ):
             from official_mcp_servers.server import call_tool
 

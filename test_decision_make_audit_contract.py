@@ -36,8 +36,16 @@ def _deterministic_runtime(monkeypatch):
                 },
             ],
             "options": [
-                {"id": "full", "label": "construir producto completo", "description": "Build full product"},
-                {"id": "mvp", "label": "lanzar piloto/MVP", "description": "Pilot first"},
+                {
+                    "id": "full",
+                    "label": "construir producto completo",
+                    "description": "Build full product",
+                },
+                {
+                    "id": "mvp",
+                    "label": "lanzar piloto/MVP",
+                    "description": "Pilot first",
+                },
                 {"id": "wait", "label": "posponer", "description": "Delay decision"},
             ],
             "option_constraint_mode": "strict",
@@ -79,7 +87,10 @@ def test_decision_make_meta_contract(inputs):
     assert isinstance(meta.get("steps_count"), int) and meta["steps_count"] >= 1
     assert isinstance(meta.get("completed_steps_count"), int)
     assert isinstance(meta.get("failed_steps_count"), int)
-    assert meta["completed_steps_count"] + meta["failed_steps_count"] == meta["steps_count"]
+    assert (
+        meta["completed_steps_count"] + meta["failed_steps_count"]
+        == meta["steps_count"]
+    )
 
     # Fallback and step diagnostics contract
     assert isinstance(meta.get("fallback_used"), bool)
@@ -92,9 +103,14 @@ def test_decision_make_meta_contract(inputs):
         assert isinstance(step.get("step_id"), str) and step["step_id"]
         assert isinstance(step.get("uses"), str) and step["uses"]
         assert isinstance(step.get("status"), str) and step["status"]
-        assert isinstance(step.get("duration_ms"), (int, float)) and step["duration_ms"] >= 0
+        assert (
+            isinstance(step.get("duration_ms"), (int, float))
+            and step["duration_ms"] >= 0
+        )
         assert isinstance(step.get("fallback_used"), bool)
-        assert isinstance(step.get("attempts_count"), int) and step["attempts_count"] >= 1
+        assert (
+            isinstance(step.get("attempts_count"), int) and step["attempts_count"] >= 1
+        )
 
 
 def test_decision_make_step_diagnostics_are_auditable():

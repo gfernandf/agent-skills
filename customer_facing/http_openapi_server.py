@@ -825,7 +825,9 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     raise ValueError("Request body must be a JSON object")
                 skill_id = body.get("skill_id")
                 if not isinstance(skill_id, str) or not skill_id:
-                    raise ValueError("run_async requires non-empty string field 'skill_id'")
+                    raise ValueError(
+                        "run_async requires non-empty string field 'skill_id'"
+                    )
                 inputs = body.get("inputs") if isinstance(body, dict) else {}
                 trace_id = self._extract_trace_id(body)
                 idempotency_key = self._extract_idempotency_key(body)
@@ -851,7 +853,10 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     async_pool=self._async_pool,
                     webhook_store=self.webhook_store,
                 )
-                self._write_json(_http_status_for_run_response(response, success_status=202), response)
+                self._write_json(
+                    _http_status_for_run_response(response, success_status=202),
+                    response,
+                )
                 return
 
             if parsed.path.startswith(skill_prefix) and parsed.path.endswith(
