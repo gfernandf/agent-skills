@@ -11,6 +11,7 @@ from runtime.errors import (
     FinalOutputValidationError,
     GateDeniedError,
     GateExecutionError,
+    IdempotencyConflictError,
     InputMappingError,
     InvalidExecutionOptionsError,
     InvalidCapabilitySpecError,
@@ -145,6 +146,14 @@ def map_runtime_error_to_http(error: Exception) -> HttpErrorContract:
         return HttpErrorContract(
             status_code=409,
             code="invalid_configuration",
+            type=type(error).__name__,
+            message=sanitize_error_message(error),
+        )
+
+    if isinstance(error, IdempotencyConflictError):
+        return HttpErrorContract(
+            status_code=409,
+            code="idempotency_conflict",
             type=type(error).__name__,
             message=sanitize_error_message(error),
         )

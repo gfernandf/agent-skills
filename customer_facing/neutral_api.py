@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from typing import Any
 from runtime.engine_factory import RuntimeComponents, build_runtime_components
 from runtime.errors import (
     CheckpointNotFoundError,
+    IdempotencyConflictError,
     RunNotFoundError,
     SafetyConfirmationRequiredError,
 )
@@ -66,6 +68,25 @@ def _calibrate_execution_confidence(
         outputs=outputs,
         meta=meta,
     )
+
+
+def _build_async_idempotency_fingerprint(
+    *,
+    skill_id: str,
+    inputs: dict[str, Any],
+    required_conformance_profile: str | None,
+    audit_mode: str | None,
+    execution_channel: str | None,
+) -> str:
+    payload = {
+        "skill_id": skill_id,
+        "inputs": inputs,
+        "required_conformance_profile": required_conformance_profile,
+        "audit_mode": audit_mode,
+        "execution_channel": execution_channel,
+    }
+    normalized = json.dumps(payload, sort_keys=True, ensure_ascii=True, default=str)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 class NeutralRuntimeAPI:
@@ -426,12 +447,38 @@ class NeutralRuntimeAPI:
             else None
         )
 
+        normalized_inputs = dict(inputs or {})
+        request_fingerprint = _build_async_idempotency_fingerprint(
+            skill_id=skill_id,
+            inputs=normalized_inputs,
+            required_conformance_profile=required_conformance_profile,
+            audit_mode=audit_mode,
+            execution_channel=execution_channel,
+        )
+
         if normalized_idempotency_key is not None:
             existing_run = run_store.find_run_by_idempotency_key(
                 normalized_idempotency_key,
                 skill_id=skill_id,
             )
             if isinstance(existing_run, dict):
+                existing_metadata = (
+                    existing_run.get("metadata")
+                    if isinstance(existing_run.get("metadata"), dict)
+                    else {}
+                )
+                existing_fingerprint = (
+                    existing_metadata.get("idempotency_fingerprint")
+                    if isinstance(existing_metadata.get("idempotency_fingerprint"), str)
+                    else None
+                )
+                if existing_fingerprint and existing_fingerprint != request_fingerprint:
+                    return _error_response(
+                        IdempotencyConflictError(
+                            f"Idempotency key '{normalized_idempotency_key}' conflicts with an existing async request"
+                        ),
+                        trace_id=trace_id,
+                    )
                 return {
                     "run_id": existing_run.get("run_id"),
                     "status": existing_run.get("status"),
@@ -449,12 +496,13 @@ class NeutralRuntimeAPI:
             trace_id=trace_id,
             status="running",
             metadata={
-                "inputs": dict(inputs or {}),
+                "inputs": normalized_inputs,
                 "required_conformance_profile": required_conformance_profile,
                 "audit_mode": audit_mode,
                 "execution_channel": execution_channel,
                 "confirmed_capabilities": [],
                 "idempotency_key": normalized_idempotency_key,
+                "idempotency_fingerprint": request_fingerprint,
             },
         )
 

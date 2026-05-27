@@ -194,6 +194,57 @@ def test_execute_skill_async_idempotency_key_reuses_run() -> None:
     assert len(runs) == 1
 
 
+def test_execute_skill_async_idempotency_key_conflicts_on_payload_change() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+
+    def _fake_execute(*, skill_id, inputs, trace_id, **_kwargs):
+        state = create_execution_state(skill_id, inputs or {}, trace_id=trace_id)
+        mark_started(state)
+        time.sleep(0.1)
+        mark_finished(state, "completed")
+        return SimpleNamespace(state=state), {
+            "skill_id": skill_id,
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": trace_id,
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        first = api.execute_skill_async(
+            skill_id="x.y",
+            inputs={"n": 2},
+            trace_id="t-idem-conflict",
+            idempotency_key="idem-456",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+
+        second = api.execute_skill_async(
+            skill_id="x.y",
+            inputs={"n": 3},
+            trace_id="t-idem-conflict",
+            idempotency_key="idem-456",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run(first["run_id"])
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
+
+    assert second["error"]["code"] == "idempotency_conflict"
+    assert second["error"]["status"] == 409
+
+
 def test_resume_run_executes_from_checkpoint() -> None:
     api = _build_api_without_init()
     store = RunStoreV2(max_runs=10)

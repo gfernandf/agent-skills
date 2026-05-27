@@ -13,6 +13,7 @@ from runtime.errors import (  # noqa: E402
     CapabilityExecutionError,
     CapabilityNotFoundError,
     FinalOutputValidationError,
+    IdempotencyConflictError,
     InputMappingError,
     SkillNotFoundError,
 )
@@ -81,8 +82,18 @@ def main() -> int:
     fallback = map_runtime_error_to_http(ValueError("x"))
     checks += 1
     _assert(
-        fallback.status_code == 500 and fallback.code == "internal_error",
+        fallback.status_code == 400 and fallback.code == "invalid_request",
         "fallback mapping mismatch",
+    )
+
+    idempotency_conflict = map_runtime_error_to_http(
+        IdempotencyConflictError("duplicate key payload mismatch")
+    )
+    checks += 1
+    _assert(
+        idempotency_conflict.status_code == 409
+        and idempotency_conflict.code == "idempotency_conflict",
+        "idempotency_conflict mapping mismatch",
     )
 
     capability_not_found = map_runtime_error_to_http(

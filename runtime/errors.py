@@ -70,6 +70,10 @@ class CheckpointNotFoundError(RuntimeErrorBase):
     """Raised when a requested run checkpoint cannot be found."""
 
 
+class IdempotencyConflictError(RuntimeErrorBase):
+    """Raised when an idempotency key is reused with a different request payload."""
+
+
 class InvalidSkillSpecError(RuntimeErrorBase):
     """Raised when a skill source file cannot be normalized into a valid SkillSpec."""
 
