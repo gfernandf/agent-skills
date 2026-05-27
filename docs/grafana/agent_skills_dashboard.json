@@ -64,6 +64,63 @@
       "targets": [
         {"expr": "agent_skills_binding_circuit_open_skip_total", "legendFormat": "circuit_open"}
       ]
+    },
+    {
+      "title": "Idempotency Created (total)",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 12},
+      "targets": [
+        {"expr": "agent_skills_runtime_idempotency_created_total", "legendFormat": "created"}
+      ]
+    },
+    {
+      "title": "Idempotency Reused (total)",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 12},
+      "targets": [
+        {"expr": "agent_skills_runtime_idempotency_reused_total", "legendFormat": "reused"}
+      ]
+    },
+    {
+      "title": "Idempotency Conflict Rate (5m)",
+      "type": "gauge",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "sum(rate(agent_skills_runtime_idempotency_conflict_total[5m])) / clamp_min(sum(rate(agent_skills_runtime_idempotency_created_total[5m])) + sum(rate(agent_skills_runtime_idempotency_reused_total[5m])) + sum(rate(agent_skills_runtime_idempotency_conflict_total[5m])), 1)",
+          "legendFormat": "conflict_rate"
+        }
+      ]
+    },
+    {
+      "title": "Idempotency Expiration Ratio (30m)",
+      "type": "gauge",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 16},
+      "targets": [
+        {
+          "expr": "sum(rate(agent_skills_runtime_idempotency_expired_total[30m])) / clamp_min(sum(rate(agent_skills_runtime_idempotency_created_total[30m])) + sum(rate(agent_skills_runtime_idempotency_reused_total[30m])), 1)",
+          "legendFormat": "expiration_ratio"
+        }
+      ]
+    },
+    {
+      "title": "Idempotency Event Rates (5m)",
+      "type": "timeseries",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 16},
+      "targets": [
+        {
+          "expr": "sum(rate(agent_skills_runtime_idempotency_created_total[5m]))",
+          "legendFormat": "created/s"
+        },
+        {
+          "expr": "sum(rate(agent_skills_runtime_idempotency_reused_total[5m]))",
+          "legendFormat": "reused/s"
+        },
+        {
+          "expr": "sum(rate(agent_skills_runtime_idempotency_conflict_total[5m]))",
+          "legendFormat": "conflict/s"
+        }
+      ]
     }
   ],
   "schemaVersion": 39,
@@ -72,5 +129,5 @@
   "time": {"from": "now-1h", "to": "now"},
   "title": "Agent Skills Runtime",
   "uid": "agent-skills-runtime",
-  "version": 1
+  "version": 2
 }

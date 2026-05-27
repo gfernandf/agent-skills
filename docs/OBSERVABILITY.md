@@ -67,6 +67,34 @@ Counter semantics:
 - `conflict`: the key matched an existing run but fingerprint changed (HTTP 409).
 - `expired`: idempotency keys removed due to TTL expiration during prune/lookup.
 
+### Grafana Dashboard and Alerts
+
+Repository artifacts:
+
+- Dashboard: `docs/grafana/agent_skills_dashboard.json`
+- Alert rules: `docs/grafana/agent_skills_idempotency_alerts.yaml`
+
+Idempotency panels included in the dashboard:
+
+- `Idempotency Created (total)`
+- `Idempotency Reused (total)`
+- `Idempotency Conflict Rate (5m)`
+- `Idempotency Expiration Ratio (30m)`
+- `Idempotency Event Rates (5m)`
+
+Suggested alert thresholds encoded in alert rules:
+
+- Warning: idempotency conflict rate > 1% for 10m.
+- Critical: idempotency conflict rate > 3% for 10m.
+- Warning: expiration ratio > 20% for 30m.
+
+Import workflow:
+
+1. Import dashboard JSON into Grafana.
+2. Update datasource UID values in alert rules if your Prometheus UID differs.
+3. Import alert rules using Grafana provisioning or API.
+4. Validate live values against `/v1/metrics/prometheus` before enabling notifications.
+
 ### Parallel Step Events
 
 When the DAG scheduler executes steps in parallel (see docs/SCHEDULER.md),

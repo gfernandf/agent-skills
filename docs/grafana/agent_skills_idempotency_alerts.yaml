@@ -1,0 +1,105 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: agent-skills-idempotency
+    folder: Agent Skills
+    interval: 1m
+    rules:
+      - uid: idem-conflict-warning
+        title: Idempotency conflict rate warning
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: |
+                sum(rate(agent_skills_runtime_idempotency_conflict_total[10m]))
+                /
+                clamp_min(
+                  sum(rate(agent_skills_runtime_idempotency_created_total[10m]))
+                  + sum(rate(agent_skills_runtime_idempotency_reused_total[10m]))
+                  + sum(rate(agent_skills_runtime_idempotency_conflict_total[10m])),
+                  1
+                )
+              intervalMs: 60000
+              maxDataPoints: 43200
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: Client idempotency key reuse with changed payload is elevated
+          runbook_url: docs/CONSUMER_FACING_NEUTRAL_API.md
+        labels:
+          severity: warning
+          domain: idempotency
+        isPaused: false
+
+      - uid: idem-conflict-critical
+        title: Idempotency conflict rate critical
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: |
+                sum(rate(agent_skills_runtime_idempotency_conflict_total[10m]))
+                /
+                clamp_min(
+                  sum(rate(agent_skills_runtime_idempotency_created_total[10m]))
+                  + sum(rate(agent_skills_runtime_idempotency_reused_total[10m]))
+                  + sum(rate(agent_skills_runtime_idempotency_conflict_total[10m])),
+                  1
+                )
+              intervalMs: 60000
+              maxDataPoints: 43200
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: Idempotency conflict rate is critical
+          runbook_url: docs/CONSUMER_FACING_NEUTRAL_API.md
+        labels:
+          severity: critical
+          domain: idempotency
+        isPaused: false
+
+      - uid: idem-expiration-pressure
+        title: Idempotency expiration pressure
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: |
+                sum(rate(agent_skills_runtime_idempotency_expired_total[30m]))
+                /
+                clamp_min(
+                  sum(rate(agent_skills_runtime_idempotency_created_total[30m]))
+                  + sum(rate(agent_skills_runtime_idempotency_reused_total[30m])),
+                  1
+                )
+              intervalMs: 60000
+              maxDataPoints: 43200
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 30m
+        annotations:
+          summary: Expired idempotency keys ratio suggests TTL is too short for retry horizon
+          runbook_url: docs/SLO_SLI.md
+        labels:
+          severity: warning
+          domain: idempotency
+        isPaused: false
