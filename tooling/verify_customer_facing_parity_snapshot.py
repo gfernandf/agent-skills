@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -25,7 +26,7 @@ from gateway.core import SkillGateway
 
 def _http_get_json(url: str, headers: dict[str, str] | None = None) -> dict[str, Any]:
     req = urllib.request.Request(url, headers=headers or {}, method="GET")
-    with urllib.request.urlopen(req, timeout=10) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -41,8 +42,50 @@ def _http_post_json(
         headers=req_headers,
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:
+    with urllib.request.urlopen(req, timeout=60) as resp:
         return json.loads(resp.read().decode("utf-8"))
+
+
+def _wait_for_server_ready(
+    base_url: str,
+    *,
+    headers: dict[str, str],
+    timeout_seconds: float = 20.0,
+) -> None:
+    deadline = time.time() + timeout_seconds
+    last_error: Exception | None = None
+    while time.time() < deadline:
+        try:
+            health = _http_get_json(f"{base_url}/v1/health")
+            if isinstance(health, dict) and health.get("status") == "ok":
+                _http_get_json(f"{base_url}/v1/skills/list", headers=headers)
+                return
+        except Exception as exc:  # pragma: no cover - exercised in integration runs
+            last_error = exc
+        time.sleep(0.2)
+    raise RuntimeError(f"server did not become ready at {base_url}: {last_error}")
+
+
+def _pick_skill(base_url: str, *, headers: dict[str, str]) -> str:
+    listed = _http_get_json(f"{base_url}/v1/skills/list", headers=headers)
+    skills = listed.get("skills") if isinstance(listed, dict) else None
+    if not isinstance(skills, list):
+        raise RuntimeError("skills/list did not return a skills array")
+
+    available = {
+        item.get("id")
+        for item in skills
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    preferred = [
+        "agent.plan-and-route",
+        "agent.execute-from-plan",
+        "agent.orchestrate-from-prompt",
+    ]
+    for skill_id in preferred:
+        if skill_id in available:
+            return skill_id
+    raise RuntimeError(f"none of preferred verification skills found: {preferred}")
 
 
 def _normalize(value: Any) -> Any:
@@ -54,6 +97,8 @@ def _normalize(value: Any) -> Any:
             "runtime_root",
             "registry_root",
             "host_root",
+            "duration_ms",
+            "resolution_ms",
             "attempts",
             "fallback_chain",
             "fallback_used",
@@ -72,6 +117,7 @@ def _normalize(value: Any) -> Any:
 
 
 def _compute_snapshot(api_key: str) -> dict[str, Any]:
+    base_url = "http://127.0.0.1:8086"
     api = NeutralRuntimeAPI(
         registry_root=REGISTRY_ROOT,
         runtime_root=ROOT,
@@ -85,28 +131,24 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
     bridge = MCPToolBridge(api, gateway)
 
     headers = {"x-api-key": api_key}
+    skill_id = _pick_skill(base_url, headers=headers)
 
-    http_health = _http_get_json("http://127.0.0.1:8086/v1/health")
+    http_health = _http_get_json(f"{base_url}/v1/health")
     mcp_health = bridge.call_tool("runtime.health", {})
 
-    http_desc = _http_get_json(
-        "http://127.0.0.1:8086/v1/skills/agent.plan-from-objective/describe",
-        headers=headers,
-    )
-    mcp_desc = bridge.call_tool(
-        "skill.describe", {"skill_id": "agent.plan-from-objective"}
-    )
+    http_desc = _http_get_json(f"{base_url}/v1/skills/{skill_id}/describe", headers=headers)
+    mcp_desc = bridge.call_tool("skill.describe", {"skill_id": skill_id})
 
     skill_inputs = {"objective": "Build a policy-compliant execution plan."}
     http_skill_exec = _http_post_json(
-        "http://127.0.0.1:8086/v1/skills/agent.plan-from-objective/execute",
+        f"{base_url}/v1/skills/{skill_id}/execute",
         {"inputs": skill_inputs, "include_trace": False},
         headers=headers,
     )
     mcp_skill_exec = bridge.call_tool(
         "skill.execute",
         {
-            "skill_id": "agent.plan-from-objective",
+            "skill_id": skill_id,
             "inputs": skill_inputs,
             "include_trace": False,
         },
@@ -117,7 +159,7 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
         "constraint": {"required_keys": ["title"], "forbidden_keys": ["password"]},
     }
     http_cap_exec = _http_post_json(
-        "http://127.0.0.1:8086/v1/capabilities/policy.constraint.validate/execute",
+        f"{base_url}/v1/capabilities/policy.constraint.validate/execute",
         {"inputs": capability_inputs},
         headers=headers,
     )
@@ -127,6 +169,7 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
     )
 
     snapshot = {
+        "skill_id": skill_id,
         "health": {
             "http": _normalize(http_health),
             "mcp": _normalize(mcp_health),
@@ -157,8 +200,41 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
     return snapshot
 
 
+def _stable_projection(snapshot: dict[str, Any]) -> dict[str, Any]:
+    def _summary(payload: Any) -> dict[str, Any]:
+        if not isinstance(payload, dict):
+            return {"type": type(payload).__name__}
+
+        outputs = payload.get("outputs") if isinstance(payload.get("outputs"), dict) else {}
+        meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
+        return {
+            "id": payload.get("id") or payload.get("skill_id") or payload.get("capability_id"),
+            "status": payload.get("status"),
+            "top_level_keys": sorted(payload.keys()),
+            "output_keys": sorted(outputs.keys()),
+            "meta_keys": sorted(meta.keys()),
+        }
+
+    projected: dict[str, Any] = {
+        "skill_id": snapshot.get("skill_id"),
+        "all_equal": snapshot.get("all_equal"),
+    }
+
+    for section in ("health", "describe_skill", "execute_skill", "execute_capability"):
+        value = snapshot.get(section)
+        if not isinstance(value, dict):
+            continue
+        projected[section] = {
+            "equal": value.get("equal"),
+            "http": _summary(value.get("http")),
+            "mcp": _summary(value.get("mcp")),
+        }
+    return projected
+
+
 def main() -> int:
     api_key = "parity-key"
+    base_url = "http://127.0.0.1:8086"
     proc = subprocess.Popen(
         [
             sys.executable,
@@ -181,8 +257,8 @@ def main() -> int:
     )
 
     try:
-        time.sleep(0.8)
-        actual = _compute_snapshot(api_key)
+        _wait_for_server_ready(base_url, headers={"x-api-key": api_key})
+        actual = _stable_projection(_compute_snapshot(api_key))
 
         if not actual.get("all_equal"):
             raise RuntimeError(

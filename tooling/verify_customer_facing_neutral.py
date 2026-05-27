@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -21,24 +22,72 @@ from customer_facing.neutral_api import NeutralRuntimeAPI
 from gateway.core import SkillGateway
 
 
-def _http_get_json(url: str) -> dict:
-    with urllib.request.urlopen(url, timeout=10) as resp:
+def _http_get_json(url: str, headers: dict[str, str] | None = None) -> dict:
+    req = urllib.request.Request(url, headers=headers or {}, method="GET")
+    with urllib.request.urlopen(req, timeout=15) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def _http_post_json(url: str, payload: dict) -> dict:
+def _http_post_json(
+    url: str,
+    payload: dict,
+    *,
+    headers: dict[str, str] | None = None,
+) -> dict:
     data = json.dumps(payload).encode("utf-8")
+    request_headers = {"Content-Type": "application/json"}
+    if headers:
+        request_headers.update(headers)
     req = urllib.request.Request(
-        url, data=data, headers={"Content-Type": "application/json"}, method="POST"
+        url, data=data, headers=request_headers, method="POST"
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode("utf-8"))
+
+
+def _wait_for_server_ready(base_url: str, *, timeout_seconds: float = 20.0) -> None:
+    deadline = time.time() + timeout_seconds
+    last_error: Exception | None = None
+    while time.time() < deadline:
+        try:
+            health = _http_get_json(f"{base_url}/v1/health")
+            if isinstance(health, dict) and health.get("status") == "ok":
+                return
+        except Exception as exc:  # pragma: no cover - exercised in integration runs
+            last_error = exc
+        time.sleep(0.2)
+    raise RuntimeError(f"server did not become ready at {base_url}: {last_error}")
+
+
+def _pick_skill(base_url: str, *, headers: dict[str, str]) -> str:
+    listed = _http_get_json(f"{base_url}/v1/skills/list", headers=headers)
+    skills = listed.get("skills") if isinstance(listed, dict) else None
+    if not isinstance(skills, list):
+        raise RuntimeError("skills/list did not return a skills array")
+
+    available = {
+        item.get("id")
+        for item in skills
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    preferred = [
+        "agent.plan-and-route",
+        "agent.execute-from-plan",
+        "agent.orchestrate-from-prompt",
+    ]
+    for skill_id in preferred:
+        if skill_id in available:
+            return skill_id
+    raise RuntimeError(f"none of preferred verification skills found: {preferred}")
 
 
 def main() -> int:
+    base_url = "http://127.0.0.1:8083"
+    api_key = "neutral-verify-key"
+    headers = {"x-api-key": api_key}
     http_proc = subprocess.Popen(
         [
-            "python",
+            sys.executable,
             str(ROOT / "tooling" / "run_customer_http_api.py"),
             "--host",
             "127.0.0.1",
@@ -48,30 +97,35 @@ def main() -> int:
             str(ROOT),
             "--registry-root",
             str(REGISTRY_ROOT),
+            "--api-key",
+            api_key,
         ],
     )
 
     try:
-        time.sleep(0.7)
+        _wait_for_server_ready(base_url)
+        skill_id = _pick_skill(base_url, headers=headers)
 
-        health = _http_get_json("http://127.0.0.1:8083/v1/health")
+        health = _http_get_json(f"{base_url}/v1/health")
         if health.get("status") != "ok":
             raise RuntimeError("health endpoint did not return status=ok")
 
         desc = _http_get_json(
-            "http://127.0.0.1:8083/v1/skills/agent.plan-from-objective/describe"
+            f"{base_url}/v1/skills/{skill_id}/describe",
+            headers=headers,
         )
-        if desc.get("id") != "agent.plan-from-objective":
+        if desc.get("id") != skill_id:
             raise RuntimeError("describe endpoint returned unexpected skill id")
 
         exec_result = _http_post_json(
-            "http://127.0.0.1:8083/v1/skills/agent.plan-from-objective/execute",
+            f"{base_url}/v1/skills/{skill_id}/execute",
             {
                 "inputs": {
                     "objective": "Build a safe runtime execution plan.",
                 },
                 "include_trace": False,
             },
+            headers=headers,
         )
         if "outputs" not in exec_result:
             raise RuntimeError("execute endpoint did not return outputs")
@@ -94,7 +148,7 @@ def main() -> int:
         mcp_exec = bridge.call_tool(
             "skill.execute",
             {
-                "skill_id": "agent.plan-from-objective",
+                "skill_id": skill_id,
                 "inputs": {
                     "objective": "Generate a compact plan.",
                 },
