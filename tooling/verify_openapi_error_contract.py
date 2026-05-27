@@ -30,6 +30,27 @@ def _assert(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+def _assert_common_auth_responses(
+    responses: dict[str, dict[str, str]],
+    *,
+    path_label: str,
+) -> int:
+    expected = {
+        "401": "Missing API key",
+        "403": "Invalid API key",
+        "429": "Rate limited",
+    }
+    checks = 0
+    for status, description in expected.items():
+        checks += 1
+        actual = responses.get(status, {}).get("description")
+        _assert(
+            actual == description,
+            f"openapi {path_label} {status} description mismatch",
+        )
+    return checks
+
+
 def main() -> int:
     checks = 0
 
@@ -113,7 +134,8 @@ def main() -> int:
     schemas = spec.get("components", {}).get("schemas", {})
 
     metrics_get = paths.get("/v1/metrics", {}).get("get", {})
-    metrics_200 = metrics_get.get("responses", {}).get("200", {})
+    metrics_responses = metrics_get.get("responses", {})
+    metrics_200 = metrics_responses.get("200", {})
     metrics_content = metrics_200.get("content", {})
     checks += 1
     _assert(
@@ -123,15 +145,24 @@ def main() -> int:
         == "#/components/schemas/MetricsSnapshot",
         "openapi /v1/metrics application/json contract mismatch",
     )
+    checks += _assert_common_auth_responses(
+        metrics_responses,
+        path_label="/v1/metrics",
+    )
 
     prom_get = paths.get("/v1/metrics/prometheus", {}).get("get", {})
-    prom_200 = prom_get.get("responses", {}).get("200", {})
+    prom_responses = prom_get.get("responses", {})
+    prom_200 = prom_responses.get("200", {})
     prom_content = prom_200.get("content", {})
     checks += 1
     _assert(
         prom_content.get("text/plain", {}).get("schema", {}).get("type")
         == "string",
         "openapi /v1/metrics/prometheus text/plain contract mismatch",
+    )
+    checks += _assert_common_auth_responses(
+        prom_responses,
+        path_label="/v1/metrics/prometheus",
     )
 
     checks += 1
