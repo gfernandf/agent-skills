@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -104,6 +105,39 @@ def main() -> int:
         capability_not_found.status_code == 404
         and capability_not_found.code == "not_found",
         "capability not_found mapping mismatch",
+    )
+
+    spec_path = ROOT / "docs" / "specs" / "consumer_facing_v1_openapi.json"
+    spec = json.loads(spec_path.read_text(encoding="utf-8"))
+    paths = spec.get("paths", {})
+    schemas = spec.get("components", {}).get("schemas", {})
+
+    metrics_get = paths.get("/v1/metrics", {}).get("get", {})
+    metrics_200 = metrics_get.get("responses", {}).get("200", {})
+    metrics_content = metrics_200.get("content", {})
+    checks += 1
+    _assert(
+        metrics_content.get("application/json", {})
+        .get("schema", {})
+        .get("$ref")
+        == "#/components/schemas/MetricsSnapshot",
+        "openapi /v1/metrics application/json contract mismatch",
+    )
+
+    prom_get = paths.get("/v1/metrics/prometheus", {}).get("get", {})
+    prom_200 = prom_get.get("responses", {}).get("200", {})
+    prom_content = prom_200.get("content", {})
+    checks += 1
+    _assert(
+        prom_content.get("text/plain", {}).get("schema", {}).get("type")
+        == "string",
+        "openapi /v1/metrics/prometheus text/plain contract mismatch",
+    )
+
+    checks += 1
+    _assert(
+        "MetricsSnapshot" in schemas and "MetricHistogramSummary" in schemas,
+        "openapi metrics schemas missing",
     )
 
     print(f"OpenAPI error contract verification passed ({checks} checks)")

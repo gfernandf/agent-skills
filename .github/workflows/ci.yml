@@ -125,6 +125,10 @@ jobs:
           pip install jsonschema
           python tooling/validate_json_schemas.py
 
+      - name: OpenAPI contract guardrails
+        run: |
+          python tooling/verify_openapi_error_contract.py
+
       - name: Upload security artifacts
         if: always()
         uses: actions/upload-artifact@v4
