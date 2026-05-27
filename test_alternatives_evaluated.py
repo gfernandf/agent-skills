@@ -2,7 +2,6 @@
 Quick validation that alternatives_evaluated is included in decision.make output
 and confidence is reduced for domain-new decisions.
 """
-import sys
 from pathlib import Path
 from cli.main import _build_engine
 from runtime.models import ExecutionRequest

@@ -1835,7 +1835,6 @@ def generate_output_report(
     if not isinstance(execution_result, dict):
         execution_result = {}
 
-    objective = interpreted_goal.get("objective", "Complete the task")
     exec_status = execution_result.get("status", "unknown")
     step_results = execution_result.get("step_results", [])
     steps_done = [s["step_id"] for s in step_results if s.get("status") == "success"]

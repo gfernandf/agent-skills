@@ -11,7 +11,6 @@ Validates:
 import pytest
 from official_services.decision_baseline import (
     _detect_domain_uncertainty,
-    _build_alternatives_evaluated,
     justify_option,
 )
 

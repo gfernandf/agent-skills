@@ -273,7 +273,7 @@ class TestJustifyOptionWithNewConfidence:
             risk_tolerance="medium",
         )
         
-        print(f"\nFull flow result:")
+        print("\nFull flow result:")
         print(f"  Recommendation: {result['recommendation']}")
         print(f"  Confidence score: {result['confidence_score']}")
         print(f"  Confidence level: {result['confidence_level']}")

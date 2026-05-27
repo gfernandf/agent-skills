@@ -29,7 +29,7 @@ nav:
       - RFC 0003 Side-Effect Safety: rfcs/RFC-0003-SIDE-EFFECT-LEDGER-AND-REPLAY-SAFETY.md
       - RFC 0004 Runtime APIs and Events: rfcs/RFC-0004-RUNTIME-APIS-AND-EVENT-CONTRACT.md
       - RFC 0005 Integration Pseudocode: rfcs/RFC-0005-INTEGRATION-PSEUDOCODE-AND-MIGRATION.md
-    - RFC 0006 Legacy Retirement Matrix: rfcs/RFC-0006-LEGACY-RETIREMENT-MATRIX.md
+      - RFC 0006 Legacy Retirement Matrix: rfcs/RFC-0006-LEGACY-RETIREMENT-MATRIX.md
   - Bindings & Services:
       - Binding Guide: BINDING_GUIDE.md
       - Binding Selection: BINDING_SELECTION.md
