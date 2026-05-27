@@ -90,6 +90,7 @@ Async launch idempotency:
 
 - `POST /v1/run_async` and `POST /run_async` accept optional `idempotency_key` (or `x-idempotency-key` header).
 - Repeating the same async launch with the same `skill_id` + `idempotency_key` returns the existing run instead of creating a duplicate.
+- Reusing the same `idempotency_key` with a different async request payload returns `409 idempotency_conflict`.
 
 Security model (configurable):
 

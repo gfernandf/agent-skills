@@ -41,6 +41,13 @@ def test_consumer_openapi_includes_async_run_routes() -> None:
     run_async_props = schemas["RunAsyncRequest"]["properties"]
     assert "idempotency_key" in run_async_props
 
+    execute_async_responses = paths["/v1/skills/{skill_id}/execute/async"]["post"]["responses"]
+    run_async_v1_responses = paths["/v1/run_async"]["post"]["responses"]
+    run_async_legacy_responses = paths["/run_async"]["post"]["responses"]
+    assert "409" in execute_async_responses
+    assert "409" in run_async_v1_responses
+    assert "409" in run_async_legacy_responses
+
     run_status_enum = schemas["RunStatus"]["properties"]["status"]["enum"]
     assert "waiting_for_human" in run_status_enum
     assert "replaying" in run_status_enum

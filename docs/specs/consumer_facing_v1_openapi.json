@@ -718,6 +718,9 @@
           "404": {
             "description": "Skill not found"
           },
+          "409": {
+            "description": "Idempotency conflict"
+          },
           "429": {
             "description": "Rate limited"
           }
@@ -763,6 +766,9 @@
           "404": {
             "description": "Skill not found"
           },
+          "409": {
+            "description": "Idempotency conflict"
+          },
           "429": {
             "description": "Rate limited"
           }
@@ -807,6 +813,9 @@
           },
           "404": {
             "description": "Skill not found"
+          },
+          "409": {
+            "description": "Idempotency conflict"
           },
           "429": {
             "description": "Rate limited"
