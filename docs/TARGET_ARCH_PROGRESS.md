@@ -83,7 +83,7 @@ Computation:
 
 1. Durability: 73%
 2. Contracts/artifacts/promotion: 63%
-3. Policy/tenancy: 88%
+3. Policy/tenancy: 92%
 4. DX/distribution: 69%
 5. Overall average: 75%
 

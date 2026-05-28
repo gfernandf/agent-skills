@@ -77,6 +77,14 @@ Runs on push to `main`/`master` and on PRs. 8 jobs:
 | **dx-metrics** | Developer-experience metrics (time-to-first-success + docs parity), trend history artifact, and optional SLO enforcement |
 | **batch** | Full `test_capabilities_batch.py` run |
 
+### agent-skills — `ci.yml`
+
+Includes a dedicated policy governance gate:
+
+1. `policy-bundle-governance` runs `tooling/verify_policy_bundle_lifecycle.py`
+2. Enforces tenant-scope and environment promotion controls in `policies/opa/bundle_manifest.json`
+3. Publishes `artifacts/policy_bundle_lifecycle_report.json` as CI evidence
+
 ### agent-skill-registry — `validate.yml`
 
 Runs on push to `main`/`master` and on PRs. Single job:
