@@ -30,6 +30,10 @@ Canonical source for this list:
 
 1. `docs/required_status_checks.json`
 
+Operational setup guide:
+
+1. `docs/GITHUB_RULESET_RUNBOOK.md`
+
 ## Operational Note
 
 Repository settings cannot be fully enforced from code inside the repository. This
