@@ -109,7 +109,7 @@ implementation:
 | `text.content.generate` | Echoes the instruction |
 | `text.content.classify` | Returns first candidate category |
 | `text.content.embed` | Hash-based pseudo-embedding |
-| `text.entity.extract` | Regex-based extraction (type = OTHER) |
+| `perception.entity.extract` | Regex-based extraction (type = OTHER) |
 | `text.language.detect` | Defaults to `en` |
 | `text.content.transform` | Wraps text with the goal directive |
 | `text.response.extract` | Returns first sentence of context |
@@ -130,11 +130,11 @@ The `model.*` domain has two kinds of capabilities:
 | Capability | Baseline behaviour |
 |---|---|
 | `model.output.generate` | Mock / OpenAI only (no pythoncall baseline) |
-| `model.response.validate` | Structural check: empty fields, non-dict detection |
+| `evaluation.response.validate` | Structural check: empty fields, non-dict detection |
 | `model.embedding.generate` | Hash-based pseudo-embedding (128-dim default) |
 | `model.output.classify` | Keyword frequency + field-name heuristics |
-| `model.output.score` | Word overlap, sentence length, length ratio proxies |
-| `model.risk.score` | Pattern matching for toxicity, bias, injection markers |
+| `evaluation.output.score` | Word overlap, sentence length, length ratio proxies |
+| `evaluation.risk.score` | Pattern matching for toxicity, bias, injection markers |
 
 These baselines ensure the system never crashes — but for production use with
 LLM-dependent capabilities, **setting `OPENAI_API_KEY` is strongly

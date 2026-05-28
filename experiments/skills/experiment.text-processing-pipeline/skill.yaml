@@ -30,7 +30,7 @@ outputs:
 
 steps:
   - id: extract_entities
-    uses: text.entity.extract
+    uses: perception.entity.extract
     input:
       text: inputs.text
     output:

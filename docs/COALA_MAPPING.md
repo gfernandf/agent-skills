@@ -53,9 +53,9 @@ Each capability declares `cognitive_hints.role` that maps to a CoALA processing 
 
 | `cognitive_hints.role` | CoALA Stage | Description | Example Capabilities |
 |-----------------------|-------------|-------------|---------------------|
-| `perceive` | Perception | Convert raw input to structured form | `text.entity.extract`, `audio.speech.transcribe` |
+| `perceive` | Perception | Convert raw input to structured form | `perception.entity.extract`, `audio.speech.transcribe` |
 | `analyze` | Internal reasoning | Examine and decompose | `code.source.analyze`, `analysis.problem.split` |
-| `evaluate` | Decision making | Score, rank, or judge | `eval.option.score`, `data.schema.validate` |
+| `evaluate` | Decision making | Score, rank, or judge | `evaluation.option.score`, `data.schema.validate` |
 | `synthesize` | Internal action | Combine information into new form | `text.content.summarize`, `text.content.merge` |
 | `act` | External action | Produce side effects | `fs.file.write`, `email.message.send` |
 | `retrieve` | Memory retrieval | Access stored knowledge | `memory.context.retrieve`, `research.source.retrieve` |

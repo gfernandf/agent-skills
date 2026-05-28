@@ -773,11 +773,11 @@ def _select_executable_template_caps(
         "text.content.translate",
         "text.content.summarize",
         "text.content.classify",
-        "text.entity.extract",
-        "text.keyword.extract",
+        "perception.entity.extract",
+        "perception.keyword.extract",
         "text.language.detect",
         "text.content.embed",
-        "text.content.extract",
+        "perception.content.extract",
     }
     if goal_capability_ids:
         for goal_id in goal_capability_ids:

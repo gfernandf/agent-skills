@@ -208,7 +208,7 @@ steps:
 # Score each option with retry per iteration
 steps:
   - id: score_options
-    uses: eval.option.score
+    uses: evaluation.option.score
     input:
       option: "item"
       criteria: "vars.criteria"
