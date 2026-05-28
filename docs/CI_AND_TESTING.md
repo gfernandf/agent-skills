@@ -82,8 +82,9 @@ Runs on push to `main`/`master` and on PRs. 8 jobs:
 Includes a dedicated policy governance gate:
 
 1. `policy-bundle-governance` runs `tooling/verify_policy_bundle_lifecycle.py`
-2. Enforces tenant-scope and environment promotion controls in `policies/opa/bundle_manifest.json`
-3. Publishes `artifacts/policy_bundle_lifecycle_report.json` as CI evidence
+2. Also runs `tooling/verify_policy_gate_freshness.py` to ensure CI/smoke workflow enforcement does not drift
+3. Enforces tenant-scope and environment promotion controls in `policies/opa/bundle_manifest.json`
+4. Publishes `artifacts/policy_bundle_lifecycle_report.json` and `artifacts/policy_gate_freshness_report.json` as CI evidence
 
 ### agent-skill-registry — `validate.yml`
 

@@ -50,6 +50,7 @@ def parse_args() -> argparse.Namespace:
 def _build_steps(args: argparse.Namespace) -> list[list[str]]:
     steps: list[list[str]] = [
         ["tooling/run_cognitive_quality_gates.py"],
+        ["tooling/verify_policy_gate_freshness.py"],
     ]
 
     if not args.skip_customer_facing:

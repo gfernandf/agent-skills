@@ -257,10 +257,13 @@ jobs:
       - name: Verify OPA policy bundle lifecycle governance
         run: |
           python tooling/verify_policy_bundle_lifecycle.py --bundle-root policies/opa --report-file artifacts/policy_bundle_lifecycle_report.json
+          python tooling/verify_policy_gate_freshness.py --report-file artifacts/policy_gate_freshness_report.json
 
       - name: Upload policy bundle governance report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: policy-bundle-governance-report
-          path: artifacts/policy_bundle_lifecycle_report.json
+          path: |
+            artifacts/policy_bundle_lifecycle_report.json
+            artifacts/policy_gate_freshness_report.json
