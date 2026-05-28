@@ -1,4 +1,4 @@
-# OPA Policy Bundle Lifecycle (v1)
+# OPA Policy Bundle Lifecycle (v2)
 
 Status: Active baseline
 Last updated: 2026-05-28
@@ -42,6 +42,12 @@ Required governance fields:
 4. `promotion_policy.required_reviews >= 1`
 5. `promotion_policy.enforce_requires_shadow_validation = true`
 6. `promotion_policy.require_bundle_version_bump = true`
+7. `promotion_policy.environment_promotion.sequence = [dev, staging, prod]`
+8. `promotion_policy.environment_promotion.rules.dev_to_staging.require_shadow_parity = true`
+9. `promotion_policy.environment_promotion.rules.dev_to_staging.min_runtime_canary_pass_ratio >= 1.0`
+10. `promotion_policy.environment_promotion.rules.staging_to_prod.require_shadow_parity = true`
+11. `promotion_policy.environment_promotion.rules.staging_to_prod.min_runtime_canary_pass_ratio >= 1.0`
+12. `promotion_policy.environment_promotion.rules.staging_to_prod.required_approvals >= 2`
 
 ## Rego Contract
 
@@ -69,4 +75,4 @@ Report fields:
 
 1. Keep bundle checks in CI as a readiness gate.
 2. Expand decision coverage over time without breaking runtime-safe defaults.
-3. Add formal bundle governance (versioning/review policy) before production-enforce cutover.
+3. Enforce explicit environment promotion controls before production-enforce cutover.

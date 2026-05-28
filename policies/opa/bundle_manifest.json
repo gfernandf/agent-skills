@@ -16,7 +16,25 @@
   "promotion_policy": {
     "required_reviews": 1,
     "enforce_requires_shadow_validation": true,
-    "require_bundle_version_bump": true
+    "require_bundle_version_bump": true,
+    "environment_promotion": {
+      "sequence": [
+        "dev",
+        "staging",
+        "prod"
+      ],
+      "rules": {
+        "dev_to_staging": {
+          "require_shadow_parity": true,
+          "min_runtime_canary_pass_ratio": 1.0
+        },
+        "staging_to_prod": {
+          "require_shadow_parity": true,
+          "min_runtime_canary_pass_ratio": 1.0,
+          "required_approvals": 2
+        }
+      }
+    }
   },
   "ownership": {
     "team": "runtime-policy",

@@ -7,7 +7,7 @@ Progress baseline: docs/TARGET_ARCH_PROGRESS.md
 ## Executive Status
 
 1. Overall strategic completion: 75%
-2. Policy/Tenancy pillar: 90%
+2. Policy/Tenancy pillar: 92%
 3. Tenant isolation matrix: passed (22/22)
 4. same_tenant capability baseline: passed (5/5)
 
@@ -103,7 +103,7 @@ Evidence:
 
 1. Durability to Temporal-grade semantics (beyond current baseline contract)
 2. Contracts/artifacts/promotion orchestration with stronger lineage model
-3. OPA governance depth beyond tenant-scoped manifest checks (environment-level promotion policy)
+3. OPA governance depth beyond manifest checks: branch/CI-enforced environment promotion policy
 4. Wider same_tenant rollout beyond 5-capability baseline
 
 ## Commit Guidance with Large Dirty Trees

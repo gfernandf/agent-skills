@@ -129,4 +129,4 @@ Policy bundle lifecycle report:
 
 1. OPA runtime decision enforcement cutover.
 2. Replacing in-runtime safety gates.
-3. Tenant-scoped policy-bundle governance rollout beyond manifest-level lifecycle checks.
+3. Tenant-scoped policy-bundle governance with explicit environment promotion controls.

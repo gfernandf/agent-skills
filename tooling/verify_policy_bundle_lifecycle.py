@@ -184,6 +184,108 @@ def main() -> int:
                 )
             )
 
+            environment_promotion = promotion_policy.get("environment_promotion")
+            checks.append(
+                _check(
+                    isinstance(environment_promotion, dict),
+                    "manifest_promotion_environment_block",
+                    "present" if isinstance(environment_promotion, dict) else "missing",
+                )
+            )
+            if isinstance(environment_promotion, dict):
+                sequence = environment_promotion.get("sequence")
+                checks.append(
+                    _check(
+                        sequence == ["dev", "staging", "prod"],
+                        "manifest_promotion_environment_sequence",
+                        str(sequence),
+                    )
+                )
+
+                rules = environment_promotion.get("rules")
+                checks.append(
+                    _check(
+                        isinstance(rules, dict),
+                        "manifest_promotion_environment_rules_block",
+                        "present" if isinstance(rules, dict) else "missing",
+                    )
+                )
+
+                if isinstance(rules, dict):
+                    dev_to_staging = rules.get("dev_to_staging")
+                    checks.append(
+                        _check(
+                            isinstance(dev_to_staging, dict),
+                            "manifest_promotion_rule_dev_to_staging_present",
+                            "present" if isinstance(dev_to_staging, dict) else "missing",
+                        )
+                    )
+                    if isinstance(dev_to_staging, dict):
+                        checks.append(
+                            _check(
+                                dev_to_staging.get("require_shadow_parity") is True,
+                                "manifest_promotion_rule_dev_to_staging_shadow_parity",
+                                str(dev_to_staging.get("require_shadow_parity")),
+                            )
+                        )
+                        checks.append(
+                            _check(
+                                isinstance(
+                                    dev_to_staging.get(
+                                        "min_runtime_canary_pass_ratio"
+                                    ),
+                                    (int, float),
+                                )
+                                and float(
+                                    dev_to_staging.get("min_runtime_canary_pass_ratio")
+                                )
+                                >= 1.0,
+                                "manifest_promotion_rule_dev_to_staging_canary_ratio",
+                                str(dev_to_staging.get("min_runtime_canary_pass_ratio")),
+                            )
+                        )
+
+                    staging_to_prod = rules.get("staging_to_prod")
+                    checks.append(
+                        _check(
+                            isinstance(staging_to_prod, dict),
+                            "manifest_promotion_rule_staging_to_prod_present",
+                            "present" if isinstance(staging_to_prod, dict) else "missing",
+                        )
+                    )
+                    if isinstance(staging_to_prod, dict):
+                        checks.append(
+                            _check(
+                                staging_to_prod.get("require_shadow_parity") is True,
+                                "manifest_promotion_rule_staging_to_prod_shadow_parity",
+                                str(staging_to_prod.get("require_shadow_parity")),
+                            )
+                        )
+                        checks.append(
+                            _check(
+                                isinstance(
+                                    staging_to_prod.get(
+                                        "min_runtime_canary_pass_ratio"
+                                    ),
+                                    (int, float),
+                                )
+                                and float(
+                                    staging_to_prod.get("min_runtime_canary_pass_ratio")
+                                )
+                                >= 1.0,
+                                "manifest_promotion_rule_staging_to_prod_canary_ratio",
+                                str(staging_to_prod.get("min_runtime_canary_pass_ratio")),
+                            )
+                        )
+                        checks.append(
+                            _check(
+                                isinstance(staging_to_prod.get("required_approvals"), int)
+                                and int(staging_to_prod.get("required_approvals")) >= 2,
+                                "manifest_promotion_rule_staging_to_prod_required_approvals",
+                                str(staging_to_prod.get("required_approvals")),
+                            )
+                        )
+
     if rego_path.exists():
         rego_text = rego_path.read_text(encoding="utf-8")
         checks.append(
