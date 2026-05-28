@@ -753,6 +753,11 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      CI_TREND_SLO_ENFORCE: "false"
+      CI_TREND_SLO_FAIL_ON_UNVERIFIED: "false"
+      CI_TREND_SLO_MIN_PASS_RATE: "0.80"
+      CI_TREND_SLO_MIN_SAMPLES: "5"
 
     steps:
       - name: Checkout agent-skills
@@ -772,12 +777,27 @@ jobs:
           mkdir -p artifacts
           python tooling/report_critical_ci_trend.py --report-file artifacts/critical_ci_trend_report.json --window 20
 
+      - name: Evaluate critical CI trend SLO
+        run: |
+          ARGS="--trend-report-file artifacts/critical_ci_trend_report.json --slo-report-file artifacts/critical_ci_trend_slo_report.json"
+          ARGS="$ARGS --min-pass-rate ${CI_TREND_SLO_MIN_PASS_RATE}"
+          ARGS="$ARGS --min-samples ${CI_TREND_SLO_MIN_SAMPLES}"
+          if [ "${CI_TREND_SLO_ENFORCE}" = "true" ]; then
+            ARGS="$ARGS --fail-on-breach"
+          fi
+          if [ "${CI_TREND_SLO_FAIL_ON_UNVERIFIED}" = "true" ]; then
+            ARGS="$ARGS --fail-on-unverified"
+          fi
+          python tooling/evaluate_critical_ci_trend.py ${ARGS}
+
       - name: Publish critical CI trend artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: critical-ci-trend-report
-          path: artifacts/critical_ci_trend_report.json
+          path: |
+            artifacts/critical_ci_trend_report.json
+            artifacts/critical_ci_trend_slo_report.json
 
       - name: Append critical CI trend summary
         if: always()
@@ -800,6 +820,15 @@ jobs:
                       f"- {name}: {item.get('passed', 'n/a')}/{item.get('samples', 'n/a')} "
                       f"(pass_rate={item.get('pass_rate', 'n/a')})"
                   )
+
+                slo_path = Path('artifacts/critical_ci_trend_slo_report.json')
+                if not slo_path.exists():
+                  lines.append('- SLO report: missing')
+                else:
+                  slo = json.loads(slo_path.read_text(encoding='utf-8'))
+                  lines.append(f"- SLO status: {slo.get('slo_status', 'unknown')}")
+                  for breach in slo.get('breaches', []):
+                    lines.append(f"- SLO breach: {breach}")
 
           with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
               f.write('\n'.join(lines) + '\n')

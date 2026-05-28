@@ -106,6 +106,12 @@ Smoke workflow also includes CI trend observability:
 1. `tooling/report_critical_ci_trend.py` queries recent Actions runs for critical jobs
 2. Publishes `artifacts/critical_ci_trend_report.json`
 3. Appends pass-rate summary for `smoke`, `runtime_canary`, `dx_metrics`, and `policy-bundle-governance`
+4. `tooling/evaluate_critical_ci_trend.py` evaluates pass-rate SLO thresholds and writes `artifacts/critical_ci_trend_slo_report.json`
+5. Enforcement toggles in `ci_stability_trend` job:
+  - `CI_TREND_SLO_ENFORCE`
+  - `CI_TREND_SLO_FAIL_ON_UNVERIFIED`
+  - `CI_TREND_SLO_MIN_PASS_RATE`
+  - `CI_TREND_SLO_MIN_SAMPLES`
 
 ## Global Hardening Progress
 
