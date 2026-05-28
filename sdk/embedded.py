@@ -300,8 +300,8 @@ def _classify_fallback_severity(
 
     ratio = fallback_steps_count / max(steps_count, 1)
     critical_uses = {
-        "eval.option.analyze",
-        "eval.option.score",
+        "reasoning.option.analyze",
+        "evaluation.option.score",
         "decision.option.justify",
     }
     critical_fallback = any(
@@ -310,7 +310,7 @@ def _classify_fallback_severity(
         if isinstance(step, dict)
     )
     scoring_completed = any(
-        step.get("uses") == "eval.option.score" and step.get("status") == "completed"
+        step.get("uses") == "evaluation.option.score" and step.get("status") == "completed"
         for step in step_diagnostics
         if isinstance(step, dict)
     )

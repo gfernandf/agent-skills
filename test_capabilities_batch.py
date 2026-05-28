@@ -176,11 +176,11 @@ TEST_DATA = {
             {"text": "Unrelated source"},
         ],
     },
-    "eval.output.score": {
+    "evaluation.output.score": {
         "output": {"summary": "Short summary", "confidence": 0.9},
         "rubric": {"dimensions": {"completeness": 0.5, "clarity": 0.5}},
     },
-    "eval.option.analyze": {
+    "reasoning.option.analyze": {
         "options": [
             {
                 "id": "opt-a",
@@ -191,7 +191,7 @@ TEST_DATA = {
         ],
         "goal": "Choose deployment strategy for new service",
     },
-    "eval.option.score": {
+    "evaluation.option.score": {
         "options": [
             {
                 "id": "opt-a",
@@ -222,11 +222,11 @@ TEST_DATA = {
         "instruction": "Write a one-sentence description of Python.",
         "context": "Python is a programming language.",
     },
-    "text.entity.extract": {"text": "John Smith works at Google in Mountain View."},
-    "text.content.extract": {
+    "perception.entity.extract": {"text": "John Smith works at Google in Mountain View."},
+    "perception.content.extract": {
         "text": "<html><body><h1>Title</h1><p>This is a test paragraph with important information.</p></body></html>"
     },
-    "text.keyword.extract": {
+    "perception.keyword.extract": {
         "text": "Python is a great programming language for machine learning and data science applications."
     },
     "text.language.detect": {"text": "This is English text."},
@@ -289,18 +289,25 @@ TEST_DATA = {
         "output": {"text": "Contact admin at admin@corp.com, password=s3cret!"},
         "policy": {"remove_pii": True, "remove_harmful": True},
     },
-    "model.output.score": {
+    "evaluation.output.score": {
         "output": "The product launch was successful with strong user adoption.",
-        "instruction": "Evaluate the product launch summary.",
+        "rubric": {
+            "dimensions": [
+                {"name": "coverage", "description": "Covers the main outcome"},
+                {"name": "clarity", "description": "Is concise and readable"},
+            ]
+        },
+        "context": "Evaluate the product launch summary.",
     },
     "model.prompt.template": {
         "template": "Hello ${name}, your project ${project} is ready.",
         "variables": {"name": "Alice", "project": "Alpha"},
     },
-    "model.response.validate": {
+    "evaluation.response.validate": {
         "output": {"summary": "Q3 results were positive.", "confidence": 0.85},
+        "validation_policy": {"coherence": True, "grounding": False, "coverage": True},
     },
-    "model.risk.score": {
+    "evaluation.risk.score": {
         "output": "The system performed within normal parameters.",
     },
     # ── remaining gaps ──

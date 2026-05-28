@@ -28,7 +28,7 @@ PHASE_1_CAPABILITIES = [
     "text.content.generate",
     "text.content.rewrite",
     "text.content.classify",
-    "text.content.extract",
+    "perception.content.extract",
     "text.sentiment.analyze",
     "text.language.detect",
     "text.language.translate",
@@ -46,9 +46,9 @@ PHASE_1_CAPABILITIES = [
     "analysis.problem.split",
     "analysis.risk.extract",
     "analysis.theme.cluster",
-    "eval.option.score",
-    "eval.option.analyze",
-    "eval.output.score",
+    "evaluation.option.score",
+    "reasoning.option.analyze",
+    "evaluation.output.score",
 ]
 
 
