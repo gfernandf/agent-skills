@@ -866,8 +866,6 @@ jobs:
     timeout-minutes: 15
     env:
       RELEASE_GATE_STRICT_MODE: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
-      RELEASE_GATE_ALLOW_TREND_UNVERIFIED: "true"
-      RELEASE_GATE_ALLOW_MISSING_RUNTIME_EXEC_SUMMARY: "false"
       NEEDS_CONTEXT_JSON: ${{ toJson(needs) }}
 
     steps:
@@ -916,20 +914,16 @@ jobs:
       - name: Evaluate consolidated release readiness gate
         if: always()
         run: |
-          ARGS="--needs-json '${NEEDS_CONTEXT_JSON}' --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --fail-on-no-go"
+          ARGS="--needs-json '${NEEDS_CONTEXT_JSON}' --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --fail-on-no-go --policy-file .github/release_gate_policy.json"
           if [ -f .github/release_exceptions.json ]; then
             ARGS="$ARGS --exceptions-file .github/release_exceptions.json"
           fi
           if [ "${RELEASE_GATE_STRICT_MODE}" = "true" ]; then
             echo "Running release gate in strict mode (release branch push)."
+            ARGS="$ARGS --policy-profile strict"
           else
             echo "Running release gate in non-strict mode (PR/dispatch/scheduled context)."
-            if [ "${RELEASE_GATE_ALLOW_TREND_UNVERIFIED}" = "true" ]; then
-              ARGS="$ARGS --allow-trend-unverified"
-            fi
-            if [ "${RELEASE_GATE_ALLOW_MISSING_RUNTIME_EXEC_SUMMARY}" = "true" ]; then
-              ARGS="$ARGS --allow-missing-runtime-executive-summary"
-            fi
+            ARGS="$ARGS --policy-profile transitional"
           fi
           python tooling/generate_release_readiness_gate.py ${ARGS}
 

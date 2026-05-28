@@ -126,6 +126,7 @@ Immediate actions:
 5. `docs/PUBLIC_RELEASE_USE_CASES.md`
 6. `docs/PRODUCT_100_EXECUTION_PLAN.md`
 7. `docs/RELEASE_LINEAGE_MODEL.md`
+8. `docs/RELEASE_GATE_SLO_POLICY.md`
 
 ## 8. Clarification: What "External Operational Closure" Means
 

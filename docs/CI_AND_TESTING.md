@@ -127,6 +127,7 @@ Smoke workflow also includes a final cross-workflow release gate:
 5. Strict mode behavior:
   - strict on push to `main`/`master`
   - non-strict on PR/schedule/manual dispatch (allows configured transitional exceptions)
+  - profile behavior is versioned in `.github/release_gate_policy.json`
 6. Optional temporary exceptions:
   - if `.github/release_exceptions.json` exists, gate reads approved temporary exceptions
   - exception format and governance rules are documented in `docs/RELEASE_EXCEPTIONS_POLICY.md`
@@ -134,6 +135,8 @@ Smoke workflow also includes a final cross-workflow release gate:
 7. Lineage artifact:
   - `tooling/generate_release_lineage.py` builds `artifacts/release_lineage.json` and `artifacts/release_lineage.md`
   - completeness validation runs in CI with `--fail-on-incomplete`
+8. SLO policy reference:
+  - `docs/RELEASE_GATE_SLO_POLICY.md`
 
 Governance evidence now also includes an executive rollup artifact per governance run:
 

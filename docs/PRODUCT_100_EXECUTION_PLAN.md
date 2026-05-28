@@ -144,7 +144,7 @@ Done criteria:
 
 Status:
 
-1. Not started
+1. In progress (versioned release-gate SLO policy and strict/transitional profiles implemented; threshold tuning rollout and sustained enforcement evidence pending)
 
 Phase note:
 

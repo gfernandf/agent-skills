@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "profiles": {
+    "strict": {
+      "allow_trend_unverified": false,
+      "allow_missing_runtime_executive_summary": false,
+      "max_high_failures": 0,
+      "max_medium_failures": 0,
+      "dx_allowed_slo_statuses": ["pass", "passed"],
+      "trend_allowed_slo_statuses": ["pass", "passed"]
+    },
+    "transitional": {
+      "allow_trend_unverified": true,
+      "allow_missing_runtime_executive_summary": false,
+      "max_high_failures": 0,
+      "max_medium_failures": 2,
+      "dx_allowed_slo_statuses": ["pass", "passed"],
+      "trend_allowed_slo_statuses": ["pass", "passed"]
+    }
+  }
+}
