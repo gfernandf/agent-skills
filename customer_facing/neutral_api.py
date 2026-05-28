@@ -79,6 +79,7 @@ def _build_async_idempotency_fingerprint(
     required_conformance_profile: str | None,
     audit_mode: str | None,
     execution_channel: str | None,
+    tenant_id: str | None,
 ) -> str:
     payload = {
         "skill_id": skill_id,
@@ -86,6 +87,7 @@ def _build_async_idempotency_fingerprint(
         "required_conformance_profile": required_conformance_profile,
         "audit_mode": audit_mode,
         "execution_channel": execution_channel,
+        "tenant_id": tenant_id,
     }
     normalized = json.dumps(payload, sort_keys=True, ensure_ascii=True, default=str)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -238,6 +240,7 @@ class NeutralRuntimeAPI:
         required_conformance_profile: str | None = None,
         audit_mode: str | None = None,
         execution_channel: str | None = None,
+        tenant_id: str | None = None,
         trace_callback=None,
     ) -> dict[str, Any]:
         try:
@@ -249,6 +252,7 @@ class NeutralRuntimeAPI:
                 required_conformance_profile=required_conformance_profile,
                 audit_mode=audit_mode,
                 execution_channel=execution_channel,
+                tenant_id=tenant_id,
                 trace_callback=trace_callback,
             )
             return payload
@@ -265,6 +269,7 @@ class NeutralRuntimeAPI:
         required_conformance_profile: str | None,
         audit_mode: str | None,
         execution_channel: str | None,
+        tenant_id: str | None = None,
         confirmed_capabilities: list[str] | None = None,
         initial_state=None,
         trace_callback=None,
@@ -281,6 +286,7 @@ class NeutralRuntimeAPI:
                     for item in (confirmed_capabilities or [])
                     if isinstance(item, str)
                 ),
+                tenant_id=tenant_id,
             ),
             trace_id=trace_id,
             channel=execution_channel,
@@ -397,6 +403,7 @@ class NeutralRuntimeAPI:
         required_conformance_profile: str | None = None,
         audit_mode: str | None = None,
         execution_channel: str | None = None,
+        tenant_id: str | None = None,
     ) -> dict[str, Any]:
         """Execute a skill, emitting each engine event via *event_callback*.
 
@@ -410,6 +417,7 @@ class NeutralRuntimeAPI:
             options=ExecutionOptions(
                 required_conformance_profile=required_conformance_profile,
                 audit_mode=audit_mode,
+                tenant_id=tenant_id,
             ),
             trace_id=trace_id,
             channel=execution_channel,
@@ -458,6 +466,7 @@ class NeutralRuntimeAPI:
         required_conformance_profile: str | None = None,
         audit_mode: str | None = None,
         execution_channel: str | None = None,
+        tenant_id: str | None = None,
         run_store=None,
         checkpoint_manager=None,
         async_pool=None,
@@ -490,6 +499,7 @@ class NeutralRuntimeAPI:
             required_conformance_profile=required_conformance_profile,
             audit_mode=audit_mode,
             execution_channel=execution_channel,
+            tenant_id=tenant_id,
         )
 
         if normalized_idempotency_key is not None:
@@ -566,11 +576,13 @@ class NeutralRuntimeAPI:
             skill_id=skill_id,
             trace_id=trace_id,
             status="running",
+            tenant_id=tenant_id,
             metadata={
                 "inputs": normalized_inputs,
                 "required_conformance_profile": required_conformance_profile,
                 "audit_mode": audit_mode,
                 "execution_channel": execution_channel,
+                "tenant_id": tenant_id,
                 "confirmed_capabilities": [],
                 "idempotency_key": normalized_idempotency_key,
                 "idempotency_fingerprint": request_fingerprint,
@@ -619,6 +631,7 @@ class NeutralRuntimeAPI:
                     required_conformance_profile=required_conformance_profile,
                     audit_mode=audit_mode,
                     execution_channel=execution_channel,
+                    tenant_id=tenant_id,
                 )
 
                 if checkpoint_manager is not None:
@@ -925,6 +938,13 @@ class NeutralRuntimeAPI:
             if isinstance(metadata.get("execution_channel"), str)
             else "http-resume"
         )
+        tenant_id = (
+            metadata.get("tenant_id")
+            if isinstance(metadata.get("tenant_id"), str)
+            else run.get("tenant_id")
+            if isinstance(run.get("tenant_id"), str)
+            else None
+        )
 
         try:
             updated = run_store.resume_run(
@@ -967,6 +987,7 @@ class NeutralRuntimeAPI:
                     required_conformance_profile=required_conformance_profile,
                     audit_mode=audit_mode,
                     execution_channel=execution_channel,
+                    tenant_id=tenant_id,
                     confirmed_capabilities=combined_confirmed,
                     initial_state=restored_state,
                     propagate_safety_confirmation=True,
@@ -1197,12 +1218,26 @@ class NeutralRuntimeAPI:
             source_run_id=run_id,
             source_checkpoint_id=selected_checkpoint_id,
             checkpoint_head=selected_checkpoint_id,
+            tenant_id=(
+                (source_run.get("metadata") or {}).get("tenant_id")
+                if isinstance(source_run.get("metadata"), dict)
+                else source_run.get("tenant_id")
+                if isinstance(source_run.get("tenant_id"), str)
+                else None
+            ),
             metadata={
                 "inputs": dict(restored_state.inputs),
                 "audit_mode": "replay",
                 "execution_channel": source_run.get("execution_channel")
                 if isinstance(source_run.get("execution_channel"), str)
                 else "http-replay",
+                "tenant_id": (
+                    (source_run.get("metadata") or {}).get("tenant_id")
+                    if isinstance(source_run.get("metadata"), dict)
+                    else source_run.get("tenant_id")
+                    if isinstance(source_run.get("tenant_id"), str)
+                    else None
+                ),
                 "confirmed_capabilities": list(
                     (source_run.get("metadata") or {}).get("confirmed_capabilities", [])
                 )
@@ -1236,6 +1271,13 @@ class NeutralRuntimeAPI:
                     execution_channel=source_run.get("execution_channel")
                     if isinstance(source_run.get("execution_channel"), str)
                     else "http-replay",
+                    tenant_id=(
+                        (source_run.get("metadata") or {}).get("tenant_id")
+                        if isinstance(source_run.get("metadata"), dict)
+                        else source_run.get("tenant_id")
+                        if isinstance(source_run.get("tenant_id"), str)
+                        else None
+                    ),
                     confirmed_capabilities=(source_run.get("metadata") or {}).get(
                         "confirmed_capabilities"
                     )
@@ -1379,12 +1421,26 @@ class NeutralRuntimeAPI:
             source_run_id=run_id,
             source_checkpoint_id=selected_checkpoint_id,
             checkpoint_head=selected_checkpoint_id,
+            tenant_id=(
+                (source_run.get("metadata") or {}).get("tenant_id")
+                if isinstance(source_run.get("metadata"), dict)
+                else source_run.get("tenant_id")
+                if isinstance(source_run.get("tenant_id"), str)
+                else None
+            ),
             metadata={
                 "inputs": dict(restored_state.inputs),
                 "execution_channel": (
                     source_run.get("execution_channel")
                     if isinstance(source_run.get("execution_channel"), str)
                     else "http-fork"
+                ),
+                "tenant_id": (
+                    (source_run.get("metadata") or {}).get("tenant_id")
+                    if isinstance(source_run.get("metadata"), dict)
+                    else source_run.get("tenant_id")
+                    if isinstance(source_run.get("tenant_id"), str)
+                    else None
                 ),
                 "confirmed_capabilities": (
                     list(

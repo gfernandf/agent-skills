@@ -8,8 +8,12 @@ Runtime for composable AI agent skills — deterministic execution of capability
 - **Build a skill:** [Tutorial: First Skill](TUTORIAL_FIRST_SKILL.md) → [Skill Authoring Guide](SKILL_AUTHORING.md)
 - **Integrate:** [Environment Variables](ENVIRONMENT_VARIABLES.md) · [MCP Integration](MCP_INTEGRATION_SLICES.md) · [OpenAPI Construction](OPENAPI_CONSTRUCTION_GUIDE.md)
 - **Troubleshoot:** [Troubleshooting](TROUBLESHOOTING.md) · [Error Taxonomy](ERROR_TAXONOMY.md)
-- **Architecture:** [Runner Guide](RUNNER_GUIDE.md) · [Scheduler](SCHEDULER.md) · [CognitiveState](COGNITIVE_STATE_V1.md)
-- **Target Architecture RFCs:** [RFC-0001](rfcs/RFC-0001-ORCA-RUNTIME-BLUEPRINT.md) · [RFC-0002](rfcs/RFC-0002-DURABLE-EXECUTION-STATE-MACHINE.md) · [RFC-0003](rfcs/RFC-0003-SIDE-EFFECT-LEDGER-AND-REPLAY-SAFETY.md) · [RFC-0004](rfcs/RFC-0004-RUNTIME-APIS-AND-EVENT-CONTRACT.md) · [RFC-0005](rfcs/RFC-0005-INTEGRATION-PSEUDOCODE-AND-MIGRATION.md) · [RFC-0006](rfcs/RFC-0006-LEGACY-RETIREMENT-MATRIX.md)
+- **Architecture:** [Target Architecture (Canonical)](TARGET_ARCHITECTURE.md) · [Runner Guide](RUNNER_GUIDE.md) · [Scheduler](SCHEDULER.md) · [CognitiveState](COGNITIVE_STATE_V1.md)
+- **Durability:** [Durability Contract](DURABILITY_CONTRACT.md)
+- **Policy/Tenancy:** [Policy Decision Contract](POLICY_DECISION_CONTRACT.md)
+- **Target Architecture RFCs:** [RFC-0001](rfcs/RFC-0001-ORCA-RUNTIME-BLUEPRINT.md) · [RFC-0002](rfcs/RFC-0002-DURABLE-EXECUTION-STATE-MACHINE.md) · [RFC-0003](rfcs/RFC-0003-SIDE-EFFECT-LEDGER-AND-REPLAY-SAFETY.md) · [RFC-0004](rfcs/RFC-0004-RUNTIME-APIS-AND-EVENT-CONTRACT.md) · [RFC-0005](rfcs/RFC-0005-INTEGRATION-PSEUDOCODE-AND-MIGRATION.md) · [RFC-0006](rfcs/RFC-0006-LEGACY-RETIREMENT-MATRIX.md) · [RFC-0007](rfcs/RFC-0007-OSS-FIRST-TARGET-ARCH-EXECUTION.md)
+- **Progress:** [Target Architecture Progress Snapshot](TARGET_ARCH_PROGRESS.md)
+- **Readiness:** [Target Architecture Merge Readiness](TARGET_ARCH_MERGE_READINESS.md)
 
 ## What is this?
 

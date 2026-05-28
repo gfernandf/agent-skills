@@ -143,6 +143,54 @@ def test_execute_skill_async_updates_checkpoint_head() -> None:
     assert run["checkpoint_head"]
 
 
+def test_execute_skill_async_propagates_tenant_to_execution_options() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+    observed: dict[str, object] = {}
+
+    def _fake_execute(*, tenant_id=None, execution_channel=None, **_kwargs):
+        observed["tenant_id"] = tenant_id
+        observed["execution_channel"] = execution_channel
+        state = create_execution_state("x.y", {"n": 1}, trace_id="t-tenant-async")
+        mark_started(state)
+        mark_finished(state, "completed")
+        return SimpleNamespace(state=state), {
+            "skill_id": "x.y",
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": "t-tenant-async",
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        launch = api.execute_skill_async(
+            skill_id="x.y",
+            inputs={"n": 1},
+            trace_id="t-tenant-async",
+            tenant_id="tenant-acme",
+            execution_channel="http-async",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run(launch["run_id"])
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
+
+    run = store.get_run(launch["run_id"])
+    assert isinstance(run, dict)
+    assert run.get("tenant_id") == "tenant-acme"
+    assert run.get("metadata", {}).get("tenant_id") == "tenant-acme"
+    assert observed.get("tenant_id") == "tenant-acme"
+    assert observed.get("execution_channel") == "http-async"
+
+
 def test_execute_skill_async_idempotency_key_reuses_run() -> None:
     api = _build_api_without_init()
     store = RunStoreV2(max_runs=10)
@@ -430,6 +478,68 @@ def test_resume_run_executes_from_checkpoint() -> None:
     assert isinstance(run.get("checkpoint_head"), str)
 
 
+def test_resume_run_propagates_tenant_from_run_metadata() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+    observed: dict[str, object] = {}
+
+    state = create_execution_state("x.y", {"n": 1}, trace_id="t-resume-tenant")
+    mark_started(state)
+    record = checkpoints.save_checkpoint(
+        run_id="r-resume-tenant",
+        state=state,
+        step_id="s-1",
+        kind="run_waiting",
+    )
+    store.create_run_record(
+        run_id="r-resume-tenant",
+        skill_id="x.y",
+        trace_id="t-resume-tenant",
+        status="waiting_for_human",
+        tenant_id="tenant-acme",
+        metadata={
+            "inputs": {"n": 1},
+            "execution_channel": "http-resume",
+            "tenant_id": "tenant-acme",
+        },
+        checkpoint_head=record.checkpoint_id,
+    )
+
+    def _fake_execute(*, tenant_id=None, execution_channel=None, initial_state=None, **_kwargs):
+        observed["tenant_id"] = tenant_id
+        observed["execution_channel"] = execution_channel
+        assert initial_state is not None
+        mark_finished(initial_state, "completed")
+        return SimpleNamespace(state=initial_state), {
+            "skill_id": "x.y",
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": "t-resume-tenant",
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        response = api.resume_run(
+            "r-resume-tenant",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+        assert response["ok"] is True
+
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run("r-resume-tenant")
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
+
+    assert observed.get("tenant_id") == "tenant-acme"
+    assert observed.get("execution_channel") == "http-resume"
+
+
 def test_async_approval_flow_runs_after_waiting() -> None:
     api = _build_api_without_init()
     store = RunStoreV2(max_runs=10)
@@ -599,6 +709,73 @@ def test_replay_run_executes_from_checkpoint() -> None:
     assert isinstance(run, dict)
     assert run.get("status") == "completed"
     assert run.get("metadata", {}).get("source_run_id") == "r-source"
+
+
+def test_replay_run_propagates_tenant_to_replay_execution() -> None:
+    api = _build_api_without_init()
+    store = RunStoreV2(max_runs=10)
+    checkpoints = CheckpointManager(InMemoryCheckpointStoreBackend())
+    observed: dict[str, object] = {}
+
+    source_state = create_execution_state("x.y", {"n": 1}, trace_id="t-replay-tenant")
+    mark_started(source_state)
+    record = checkpoints.save_checkpoint(
+        run_id="r-source-tenant",
+        state=source_state,
+        step_id="s-1",
+        kind="run_finished",
+    )
+    store.create_run_record(
+        run_id="r-source-tenant",
+        skill_id="x.y",
+        trace_id="t-replay-tenant",
+        status="completed",
+        checkpoint_head=record.checkpoint_id,
+        tenant_id="tenant-acme",
+        metadata={
+            "inputs": {"n": 1},
+            "execution_channel": "http-replay",
+            "tenant_id": "tenant-acme",
+        },
+    )
+
+    def _fake_execute(*, tenant_id=None, execution_channel=None, initial_state=None, **_kwargs):
+        observed["tenant_id"] = tenant_id
+        observed["execution_channel"] = execution_channel
+        assert initial_state is not None
+        mark_finished(initial_state, "completed")
+        return SimpleNamespace(state=initial_state), {
+            "skill_id": "x.y",
+            "status": "completed",
+            "outputs": {"ok": True},
+            "trace_id": "t-replay-tenant",
+        }
+
+    api._execute_skill_with_result = _fake_execute  # type: ignore[attr-defined]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        response = api.replay_run(
+            "r-source-tenant",
+            run_store=store,
+            checkpoint_manager=checkpoints,
+            async_pool=pool,
+        )
+        assert response["ok"] is True
+
+        replay_id = response["data"]["run"]["run_id"]
+        deadline = time.time() + 2.0
+        while time.time() < deadline:
+            run = store.get_run(replay_id)
+            if isinstance(run, dict) and run.get("status") == "completed":
+                break
+            time.sleep(0.05)
+
+    replay_run = store.get_run(replay_id)
+    assert isinstance(replay_run, dict)
+    assert replay_run.get("tenant_id") == "tenant-acme"
+    assert replay_run.get("metadata", {}).get("tenant_id") == "tenant-acme"
+    assert observed.get("tenant_id") == "tenant-acme"
+    assert observed.get("execution_channel") == "http-replay"
 
 
 def test_replay_run_uses_unique_run_ids() -> None:

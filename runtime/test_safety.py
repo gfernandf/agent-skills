@@ -23,6 +23,7 @@ from runtime.models import (
     SkillSpec,
     StepSpec,
 )
+from runtime.policy_shadow import PolicyDecision
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -160,6 +161,9 @@ def _build_engine(
     caps: dict[str, CapabilitySpec] | None = None,
     executor: Any = None,
     skill: SkillSpec | None = None,
+    policy_external_adapter: Any = None,
+    policy_external_mode: str | None = None,
+    policy_external_fail_open: bool | None = None,
 ) -> ExecutionEngine:
     if caps is None:
         caps = {}
@@ -173,7 +177,20 @@ def _build_engine(
         capability_executor=executor or _FakeExecutor(),
         nested_skill_runner=_FakeNested(),
         audit_recorder=_FakeAudit(),
+        policy_external_adapter=policy_external_adapter,
+        policy_external_mode=policy_external_mode,
+        policy_external_fail_open=policy_external_fail_open,
     )
+
+
+class _ExternalPolicyAdapter:
+    def __init__(self, decision: PolicyDecision | Exception):
+        self._decision = decision
+
+    def decide_pre(self, payload):
+        if isinstance(self._decision, Exception):
+            raise self._decision
+        return self._decision
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -207,16 +224,19 @@ def test_execution_options_safety_fields():
         "default confirmed_capabilities is empty",
         opts.confirmed_capabilities == frozenset(),
     )
+    _test("default tenant_id is None", opts.tenant_id is None)
 
     opts2 = ExecutionOptions(
         trust_level="elevated",
         confirmed_capabilities=frozenset({"email.message.send"}),
+        tenant_id="tenant-acme",
     )
     _test("custom trust_level", opts2.trust_level == "elevated")
     _test(
         "custom confirmed_capabilities",
         "email.message.send" in opts2.confirmed_capabilities,
     )
+    _test("custom tenant_id", opts2.tenant_id == "tenant-acme")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -334,6 +354,52 @@ def test_requires_confirmation_false_no_block():
     req = ExecutionRequest(
         skill_id="test.skill",
         inputs={"text": "hello"},
+    )
+    result = engine.execute(req)
+    _test("completes", result.status == "completed")
+
+
+def test_same_tenant_requires_context():
+    print("▸ same_tenant blocks when tenant context is missing")
+    cap = _make_cap(safety={"allowed_targets": ["same_tenant"]})
+    engine = _build_engine(cap=cap)
+    req = ExecutionRequest(
+        skill_id="test.skill",
+        inputs={"text": "hello", "target_tenant_id": "tenant-acme"},
+    )
+    try:
+        engine.execute(req)
+        _test("should have raised", False)
+    except SafetyGateFailedError as e:
+        _test("raised SafetyGateFailedError", True)
+        _test("mentions same_tenant", "same_tenant" in str(e))
+
+
+def test_same_tenant_mismatch_blocked():
+    print("▸ same_tenant blocks cross-tenant target")
+    cap = _make_cap(safety={"allowed_targets": ["same_tenant"]})
+    engine = _build_engine(cap=cap)
+    req = ExecutionRequest(
+        skill_id="test.skill",
+        inputs={"text": "hello", "target_tenant_id": "tenant-beta"},
+        options=ExecutionOptions(tenant_id="tenant-acme"),
+    )
+    try:
+        engine.execute(req)
+        _test("should have raised", False)
+    except SafetyGateFailedError as e:
+        _test("raised SafetyGateFailedError", True)
+        _test("mentions target tenant", "tenant-beta" in str(e))
+
+
+def test_same_tenant_matching_allows_execution():
+    print("▸ same_tenant allows matching tenant target")
+    cap = _make_cap(safety={"allowed_targets": ["same_tenant"]})
+    engine = _build_engine(cap=cap)
+    req = ExecutionRequest(
+        skill_id="test.skill",
+        inputs={"text": "hello", "target_tenant_id": "tenant-acme"},
+        options=ExecutionOptions(tenant_id="tenant-acme"),
     )
     result = engine.execute(req)
     _test("completes", result.status == "completed")
@@ -627,6 +693,93 @@ def test_gate_exception_treated_as_blocked():
 
 
 # ═══════════════════════════════════════════════════════════════
+# 10. External policy modes
+# ═══════════════════════════════════════════════════════════════
+
+
+def test_external_policy_enforce_require_human():
+    print("▸ External policy enforce mode can require human")
+    cap = _make_cap(safety={"requires_confirmation": False})
+    adapter = _ExternalPolicyAdapter(
+        PolicyDecision(status="require_human", reason="manual approval")
+    )
+    engine = _build_engine(
+        cap=cap,
+        policy_external_adapter=adapter,
+        policy_external_mode="enforce",
+    )
+    req = ExecutionRequest(skill_id="test.skill", inputs={"text": "hello"})
+    try:
+        engine.execute(req)
+        _test("should have raised", False)
+    except SafetyConfirmationRequiredError:
+        _test("external require_human enforced", True)
+
+
+def test_external_policy_enforce_fail_open_fallback():
+    print("▸ External policy enforce fail-open falls back to internal checks")
+    cap = _make_cap(safety={"trust_level": "privileged"})
+    adapter = _ExternalPolicyAdapter(RuntimeError("external down"))
+    engine = _build_engine(
+        cap=cap,
+        policy_external_adapter=adapter,
+        policy_external_mode="enforce",
+        policy_external_fail_open=True,
+    )
+    req = ExecutionRequest(
+        skill_id="test.skill",
+        inputs={"text": "hello"},
+        options=ExecutionOptions(trust_level="standard"),
+    )
+    try:
+        engine.execute(req)
+        _test("should have raised", False)
+    except SafetyTrustLevelError:
+        _test("fallback reached internal trust check", True)
+
+
+def test_external_policy_enforce_fail_closed_raises_gate_error():
+    print("▸ External policy enforce fail-closed raises GateExecutionError")
+    from runtime.errors import GateExecutionError
+
+    cap = _make_cap(safety={"trust_level": "standard"})
+    adapter = _ExternalPolicyAdapter(RuntimeError("external unavailable"))
+    engine = _build_engine(
+        cap=cap,
+        policy_external_adapter=adapter,
+        policy_external_mode="enforce",
+        policy_external_fail_open=False,
+    )
+    req = ExecutionRequest(skill_id="test.skill", inputs={"text": "hello"})
+    try:
+        engine.execute(req)
+        _test("should have raised", False)
+    except GateExecutionError:
+        _test("fail-closed raises GateExecutionError", True)
+
+
+def test_external_policy_shadow_does_not_override_internal():
+    print("▸ External policy shadow mode does not override internal enforcement")
+    cap = _make_cap(safety={"trust_level": "privileged"})
+    adapter = _ExternalPolicyAdapter(PolicyDecision(status="allow"))
+    engine = _build_engine(
+        cap=cap,
+        policy_external_adapter=adapter,
+        policy_external_mode="shadow",
+    )
+    req = ExecutionRequest(
+        skill_id="test.skill",
+        inputs={"text": "hello"},
+        options=ExecutionOptions(trust_level="standard"),
+    )
+    try:
+        engine.execute(req)
+        _test("should have raised", False)
+    except SafetyTrustLevelError:
+        _test("shadow mode keeps internal safety authoritative", True)
+
+
+# ═══════════════════════════════════════════════════════════════
 # 9. Loader normalization
 # ═══════════════════════════════════════════════════════════════
 
@@ -688,6 +841,9 @@ def main() -> None:
     test_requires_confirmation_blocked()
     test_requires_confirmation_confirmed()
     test_requires_confirmation_false_no_block()
+    test_same_tenant_requires_context()
+    test_same_tenant_mismatch_blocked()
+    test_same_tenant_matching_allows_execution()
     test_pre_gate_block()
     test_pre_gate_warn()
     test_pre_gate_degrade()
@@ -698,6 +854,10 @@ def main() -> None:
     test_no_safety_passthrough()
     test_combined_trust_and_confirmation()
     test_gate_exception_treated_as_blocked()
+    test_external_policy_enforce_require_human()
+    test_external_policy_enforce_fail_open_fallback()
+    test_external_policy_enforce_fail_closed_raises_gate_error()
+    test_external_policy_shadow_does_not_override_internal()
     test_loader_normalize_safety()
 
     print()

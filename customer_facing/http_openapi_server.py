@@ -24,6 +24,24 @@ from runtime.openapi_error_contract import (
 logger = logging.getLogger(__name__)
 
 
+def _resolve_tenant_id_for_request(
+    *,
+    auth_enabled: bool,
+    authenticated_tenant_id: str | None,
+    body: Any,
+) -> str | None:
+    if auth_enabled:
+        if isinstance(authenticated_tenant_id, str) and authenticated_tenant_id.strip():
+            return authenticated_tenant_id.strip()
+        return None
+
+    if isinstance(body, dict):
+        tenant_id = body.get("tenant_id")
+        if isinstance(tenant_id, str) and tenant_id.strip():
+            return tenant_id.strip()
+    return None
+
+
 def _is_not_found_error(response: Any) -> bool:
     if not isinstance(response, dict):
         return False
@@ -118,6 +136,14 @@ class _RequestHandler(BaseHTTPRequestHandler):
     webhook_store = None  # WebhookStore instance (set by run_server)
     auth_middleware = None  # AuthMiddleware instance (set by run_server)
     _runtime_metrics = None  # RuntimeMetrics instance (set by run_server)
+    _authenticated_tenant_id: str | None = None
+
+    def _current_tenant_id(self, body: Any = None) -> str | None:
+        return _resolve_tenant_id_for_request(
+            auth_enabled=self.auth_middleware is not None,
+            authenticated_tenant_id=self._authenticated_tenant_id,
+            body=body,
+        )
 
     def do_GET(self) -> None:  # noqa: N802
         try:
@@ -547,6 +573,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     required_conformance_profile=required_profile,
                     audit_mode=audit_mode,
                     execution_channel="http-stream",
+                    tenant_id=self._current_tenant_id(body),
                 )
 
                 # Final result event
@@ -599,6 +626,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     required_conformance_profile=required_profile,
                     audit_mode=audit_mode,
                     execution_channel="http-async",
+                    tenant_id=self._current_tenant_id(body),
                     run_store=store,
                     checkpoint_manager=self.checkpoint_manager,
                     async_pool=self._async_pool,
@@ -888,6 +916,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     required_conformance_profile=required_profile,
                     audit_mode=audit_mode,
                     execution_channel="http",
+                    tenant_id=self._current_tenant_id(body),
                 )
                 self._write_json(200, response)
                 return
@@ -983,6 +1012,12 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     },
                 )
                 return False
+            try:
+                from runtime.auth import extract_tenant
+
+                self._authenticated_tenant_id = extract_tenant(identity)
+            except Exception:
+                self._authenticated_tenant_id = None
             method = getattr(self, "command", "GET")
             if not middleware.authorize(identity, method, path):
                 log_event(
@@ -1005,6 +1040,8 @@ class _RequestHandler(BaseHTTPRequestHandler):
                 )
                 return False
             return True
+
+        self._authenticated_tenant_id = None
 
         # ── Legacy flat API-key check (backward-compatible) ────────
         if config.api_key is None:

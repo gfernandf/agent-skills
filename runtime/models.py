@@ -273,6 +273,8 @@ class ExecutionOptions:
     trust_level: str = "standard"
     # Safety: capabilities pre-confirmed by the caller (bypasses requires_confirmation).
     confirmed_capabilities: frozenset[str] = field(default_factory=frozenset)
+    # Safety: tenant identity for same_tenant enforcement.
+    tenant_id: str | None = None
     # Maximum wall-clock seconds across the entire nested-skill lineage.
     # None means no aggregate timeout (individual step timeouts still apply).
     max_lineage_timeout_seconds: float | None = None

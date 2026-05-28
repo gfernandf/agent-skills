@@ -115,6 +115,7 @@ class MCPToolBridge:
                         "include_trace": {"type": "boolean"},
                         "required_conformance_profile": {"type": "string"},
                         "audit_mode": {"type": "string"},
+                        "tenant_id": {"type": "string"},
                     },
                 },
             },
@@ -280,6 +281,9 @@ class MCPToolBridge:
                     else None
                 ),
                 execution_channel="mcp",
+                tenant_id=(
+                    args.get("tenant_id") if isinstance(args.get("tenant_id"), str) else None
+                ),
             )
 
         if name == "capability.execute":

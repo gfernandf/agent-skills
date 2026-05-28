@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
@@ -42,6 +43,12 @@ from runtime.observability import (
 )
 from runtime.otel_integration import start_span, record_exception
 from runtime.output_mapper import apply_step_output
+from runtime.policy_shadow import (
+    PolicyDecision,
+    PolicyDecisionInput,
+    build_external_policy_adapter_from_env,
+    compare_decisions,
+)
 from runtime.scheduler import Scheduler, _NoopLock
 from runtime.step_control import (
     StepSkipped,
@@ -131,6 +138,9 @@ class ExecutionEngine:
         audit_recorder,
         scheduler=None,  # Nuevo parámetro opcional
         webhook_store=None,  # Optional WebhookStore for event delivery
+        policy_external_adapter=None,
+        policy_external_mode: str | None = None,
+        policy_external_fail_open: bool | None = None,
     ) -> None:
         self.skill_loader = skill_loader
         self.capability_loader = capability_loader
@@ -141,6 +151,183 @@ class ExecutionEngine:
         self.audit_recorder = audit_recorder
         self.scheduler = scheduler or Scheduler()
         self.webhook_store = webhook_store
+        mode = (
+            policy_external_mode
+            if isinstance(policy_external_mode, str)
+            else os.environ.get("AGENT_SKILLS_POLICY_EXTERNAL_MODE", "off")
+        )
+        mode = mode.lower().strip()
+        if mode not in {"off", "shadow", "enforce"}:
+            mode = "off"
+        self.policy_external_mode = mode
+        if policy_external_fail_open is None:
+            self.policy_external_fail_open = (
+                os.environ.get("AGENT_SKILLS_POLICY_EXTERNAL_FAIL_OPEN", "true")
+                .strip()
+                .lower()
+                == "true"
+            )
+        else:
+            self.policy_external_fail_open = bool(policy_external_fail_open)
+        self.policy_external_adapter = policy_external_adapter
+        if self.policy_external_adapter is None and self.policy_external_mode != "off":
+            try:
+                self.policy_external_adapter = build_external_policy_adapter_from_env()
+            except Exception as exc:
+                if self.policy_external_fail_open:
+                    log_event(
+                        "policy.external.adapter_init_failed",
+                        level="warning",
+                        error=str(exc),
+                        mode=self.policy_external_mode,
+                    )
+                    self.policy_external_adapter = None
+                else:
+                    raise
+
+    @staticmethod
+    def _extract_target_tenant_id(step_input: dict[str, Any]) -> str | None:
+        if not isinstance(step_input, dict):
+            return None
+        for key in ("target_tenant_id", "target_tenant", "tenant_id", "tenant"):
+            value = step_input.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return None
+
+    def _build_policy_input(
+        self,
+        capability,
+        step,
+        context: ExecutionContext,
+        step_input: dict[str, Any] | None = None,
+    ):
+        safety: dict[str, Any] | None = getattr(capability, "safety", None)
+        return PolicyDecisionInput(
+            capability_id=capability.id,
+            step_id=step.id,
+            safety=safety or {},
+            context_trust_level=context.options.trust_level,
+            confirmed_capabilities=sorted(context.options.confirmed_capabilities),
+            context_tenant_id=context.options.tenant_id,
+            target_tenant_id=self._extract_target_tenant_id(step_input or {}),
+        )
+
+    def _apply_enforced_policy_decision(
+        self,
+        decision: PolicyDecision,
+        capability,
+        step,
+    ) -> None:
+        status = decision.status
+        reason = decision.reason or ""
+        if status == "allow":
+            return
+        if status == "require_human":
+            raise SafetyConfirmationRequiredError(
+                f"External policy requires human review: {reason or 'no reason'}",
+                capability_id=capability.id,
+                step_id=step.id,
+            )
+        if status == "block":
+            if reason.startswith("trust_level_insufficient"):
+                raise SafetyTrustLevelError(
+                    f"External policy trust-level block: {reason}",
+                    capability_id=capability.id,
+                    step_id=step.id,
+                )
+            raise SafetyGateFailedError(
+                f"External policy blocked execution: {reason or 'policy denied'}",
+                capability_id=capability.id,
+                step_id=step.id,
+            )
+        raise SafetyGateFailedError(
+            f"External policy returned unsupported status '{status}'.",
+            capability_id=capability.id,
+            step_id=step.id,
+        )
+
+    def _enforce_external_policy_pre(
+        self,
+        capability,
+        step,
+        context: ExecutionContext,
+        step_input: dict[str, Any],
+    ) -> bool:
+        """Return True when external policy decision was successfully enforced."""
+        if self.policy_external_mode == "off":
+            return False
+        if self.policy_external_adapter is None:
+            return False
+
+        payload = self._build_policy_input(capability, step, context, step_input)
+
+        if self.policy_external_mode == "shadow":
+            try:
+                diff = compare_decisions(payload, self.policy_external_adapter)
+                if not diff.get("equal", False):
+                    log_event(
+                        "policy.shadow.mismatch",
+                        level="warning",
+                        capability_id=capability.id,
+                        step_id=step.id,
+                        internal=diff.get("internal"),
+                        external=diff.get("external"),
+                    )
+                    emit_event(
+                        context.state,
+                        "policy_shadow_mismatch",
+                        f"Policy shadow mismatch on step '{step.id}'.",
+                        step_id=step.id,
+                        data={
+                            "internal": diff.get("internal"),
+                            "external": diff.get("external"),
+                        },
+                    )
+            except Exception as exc:
+                log_event(
+                    "policy.shadow.error",
+                    level="warning",
+                    capability_id=capability.id,
+                    step_id=step.id,
+                    error=str(exc),
+                )
+            return False
+
+        # enforce mode
+        try:
+            decision = self.policy_external_adapter.decide_pre(payload)
+            self._apply_enforced_policy_decision(decision, capability, step)
+            return True
+        except (
+            SafetyConfirmationRequiredError,
+            SafetyTrustLevelError,
+            SafetyGateFailedError,
+        ):
+            raise
+        except Exception as exc:
+            if self.policy_external_fail_open:
+                log_event(
+                    "policy.external.fail_open",
+                    level="warning",
+                    capability_id=capability.id,
+                    step_id=step.id,
+                    error=str(exc),
+                )
+                emit_event(
+                    context.state,
+                    "policy_external_fallback",
+                    f"External policy failed on step '{step.id}', falling back to internal policy.",
+                    step_id=step.id,
+                    data={"error": str(exc)},
+                )
+                return False
+            raise GateExecutionError(
+                f"External policy decision failed on step '{step.id}': {exc}",
+                capability_id=capability.id,
+                step_id=step.id,
+                cause=exc,
+            ) from exc
 
     # ------------------------------------------------------------------
     # Safety enforcement
@@ -162,6 +349,26 @@ class ExecutionEngine:
         """
         safety: dict[str, Any] | None = getattr(capability, "safety", None)
         if not safety:
+            return None
+
+        external_enforced = self._enforce_external_policy_pre(
+            capability,
+            step,
+            context,
+            step_input,
+        )
+        if external_enforced:
+            # Gate semantics remain runtime-owned in this migration stage.
+            degrade = self._run_gates(
+                safety.get("mandatory_pre_gates"),
+                capability,
+                step,
+                context,
+                step_input,
+                phase="pre",
+            )
+            if degrade is not None:
+                return degrade
             return None
 
         # 1. Trust-level check
@@ -189,6 +396,31 @@ class ExecutionEngine:
                 raise SafetyConfirmationRequiredError(
                     f"Capability '{capability.id}' requires human "
                     f"confirmation before execution.",
+                    capability_id=capability.id,
+                    step_id=step.id,
+                )
+
+        allowed_targets = safety.get("allowed_targets")
+        if isinstance(allowed_targets, list) and "same_tenant" in allowed_targets:
+            context_tenant = (
+                context.options.tenant_id.strip()
+                if isinstance(context.options.tenant_id, str)
+                else ""
+            )
+            if not context_tenant:
+                raise SafetyGateFailedError(
+                    f"Capability '{capability.id}' requires tenant context for same_tenant enforcement.",
+                    capability_id=capability.id,
+                    step_id=step.id,
+                )
+
+            target_tenant = self._extract_target_tenant_id(step_input)
+            if isinstance(target_tenant, str) and target_tenant != context_tenant:
+                raise SafetyGateFailedError(
+                    (
+                        f"Capability '{capability.id}' same_tenant policy rejected target tenant "
+                        f"'{target_tenant}' for caller tenant '{context_tenant}'."
+                    ),
                     capability_id=capability.id,
                     step_id=step.id,
                 )

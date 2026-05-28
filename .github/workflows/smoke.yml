@@ -423,6 +423,9 @@ jobs:
           python tooling/verify_binding_fallback_policy.py | tee artifacts/binding_fallback.log
           python tooling/verify_binding_conformance_suite.py | tee artifacts/binding_conformance_suite.log
           python tooling/verify_customer_facing_neutral.py | tee artifacts/customer_facing_neutral.log
+          python tooling/verify_durability_contract.py --report-file artifacts/durability_contract_report.json
+          python tooling/verify_policy_shadow_mode.py --report-file artifacts/policy_shadow_report.json
+          python tooling/verify_tenant_isolation_matrix.py --report-file artifacts/tenant_isolation_matrix_report.json
           python tooling/compute_runtime_coverage.py > artifacts/runtime_coverage.json
           python tooling/compute_skill_executability.py > artifacts/skill_executability.json
 
@@ -453,6 +456,9 @@ jobs:
             artifacts/binding_fallback.log
             artifacts/binding_conformance_suite.log
             artifacts/customer_facing_neutral.log
+            artifacts/durability_contract_report.json
+            artifacts/policy_shadow_report.json
+            artifacts/tenant_isolation_matrix_report.json
             artifacts/runtime_coverage.json
             artifacts/skill_executability.json
 
@@ -461,12 +467,16 @@ jobs:
         run: |
           python - << 'PY'
           import json
+          import os
           from pathlib import Path
 
           lines = ['## Runtime Canary', '']
 
           coverage_path = Path('artifacts/runtime_coverage.json')
           skills_path = Path('artifacts/skill_executability.json')
+          durability_path = Path('artifacts/durability_contract_report.json')
+          policy_path = Path('artifacts/policy_shadow_report.json')
+          tenant_path = Path('artifacts/tenant_isolation_matrix_report.json')
 
           if coverage_path.exists():
               coverage = json.loads(coverage_path.read_text(encoding='utf-8'))
@@ -480,6 +490,36 @@ jobs:
           else:
               lines.append('- Skill executability ratio: report missing')
 
+          if durability_path.exists():
+              durability = json.loads(durability_path.read_text(encoding='utf-8'))
+              d_summary = durability.get('summary', {})
+              lines.append(
+                  f"- Durability contract: {durability.get('status', 'unknown')} "
+                  f"({d_summary.get('passed', 'n/a')}/{d_summary.get('total', 'n/a')})"
+              )
+          else:
+              lines.append('- Durability contract: report missing')
+
+          if policy_path.exists():
+              policy = json.loads(policy_path.read_text(encoding='utf-8'))
+              p_summary = policy.get('summary', {})
+              lines.append(
+                  f"- Policy shadow parity: {policy.get('status', 'unknown')} "
+                  f"({p_summary.get('matched', 'n/a')}/{p_summary.get('total', 'n/a')})"
+              )
+          else:
+              lines.append('- Policy shadow parity: report missing')
+
+          if tenant_path.exists():
+              tenant = json.loads(tenant_path.read_text(encoding='utf-8'))
+              t_summary = tenant.get('summary', {})
+              lines.append(
+                  f"- Tenant isolation matrix: {tenant.get('status', 'unknown')} "
+                  f"({t_summary.get('passed', 'n/a')}/{t_summary.get('total', 'n/a')})"
+              )
+          else:
+              lines.append('- Tenant isolation matrix: report missing')
+
           for log_name in [
               'binding_fallback.log',
               'binding_conformance_suite.log',
@@ -487,6 +527,109 @@ jobs:
           ]:
               log_path = Path('artifacts') / log_name
               lines.append(f"- {log_name}: {'present' if log_path.exists() else 'missing'}")
+
+          with open(Path(os.environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+              f.write('\n'.join(lines) + '\n')
+          PY
+
+  dx_metrics:
+    needs: pin_drift_guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DX_SLO_ENFORCE: "false"
+      DX_SLO_MAX_TTFS_SECONDS: "300"
+      DX_SLO_MIN_DOCS_PARITY: "0.90"
+      DX_SLO_MIN_CHECK_PASS_RATIO: "1.00"
+
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+          git -C ../agent-skill-registry checkout "${REGISTRY_REF}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[all]"
+
+      - name: Run DX metrics
+        run: |
+          mkdir -p artifacts
+          python tooling/measure_dx_metrics.py --report-file artifacts/dx_metrics.json
+
+      - name: Evaluate DX SLO and append history
+        run: |
+          ARGS="--metrics-file artifacts/dx_metrics.json --history-file artifacts/dx_metrics_history.jsonl --slo-report-file artifacts/dx_metrics_slo_report.json"
+          ARGS="$ARGS --max-time-to-first-success-seconds ${DX_SLO_MAX_TTFS_SECONDS}"
+          ARGS="$ARGS --min-docs-parity-score ${DX_SLO_MIN_DOCS_PARITY}"
+          ARGS="$ARGS --min-check-pass-ratio ${DX_SLO_MIN_CHECK_PASS_RATIO}"
+          if [ "${DX_SLO_ENFORCE}" = "true" ]; then
+            ARGS="$ARGS --fail-on-slo-breach"
+          fi
+          python tooling/evaluate_dx_metrics.py ${ARGS}
+
+      - name: Publish DX metrics artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dx-metrics-report
+          path: |
+            artifacts/dx_metrics.json
+            artifacts/dx_metrics_history.jsonl
+            artifacts/dx_metrics_slo_report.json
+            artifacts/smoke_report.json
+
+      - name: Append DX metrics summary
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          from pathlib import Path
+
+          report_path = Path('artifacts/dx_metrics.json')
+          slo_path = Path('artifacts/dx_metrics_slo_report.json')
+          lines = ['## DX Metrics', '']
+
+          if not report_path.exists():
+              lines.append('- Report missing: artifacts/dx_metrics.json')
+          else:
+              report = json.loads(report_path.read_text(encoding='utf-8'))
+              metrics = report.get('metrics', {})
+              lines.append(f"- Status: {report.get('status', 'unknown')}")
+              lines.append(
+                  f"- Checks passed: {metrics.get('checks_passed', 'n/a')}/{metrics.get('checks_total', 'n/a')}"
+              )
+              lines.append(
+                  f"- Docs parity score: {metrics.get('docs_parity_score', 'n/a')}"
+              )
+              lines.append(
+                  f"- Time to first success (s): {metrics.get('time_to_first_success_seconds', 'n/a')}"
+              )
+
+              if not slo_path.exists():
+                lines.append('- SLO report: missing')
+              else:
+                slo = json.loads(slo_path.read_text(encoding='utf-8'))
+                lines.append(f"- SLO status: {slo.get('slo_status', 'unknown')}")
+                breaches = slo.get('breaches', [])
+                if breaches:
+                  lines.append('- SLO breaches:')
+                  for breach in breaches:
+                    lines.append(f"  - {breach}")
 
           with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
               f.write('\n'.join(lines) + '\n')
