@@ -79,6 +79,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[all]"
+          pip install jsonschema
 
       - name: Run smoke verifier
         run: |
@@ -539,24 +540,24 @@ jobs:
           else:
               lines.append('- Policy bundle lifecycle: report missing')
 
-            if promotion_path.exists():
+          if promotion_path.exists():
               promotion = json.loads(promotion_path.read_text(encoding='utf-8'))
               p_summary = promotion.get('summary', {})
               envs = promotion.get('environments', {})
               d2s = envs.get('dev_to_staging', {}) if isinstance(envs, dict) else {}
               s2p = envs.get('staging_to_prod', {}) if isinstance(envs, dict) else {}
               lines.append(
-                f"- Policy promotion readiness: {promotion.get('status', 'unknown')} "
-                f"(canary_ratio={p_summary.get('runtime_canary_pass_ratio', 'n/a')})"
+                  f"- Policy promotion readiness: {promotion.get('status', 'unknown')} "
+                  f"(canary_ratio={p_summary.get('runtime_canary_pass_ratio', 'n/a')})"
               )
               lines.append(
-                f"- Dev→Staging ready: {d2s.get('ready', 'n/a')}"
+                  f"- Dev→Staging ready: {d2s.get('ready', 'n/a')}"
               )
               lines.append(
-                f"- Staging→Prod automated ready: {s2p.get('automated_ready', 'n/a')} "
-                f"(required_approvals={s2p.get('required_approvals', 'n/a')})"
+                  f"- Staging→Prod automated ready: {s2p.get('automated_ready', 'n/a')} "
+                  f"(required_approvals={s2p.get('required_approvals', 'n/a')})"
               )
-            else:
+          else:
               lines.append('- Policy promotion readiness: report missing')
 
           for log_name in [
