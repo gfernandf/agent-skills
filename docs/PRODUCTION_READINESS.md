@@ -121,3 +121,24 @@ Immediate actions:
 2. `docs/OPA_POLICY_BUNDLE_LIFECYCLE.md`
 3. `docs/BRANCH_PROTECTION_POLICY.md`
 4. `docs/GITHUB_RULESET_RUNBOOK.md`
+
+## 8. Clarification: What "External Operational Closure" Means
+
+When we say this gap is external to repository code, it means:
+
+1. The repository can verify expectations and detect drift.
+2. The repository cannot force GitHub tenant-level settings by itself.
+3. A repository admin must apply branch rules/rulesets in GitHub settings UI.
+
+Why this matters:
+
+1. CI can pass while push/merge governance is still weak if rulesets are not correctly applied.
+2. This is the reason API-based verification may return `unverified` under limited token permissions.
+
+Minimum acceptance checklist for closure:
+
+1. Ruleset/branch protection is active on the release branch.
+2. Required checks match `docs/required_status_checks.json` exactly.
+3. PR review, stale review dismissal, and conversation resolution are enabled.
+4. Bypass list is restricted and explicitly reviewed.
+5. Evidence is attached in PR/release notes (report + UI proof).
