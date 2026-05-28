@@ -218,7 +218,9 @@ TEST_DATA = {
         "instruction": "Write a one-sentence description of Python.",
         "context": "Python is a programming language.",
     },
-    "perception.entity.extract": {"text": "John Smith works at Google in Mountain View."},
+    "perception.entity.extract": {
+        "text": "John Smith works at Google in Mountain View."
+    },
     "perception.content.extract": {
         "text": "<html><body><h1>Title</h1><p>This is a test paragraph with important information.</p></body></html>"
     },

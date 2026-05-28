@@ -310,7 +310,8 @@ def _classify_fallback_severity(
         if isinstance(step, dict)
     )
     scoring_completed = any(
-        step.get("uses") == "evaluation.option.score" and step.get("status") == "completed"
+        step.get("uses") == "evaluation.option.score"
+        and step.get("status") == "completed"
         for step in step_diagnostics
         if isinstance(step, dict)
     )
