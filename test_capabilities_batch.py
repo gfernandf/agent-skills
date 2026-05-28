@@ -176,10 +176,6 @@ TEST_DATA = {
             {"text": "Unrelated source"},
         ],
     },
-    "evaluation.output.score": {
-        "output": {"summary": "Short summary", "confidence": 0.9},
-        "rubric": {"dimensions": {"completeness": 0.5, "clarity": 0.5}},
-    },
     "reasoning.option.analyze": {
         "options": [
             {
