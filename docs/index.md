@@ -14,6 +14,7 @@ Runtime for composable AI agent skills — deterministic execution of capability
 - **Policy Bundles:** [OPA Policy Bundle Lifecycle](OPA_POLICY_BUNDLE_LIFECYCLE.md)
 - **Governance Ops:** [GitHub Ruleset Runbook](GITHUB_RULESET_RUNBOOK.md)
 - **Production Ops:** [Production Readiness Playbook](PRODUCTION_READINESS.md)
+- **Release Use Cases:** [Public Release Use Cases](PUBLIC_RELEASE_USE_CASES.md)
 - **Target Architecture RFCs:** [RFC-0001](rfcs/RFC-0001-ORCA-RUNTIME-BLUEPRINT.md) · [RFC-0002](rfcs/RFC-0002-DURABLE-EXECUTION-STATE-MACHINE.md) · [RFC-0003](rfcs/RFC-0003-SIDE-EFFECT-LEDGER-AND-REPLAY-SAFETY.md) · [RFC-0004](rfcs/RFC-0004-RUNTIME-APIS-AND-EVENT-CONTRACT.md) · [RFC-0005](rfcs/RFC-0005-INTEGRATION-PSEUDOCODE-AND-MIGRATION.md) · [RFC-0006](rfcs/RFC-0006-LEGACY-RETIREMENT-MATRIX.md) · [RFC-0007](rfcs/RFC-0007-OSS-FIRST-TARGET-ARCH-EXECUTION.md)
 - **Progress:** [Target Architecture Progress Snapshot](TARGET_ARCH_PROGRESS.md)
 - **Readiness:** [Target Architecture Merge Readiness](TARGET_ARCH_MERGE_READINESS.md)

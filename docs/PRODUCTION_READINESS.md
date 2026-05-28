@@ -121,6 +121,7 @@ Immediate actions:
 2. `docs/OPA_POLICY_BUNDLE_LIFECYCLE.md`
 3. `docs/BRANCH_PROTECTION_POLICY.md`
 4. `docs/GITHUB_RULESET_RUNBOOK.md`
+5. `docs/PUBLIC_RELEASE_USE_CASES.md`
 
 ## 8. Clarification: What "External Operational Closure" Means
 
