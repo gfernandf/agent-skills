@@ -1,0 +1,10 @@
+{
+  "exceptions": [
+    {
+      "check_id": "trend_slo_status",
+      "approved_by": "repo-owner",
+      "reason": "bootstrap period with insufficient historical trend samples",
+      "expires_at": "2026-06-15T00:00:00Z"
+    }
+  ]
+}

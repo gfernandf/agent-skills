@@ -59,6 +59,7 @@ Required fields per exception:
 Recommended path:
 
 1. `.github/release_exceptions.json`
+2. Template: `.github/release_exceptions.example.json`
 
 The file should be created only when needed and removed when no longer required.
 
