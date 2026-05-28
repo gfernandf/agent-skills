@@ -31,6 +31,17 @@ Expected files under `policies/opa`:
 3. `policy_package` (must be `orca.policy.pre`)
 4. `decision_path` (must be `/v1/data/orca/policy/pre`)
 5. `compatibility` block
+6. `tenant_scope` block
+7. `promotion_policy` block
+
+Required governance fields:
+
+1. `tenant_scope.mode` in `{shared_with_tenant_constraints, tenant_scoped}`
+2. `tenant_scope.tenant_selection = context_tenant_only`
+3. `tenant_scope.cross_tenant_allowed = false`
+4. `promotion_policy.required_reviews >= 1`
+5. `promotion_policy.enforce_requires_shadow_validation = true`
+6. `promotion_policy.require_bundle_version_bump = true`
 
 ## Rego Contract
 
@@ -52,6 +63,7 @@ Report fields:
 1. status
 2. summary.total/passed/failed/pass_ratio
 3. checks[]
+4. contract (`opa_policy_bundle_lifecycle_v2`)
 
 ## Rollout Intention
 

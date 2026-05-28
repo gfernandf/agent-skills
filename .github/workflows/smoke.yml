@@ -523,14 +523,14 @@ jobs:
           else:
               lines.append('- Tenant isolation matrix: report missing')
 
-            if bundle_path.exists():
+          if bundle_path.exists():
               bundle = json.loads(bundle_path.read_text(encoding='utf-8'))
               b_summary = bundle.get('summary', {})
               lines.append(
-                f"- Policy bundle lifecycle: {bundle.get('status', 'unknown')} "
-                f"({b_summary.get('passed', 'n/a')}/{b_summary.get('total', 'n/a')})"
+                  f"- Policy bundle lifecycle: {bundle.get('status', 'unknown')} "
+                  f"({b_summary.get('passed', 'n/a')}/{b_summary.get('total', 'n/a')})"
               )
-            else:
+          else:
               lines.append('- Policy bundle lifecycle: report missing')
 
           for log_name in [

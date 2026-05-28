@@ -8,6 +8,16 @@
     "input_contract": "policy_decision_v1",
     "output_contract": "status_reason_v1"
   },
+  "tenant_scope": {
+    "mode": "shared_with_tenant_constraints",
+    "tenant_selection": "context_tenant_only",
+    "cross_tenant_allowed": false
+  },
+  "promotion_policy": {
+    "required_reviews": 1,
+    "enforce_requires_shadow_validation": true,
+    "require_bundle_version_bump": true
+  },
   "ownership": {
     "team": "runtime-policy",
     "review_required": true

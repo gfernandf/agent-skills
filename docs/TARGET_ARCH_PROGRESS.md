@@ -48,15 +48,15 @@ Main gaps:
 
 Criteria scoring:
 
-1. Externally explainable and auditable policy decisions: 0.82
+1. Externally explainable and auditable policy decisions: 0.86
 2. Tenant isolation consistency: 0.94
 3. Existing runtime safety controls preserved: 0.90
 
-Pillar completion: 89%
+Pillar completion: 90%
 
 Main gaps:
 
-1. OPA adapter wiring and baseline policy-bundle lifecycle verification are in place, but production governance depth (tenant-scoped bundles, stricter review gates) is pending.
+1. OPA adapter wiring and tenant-scoped policy-bundle lifecycle verification are in place, but production governance depth (environment promotion controls beyond manifest checks) is pending.
 2. `same_tenant` runtime enforcement, 5-capability baseline rollout, channel-level probes, and HTTP/MCP transport probes are in place; broader registry rollout is still pending.
 
 ### 4) Developer Experience and Distribution (Stripe-like/Vercel-like)
@@ -91,7 +91,7 @@ Computation:
 
 1. Temporal-grade durable orchestration layer beyond current durability contract baseline.
 2. Orchestrated delivery lineage model for contract/artifact/promotion flow.
-3. OPA staged enforcement policy hardening and tenant-scoped policy-bundle governance.
+3. OPA staged enforcement policy hardening and environment-level policy-bundle promotion controls.
 4. DX SLO hardening and deploy-flow latency instrumentation.
 
 ## Notes

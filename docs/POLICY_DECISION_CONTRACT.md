@@ -123,9 +123,10 @@ Policy bundle lifecycle report:
 2. summary.total/passed/failed/pass_ratio
 3. bundle_root
 4. checks[]
+5. contract (`opa_policy_bundle_lifecycle_v2`)
 
 ## Out of Scope (v1)
 
 1. OPA runtime decision enforcement cutover.
 2. Replacing in-runtime safety gates.
-3. Tenant-scoped policy-bundle governance lifecycle (v2 expansion beyond baseline contract checks).
+3. Tenant-scoped policy-bundle governance rollout beyond manifest-level lifecycle checks.

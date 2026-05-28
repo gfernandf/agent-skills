@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import time
 from pathlib import Path
 from urllib.parse import urlparse
@@ -77,9 +78,14 @@ def main() -> int:
 
     if manifest:
         bundle_version = manifest.get("bundle_version")
+        bundle_version_ok = (
+            isinstance(bundle_version, str)
+            and bool(bundle_version.strip())
+            and re.fullmatch(r"\d+\.\d+\.\d+", bundle_version.strip()) is not None
+        )
         checks.append(
             _check(
-                isinstance(bundle_version, str) and bool(bundle_version.strip()),
+                bundle_version_ok,
                 "manifest_bundle_version",
                 str(bundle_version),
             )
@@ -111,6 +117,72 @@ def main() -> int:
                 "present" if isinstance(compatibility, dict) else "missing",
             )
         )
+
+        tenant_scope = manifest.get("tenant_scope")
+        checks.append(
+            _check(
+                isinstance(tenant_scope, dict),
+                "manifest_tenant_scope_block",
+                "present" if isinstance(tenant_scope, dict) else "missing",
+            )
+        )
+        if isinstance(tenant_scope, dict):
+            checks.append(
+                _check(
+                    tenant_scope.get("mode") in {
+                        "shared_with_tenant_constraints",
+                        "tenant_scoped",
+                    },
+                    "manifest_tenant_scope_mode",
+                    str(tenant_scope.get("mode")),
+                )
+            )
+            checks.append(
+                _check(
+                    tenant_scope.get("tenant_selection") == "context_tenant_only",
+                    "manifest_tenant_scope_selection",
+                    str(tenant_scope.get("tenant_selection")),
+                )
+            )
+            checks.append(
+                _check(
+                    tenant_scope.get("cross_tenant_allowed") is False,
+                    "manifest_tenant_scope_cross_tenant_allowed",
+                    str(tenant_scope.get("cross_tenant_allowed")),
+                )
+            )
+
+        promotion_policy = manifest.get("promotion_policy")
+        checks.append(
+            _check(
+                isinstance(promotion_policy, dict),
+                "manifest_promotion_policy_block",
+                "present" if isinstance(promotion_policy, dict) else "missing",
+            )
+        )
+        if isinstance(promotion_policy, dict):
+            checks.append(
+                _check(
+                    isinstance(promotion_policy.get("required_reviews"), int)
+                    and int(promotion_policy.get("required_reviews")) >= 1,
+                    "manifest_promotion_required_reviews",
+                    str(promotion_policy.get("required_reviews")),
+                )
+            )
+            checks.append(
+                _check(
+                    promotion_policy.get("enforce_requires_shadow_validation") is True,
+                    "manifest_promotion_requires_shadow_validation",
+                    str(promotion_policy.get("enforce_requires_shadow_validation")),
+                )
+            )
+            checks.append(
+                _check(
+                    promotion_policy.get("require_bundle_version_bump") is True,
+                    "manifest_promotion_requires_version_bump",
+                    str(promotion_policy.get("require_bundle_version_bump")),
+                )
+            )
 
     if rego_path.exists():
         rego_text = rego_path.read_text(encoding="utf-8")
@@ -146,7 +218,7 @@ def main() -> int:
     report = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "status": "passed" if failed == 0 else "failed",
-        "contract": "opa_policy_bundle_lifecycle_v1",
+        "contract": "opa_policy_bundle_lifecycle_v2",
         "summary": {
             "total": total,
             "passed": passed,
