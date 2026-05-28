@@ -1,0 +1,18 @@
+id: python_model_output_sanitize
+capability: model.output.sanitize
+service: model_baseline
+protocol: pythoncall
+operation: sanitize_output
+
+request:
+  output: input.output
+  policy: input.policy
+
+response:
+  sanitized_output: response.sanitized_output
+  removals: response.removals
+  clean: response.clean
+
+metadata:
+  description: Official pythoncall binding for model.output.sanitize.
+  status: experimental

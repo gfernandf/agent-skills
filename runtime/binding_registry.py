@@ -46,7 +46,16 @@ class BindingRegistry:
         return binding
 
     def get_bindings_for_capability(self, capability_id: str) -> list[BindingSpec]:
-        return list(self._bindings_by_capability.get(capability_id, []))
+        bindings = self._bindings_by_capability.get(capability_id)
+        if bindings:
+            return list(bindings)
+
+        for alias in self._legacy_alias_candidates(capability_id):
+            alias_bindings = self._bindings_by_capability.get(alias)
+            if alias_bindings:
+                return list(alias_bindings)
+
+        return []
 
     def get_service(self, service_id: str) -> ServiceDescriptor:
         service = self._services_by_id.get(service_id)
@@ -55,13 +64,64 @@ class BindingRegistry:
         return service
 
     def get_official_default_binding_id(self, capability_id: str) -> str | None:
-        return self._official_defaults.get(capability_id)
+        binding_id = self._official_defaults.get(capability_id)
+        if binding_id is not None:
+            return binding_id
+
+        for alias in self._legacy_alias_candidates(capability_id):
+            alias_binding_id = self._official_defaults.get(alias)
+            if alias_binding_id is not None:
+                return alias_binding_id
+
+        return None
 
     def list_bindings(self) -> list[BindingSpec]:
         return sorted(self._bindings_by_id.values(), key=lambda b: b.id)
 
     def list_services(self) -> list[ServiceDescriptor]:
         return sorted(self._services_by_id.values(), key=lambda s: s.id)
+
+    @staticmethod
+    def _legacy_alias_candidates(capability_id: str) -> list[str]:
+        candidates: list[str] = []
+
+        prefix_aliases = {
+            "text.": "reasoning.",
+            "eval.": "evaluation.",
+            "model.": "reasoning.",
+            "analysis.": "reasoning.",
+            "provenance.": "evidence.",
+            "ops.trace.": "evidence.trace.",
+            "ops.event.": "perception.event.",
+            "task.case.": "perception.case.",
+            "task.priority.": "message.priority.",
+            "task.sla.": "perception.sla.",
+            "agent.option.": "reasoning.option.",
+        }
+        for old_prefix, new_prefix in prefix_aliases.items():
+            if capability_id.startswith(old_prefix):
+                candidates.append(new_prefix + capability_id[len(old_prefix) :])
+
+        explicit_aliases = {
+            "agent.task.plan": "reasoning.plan.generate",
+            "agent.plan.split": "reasoning.plan.decompose",
+            "agent.plan.run": "agent.plan.execute",
+            "agent.plan.generate": "reasoning.plan.generate",
+            "agent.plan.create": "reasoning.plan.create",
+            "agent.task.delegate": "decision.task.delegate",
+            "eval.option.analyze": "reasoning.option.analyze",
+            "model.output.score": "evaluation.output.score",
+            "model.response.validate": "evaluation.response.validate",
+            "model.risk.score": "evaluation.risk.score",
+            "text.content.extract": "perception.content.extract",
+            "text.entity.extract": "perception.entity.extract",
+            "text.keyword.extract": "perception.keyword.extract",
+        }
+        mapped = explicit_aliases.get(capability_id)
+        if mapped:
+            candidates.append(mapped)
+
+        return list(dict.fromkeys(candidates))
 
     def _load_all(self) -> None:
         self._load_services()

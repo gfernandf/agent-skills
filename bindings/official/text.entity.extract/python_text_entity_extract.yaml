@@ -1,0 +1,16 @@
+id: python_text_entity_extract
+
+capability: text.entity.extract
+service: text_baseline
+protocol: pythoncall
+operation: extract_entities
+
+request:
+  text: input.text
+
+response:
+  entities: response.entities
+
+metadata:
+  description: "Official binding for text.entity.extract using the text_baseline service."
+  status: stable

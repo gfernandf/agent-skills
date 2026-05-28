@@ -1,0 +1,18 @@
+id: python_model_prompt_template
+capability: model.prompt.template
+service: model_baseline
+protocol: pythoncall
+operation: template_prompt
+
+request:
+  template: input.template
+  variables: input.variables
+  format: input.format
+
+response:
+  prompt: response.prompt
+  unresolved: response.unresolved
+
+metadata:
+  description: Official pythoncall binding for model.prompt.template.
+  status: experimental

@@ -1,0 +1,17 @@
+id: python_task_case_search
+capability: task.case.search
+service: task_baseline
+protocol: pythoncall
+operation: search_cases
+
+request:
+  query: input.query
+  filters: input.filters
+
+response:
+  results: response.results
+  total: response.total
+
+metadata:
+  description: Official pythoncall binding for task.case.search.
+  status: experimental

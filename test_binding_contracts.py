@@ -97,10 +97,18 @@ def _legacy_capability_alias_candidates(capability_id: str) -> list[str]:
     candidates: list[str] = []
 
     prefix_aliases = {
-        "text.content.": "reasoning.content.",
+        "text.": "reasoning.",
         "eval.": "evaluation.",
+        "model.": "reasoning.",
+        "analysis.": "reasoning.",
+        "provenance.": "evidence.",
         "ops.trace.": "evidence.trace.",
+        "ops.event.": "perception.event.",
         "agent.input.": "decision.input.",
+        "task.case.": "perception.case.",
+        "task.priority.": "message.priority.",
+        "task.sla.": "perception.sla.",
+        "agent.option.": "reasoning.option.",
     }
     for old_prefix, new_prefix in prefix_aliases.items():
         if capability_id.startswith(old_prefix):
@@ -110,6 +118,16 @@ def _legacy_capability_alias_candidates(capability_id: str) -> list[str]:
         "agent.task.plan": "reasoning.plan.generate",
         "agent.plan.split": "reasoning.plan.decompose",
         "agent.plan.run": "agent.plan.execute",
+        "agent.plan.generate": "reasoning.plan.generate",
+        "agent.plan.create": "reasoning.plan.create",
+        "agent.task.delegate": "decision.task.delegate",
+        "eval.option.analyze": "reasoning.option.analyze",
+        "model.output.score": "evaluation.output.score",
+        "model.response.validate": "evaluation.response.validate",
+        "model.risk.score": "evaluation.risk.score",
+        "text.content.extract": "perception.content.extract",
+        "text.entity.extract": "perception.entity.extract",
+        "text.keyword.extract": "perception.keyword.extract",
     }
     mapped = explicit_aliases.get(capability_id)
     if mapped:

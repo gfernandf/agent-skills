@@ -1,0 +1,16 @@
+id: python_text_embed
+
+capability: text.content.embed
+service: text_baseline
+protocol: pythoncall
+operation: embed_text
+
+request:
+  text: input.text
+
+response:
+  embedding: response.embedding
+
+metadata:
+  description: "Official binding for text.content.embed using the text_baseline service."
+  status: stable

@@ -1,0 +1,20 @@
+id: python_model_risk_score
+capability: model.risk.score
+service: model_baseline
+protocol: pythoncall
+operation: score_risk
+
+request:
+  output: input.output
+  context: input.context
+  dimensions: input.dimensions
+
+response:
+  risk_score: response.risk_score
+  dimension_scores: response.dimension_scores
+  flags: response.flags
+  safe: response.safe
+
+metadata:
+  description: Official pythoncall binding for model.risk.score.
+  status: experimental
