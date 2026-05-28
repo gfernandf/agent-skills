@@ -92,6 +92,47 @@ _ALLOWED_CONTROL_INPUT_REFS = {
 }
 
 
+def _legacy_capability_alias_candidates(capability_id: str) -> list[str]:
+    """Return canonical alias candidates for legacy capability identifiers."""
+    candidates: list[str] = []
+
+    prefix_aliases = {
+        "text.content.": "reasoning.content.",
+        "eval.": "evaluation.",
+        "ops.trace.": "evidence.trace.",
+        "agent.input.": "decision.input.",
+    }
+    for old_prefix, new_prefix in prefix_aliases.items():
+        if capability_id.startswith(old_prefix):
+            candidates.append(new_prefix + capability_id[len(old_prefix) :])
+
+    explicit_aliases = {
+        "agent.task.plan": "reasoning.plan.generate",
+        "agent.plan.split": "reasoning.plan.decompose",
+        "agent.plan.run": "agent.plan.execute",
+    }
+    mapped = explicit_aliases.get(capability_id)
+    if mapped:
+        candidates.append(mapped)
+
+    # Deduplicate while preserving order.
+    return list(dict.fromkeys(candidates))
+
+
+def _resolve_capability(capability_id: str) -> tuple[str | None, Dict[str, Any] | None]:
+    """Resolve a capability id, including legacy aliases, to a registry record."""
+    cap = _CAPABILITIES.get(capability_id)
+    if cap is not None:
+        return capability_id, cap
+
+    for alias in _legacy_capability_alias_candidates(capability_id):
+        alias_cap = _CAPABILITIES.get(alias)
+        if alias_cap is not None:
+            return alias, alias_cap
+
+    return None, None
+
+
 def _binding_ids():
     """Return list of (test_id, binding_path, binding_data) for parametrize."""
     items = []
@@ -113,12 +154,13 @@ class TestBindingContract:
     def test_capability_exists(self, path: Path, data: dict):
         cap_id = data.get("capability")
         assert cap_id, f"{path.name}: missing 'capability' field"
-        assert cap_id in _CAPABILITIES, (
+        resolved_id, _ = _resolve_capability(cap_id)
+        assert resolved_id is not None, (
             f"{path.name}: capability '{cap_id}' not found in registry"
         )
 
     def test_required_inputs_covered(self, path: Path, data: dict):
-        cap = _CAPABILITIES.get(data.get("capability", ""))
+        _, cap = _resolve_capability(data.get("capability", ""))
         if cap is None:
             pytest.skip("capability not found")
         cap_inputs = cap.get("inputs", {})
@@ -138,7 +180,7 @@ class TestBindingContract:
         )
 
     def test_required_outputs_covered(self, path: Path, data: dict):
-        cap = _CAPABILITIES.get(data.get("capability", ""))
+        _, cap = _resolve_capability(data.get("capability", ""))
         if cap is None:
             pytest.skip("capability not found")
         cap_outputs = cap.get("outputs", {})
@@ -158,7 +200,7 @@ class TestBindingContract:
         )
 
     def test_no_phantom_input_refs(self, path: Path, data: dict):
-        cap = _CAPABILITIES.get(data.get("capability", ""))
+        _, cap = _resolve_capability(data.get("capability", ""))
         if cap is None:
             pytest.skip("capability not found")
         cap_input_names = set(cap.get("inputs", {}).keys())
