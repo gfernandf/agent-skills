@@ -97,6 +97,12 @@ Tenant isolation matrix:
 python tooling/verify_tenant_isolation_matrix.py --report-file artifacts/tenant_isolation_matrix_report.json
 ```
 
+OPA policy bundle lifecycle:
+
+```bash
+python tooling/verify_policy_bundle_lifecycle.py --bundle-root policies/opa --report-file artifacts/policy_bundle_lifecycle_report.json
+```
+
 Report:
 
 1. status
@@ -111,8 +117,15 @@ Tenant matrix report:
 3. by_surface (runtime_identity, runtime_persistence, runtime_policy, channel_tenancy, transport_tenancy, registry_vocabulary, registry_capabilities)
 4. checks[]
 
+Policy bundle lifecycle report:
+
+1. status
+2. summary.total/passed/failed/pass_ratio
+3. bundle_root
+4. checks[]
+
 ## Out of Scope (v1)
 
 1. OPA runtime decision enforcement cutover.
 2. Replacing in-runtime safety gates.
-3. Tenant-scoped external policy bundles.
+3. Tenant-scoped policy-bundle governance lifecycle (v2 expansion beyond baseline contract checks).

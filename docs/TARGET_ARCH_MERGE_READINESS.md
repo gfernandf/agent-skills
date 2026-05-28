@@ -7,7 +7,7 @@ Progress baseline: docs/TARGET_ARCH_PROGRESS.md
 ## Executive Status
 
 1. Overall strategic completion: 75%
-2. Policy/Tenancy pillar: 88%
+2. Policy/Tenancy pillar: 89%
 3. Tenant isolation matrix: passed (22/22)
 4. same_tenant capability baseline: passed (5/5)
 
@@ -52,7 +52,8 @@ Evidence:
 
 1. tooling/verify_policy_shadow_mode.py
 2. tooling/verify_tenant_isolation_matrix.py
-3. runtime canary integration in .github/workflows/smoke.yml
+3. tooling/verify_policy_bundle_lifecycle.py
+4. runtime canary integration in .github/workflows/smoke.yml
 
 ### 5) Explicit non-goals
 
@@ -102,7 +103,7 @@ Evidence:
 
 1. Durability to Temporal-grade semantics (beyond current baseline contract)
 2. Contracts/artifacts/promotion orchestration with stronger lineage model
-3. OPA production policy bundle lifecycle and governance formalization
+3. OPA governance depth beyond baseline lifecycle checks (tenant-scoped bundles and stricter promotion policy)
 4. Wider same_tenant rollout beyond 5-capability baseline
 
 ## Commit Guidance with Large Dirty Trees

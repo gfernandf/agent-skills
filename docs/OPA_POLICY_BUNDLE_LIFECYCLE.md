@@ -1,0 +1,60 @@
+# OPA Policy Bundle Lifecycle (v1)
+
+Status: Active baseline
+Last updated: 2026-05-28
+
+This document defines a minimal, auditable lifecycle contract for OPA policy
+bundles used by external policy decision rollout.
+
+## Scope
+
+This lifecycle covers bundle structure and compatibility checks for the pre-decision path:
+
+1. `/v1/data/orca/policy/pre`
+2. package `orca.policy.pre`
+
+Runtime safety remains authoritative during staged rollout.
+
+## Bundle Layout
+
+Expected files under `policies/opa`:
+
+1. `bundle_manifest.json`
+2. `policy_pre.rego`
+
+## Manifest Contract
+
+`bundle_manifest.json` must contain:
+
+1. `bundle_name`
+2. `bundle_version`
+3. `policy_package` (must be `orca.policy.pre`)
+4. `decision_path` (must be `/v1/data/orca/policy/pre`)
+5. `compatibility` block
+
+## Rego Contract
+
+`policy_pre.rego` must contain:
+
+1. `package orca.policy.pre`
+2. `default result` decision baseline
+
+## Verification
+
+Run:
+
+```bash
+python tooling/verify_policy_bundle_lifecycle.py --bundle-root policies/opa --report-file artifacts/policy_bundle_lifecycle_report.json
+```
+
+Report fields:
+
+1. status
+2. summary.total/passed/failed/pass_ratio
+3. checks[]
+
+## Rollout Intention
+
+1. Keep bundle checks in CI as a readiness gate.
+2. Expand decision coverage over time without breaking runtime-safe defaults.
+3. Add formal bundle governance (versioning/review policy) before production-enforce cutover.

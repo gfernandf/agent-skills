@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -53,9 +54,11 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _run_test(nodeid: str) -> TestResult:
-    command = [sys.executable, "-m", "pytest", "-q", nodeid]
+    command = [sys.executable, "-m", "pytest", "-q", "-o", "addopts=", nodeid]
+    env = dict(os.environ)
+    env["PYTEST_ADDOPTS"] = ""
     start = time.perf_counter()
-    proc = subprocess.run(command, cwd=ROOT)
+    proc = subprocess.run(command, cwd=ROOT, env=env)
     duration = time.perf_counter() - start
     return TestResult(
         nodeid=nodeid,

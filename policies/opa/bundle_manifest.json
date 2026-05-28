@@ -1,0 +1,15 @@
+{
+  "bundle_name": "orca_policy_pre_bundle",
+  "bundle_version": "0.1.0",
+  "policy_package": "orca.policy.pre",
+  "decision_path": "/v1/data/orca/policy/pre",
+  "compatibility": {
+    "external_adapter": "opa_http_v1",
+    "input_contract": "policy_decision_v1",
+    "output_contract": "status_reason_v1"
+  },
+  "ownership": {
+    "team": "runtime-policy",
+    "review_required": true
+  }
+}

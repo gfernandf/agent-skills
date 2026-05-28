@@ -426,6 +426,7 @@ jobs:
           python tooling/verify_durability_contract.py --report-file artifacts/durability_contract_report.json
           python tooling/verify_policy_shadow_mode.py --report-file artifacts/policy_shadow_report.json
           python tooling/verify_tenant_isolation_matrix.py --report-file artifacts/tenant_isolation_matrix_report.json
+          python tooling/verify_policy_bundle_lifecycle.py --bundle-root policies/opa --report-file artifacts/policy_bundle_lifecycle_report.json
           python tooling/compute_runtime_coverage.py > artifacts/runtime_coverage.json
           python tooling/compute_skill_executability.py > artifacts/skill_executability.json
 
@@ -459,6 +460,7 @@ jobs:
             artifacts/durability_contract_report.json
             artifacts/policy_shadow_report.json
             artifacts/tenant_isolation_matrix_report.json
+            artifacts/policy_bundle_lifecycle_report.json
             artifacts/runtime_coverage.json
             artifacts/skill_executability.json
 
@@ -477,6 +479,7 @@ jobs:
           durability_path = Path('artifacts/durability_contract_report.json')
           policy_path = Path('artifacts/policy_shadow_report.json')
           tenant_path = Path('artifacts/tenant_isolation_matrix_report.json')
+          bundle_path = Path('artifacts/policy_bundle_lifecycle_report.json')
 
           if coverage_path.exists():
               coverage = json.loads(coverage_path.read_text(encoding='utf-8'))
@@ -519,6 +522,16 @@ jobs:
               )
           else:
               lines.append('- Tenant isolation matrix: report missing')
+
+            if bundle_path.exists():
+              bundle = json.loads(bundle_path.read_text(encoding='utf-8'))
+              b_summary = bundle.get('summary', {})
+              lines.append(
+                f"- Policy bundle lifecycle: {bundle.get('status', 'unknown')} "
+                f"({b_summary.get('passed', 'n/a')}/{b_summary.get('total', 'n/a')})"
+              )
+            else:
+              lines.append('- Policy bundle lifecycle: report missing')
 
           for log_name in [
               'binding_fallback.log',
