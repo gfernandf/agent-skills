@@ -58,7 +58,7 @@ Done criteria:
 
 Status:
 
-1. In progress (gate implemented; hardening and operational closure pending)
+1. In progress (gate implemented and hardened with strict-mode behavior on release-branch pushes; operational closure and sustained `go` evidence still pending)
 
 ### Phase B — Durability to Temporal-Grade Baseline+
 

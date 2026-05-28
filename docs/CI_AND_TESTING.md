@@ -124,6 +124,9 @@ Smoke workflow also includes a final cross-workflow release gate:
   - `go`: no blocking failures
   - `conditional-go`: only medium-severity failures/warnings
   - `no-go`: one or more high-severity failures
+5. Strict mode behavior:
+  - strict on push to `main`/`master`
+  - non-strict on PR/schedule/manual dispatch (allows configured transitional exceptions)
 
 Governance evidence now also includes an executive rollup artifact per governance run:
 

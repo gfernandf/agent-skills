@@ -162,6 +162,92 @@ def main() -> int:
             detail=f"failed={failed}",
         )
 
+    runtime_coverage_data, runtime_coverage_error = _load_json(
+        artifacts_dir / "runtime_coverage.json"
+    )
+    if runtime_coverage_error:
+        _append_check(
+            checks,
+            check_id="runtime_coverage_report_present",
+            passed=False,
+            severity="high",
+            detail=runtime_coverage_error,
+        )
+    else:
+        ratio = runtime_coverage_data.get("coverage_ratio")
+        ratio_value = float(ratio) if isinstance(ratio, (int, float)) else -1.0
+        _append_check(
+            checks,
+            check_id="runtime_coverage_ratio",
+            passed=ratio_value >= 1.0,
+            severity="high",
+            detail=f"coverage_ratio={ratio}",
+        )
+
+    executability_data, executability_error = _load_json(
+        artifacts_dir / "skill_executability.json"
+    )
+    if executability_error:
+        _append_check(
+            checks,
+            check_id="skill_executability_report_present",
+            passed=False,
+            severity="high",
+            detail=executability_error,
+        )
+    else:
+        ratio = executability_data.get("executability_ratio")
+        ratio_value = float(ratio) if isinstance(ratio, (int, float)) else -1.0
+        _append_check(
+            checks,
+            check_id="skill_executability_ratio",
+            passed=ratio_value >= 1.0,
+            severity="high",
+            detail=f"executability_ratio={ratio}",
+        )
+
+    lifecycle_data, lifecycle_error = _load_json(
+        artifacts_dir / "policy_bundle_lifecycle_report.json"
+    )
+    if lifecycle_error:
+        _append_check(
+            checks,
+            check_id="policy_bundle_lifecycle_report_present",
+            passed=False,
+            severity="high",
+            detail=lifecycle_error,
+        )
+    else:
+        status = lifecycle_data.get("status")
+        _append_check(
+            checks,
+            check_id="policy_bundle_lifecycle_status_passed",
+            passed=_status_is_pass(status),
+            severity="high",
+            detail=f"status={status}",
+        )
+
+    promotion_data, promotion_error = _load_json(
+        artifacts_dir / "policy_promotion_readiness_report.json"
+    )
+    if promotion_error:
+        _append_check(
+            checks,
+            check_id="promotion_readiness_report_present",
+            passed=False,
+            severity="high",
+            detail=promotion_error,
+        )
+    else:
+        status = promotion_data.get("status")
+        _append_check(
+            checks,
+            check_id="promotion_readiness_status_passed",
+            passed=_status_is_pass(status),
+            severity="high",
+            detail=f"status={status}",
+        )
+
     promo_verify_data, promo_verify_error = _load_json(
         artifacts_dir / "policy_promotion_readiness_verify_report.json"
     )
@@ -242,6 +328,27 @@ def main() -> int:
             passed=trend_ok or trend_allowed,
             severity="medium" if trend_allowed else "high",
             detail=f"slo_status={trend_slo_status}",
+        )
+
+    trend_data, trend_error = _load_json(artifacts_dir / "critical_ci_trend_report.json")
+    if trend_error:
+        _append_check(
+            checks,
+            check_id="trend_report_present",
+            passed=False,
+            severity="high",
+            detail=trend_error,
+        )
+    else:
+        status = str(trend_data.get("status", "unknown")).strip().lower()
+        status_ok = status == "passed"
+        status_allowed = args.allow_trend_unverified and status == "unverified"
+        _append_check(
+            checks,
+            check_id="trend_report_status",
+            passed=status_ok or status_allowed,
+            severity="medium" if status_allowed else "high",
+            detail=f"status={status}",
         )
 
     high_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "high"]
