@@ -1,0 +1,13 @@
+id: python_perception_case_get
+capability: perception.case.get
+service: task_baseline
+protocol: pythoncall
+operation: get_case
+request:
+  case_id: input.case_id
+response:
+  case: response.case
+  found: response.found
+metadata:
+  description: Python fallback for perception.case.get using task case retrieval baseline.
+  status: stable

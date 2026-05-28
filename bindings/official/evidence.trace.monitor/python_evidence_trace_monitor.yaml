@@ -1,0 +1,14 @@
+id: python_evidence_trace_monitor
+capability: evidence.trace.monitor
+service: ops_baseline
+protocol: pythoncall
+operation: monitor_trace
+request:
+  trace: input.trace
+  thresholds: input.thresholds
+response:
+  status: response.status
+  alerts: response.alerts
+metadata:
+  description: Python fallback for evidence.trace.monitor using ops trace monitoring baseline.
+  status: stable

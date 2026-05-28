@@ -1,0 +1,14 @@
+id: python_perception_case_list
+capability: perception.case.list
+service: task_baseline
+protocol: pythoncall
+operation: list_cases
+request:
+  status_filter: input.status_filter
+  assignee_filter: input.assignee_filter
+response:
+  cases: response.cases
+  total: response.total
+metadata:
+  description: Python fallback for perception.case.list using task case listing baseline.
+  status: stable

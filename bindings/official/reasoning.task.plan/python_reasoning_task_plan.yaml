@@ -1,0 +1,14 @@
+id: python_reasoning_task_plan
+capability: reasoning.task.plan
+service: agent_baseline
+protocol: pythoncall
+operation: generate_plan
+request:
+  interpreted_goal: input.interpreted_goal
+  planning_strategy: input.planning_strategy
+response:
+  macro_plan: response.plan
+  stage_count: response.step_count
+metadata:
+  description: Python fallback for reasoning.task.plan using agent_baseline plan generation.
+  status: stable

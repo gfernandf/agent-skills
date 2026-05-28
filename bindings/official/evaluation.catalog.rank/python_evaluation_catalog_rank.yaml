@@ -1,0 +1,14 @@
+id: python_evaluation_catalog_rank
+capability: evaluation.catalog.rank
+service: cognitive_baseline
+protocol: pythoncall
+operation: evaluation_framework_rank
+request:
+  candidate_items: input.candidate_items
+  interpreted_goal: input.interpreted_goal
+response:
+  ranked_skills: response.ranked_skills
+  ranked_capabilities: response.ranked_capabilities
+metadata:
+  description: Python fallback for evaluation.catalog.rank using evaluation framework ranking baseline.
+  status: stable

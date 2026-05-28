@@ -1,0 +1,14 @@
+id: python_perception_case_search
+capability: perception.case.search
+service: task_baseline
+protocol: pythoncall
+operation: search_cases
+request:
+  query: input.query
+  filters: input.filters
+response:
+  results: response.results
+  total: response.total
+metadata:
+  description: Python fallback for perception.case.search using task case search baseline.
+  status: stable
