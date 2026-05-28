@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -55,6 +56,15 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Exit non-zero when final decision is no-go.",
     )
+    parser.add_argument(
+        "--exceptions-file",
+        type=Path,
+        default=None,
+        help=(
+            "Optional JSON file with temporary approved exceptions. "
+            "Format: {\"exceptions\": [{\"check_id\":...,\"expires_at\":...,\"approved_by\":...,\"reason\":...}]}"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -92,12 +102,113 @@ def _status_is_pass(value: Any) -> bool:
     return isinstance(value, str) and value.strip().lower() in {"pass", "passed", "ok", "success"}
 
 
+def _parse_utc(value: str) -> datetime | None:
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _load_active_exceptions(path: Path | None) -> tuple[dict[str, dict[str, str]], list[str], str | None]:
+    if path is None:
+        return {}, [], None
+    if not path.exists():
+        return {}, [], f"exceptions file missing: {path}"
+
+    data, error = _load_json(path)
+    if error:
+        return {}, [], f"exceptions file error: {error}"
+
+    raw_items = data.get("exceptions") if isinstance(data, dict) else None
+    if not isinstance(raw_items, list):
+        return {}, [], "exceptions file invalid: exceptions must be a list"
+
+    active: dict[str, dict[str, str]] = {}
+    issues: list[str] = []
+    now = datetime.now(timezone.utc)
+
+    for idx, item in enumerate(raw_items):
+        if not isinstance(item, dict):
+            issues.append(f"exceptions[{idx}] invalid: not object")
+            continue
+
+        check_id = item.get("check_id")
+        expires_at = item.get("expires_at")
+        approved_by = item.get("approved_by")
+        reason = item.get("reason")
+
+        if not isinstance(check_id, str) or not check_id.strip():
+            issues.append(f"exceptions[{idx}] invalid: check_id")
+            continue
+        if not isinstance(expires_at, str) or not expires_at.strip():
+            issues.append(f"exceptions[{idx}] invalid: expires_at")
+            continue
+        if not isinstance(approved_by, str) or not approved_by.strip():
+            issues.append(f"exceptions[{idx}] invalid: approved_by")
+            continue
+        if not isinstance(reason, str) or not reason.strip():
+            issues.append(f"exceptions[{idx}] invalid: reason")
+            continue
+
+        expires_dt = _parse_utc(expires_at)
+        if expires_dt is None:
+            issues.append(f"exceptions[{idx}] invalid datetime: {expires_at}")
+            continue
+        if expires_dt <= now:
+            issues.append(f"exceptions[{idx}] expired: {check_id} at {expires_at}")
+            continue
+
+        active[check_id] = {
+            "approved_by": approved_by.strip(),
+            "reason": reason.strip(),
+            "expires_at": expires_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+
+    return active, issues, None
+
+
 def main() -> int:
     args = _parse_args()
     args.report_file.parent.mkdir(parents=True, exist_ok=True)
     args.markdown_file.parent.mkdir(parents=True, exist_ok=True)
 
     checks: list[dict[str, Any]] = []
+    exceptions_applied: list[dict[str, str]] = []
+
+    active_exceptions, exception_issues, exceptions_load_error = _load_active_exceptions(
+        args.exceptions_file
+    )
+    if exceptions_load_error is not None:
+        _append_check(
+            checks,
+            check_id="exceptions_file_load",
+            passed=False,
+            severity="high",
+            detail=exceptions_load_error,
+        )
+    elif args.exceptions_file is not None:
+        _append_check(
+            checks,
+            check_id="exceptions_file_load",
+            passed=True,
+            severity="high",
+            detail=f"loaded from {args.exceptions_file}",
+        )
+
+    for issue in exception_issues:
+        _append_check(
+            checks,
+            check_id="exceptions_entry_issue",
+            passed=False,
+            severity="medium",
+            detail=issue,
+        )
 
     try:
         needs = json.loads(args.needs_json)
@@ -354,6 +465,31 @@ def main() -> int:
     high_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "high"]
     medium_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "medium"]
 
+    for check in checks:
+        if check.get("passed"):
+            continue
+        check_id = str(check.get("check_id", "")).strip()
+        exception = active_exceptions.get(check_id)
+        if not exception:
+            continue
+        if check.get("severity") == "high":
+            check["severity"] = "medium"
+        check["detail"] = (
+            f"{check.get('detail')} | exception approved_by={exception['approved_by']} "
+            f"expires_at={exception['expires_at']} reason={exception['reason']}"
+        )
+        exceptions_applied.append(
+            {
+                "check_id": check_id,
+                "approved_by": exception["approved_by"],
+                "expires_at": exception["expires_at"],
+                "reason": exception["reason"],
+            }
+        )
+
+    high_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "high"]
+    medium_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "medium"]
+
     if high_failures:
         decision = "no-go"
     elif medium_failures:
@@ -380,7 +516,9 @@ def main() -> int:
             "artifacts_dir": str(artifacts_dir),
             "allow_trend_unverified": args.allow_trend_unverified,
             "allow_missing_runtime_executive_summary": args.allow_missing_runtime_executive_summary,
+            "exceptions_file": str(args.exceptions_file) if args.exceptions_file else None,
         },
+        "exceptions_applied": exceptions_applied,
     }
 
     args.report_file.write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -393,6 +531,7 @@ def main() -> int:
         f"- Passed checks: {summary['passed']}/{summary['total']}",
         f"- High failures: {summary['high_failures']}",
         f"- Medium failures: {summary['medium_failures']}",
+        f"- Exceptions applied: {len(exceptions_applied)}",
         "",
     ]
 

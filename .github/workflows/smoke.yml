@@ -917,6 +917,9 @@ jobs:
         if: always()
         run: |
           ARGS="--needs-json '${NEEDS_CONTEXT_JSON}' --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --fail-on-no-go"
+          if [ -f .github/release_exceptions.json ]; then
+            ARGS="$ARGS --exceptions-file .github/release_exceptions.json"
+          fi
           if [ "${RELEASE_GATE_STRICT_MODE}" = "true" ]; then
             echo "Running release gate in strict mode (release branch push)."
           else

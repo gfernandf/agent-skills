@@ -146,6 +146,10 @@ Status:
 
 1. Not started
 
+Phase note:
+
+1. Exception governance format is now documented in `docs/RELEASE_EXCEPTIONS_POLICY.md`; threshold hardening/enforcement rollout remains pending.
+
 ### Phase E — same_tenant Rollout Expansion
 
 Objective:

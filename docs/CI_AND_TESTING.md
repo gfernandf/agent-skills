@@ -127,6 +127,9 @@ Smoke workflow also includes a final cross-workflow release gate:
 5. Strict mode behavior:
   - strict on push to `main`/`master`
   - non-strict on PR/schedule/manual dispatch (allows configured transitional exceptions)
+6. Optional temporary exceptions:
+  - if `.github/release_exceptions.json` exists, gate reads approved temporary exceptions
+  - exception format and governance rules are documented in `docs/RELEASE_EXCEPTIONS_POLICY.md`
 
 Governance evidence now also includes an executive rollup artifact per governance run:
 
