@@ -64,7 +64,7 @@ Always regenerate catalog artifacts before committing.
 
 ### agent-skills — `smoke.yml`
 
-Runs on push to `main`/`master` and on PRs. 7 jobs:
+Runs on push to `main`/`master` and on PRs. 8 jobs:
 
 | Job | What it checks |
 |-----|----------------|
@@ -73,7 +73,8 @@ Runs on push to `main`/`master` and on PRs. 7 jobs:
 | **contracts** | Capability contract schema validation |
 | **registry-consistency** | Binding ↔ capability cross-reference integrity |
 | **openapi-verify** | OpenAPI service descriptor health |
-| **runtime-canary** | End-to-end skill execution canary |
+| **runtime-canary** | End-to-end skill execution canary + durability contract verifier + policy shadow parity verifier |
+| **dx-metrics** | Developer-experience metrics (time-to-first-success + docs parity), trend history artifact, and optional SLO enforcement |
 | **batch** | Full `test_capabilities_batch.py` run |
 
 ### agent-skill-registry — `validate.yml`

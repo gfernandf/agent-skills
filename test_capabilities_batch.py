@@ -109,6 +109,11 @@ TEST_DATA = {
         "query": "Summarize this quarterly earnings report",
         "agents": ["summarizer", "analyst", "translator"],
     },
+    "decision.input.route": {
+        "query": "Summarize this quarterly earnings report",
+        "agents": ["summarizer", "analyst", "translator"],
+        "routing_strategy": "keyword",
+    },
     "agent.option.generate": {
         "goal": "Choose a deployment strategy for the new microservice",
         "max_options": 3,
@@ -238,6 +243,10 @@ TEST_DATA = {
     },
     "text.content.summarize": {
         "text": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on the development of algorithms that can access data and use it to learn for themselves."
+    },
+    "reasoning.content.summarize": {
+        "text": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on the development of algorithms that can access data and use it to learn for themselves.",
+        "max_length": 140,
     },
     "text.content.merge": {"items": ["Hello", "World", "Merge test"]},
     "text.content.template": {

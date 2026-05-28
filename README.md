@@ -358,6 +358,7 @@ See docs index below for details.
 | Topic | Link |
 |-------|------|
 | 10-minute onboarding | [docs/ONBOARDING_10_MIN.md](docs/ONBOARDING_10_MIN.md) |
+| Target architecture (canonical) | [docs/TARGET_ARCHITECTURE.md](docs/TARGET_ARCHITECTURE.md) |
 | Installation | [docs/INSTALLATION.md](docs/INSTALLATION.md) |
 | Environment variables | [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) |
 | Error taxonomy | [docs/ERROR_TAXONOMY.md](docs/ERROR_TAXONOMY.md) |
