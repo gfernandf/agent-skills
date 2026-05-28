@@ -55,7 +55,7 @@ def test_critical_binding_short_timeout_is_high_risk():
 
 def test_retry_one_is_allowed():
     entry = _evaluate_binding(
-        _binding("text.keyword.extract", timeout_seconds=30, retry_count=1),
+        _binding("perception.keyword.extract", timeout_seconds=30, retry_count=1),
         _service(),
     )
 
@@ -65,7 +65,7 @@ def test_retry_one_is_allowed():
 
 def test_retry_above_one_is_flagged():
     entry = _evaluate_binding(
-        _binding("text.keyword.extract", timeout_seconds=30, retry_count=2),
+        _binding("perception.keyword.extract", timeout_seconds=30, retry_count=2),
         _service(),
     )
 
@@ -75,7 +75,7 @@ def test_retry_above_one_is_flagged():
 
 def test_missing_timeout_is_high_risk():
     entry = _evaluate_binding(
-        _binding("eval.output.score", timeout_seconds=None, retry_count=0),
+        _binding("evaluation.output.score", timeout_seconds=None, retry_count=0),
         _service(),
     )
 

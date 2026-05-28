@@ -347,11 +347,11 @@ def _rank_capabilities(
 def _infer_goal_capability_ids(intent: str) -> list[str]:
     txt = intent.lower()
     ordered_matches: list[tuple[tuple[str, ...], str]] = [
-        (("extract", "entity"), "text.entity.extract"),
-        (("extract", "entities"), "text.entity.extract"),
-        (("named", "entity"), "text.entity.extract"),
-        (("keyword",), "text.keyword.extract"),
-        (("keywords",), "text.keyword.extract"),
+        (("extract", "entity"), "perception.entity.extract"),
+        (("extract", "entities"), "perception.entity.extract"),
+        (("named", "entity"), "perception.entity.extract"),
+        (("keyword",), "perception.keyword.extract"),
+        (("keywords",), "perception.keyword.extract"),
         (("translate",), "text.content.translate"),
         (("translation",), "text.content.translate"),
         (("summarize",), "text.content.summarize"),
@@ -364,7 +364,7 @@ def _infer_goal_capability_ids(intent: str) -> list[str]:
         (("categorize",), "text.content.classify"),
         (("embed",), "text.content.embed"),
         (("embedding",), "text.content.embed"),
-        (("extract", "text"), "text.content.extract"),
+        (("extract", "text"), "perception.content.extract"),
     ]
 
     goal_ids: list[str] = []
@@ -773,11 +773,11 @@ def _select_executable_template_caps(
         "text.content.translate",
         "text.content.summarize",
         "text.content.classify",
-        "text.entity.extract",
-        "text.keyword.extract",
+        "perception.entity.extract",
+        "perception.keyword.extract",
         "text.language.detect",
         "text.content.embed",
-        "text.content.extract",
+        "perception.content.extract",
     }
     if goal_capability_ids:
         for goal_id in goal_capability_ids:

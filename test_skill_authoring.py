@@ -69,7 +69,7 @@ _TWO_STEP_SKILL = {
     "steps": [
         {
             "id": "extract",
-            "uses": "text.content.extract",
+            "uses": "perception.content.extract",
             "input": {"text": "inputs.document"},
             "output": {"extracted": "vars.extracted_text"},
         },

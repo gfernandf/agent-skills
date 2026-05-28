@@ -403,8 +403,8 @@ def test_consumes_chain_multi_step():
                 },
             },
         ),
-        "eval.option.score": _make_cap(
-            "eval.option.score",
+        "evaluation.option.score": _make_cap(
+            "evaluation.option.score",
             cognitive_hints={
                 "role": ["evaluate"],
                 "consumes": ["Risk", "Evidence"],
@@ -417,7 +417,7 @@ def test_consumes_chain_multi_step():
     steps = (
         _make_step("fetch", "web.page.fetch"),
         _make_step("extract", "analysis.risk.extract"),
-        _make_step("score", "eval.option.score"),
+        _make_step("score", "evaluation.option.score"),
     )
 
     warnings = validate_consumes_chain(steps, loader)

@@ -72,9 +72,9 @@ Pasos ejecutados:
 
 1. merge_context - text.content.merge
 2. generate_options - agent.option.generate
-3. analyze_options - eval.option.analyze
-4. evaluate_options - eval.option.score
+3. analyze_options - reasoning.option.analyze
+4. evaluate_options - evaluation.option.score
 5. justify_decision - decision.option.justify
-6. assess_quality - eval.output.score
+6. assess_quality - evaluation.output.score
 
 La ejecucion fue completa y saludable, sin fallback.

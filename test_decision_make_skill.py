@@ -97,7 +97,7 @@ def test_decision_make_with_preprovided_options(engine):
 def test_decision_make_with_risk_tolerance(engine):
     """
     Verify decision.make respects risk_tolerance setting.
-    Expects: risk_tolerance propagated through eval.option.score and affects scoring.
+    Expects: risk_tolerance propagated through evaluation.option.score and affects scoring.
     """
     request = ExecutionRequest(
         skill_id="decision.make",

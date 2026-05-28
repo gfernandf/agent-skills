@@ -686,7 +686,7 @@ def generate_report(
         "- ORCA Skill: `experiment.text-processing-pipeline` using capabilities"
     )
     lines.append(
-        "  `text.entity.extract` -> `text.content.summarize` -> `text.content.classify`."
+        "  `perception.entity.extract` -> `text.content.summarize` -> `text.content.classify`."
     )
     lines.append("")
     lines.append("### 1.3 Metrics")
