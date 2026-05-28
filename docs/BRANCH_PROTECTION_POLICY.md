@@ -26,6 +26,10 @@ At minimum, branch protection must require these checks:
 2. `policy-bundle-governance`
 3. `runtime_canary`
 
+Canonical source for this list:
+
+1. `docs/required_status_checks.json`
+
 ## Operational Note
 
 Repository settings cannot be fully enforced from code inside the repository. This

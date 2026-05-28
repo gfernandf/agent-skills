@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 SMOKE_WORKFLOW = ROOT / ".github" / "workflows" / "smoke.yml"
 POLICY_DOC = ROOT / "docs" / "BRANCH_PROTECTION_POLICY.md"
+REQUIRED_CHECKS_FILE = ROOT / "docs" / "required_status_checks.json"
 DEFAULT_REPORT = ROOT / "artifacts" / "branch_protection_policy_report.json"
 
 
@@ -43,6 +44,13 @@ def main() -> int:
     checks: list[dict[str, object]] = []
 
     checks.append(_check(POLICY_DOC.exists(), "policy_doc_exists", str(POLICY_DOC)))
+    checks.append(
+        _check(
+            REQUIRED_CHECKS_FILE.exists(),
+            "required_checks_file_exists",
+            str(REQUIRED_CHECKS_FILE),
+        )
+    )
     checks.append(_check(CI_WORKFLOW.exists(), "ci_workflow_exists", str(CI_WORKFLOW)))
     checks.append(
         _check(SMOKE_WORKFLOW.exists(), "smoke_workflow_exists", str(SMOKE_WORKFLOW))
@@ -54,13 +62,32 @@ def main() -> int:
         SMOKE_WORKFLOW.read_text(encoding="utf-8") if SMOKE_WORKFLOW.exists() else ""
     )
 
+    required_checks: list[str] = []
+    if REQUIRED_CHECKS_FILE.exists():
+        try:
+            data = json.loads(REQUIRED_CHECKS_FILE.read_text(encoding="utf-8"))
+            checks.append(_check(True, "required_checks_file_json_valid", "valid json"))
+            raw_checks = data.get("required_status_checks")
+            if isinstance(raw_checks, list):
+                required_checks = [c for c in raw_checks if isinstance(c, str)]
+        except Exception as exc:
+            checks.append(
+                _check(False, "required_checks_file_json_valid", f"invalid json: {exc}")
+            )
+
+    checks.append(
+        _check(
+            bool(required_checks),
+            "required_checks_non_empty",
+            f"count={len(required_checks)}",
+        )
+    )
+
     required_policy_tokens = [
         "Require pull request before merging",
         "Require status checks to pass before merging",
-        "cognitive-quality-gates",
-        "policy-bundle-governance",
-        "runtime_canary",
     ]
+    required_policy_tokens.extend(required_checks)
     for token in required_policy_tokens:
         checks.append(
             _check(

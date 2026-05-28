@@ -264,6 +264,8 @@ jobs:
           python tooling/verify_policy_bundle_lifecycle.py --bundle-root policies/opa --report-file artifacts/policy_bundle_lifecycle_report.json
           python tooling/verify_policy_gate_freshness.py --report-file artifacts/policy_gate_freshness_report.json
           python tooling/verify_branch_protection_policy.py --report-file artifacts/branch_protection_policy_report.json
+          python tooling/verify_required_status_checks_consistency.py --report-file artifacts/required_status_checks_consistency_report.json
+          python tooling/verify_github_branch_protection.py --report-file artifacts/github_branch_protection_report.json
           python tooling/verify_workflow_embedded_python.py --report-file artifacts/workflow_embedded_python_report.json
 
       - name: Upload policy bundle governance report
@@ -275,4 +277,6 @@ jobs:
             artifacts/policy_bundle_lifecycle_report.json
             artifacts/policy_gate_freshness_report.json
             artifacts/branch_protection_policy_report.json
+            artifacts/required_status_checks_consistency_report.json
+            artifacts/github_branch_protection_report.json
             artifacts/workflow_embedded_python_report.json

@@ -1,0 +1,21 @@
+{
+  "required_status_checks": [
+    "cognitive-quality-gates",
+    "policy-bundle-governance",
+    "runtime_canary"
+  ],
+  "check_job_mapping": {
+    "cognitive-quality-gates": {
+      "workflow": "ci.yml",
+      "job_id": "cognitive-quality-gates"
+    },
+    "policy-bundle-governance": {
+      "workflow": "ci.yml",
+      "job_id": "policy-bundle-governance"
+    },
+    "runtime_canary": {
+      "workflow": "smoke.yml",
+      "job_id": "runtime_canary"
+    }
+  }
+}

@@ -743,3 +743,64 @@ jobs:
           with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
               f.write(summary)
           PY
+
+  ci_stability_trend:
+    needs:
+      - pin_drift_guard
+      - smoke
+      - runtime_canary
+      - dx_metrics
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate critical CI trend report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p artifacts
+          python tooling/report_critical_ci_trend.py --report-file artifacts/critical_ci_trend_report.json --window 20
+
+      - name: Publish critical CI trend artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: critical-ci-trend-report
+          path: artifacts/critical_ci_trend_report.json
+
+      - name: Append critical CI trend summary
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('artifacts/critical_ci_trend_report.json')
+          lines = ['## Critical CI Trend', '']
+          if not path.exists():
+              lines.append('- Report missing: artifacts/critical_ci_trend_report.json')
+          else:
+              report = json.loads(path.read_text(encoding='utf-8'))
+              lines.append(f"- Status: {report.get('status', 'unknown')}")
+              jobs = report.get('critical_jobs', {})
+              for name in ['smoke', 'runtime_canary', 'dx_metrics', 'policy-bundle-governance']:
+                  item = jobs.get(name, {}) if isinstance(jobs, dict) else {}
+                  lines.append(
+                      f"- {name}: {item.get('passed', 'n/a')}/{item.get('samples', 'n/a')} "
+                      f"(pass_rate={item.get('pass_rate', 'n/a')})"
+                  )
+
+          with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+              f.write('\n'.join(lines) + '\n')
+          PY

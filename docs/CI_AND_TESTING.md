@@ -86,7 +86,9 @@ Includes a dedicated policy governance gate:
 3. Also runs `tooling/verify_branch_protection_policy.py` to verify required branch-protection check policy remains documented and aligned with workflows
 4. Also runs `tooling/verify_workflow_embedded_python.py` to syntax-check embedded `python - << 'PY'` blocks in workflow files
 5. Enforces tenant-scope and environment promotion controls in `policies/opa/bundle_manifest.json`
-6. Publishes `artifacts/policy_bundle_lifecycle_report.json`, `artifacts/policy_gate_freshness_report.json`, `artifacts/branch_protection_policy_report.json`, and `artifacts/workflow_embedded_python_report.json` as CI evidence
+6. Also runs `tooling/verify_required_status_checks_consistency.py` using `docs/required_status_checks.json`
+7. Also runs `tooling/verify_github_branch_protection.py` (operational check via GitHub API; may report `unverified` if token permissions are limited)
+8. Publishes governance reports as CI evidence
 
 Schema validation in `security` job also validates the formal policy bundle manifest schema:
 
@@ -98,6 +100,22 @@ Runtime canary in `smoke.yml` also emits policy promotion readiness evidence:
 2. Includes automated readiness for `dev_to_staging` and `staging_to_prod`
 3. `tooling/verify_policy_promotion_readiness.py` enforces the report contract and readiness conditions in `runtime_canary`
 4. Verification output is published as `artifacts/policy_promotion_readiness_verify_report.json`
+
+Smoke workflow also includes CI trend observability:
+
+1. `tooling/report_critical_ci_trend.py` queries recent Actions runs for critical jobs
+2. Publishes `artifacts/critical_ci_trend_report.json`
+3. Appends pass-rate summary for `smoke`, `runtime_canary`, `dx_metrics`, and `policy-bundle-governance`
+
+## Global Hardening Progress
+
+Current status for the active hardening wave:
+
+1. Policy bundle governance depth (manifest schema + lifecycle enforcement): complete
+2. Branch protection governance (policy + consistency verifier + optional API verification): complete in-repo, operational settings still managed in GitHub
+3. Promotion readiness evidence and enforcement in runtime canary: complete
+4. Workflow guardrails (embedded Python syntax + required checks consistency): complete
+5. CI stability trend reporting for critical jobs: complete
 
 ### agent-skill-registry — `validate.yml`
 
