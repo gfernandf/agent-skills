@@ -39,3 +39,9 @@ Operational setup guide:
 Repository settings cannot be fully enforced from code inside the repository. This
 policy is enforced operationally in GitHub settings and verified in-repo via
 workflow/job consistency checks.
+
+Production requirement:
+
+1. Branch protection/ruleset must be effectively active on the default branch used for releases.
+2. If API verification returns `unverified`, manual UI verification via `docs/GITHUB_RULESET_RUNBOOK.md` is mandatory before production promotion.
+3. A failed branch-protection verification outcome is always a no-go for production promotion.

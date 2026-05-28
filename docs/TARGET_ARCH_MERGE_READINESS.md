@@ -63,12 +63,15 @@ Status: Partial (in-repo policy/verifier complete, GitHub settings still operati
 Evidence:
 
 1. docs/BRANCH_PROTECTION_POLICY.md
-2. tooling/verify_branch_protection_policy.py
-3. policy-bundle-governance job integration in .github/workflows/ci.yml
+2. docs/GITHUB_RULESET_RUNBOOK.md
+3. docs/PRODUCTION_READINESS.md
+4. tooling/verify_branch_protection_policy.py
+5. policy-bundle-governance job integration in .github/workflows/ci.yml
 
 Remaining:
 
 1. Enforce branch/ruleset settings in GitHub repository configuration (outside repo code).
+2. Keep release evidence attached per docs/PRODUCTION_READINESS.md (including manual verification when API status is `unverified`).
 
 ### 5) Explicit non-goals
 

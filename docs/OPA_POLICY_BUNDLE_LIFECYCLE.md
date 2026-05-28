@@ -83,6 +83,22 @@ Promotion-readiness evidence (runtime canary):
 3. Includes `dev_to_staging.ready` and `staging_to_prod.automated_ready`
 4. `staging_to_prod.required_approvals` remains an operational branch-protection control in GitHub settings
 
+## Production Interpretation Rules
+
+Treat policy lifecycle governance as production-ready only when all are true:
+
+1. `opa_policy_bundle_lifecycle_v2` report status is `passed`
+2. `policy_promotion_readiness_v1` report status is `passed`
+3. readiness verification report status is `passed`
+4. no schema or workflow freshness drift is present in CI governance artifacts
+
+No-Go conditions:
+
+1. Manifest schema conformance fails
+2. tenant-scope constraints fail
+3. environment promotion rules fail (`dev_to_staging` or `staging_to_prod`)
+4. runtime canary pass ratio is below required threshold for promotion path
+
 ## Rollout Intention
 
 1. Keep bundle checks in CI as a readiness gate.

@@ -92,3 +92,20 @@ Then validate:
 python tooling/verify_required_status_checks_consistency.py
 python tooling/verify_branch_protection_policy.py
 ```
+
+## 6. Audit Checklist (Production Promotion)
+
+Before marking a promotion as Go, confirm and record:
+
+1. Default branch ruleset/branch protection is enabled
+2. Required status checks exactly match `docs/required_status_checks.json`
+3. PR review requirements are enabled (minimum approvals and stale review dismissal)
+4. Force push/deletion restrictions are enabled
+5. Bypass list is explicitly reviewed and limited
+6. `tooling/verify_github_branch_protection.py` report captured
+
+Evidence to attach in PR/release notes:
+
+1. `artifacts/github_branch_protection_report.json`
+2. link or screenshot of GitHub ruleset configuration
+3. last successful run IDs for `policy-bundle-governance` and `runtime_canary`

@@ -64,16 +64,17 @@ Main gaps:
 Criteria scoring:
 
 1. Time-to-first-success measured and improved: 0.55
-2. Docs/examples parity-validated: 0.70
-3. Environment promotion flow documented/reproducible: 0.50
+2. Docs/examples parity-validated: 0.78
+3. Environment promotion flow documented/reproducible: 0.65
 4. OSS baseline without paid SaaS: 1.00
 
-Pillar completion: 69%
+Pillar completion: 75%
 
 Main gaps:
 
 1. DX metrics trend and initial SLO evaluation are now in place, but thresholds still need progressive hardening.
 2. Preview/promote environment UX is not yet formalized end-to-end.
+3. Production release evidence automation is documented, but still split across workflow artifacts rather than a single cross-workflow gate.
 
 ## Overall Completion
 
@@ -84,8 +85,8 @@ Computation:
 1. Durability: 73%
 2. Contracts/artifacts/promotion: 63%
 3. Policy/tenancy: 92%
-4. DX/distribution: 69%
-5. Overall average: 75%
+4. DX/distribution: 75%
+5. Overall average: 76%
 
 ## What Is Missing Next (Priority Order)
 
@@ -98,3 +99,4 @@ Computation:
 
 1. LangGraph remains optional integration surface and is not scored as a mandatory core pillar.
 2. Score reflects strategic target alignment, not capability coverage (which is already high).
+3. Production operations baseline is now explicitly documented in docs/PRODUCTION_READINESS.md.

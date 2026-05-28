@@ -123,6 +123,11 @@ Governance evidence now also includes an executive rollup artifact per governanc
   - `artifacts/runtime_governance_executive_summary.json`
   - `artifacts/runtime_governance_executive_summary.md`
 
+Production operations guidance:
+
+1. `docs/PRODUCTION_READINESS.md` defines release go/no-go criteria and accepted exception handling
+2. `docs/GITHUB_RULESET_RUNBOOK.md` is mandatory when branch-protection API checks return `unverified`
+
 ## Global Hardening Progress
 
 Current status for the active hardening wave:
@@ -171,3 +176,14 @@ references in the binding YAML).
 | `cognitive_hints type not in vocabulary` | Invalid cognitive type | Use types from `vocabulary/cognitive_types.yaml` |
 | `VALIDATION FAILED` | Missing required YAML field or invalid status | Check validator output for specific file and field |
 | `SkillNotFoundError` | CLI `run` command expects skill IDs, not capability IDs | Use `test_capabilities_batch.py` for individual capabilities |
+
+---
+
+## 6. Production triage quick map
+
+| Signal | Primary artifact | Typical root cause | Action |
+|--------|------------------|--------------------|--------|
+| `policy-bundle-governance` failed | `artifacts/governance_executive_summary.json` | policy manifest/schema drift, required-check mismatch, workflow drift | Fix failing verifier first, then rerun CI |
+| `runtime_canary` failed | `artifacts/runtime_governance_executive_summary.json` | durability, tenant isolation, shadow parity, promotion readiness regression | Fix runtime safety regression before merge |
+| executive summary `unverified` | `artifacts/governance_executive_summary.json` | GitHub API token/permission visibility gap | Validate via `docs/GITHUB_RULESET_RUNBOOK.md` and record evidence |
+| CI trend SLO warnings/breaches | `artifacts/critical_ci_trend_slo_report.json` | repeated instability in critical jobs | prioritize flaky/failing job stabilization and tighten thresholds gradually |
