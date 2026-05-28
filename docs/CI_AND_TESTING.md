@@ -113,6 +113,18 @@ Smoke workflow also includes CI trend observability:
   - `CI_TREND_SLO_MIN_PASS_RATE`
   - `CI_TREND_SLO_MIN_SAMPLES`
 
+Smoke workflow also includes a final cross-workflow release gate:
+
+1. `release_readiness_gate` consolidates job outcomes and key artifacts into one decision
+2. Uses `tooling/generate_release_readiness_gate.py`
+3. Publishes:
+  - `artifacts/release_readiness_gate_report.json`
+  - `artifacts/release_readiness_gate_summary.md`
+4. Decision semantics:
+  - `go`: no blocking failures
+  - `conditional-go`: only medium-severity failures/warnings
+  - `no-go`: one or more high-severity failures
+
 Governance evidence now also includes an executive rollup artifact per governance run:
 
 1. `tooling/generate_governance_executive_summary.py` consolidates governance reports into one JSON + Markdown summary
@@ -127,6 +139,7 @@ Production operations guidance:
 
 1. `docs/PRODUCTION_READINESS.md` defines release go/no-go criteria and accepted exception handling
 2. `docs/GITHUB_RULESET_RUNBOOK.md` is mandatory when branch-protection API checks return `unverified`
+3. `docs/PRODUCT_100_EXECUTION_PLAN.md` tracks the remaining work to reach strict 100% completion
 
 ## Global Hardening Progress
 

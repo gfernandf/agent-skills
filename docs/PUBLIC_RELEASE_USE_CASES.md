@@ -211,6 +211,7 @@ Evidence:
 
 1. `artifacts/governance_executive_summary.json`
 2. `artifacts/runtime_governance_executive_summary.json`
+3. `artifacts/release_readiness_gate_report.json`
 
 ### UC-10: Operator readiness for incidents
 
@@ -251,8 +252,9 @@ Attach this package to release notes/PR:
 1. CI run URL(s) for `policy-bundle-governance`, `runtime_canary`, `ci_stability_trend`, and `dx_metrics`
 2. Governance executive summary artifacts
 3. Runtime governance executive summary artifacts
-4. Registry validation sequence output
-5. Branch protection verification evidence (API report or UI proof)
+4. Release readiness gate artifact
+5. Registry validation sequence output
+6. Branch protection verification evidence (API report or UI proof)
 
 ## 5. Cross References
 
@@ -260,3 +262,4 @@ Attach this package to release notes/PR:
 2. `docs/CI_AND_TESTING.md`
 3. `docs/GITHUB_RULESET_RUNBOOK.md`
 4. `docs/OPA_POLICY_BUNDLE_LIFECYCLE.md`
+5. `docs/PRODUCT_100_EXECUTION_PLAN.md`

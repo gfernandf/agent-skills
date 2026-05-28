@@ -850,3 +850,92 @@ jobs:
           with open(Path(__import__('os').environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
               f.write('\n'.join(lines) + '\n')
           PY
+
+  release_readiness_gate:
+    needs:
+      - pin_drift_guard
+      - smoke
+      - contracts
+      - registry_consistency
+      - openapi_verification
+      - runtime_canary
+      - dx_metrics
+      - ci_stability_trend
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RELEASE_GATE_ALLOW_TREND_UNVERIFIED: "true"
+      RELEASE_GATE_ALLOW_MISSING_RUNTIME_EXEC_SUMMARY: "false"
+      NEEDS_CONTEXT_JSON: ${{ toJson(needs) }}
+
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download smoke artifact
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: smoke-report
+          path: artifacts
+
+      - name: Download runtime canary artifact
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: runtime-canary-report
+          path: artifacts
+
+      - name: Download DX metrics artifact
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: dx-metrics-report
+          path: artifacts
+
+      - name: Download critical CI trend artifact
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: critical-ci-trend-report
+          path: artifacts
+
+      - name: Evaluate consolidated release readiness gate
+        if: always()
+        run: |
+          ARGS="--needs-json '${NEEDS_CONTEXT_JSON}' --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --fail-on-no-go"
+          if [ "${RELEASE_GATE_ALLOW_TREND_UNVERIFIED}" = "true" ]; then
+            ARGS="$ARGS --allow-trend-unverified"
+          fi
+          if [ "${RELEASE_GATE_ALLOW_MISSING_RUNTIME_EXEC_SUMMARY}" = "true" ]; then
+            ARGS="$ARGS --allow-missing-runtime-executive-summary"
+          fi
+          python tooling/generate_release_readiness_gate.py ${ARGS}
+
+      - name: Publish release readiness artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-readiness-gate-report
+          path: |
+            artifacts/release_readiness_gate_report.json
+            artifacts/release_readiness_gate_summary.md
+
+      - name: Append release readiness summary
+        if: always()
+        run: |
+          if [ -f artifacts/release_readiness_gate_summary.md ]; then
+            cat artifacts/release_readiness_gate_summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi

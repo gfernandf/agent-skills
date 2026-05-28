@@ -91,7 +91,8 @@ Attach at least:
 2. `policy-bundle-governance-report` artifact
 3. `runtime-canary-report` artifact
 4. `critical-ci-trend-report` artifact
-5. If applicable, screenshot/export of GitHub ruleset settings for target branch
+5. `release-readiness-gate-report` artifact
+6. If applicable, screenshot/export of GitHub ruleset settings for target branch
 
 ## 5. Incident Response Triggers
 
@@ -122,6 +123,7 @@ Immediate actions:
 3. `docs/BRANCH_PROTECTION_POLICY.md`
 4. `docs/GITHUB_RULESET_RUNBOOK.md`
 5. `docs/PUBLIC_RELEASE_USE_CASES.md`
+6. `docs/PRODUCT_100_EXECUTION_PLAN.md`
 
 ## 8. Clarification: What "External Operational Closure" Means
 
