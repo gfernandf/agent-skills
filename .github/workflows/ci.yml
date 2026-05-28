@@ -268,6 +268,27 @@ jobs:
           python tooling/verify_github_branch_protection.py --report-file artifacts/github_branch_protection_report.json
           python tooling/verify_workflow_embedded_python.py --report-file artifacts/workflow_embedded_python_report.json
 
+      - name: Generate governance executive summary
+        if: always()
+        run: |
+          python tooling/generate_governance_executive_summary.py \
+            --title "Governance Executive Summary (CI Policy Bundle Governance)" \
+            --input-report artifacts/policy_bundle_lifecycle_report.json \
+            --input-report artifacts/policy_gate_freshness_report.json \
+            --input-report artifacts/branch_protection_policy_report.json \
+            --input-report artifacts/required_status_checks_consistency_report.json \
+            --input-report artifacts/github_branch_protection_report.json \
+            --input-report artifacts/workflow_embedded_python_report.json \
+            --report-file artifacts/governance_executive_summary.json \
+            --markdown-file artifacts/governance_executive_summary.md
+
+      - name: Append governance executive summary
+        if: always()
+        run: |
+          if [ -f artifacts/governance_executive_summary.md ]; then
+            cat artifacts/governance_executive_summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Upload policy bundle governance report
         if: always()
         uses: actions/upload-artifact@v4
@@ -280,3 +301,5 @@ jobs:
             artifacts/required_status_checks_consistency_report.json
             artifacts/github_branch_protection_report.json
             artifacts/workflow_embedded_python_report.json
+            artifacts/governance_executive_summary.json
+            artifacts/governance_executive_summary.md

@@ -458,6 +458,20 @@ jobs:
         run: |
           python tooling/verify_policy_promotion_readiness.py --report-file artifacts/policy_promotion_readiness_report.json --verify-report-file artifacts/policy_promotion_readiness_verify_report.json --require-passed --require-dev-to-staging-ready --require-staging-to-prod-automated-ready
 
+      - name: Generate runtime governance executive summary
+        if: always()
+        run: |
+          python tooling/generate_governance_executive_summary.py \
+            --title "Governance Executive Summary (Runtime Canary)" \
+            --input-report artifacts/durability_contract_report.json \
+            --input-report artifacts/policy_shadow_report.json \
+            --input-report artifacts/tenant_isolation_matrix_report.json \
+            --input-report artifacts/policy_bundle_lifecycle_report.json \
+            --input-report artifacts/policy_promotion_readiness_report.json \
+            --input-report artifacts/policy_promotion_readiness_verify_report.json \
+            --report-file artifacts/runtime_governance_executive_summary.json \
+            --markdown-file artifacts/runtime_governance_executive_summary.md
+
       - name: Publish runtime canary artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -473,6 +487,8 @@ jobs:
             artifacts/policy_bundle_lifecycle_report.json
             artifacts/policy_promotion_readiness_report.json
             artifacts/policy_promotion_readiness_verify_report.json
+            artifacts/runtime_governance_executive_summary.json
+            artifacts/runtime_governance_executive_summary.md
             artifacts/runtime_coverage.json
             artifacts/skill_executability.json
 

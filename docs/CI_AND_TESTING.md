@@ -113,6 +113,16 @@ Smoke workflow also includes CI trend observability:
   - `CI_TREND_SLO_MIN_PASS_RATE`
   - `CI_TREND_SLO_MIN_SAMPLES`
 
+Governance evidence now also includes an executive rollup artifact per governance run:
+
+1. `tooling/generate_governance_executive_summary.py` consolidates governance reports into one JSON + Markdown summary
+2. CI governance job publishes:
+  - `artifacts/governance_executive_summary.json`
+  - `artifacts/governance_executive_summary.md`
+3. Runtime canary publishes:
+  - `artifacts/runtime_governance_executive_summary.json`
+  - `artifacts/runtime_governance_executive_summary.md`
+
 ## Global Hardening Progress
 
 Current status for the active hardening wave:
