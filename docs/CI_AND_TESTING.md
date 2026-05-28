@@ -96,6 +96,8 @@ Runtime canary in `smoke.yml` also emits policy promotion readiness evidence:
 
 1. `artifacts/policy_promotion_readiness_report.json`
 2. Includes automated readiness for `dev_to_staging` and `staging_to_prod`
+3. `tooling/verify_policy_promotion_readiness.py` enforces the report contract and readiness conditions in `runtime_canary`
+4. Verification output is published as `artifacts/policy_promotion_readiness_verify_report.json`
 
 ### agent-skill-registry — `validate.yml`
 

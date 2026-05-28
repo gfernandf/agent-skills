@@ -453,6 +453,10 @@ jobs:
         run: |
           python tooling/generate_policy_promotion_readiness.py --manifest-file policies/opa/bundle_manifest.json --artifacts-dir artifacts --report-file artifacts/policy_promotion_readiness_report.json
 
+      - name: Verify policy promotion readiness report
+        run: |
+          python tooling/verify_policy_promotion_readiness.py --report-file artifacts/policy_promotion_readiness_report.json --verify-report-file artifacts/policy_promotion_readiness_verify_report.json --require-passed --require-dev-to-staging-ready --require-staging-to-prod-automated-ready
+
       - name: Publish runtime canary artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -467,6 +471,7 @@ jobs:
             artifacts/tenant_isolation_matrix_report.json
             artifacts/policy_bundle_lifecycle_report.json
             artifacts/policy_promotion_readiness_report.json
+            artifacts/policy_promotion_readiness_verify_report.json
             artifacts/runtime_coverage.json
             artifacts/skill_executability.json
 
