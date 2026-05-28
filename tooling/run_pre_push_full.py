@@ -52,6 +52,7 @@ def _build_steps(args: argparse.Namespace) -> list[list[str]]:
         ["tooling/run_cognitive_quality_gates.py"],
         ["tooling/verify_policy_gate_freshness.py"],
         ["tooling/verify_branch_protection_policy.py"],
+        ["tooling/verify_workflow_embedded_python.py"],
     ]
 
     if not args.skip_customer_facing:

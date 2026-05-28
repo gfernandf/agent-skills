@@ -84,8 +84,9 @@ Includes a dedicated policy governance gate:
 1. `policy-bundle-governance` runs `tooling/verify_policy_bundle_lifecycle.py`
 2. Also runs `tooling/verify_policy_gate_freshness.py` to ensure CI/smoke workflow enforcement does not drift
 3. Also runs `tooling/verify_branch_protection_policy.py` to verify required branch-protection check policy remains documented and aligned with workflows
-4. Enforces tenant-scope and environment promotion controls in `policies/opa/bundle_manifest.json`
-5. Publishes `artifacts/policy_bundle_lifecycle_report.json`, `artifacts/policy_gate_freshness_report.json`, and `artifacts/branch_protection_policy_report.json` as CI evidence
+4. Also runs `tooling/verify_workflow_embedded_python.py` to syntax-check embedded `python - << 'PY'` blocks in workflow files
+5. Enforces tenant-scope and environment promotion controls in `policies/opa/bundle_manifest.json`
+6. Publishes `artifacts/policy_bundle_lifecycle_report.json`, `artifacts/policy_gate_freshness_report.json`, `artifacts/branch_protection_policy_report.json`, and `artifacts/workflow_embedded_python_report.json` as CI evidence
 
 Schema validation in `security` job also validates the formal policy bundle manifest schema:
 
