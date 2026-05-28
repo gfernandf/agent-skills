@@ -87,7 +87,7 @@ Done criteria:
 
 Status:
 
-1. Not started
+1. In progress (lineage artifact generation and CI completeness validation now integrated in release gate job; schema hardening and broader provenance coverage still pending)
 
 ### Phase C — Unified Lineage for Contracts/Artifacts/Promotion
 

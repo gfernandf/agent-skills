@@ -17,6 +17,7 @@ Runtime for composable AI agent skills — deterministic execution of capability
 - **Release Use Cases:** [Public Release Use Cases](PUBLIC_RELEASE_USE_CASES.md)
 - **100% Plan:** [Product 100% Completion Plan](PRODUCT_100_EXECUTION_PLAN.md)
 - **Release Exceptions:** [Release Exceptions Policy](RELEASE_EXCEPTIONS_POLICY.md)
+- **Release Lineage:** [Release Lineage Model](RELEASE_LINEAGE_MODEL.md)
 - **Target Architecture RFCs:** [RFC-0001](rfcs/RFC-0001-ORCA-RUNTIME-BLUEPRINT.md) · [RFC-0002](rfcs/RFC-0002-DURABLE-EXECUTION-STATE-MACHINE.md) · [RFC-0003](rfcs/RFC-0003-SIDE-EFFECT-LEDGER-AND-REPLAY-SAFETY.md) · [RFC-0004](rfcs/RFC-0004-RUNTIME-APIS-AND-EVENT-CONTRACT.md) · [RFC-0005](rfcs/RFC-0005-INTEGRATION-PSEUDOCODE-AND-MIGRATION.md) · [RFC-0006](rfcs/RFC-0006-LEGACY-RETIREMENT-MATRIX.md) · [RFC-0007](rfcs/RFC-0007-OSS-FIRST-TARGET-ARCH-EXECUTION.md)
 - **Progress:** [Target Architecture Progress Snapshot](TARGET_ARCH_PROGRESS.md)
 - **Readiness:** [Target Architecture Merge Readiness](TARGET_ARCH_MERGE_READINESS.md)

@@ -933,6 +933,11 @@ jobs:
           fi
           python tooling/generate_release_readiness_gate.py ${ARGS}
 
+      - name: Generate release lineage artifact
+        if: always()
+        run: |
+          python tooling/generate_release_lineage.py --needs-json '${NEEDS_CONTEXT_JSON}' --artifacts-dir artifacts --report-file artifacts/release_lineage.json --markdown-file artifacts/release_lineage.md --fail-on-incomplete
+
       - name: Publish release readiness artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -941,10 +946,15 @@ jobs:
           path: |
             artifacts/release_readiness_gate_report.json
             artifacts/release_readiness_gate_summary.md
+            artifacts/release_lineage.json
+            artifacts/release_lineage.md
 
       - name: Append release readiness summary
         if: always()
         run: |
           if [ -f artifacts/release_readiness_gate_summary.md ]; then
             cat artifacts/release_readiness_gate_summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f artifacts/release_lineage.md ]; then
+            cat artifacts/release_lineage.md >> "$GITHUB_STEP_SUMMARY"
           fi

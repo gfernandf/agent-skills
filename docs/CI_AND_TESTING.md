@@ -130,6 +130,9 @@ Smoke workflow also includes a final cross-workflow release gate:
 6. Optional temporary exceptions:
   - if `.github/release_exceptions.json` exists, gate reads approved temporary exceptions
   - exception format and governance rules are documented in `docs/RELEASE_EXCEPTIONS_POLICY.md`
+7. Lineage artifact:
+  - `tooling/generate_release_lineage.py` builds `artifacts/release_lineage.json` and `artifacts/release_lineage.md`
+  - completeness validation runs in CI with `--fail-on-incomplete`
 
 Governance evidence now also includes an executive rollup artifact per governance run:
 

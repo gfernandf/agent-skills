@@ -92,7 +92,8 @@ Attach at least:
 3. `runtime-canary-report` artifact
 4. `critical-ci-trend-report` artifact
 5. `release-readiness-gate-report` artifact
-6. If applicable, screenshot/export of GitHub ruleset settings for target branch
+6. `release_lineage` artifact (`artifacts/release_lineage.json`)
+7. If applicable, screenshot/export of GitHub ruleset settings for target branch
 
 ## 5. Incident Response Triggers
 
@@ -124,6 +125,7 @@ Immediate actions:
 4. `docs/GITHUB_RULESET_RUNBOOK.md`
 5. `docs/PUBLIC_RELEASE_USE_CASES.md`
 6. `docs/PRODUCT_100_EXECUTION_PLAN.md`
+7. `docs/RELEASE_LINEAGE_MODEL.md`
 
 ## 8. Clarification: What "External Operational Closure" Means
 
