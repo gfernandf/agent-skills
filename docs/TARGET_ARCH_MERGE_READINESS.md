@@ -53,7 +53,22 @@ Evidence:
 1. tooling/verify_policy_shadow_mode.py
 2. tooling/verify_tenant_isolation_matrix.py
 3. tooling/verify_policy_bundle_lifecycle.py
-4. runtime canary integration in .github/workflows/smoke.yml
+4. tooling/verify_branch_protection_policy.py
+5. runtime canary integration in .github/workflows/smoke.yml
+
+### 6) Branch protection governance
+
+Status: Partial (in-repo policy/verifier complete, GitHub settings still operational)
+
+Evidence:
+
+1. docs/BRANCH_PROTECTION_POLICY.md
+2. tooling/verify_branch_protection_policy.py
+3. policy-bundle-governance job integration in .github/workflows/ci.yml
+
+Remaining:
+
+1. Enforce branch/ruleset settings in GitHub repository configuration (outside repo code).
 
 ### 5) Explicit non-goals
 

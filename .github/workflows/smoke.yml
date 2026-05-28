@@ -448,6 +448,10 @@ jobs:
               raise SystemExit(f"Skill executability ratio below 1.0: {executability_ratio}")
           PY
 
+      - name: Generate policy promotion readiness report
+        run: |
+          python tooling/generate_policy_promotion_readiness.py --manifest-file policies/opa/bundle_manifest.json --artifacts-dir artifacts --report-file artifacts/policy_promotion_readiness_report.json
+
       - name: Publish runtime canary artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -461,6 +465,7 @@ jobs:
             artifacts/policy_shadow_report.json
             artifacts/tenant_isolation_matrix_report.json
             artifacts/policy_bundle_lifecycle_report.json
+            artifacts/policy_promotion_readiness_report.json
             artifacts/runtime_coverage.json
             artifacts/skill_executability.json
 
@@ -480,6 +485,7 @@ jobs:
           policy_path = Path('artifacts/policy_shadow_report.json')
           tenant_path = Path('artifacts/tenant_isolation_matrix_report.json')
           bundle_path = Path('artifacts/policy_bundle_lifecycle_report.json')
+          promotion_path = Path('artifacts/policy_promotion_readiness_report.json')
 
           if coverage_path.exists():
               coverage = json.loads(coverage_path.read_text(encoding='utf-8'))
@@ -532,6 +538,26 @@ jobs:
               )
           else:
               lines.append('- Policy bundle lifecycle: report missing')
+
+            if promotion_path.exists():
+              promotion = json.loads(promotion_path.read_text(encoding='utf-8'))
+              p_summary = promotion.get('summary', {})
+              envs = promotion.get('environments', {})
+              d2s = envs.get('dev_to_staging', {}) if isinstance(envs, dict) else {}
+              s2p = envs.get('staging_to_prod', {}) if isinstance(envs, dict) else {}
+              lines.append(
+                f"- Policy promotion readiness: {promotion.get('status', 'unknown')} "
+                f"(canary_ratio={p_summary.get('runtime_canary_pass_ratio', 'n/a')})"
+              )
+              lines.append(
+                f"- Dev→Staging ready: {d2s.get('ready', 'n/a')}"
+              )
+              lines.append(
+                f"- Staging→Prod automated ready: {s2p.get('automated_ready', 'n/a')} "
+                f"(required_approvals={s2p.get('required_approvals', 'n/a')})"
+              )
+            else:
+              lines.append('- Policy promotion readiness: report missing')
 
           for log_name in [
               'binding_fallback.log',

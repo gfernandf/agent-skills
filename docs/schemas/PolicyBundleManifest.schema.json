@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-skills://schemas/PolicyBundleManifest",
+  "title": "PolicyBundleManifest",
+  "description": "Contract for OPA policy bundle manifest used by staged rollout governance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_name",
+    "bundle_version",
+    "policy_package",
+    "decision_path",
+    "compatibility",
+    "tenant_scope",
+    "promotion_policy",
+    "ownership"
+  ],
+  "properties": {
+    "bundle_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "policy_package": {
+      "type": "string",
+      "const": "orca.policy.pre"
+    },
+    "decision_path": {
+      "type": "string",
+      "const": "/v1/data/orca/policy/pre"
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_adapter",
+        "input_contract",
+        "output_contract"
+      ],
+      "properties": {
+        "external_adapter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_contract": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output_contract": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "tenant_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "tenant_selection",
+        "cross_tenant_allowed"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "shared_with_tenant_constraints",
+            "tenant_scoped"
+          ]
+        },
+        "tenant_selection": {
+          "type": "string",
+          "const": "context_tenant_only"
+        },
+        "cross_tenant_allowed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "promotion_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_reviews",
+        "enforce_requires_shadow_validation",
+        "require_bundle_version_bump",
+        "environment_promotion"
+      ],
+      "properties": {
+        "required_reviews": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "enforce_requires_shadow_validation": {
+          "type": "boolean",
+          "const": true
+        },
+        "require_bundle_version_bump": {
+          "type": "boolean",
+          "const": true
+        },
+        "environment_promotion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "rules"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "dev",
+                  "staging",
+                  "prod"
+                ]
+              },
+              "minItems": 3,
+              "maxItems": 3,
+              "prefixItems": [
+                {
+                  "const": "dev"
+                },
+                {
+                  "const": "staging"
+                },
+                {
+                  "const": "prod"
+                }
+              ]
+            },
+            "rules": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "dev_to_staging",
+                "staging_to_prod"
+              ],
+              "properties": {
+                "dev_to_staging": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "require_shadow_parity",
+                    "min_runtime_canary_pass_ratio"
+                  ],
+                  "properties": {
+                    "require_shadow_parity": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "min_runtime_canary_pass_ratio": {
+                      "type": "number",
+                      "minimum": 1.0
+                    }
+                  }
+                },
+                "staging_to_prod": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "require_shadow_parity",
+                    "min_runtime_canary_pass_ratio",
+                    "required_approvals"
+                  ],
+                  "properties": {
+                    "require_shadow_parity": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "min_runtime_canary_pass_ratio": {
+                      "type": "number",
+                      "minimum": 1.0
+                    },
+                    "required_approvals": {
+                      "type": "integer",
+                      "minimum": 2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "team",
+        "review_required"
+      ],
+      "properties": {
+        "team": {
+          "type": "string",
+          "minLength": 1
+        },
+        "review_required": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

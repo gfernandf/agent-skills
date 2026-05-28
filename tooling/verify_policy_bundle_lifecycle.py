@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_BUNDLE_ROOT = ROOT / "policies" / "opa"
 DEFAULT_REPORT = ROOT / "artifacts" / "policy_bundle_lifecycle_report.json"
+DEFAULT_SCHEMA_PATH = ROOT / "docs" / "schemas" / "PolicyBundleManifest.schema.json"
 
 
 def _parse_args() -> argparse.Namespace:
@@ -59,6 +60,7 @@ def main() -> int:
     bundle_root = args.bundle_root
     manifest_path = bundle_root / "bundle_manifest.json"
     rego_path = bundle_root / "policy_pre.rego"
+    schema_path = DEFAULT_SCHEMA_PATH
 
     checks.append(
         _check(bundle_root.exists(), "bundle_root_exists", str(bundle_root))
@@ -67,14 +69,57 @@ def main() -> int:
         _check(manifest_path.exists(), "bundle_manifest_exists", str(manifest_path))
     )
     checks.append(_check(rego_path.exists(), "policy_rego_exists", str(rego_path)))
+    checks.append(_check(schema_path.exists(), "manifest_schema_exists", str(schema_path)))
 
     manifest: dict[str, object] = {}
+    schema: dict[str, object] = {}
     if manifest_path.exists():
         try:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             checks.append(_check(True, "manifest_json_valid", "valid json"))
         except Exception as exc:
             checks.append(_check(False, "manifest_json_valid", f"invalid json: {exc}"))
+
+    if schema_path.exists():
+        try:
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+            checks.append(_check(True, "manifest_schema_json_valid", "valid json"))
+        except Exception as exc:
+            checks.append(
+                _check(False, "manifest_schema_json_valid", f"invalid json: {exc}")
+            )
+
+    if manifest and schema:
+        try:
+            import jsonschema
+        except ImportError:
+            checks.append(
+                _check(
+                    False,
+                    "manifest_schema_dependency_jsonschema",
+                    "jsonschema package not installed",
+                )
+            )
+        else:
+            try:
+                jsonschema.Draft202012Validator.check_schema(schema)
+                checks.append(_check(True, "manifest_schema_meta_valid", "valid schema"))
+            except jsonschema.SchemaError as exc:
+                message = str(exc).splitlines()[0] if str(exc) else "schema error"
+                checks.append(_check(False, "manifest_schema_meta_valid", message))
+
+            try:
+                jsonschema.validate(manifest, schema)
+                checks.append(
+                    _check(
+                        True,
+                        "manifest_schema_conformance",
+                        "manifest conforms to schema",
+                    )
+                )
+            except jsonschema.ValidationError as exc:
+                message = str(exc).splitlines()[0] if str(exc) else "validation error"
+                checks.append(_check(False, "manifest_schema_conformance", message))
 
     if manifest:
         bundle_version = manifest.get("bundle_version")

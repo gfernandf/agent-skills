@@ -34,6 +34,11 @@ Expected files under `policies/opa`:
 6. `tenant_scope` block
 7. `promotion_policy` block
 
+Formal schema:
+
+1. `docs/schemas/PolicyBundleManifest.schema.json`
+2. `tooling/verify_policy_bundle_lifecycle.py` validates manifest conformance against this schema
+
 Required governance fields:
 
 1. `tenant_scope.mode` in `{shared_with_tenant_constraints, tenant_scoped}`
@@ -70,6 +75,13 @@ Report fields:
 2. summary.total/passed/failed/pass_ratio
 3. checks[]
 4. contract (`opa_policy_bundle_lifecycle_v2`)
+
+Promotion-readiness evidence (runtime canary):
+
+1. `artifacts/policy_promotion_readiness_report.json`
+2. contract: `policy_promotion_readiness_v1`
+3. Includes `dev_to_staging.ready` and `staging_to_prod.automated_ready`
+4. `staging_to_prod.required_approvals` remains an operational branch-protection control in GitHub settings
 
 ## Rollout Intention
 
