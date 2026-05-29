@@ -11,6 +11,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REPORT = ROOT / "artifacts" / "release_lineage.json"
 DEFAULT_MARKDOWN = ROOT / "artifacts" / "release_lineage.md"
+LINEAGE_CONTRACT = "release_lineage_v1"
+LINEAGE_SCHEMA_VERSION = "1.1"
 
 
 def _parse_args() -> argparse.Namespace:
@@ -106,6 +108,7 @@ def main() -> int:
         )
 
     artifacts_dir = args.artifacts_dir
+    required_job_results: dict[str, str] = {}
 
     required_jobs = [
         "pin_drift_guard",
@@ -151,6 +154,7 @@ def main() -> int:
     for job in required_jobs:
         item = needs.get(job) if isinstance(needs, dict) else None
         result = item.get("result") if isinstance(item, dict) else "unknown"
+        required_job_results[job] = str(result)
         status = "passed" if result == "success" else "failed"
         nodes.append(_node(f"job.{job}", "job", status, {"result": result}))
         edges.append(_edge("source.workflow.smoke_verification", f"job.{job}", "triggers"))
@@ -221,6 +225,69 @@ def main() -> int:
                 node["metadata"]["gate_status"] = gate_data.get("status")
                 break
 
+    node_ids = [str(node.get("id", "")) for node in nodes]
+    node_id_set = set(node_ids)
+    completeness_checks.append(
+        {
+            "check_id": "node_ids_unique",
+            "passed": len(node_ids) == len(node_id_set),
+            "detail": f"count={len(node_ids)} unique={len(node_id_set)}",
+        }
+    )
+
+    required_node_types = {"source", "job", "artifact", "decision"}
+    observed_node_types = {str(node.get("type", "")).strip() for node in nodes}
+    missing_node_types = sorted(required_node_types - observed_node_types)
+    completeness_checks.append(
+        {
+            "check_id": "required_node_types_present",
+            "passed": not missing_node_types,
+            "detail": "present" if not missing_node_types else f"missing={missing_node_types}",
+        }
+    )
+
+    missing_edge_refs: list[str] = []
+    for edge in edges:
+        source = str(edge.get("source", ""))
+        target = str(edge.get("target", ""))
+        if source not in node_id_set:
+            missing_edge_refs.append(f"source:{source}")
+        if target not in node_id_set:
+            missing_edge_refs.append(f"target:{target}")
+    completeness_checks.append(
+        {
+            "check_id": "edges_reference_existing_nodes",
+            "passed": not missing_edge_refs,
+            "detail": "ok" if not missing_edge_refs else f"missing_refs={missing_edge_refs[:10]}",
+        }
+    )
+
+    if gate_error is None and gate_data is not None:
+        gate_contract = gate_data.get("contract")
+        gate_decision = str(gate_data.get("decision", "")).strip().lower()
+        gate_status = str(gate_data.get("status", "")).strip().lower()
+        completeness_checks.append(
+            {
+                "check_id": "release_gate_contract_expected",
+                "passed": gate_contract == "release_readiness_gate_v1",
+                "detail": f"contract={gate_contract}",
+            }
+        )
+        completeness_checks.append(
+            {
+                "check_id": "release_gate_decision_known",
+                "passed": gate_decision in {"go", "conditional-go", "no-go"},
+                "detail": f"decision={gate_decision or 'unknown'}",
+            }
+        )
+        completeness_checks.append(
+            {
+                "check_id": "release_gate_status_known",
+                "passed": gate_status in {"passed", "failed"},
+                "detail": f"status={gate_status or 'unknown'}",
+            }
+        )
+
     required_edges = [
         ("job.runtime_canary", "artifact.runtime_exec_summary"),
         ("job.ci_stability_trend", "artifact.critical_ci_trend_slo"),
@@ -242,14 +309,45 @@ def main() -> int:
     total = len(completeness_checks)
     failed = total - passed
 
+    node_type_counts: dict[str, int] = {}
+    for node in nodes:
+        node_type = str(node.get("type", "unknown"))
+        node_type_counts[node_type] = node_type_counts.get(node_type, 0) + 1
+
+    edge_relation_counts: dict[str, int] = {}
+    for edge in edges:
+        relation = str(edge.get("relation", "unknown"))
+        edge_relation_counts[relation] = edge_relation_counts.get(relation, 0) + 1
+
+    present_required_jobs = sum(
+        1 for job in required_jobs if isinstance(needs, dict) and isinstance(needs.get(job), dict)
+    )
+
+    provenance = {
+        "schema_version": LINEAGE_SCHEMA_VERSION,
+        "generator": "tooling/generate_release_lineage.py",
+        "source_workflow": ".github/workflows/smoke.yml",
+        "artifacts_dir": str(artifacts_dir),
+        "required_jobs": {
+            "total": len(required_jobs),
+            "present_in_needs": present_required_jobs,
+            "results": required_job_results,
+        },
+    }
+
     report = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "contract": "release_lineage_v1",
+        "contract": LINEAGE_CONTRACT,
         "status": "passed" if failed == 0 else "failed",
+        "provenance": provenance,
         "summary": {
             "total_checks": total,
             "passed_checks": passed,
             "failed_checks": failed,
+            "nodes_total": len(nodes),
+            "edges_total": len(edges),
+            "node_type_counts": node_type_counts,
+            "edge_relation_counts": edge_relation_counts,
         },
         "lineage": {
             "nodes": nodes,
@@ -263,6 +361,7 @@ def main() -> int:
     lines = [
         "## Release Lineage",
         "",
+        f"- Contract: {report['contract']} (schema {LINEAGE_SCHEMA_VERSION})",
         f"- Status: {report['status']}",
         f"- Completeness checks: {passed}/{total}",
         f"- Nodes: {len(nodes)}",

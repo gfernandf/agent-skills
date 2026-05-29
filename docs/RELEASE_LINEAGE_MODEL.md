@@ -1,7 +1,7 @@
 # Release Lineage Model
 
 Status: active
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 This document defines the lineage artifact generated for release decisions.
 
@@ -30,16 +30,28 @@ Producer:
 Top-level contract id:
 
 1. `release_lineage_v1`
+2. schema version `1.1` in `provenance.schema_version`
 
 Top-level fields:
 
 1. `generated_at`
 2. `contract`
 3. `status`
-4. `summary`
-5. `lineage.nodes[]`
-6. `lineage.edges[]`
-7. `completeness_checks[]`
+4. `provenance`
+5. `summary`
+6. `lineage.nodes[]`
+7. `lineage.edges[]`
+8. `completeness_checks[]`
+
+`provenance` includes:
+
+1. `schema_version`
+2. `generator`
+3. `source_workflow`
+4. `artifacts_dir`
+5. `required_jobs.total`
+6. `required_jobs.present_in_needs`
+7. `required_jobs.results`
 
 ## 4. Node Types
 
@@ -65,6 +77,10 @@ The lineage generator validates minimum completeness:
 1. required jobs present in `needs`
 2. required artifacts present in downloaded outputs
 3. required lineage edges present
+4. node ids are unique
+5. required node types are present
+6. all edge endpoints reference existing nodes
+7. release gate contract and decision/status are well-formed
 
 If `--fail-on-incomplete` is enabled, missing lineage elements fail the job.
 
