@@ -66,6 +66,12 @@ The advanced verifier covers grouped scenarios for:
 2. replay equivalence
 3. failure-injection durability paths
 
+Advanced scenario tests include:
+
+1. `runtime/test_durability_advanced.py`
+2. resume/replay durability slices from `test_neutral_api_slice2.py`
+3. scheduler resume semantics checks in `runtime/test_scheduler_functional.py`
+
 Expected summary fields:
 
 1. `status`

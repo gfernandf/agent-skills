@@ -27,6 +27,9 @@ SCENARIOS: tuple[Scenario, ...] = (
         scenario_id="restart_continuity",
         description="Resume from checkpoint preserves continuation semantics.",
         test_nodes=(
+            "runtime/test_durability_advanced.py::test_checkpoint_lineage_multi_boundary_roundtrip",
+            "runtime/test_durability_advanced.py::test_checkpoint_state_equivalence_after_partial_progress",
+            "runtime/test_durability_advanced.py::test_resume_from_waiting_signal_uses_checkpoint_pointer",
             "test_neutral_api_slice2.py::test_resume_run_executes_from_checkpoint",
             "runtime/test_step_control_flow.py::test_engine_resume_skips_completed_steps",
             "runtime/test_scheduler_functional.py::test_precompleted_steps_enable_resume",
@@ -36,6 +39,7 @@ SCENARIOS: tuple[Scenario, ...] = (
         scenario_id="replay_equivalence",
         description="Replay runs from checkpoint with deterministic linkage behavior.",
         test_nodes=(
+            "runtime/test_durability_advanced.py::test_replay_and_fork_preserve_lineage_metadata_integrity",
             "test_neutral_api_slice2.py::test_replay_run_executes_from_checkpoint",
             "test_neutral_api_slice2.py::test_replay_run_uses_unique_run_ids",
             "runtime/test_run_store.py::test_replay_run",
