@@ -1,7 +1,7 @@
 # Release Gate SLO Policy
 
 Status: active
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 This document defines the versioned policy used by the release readiness gate.
 
@@ -38,6 +38,8 @@ Policy fields per profile:
 4. `max_medium_failures`
 5. `dx_allowed_slo_statuses`
 6. `trend_allowed_slo_statuses`
+7. `durability_advanced_min_expected_scenarios`
+8. `durability_advanced_min_expected_tests`
 
 ## 4. Governance Rules
 

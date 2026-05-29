@@ -192,6 +192,8 @@ def _load_policy(path: Path | None, profile: str) -> tuple[dict[str, Any], str |
         "max_medium_failures": 0,
         "dx_allowed_slo_statuses": ["pass", "passed"],
         "trend_allowed_slo_statuses": ["pass", "passed"],
+        "durability_advanced_min_expected_scenarios": 0,
+        "durability_advanced_min_expected_tests": 0,
     }
     if path is None:
         return default_policy, None
@@ -245,6 +247,12 @@ def main() -> int:
     )
     max_high_failures = int(policy.get("max_high_failures", 0))
     max_medium_failures = int(policy.get("max_medium_failures", 0))
+    durability_advanced_min_expected_scenarios = int(
+        policy.get("durability_advanced_min_expected_scenarios", 0)
+    )
+    durability_advanced_min_expected_tests = int(
+        policy.get("durability_advanced_min_expected_tests", 0)
+    )
 
     dx_allowed_slo_statuses_raw = policy.get("dx_allowed_slo_statuses", ["pass", "passed"])
     if not isinstance(dx_allowed_slo_statuses_raw, list):
@@ -499,6 +507,26 @@ def main() -> int:
             severity="high",
             detail=f"failed_tests={failed_tests}",
         )
+        _append_check(
+            checks,
+            check_id="durability_advanced_expected_scenarios_meet_policy",
+            passed=expected_total_scenarios >= durability_advanced_min_expected_scenarios,
+            severity="high",
+            detail=(
+                f"expected_total_scenarios={expected_total_scenarios}; "
+                f"policy_min={durability_advanced_min_expected_scenarios}"
+            ),
+        )
+        _append_check(
+            checks,
+            check_id="durability_advanced_expected_tests_meet_policy",
+            passed=expected_total_tests >= durability_advanced_min_expected_tests,
+            severity="high",
+            detail=(
+                f"expected_total_tests={expected_total_tests}; "
+                f"policy_min={durability_advanced_min_expected_tests}"
+            ),
+        )
 
     promo_verify_data, promo_verify_error = _load_json(
         artifacts_dir / "policy_promotion_readiness_verify_report.json"
@@ -665,6 +693,8 @@ def main() -> int:
             "policy_profile": args.policy_profile,
             "max_high_failures": max_high_failures,
             "max_medium_failures": max_medium_failures,
+            "durability_advanced_min_expected_scenarios": durability_advanced_min_expected_scenarios,
+            "durability_advanced_min_expected_tests": durability_advanced_min_expected_tests,
             "dx_allowed_slo_statuses": sorted(dx_allowed_slo_statuses),
             "trend_allowed_slo_statuses": sorted(trend_allowed_slo_statuses),
         },

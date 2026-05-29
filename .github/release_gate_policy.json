@@ -6,6 +6,8 @@
       "allow_missing_runtime_executive_summary": false,
       "max_high_failures": 0,
       "max_medium_failures": 0,
+      "durability_advanced_min_expected_scenarios": 3,
+      "durability_advanced_min_expected_tests": 14,
       "dx_allowed_slo_statuses": ["pass", "passed"],
       "trend_allowed_slo_statuses": ["pass", "passed"]
     },
@@ -14,6 +16,8 @@
       "allow_missing_runtime_executive_summary": false,
       "max_high_failures": 0,
       "max_medium_failures": 2,
+      "durability_advanced_min_expected_scenarios": 3,
+      "durability_advanced_min_expected_tests": 14,
       "dx_allowed_slo_statuses": ["pass", "passed"],
       "trend_allowed_slo_statuses": ["pass", "passed"]
     }
