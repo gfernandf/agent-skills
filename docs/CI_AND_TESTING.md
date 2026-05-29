@@ -101,6 +101,11 @@ Runtime canary in `smoke.yml` also emits policy promotion readiness evidence:
 3. `tooling/verify_policy_promotion_readiness.py` enforces the report contract and readiness conditions in `runtime_canary`
 4. Verification output is published as `artifacts/policy_promotion_readiness_verify_report.json`
 
+Runtime canary durability evidence now includes:
+
+1. `artifacts/durability_contract_report.json` (baseline)
+2. `artifacts/durability_advanced_report.json` (restart continuity, replay equivalence, failure-injection paths)
+
 Smoke workflow also includes CI trend observability:
 
 1. `tooling/report_critical_ci_trend.py` queries recent Actions runs for critical jobs

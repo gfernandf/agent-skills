@@ -426,6 +426,7 @@ jobs:
           python tooling/verify_binding_conformance_suite.py | tee artifacts/binding_conformance_suite.log
           python tooling/verify_customer_facing_neutral.py | tee artifacts/customer_facing_neutral.log
           python tooling/verify_durability_contract.py --report-file artifacts/durability_contract_report.json
+          python tooling/verify_durability_advanced.py --report-file artifacts/durability_advanced_report.json
           python tooling/verify_policy_shadow_mode.py --report-file artifacts/policy_shadow_report.json
           python tooling/verify_tenant_isolation_matrix.py --report-file artifacts/tenant_isolation_matrix_report.json
           python tooling/verify_policy_bundle_lifecycle.py --bundle-root policies/opa --report-file artifacts/policy_bundle_lifecycle_report.json
@@ -464,6 +465,7 @@ jobs:
           python tooling/generate_governance_executive_summary.py \
             --title "Governance Executive Summary (Runtime Canary)" \
             --input-report artifacts/durability_contract_report.json \
+            --input-report artifacts/durability_advanced_report.json \
             --input-report artifacts/policy_shadow_report.json \
             --input-report artifacts/tenant_isolation_matrix_report.json \
             --input-report artifacts/policy_bundle_lifecycle_report.json \
@@ -482,6 +484,7 @@ jobs:
             artifacts/binding_conformance_suite.log
             artifacts/customer_facing_neutral.log
             artifacts/durability_contract_report.json
+            artifacts/durability_advanced_report.json
             artifacts/policy_shadow_report.json
             artifacts/tenant_isolation_matrix_report.json
             artifacts/policy_bundle_lifecycle_report.json
@@ -505,6 +508,7 @@ jobs:
           coverage_path = Path('artifacts/runtime_coverage.json')
           skills_path = Path('artifacts/skill_executability.json')
           durability_path = Path('artifacts/durability_contract_report.json')
+          durability_advanced_path = Path('artifacts/durability_advanced_report.json')
           policy_path = Path('artifacts/policy_shadow_report.json')
           tenant_path = Path('artifacts/tenant_isolation_matrix_report.json')
           bundle_path = Path('artifacts/policy_bundle_lifecycle_report.json')
@@ -531,6 +535,16 @@ jobs:
               )
           else:
               lines.append('- Durability contract: report missing')
+
+          if durability_advanced_path.exists():
+              durability_adv = json.loads(durability_advanced_path.read_text(encoding='utf-8'))
+              adv_summary = durability_adv.get('summary', {})
+              lines.append(
+                  f"- Durability advanced: {durability_adv.get('status', 'unknown')} "
+                  f"(scenarios={adv_summary.get('passed_scenarios', 'n/a')}/{adv_summary.get('total_scenarios', 'n/a')})"
+              )
+          else:
+              lines.append('- Durability advanced: report missing')
 
           if policy_path.exists():
               policy = json.loads(policy_path.read_text(encoding='utf-8'))

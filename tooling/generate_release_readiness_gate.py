@@ -438,6 +438,27 @@ def main() -> int:
             detail=f"status={status}",
         )
 
+    durability_advanced_data, durability_advanced_error = _load_json(
+        artifacts_dir / "durability_advanced_report.json"
+    )
+    if durability_advanced_error:
+        _append_check(
+            checks,
+            check_id="durability_advanced_report_present",
+            passed=False,
+            severity="high",
+            detail=durability_advanced_error,
+        )
+    else:
+        status = durability_advanced_data.get("status")
+        _append_check(
+            checks,
+            check_id="durability_advanced_status_passed",
+            passed=_status_is_pass(status),
+            severity="high",
+            detail=f"status={status}",
+        )
+
     promo_verify_data, promo_verify_error = _load_json(
         artifacts_dir / "policy_promotion_readiness_verify_report.json"
     )

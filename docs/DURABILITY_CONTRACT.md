@@ -52,12 +52,32 @@ The verifier executes canonical test nodes for:
 Durability contract report artifact:
 
 1. `artifacts/durability_contract_report.json`
+2. `artifacts/durability_advanced_report.json`
+
+Advanced durability verifier (v2 baseline+):
+
+```bash
+python tooling/verify_durability_advanced.py --report-file artifacts/durability_advanced_report.json
+```
+
+The advanced verifier covers grouped scenarios for:
+
+1. restart continuity
+2. replay equivalence
+3. failure-injection durability paths
 
 Expected summary fields:
 
 1. `status`
 2. `summary.total/passed/failed/pass_ratio`
 3. `tests[]`
+4. `failures[]`
+
+Expected advanced summary fields:
+
+1. `status`
+2. `summary.total_scenarios/passed_scenarios/failed_scenarios/scenario_pass_ratio`
+3. `scenarios[]`
 4. `failures[]`
 
 ## Out of Scope (v1)

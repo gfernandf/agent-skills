@@ -109,6 +109,7 @@ Evidence:
 1. `artifacts/durability_contract_report.json`
 2. `artifacts/policy_shadow_report.json`
 3. `artifacts/tenant_isolation_matrix_report.json`
+4. `artifacts/durability_advanced_report.json`
 
 ### UC-05: Promotion-readiness decision path
 

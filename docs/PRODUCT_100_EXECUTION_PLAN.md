@@ -115,7 +115,7 @@ Done criteria:
 
 Status:
 
-1. Not started
+1. In progress (advanced durability verifier integrated into runtime_canary and release gate; deeper temporal-grade history semantics and broader failure-injection suite still pending)
 
 ### Phase D — DX SLO Hardening and Enforcement
 
