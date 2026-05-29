@@ -13,6 +13,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+_HTTP_API_KEY = "slice3-smoke-key"
+
 
 def _run(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
     cp = subprocess.run(cmd, capture_output=True, text=True)
@@ -70,10 +72,16 @@ def _read_trace_id_from_audit(runtime_root: Path) -> str:
 
 
 def _http_json(
-    url: str, *, method: str = "GET", body: dict[str, Any] | None = None
+    url: str,
+    *,
+    method: str = "GET",
+    body: dict[str, Any] | None = None,
+    api_key: str | None = None,
 ) -> tuple[int, dict[str, Any]]:
     data = None
     headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["x-api-key"] = api_key
     if body is not None:
         data = json.dumps(body).encode("utf-8")
 
@@ -105,6 +113,8 @@ def _start_http_server(
         str(registry_root),
         "--host-root",
         str(host_root),
+        "--api-key",
+        _HTTP_API_KEY,
     ]
 
     proc = subprocess.Popen(
@@ -451,7 +461,8 @@ def main() -> int:
     try:
         print("[smoke] http list")
         code, http_list = _http_json(
-            f"{base}/v1/skills/list?domain=web&invocation=attach"
+            f"{base}/v1/skills/list?domain=web&invocation=attach",
+            api_key=_HTTP_API_KEY,
         )
         assert code == 200 and len(http_list.get("skills", [])) >= 1, "HTTP list failed"
 
@@ -460,6 +471,7 @@ def main() -> int:
             f"{base}/v1/skills/discover",
             method="POST",
             body={"intent": "summarize web page", "domain": "web", "limit": 3},
+            api_key=_HTTP_API_KEY,
         )
         assert code == 200 and len(http_discover.get("results", [])) >= 1, (
             "HTTP discover failed"
@@ -476,7 +488,9 @@ def main() -> int:
         )
 
         print("[smoke] http diagnostics")
-        code, http_diag = _http_json(f"{base}/v1/skills/diagnostics")
+        code, http_diag = _http_json(
+            f"{base}/v1/skills/diagnostics", api_key=_HTTP_API_KEY
+        )
         assert code == 200, "HTTP diagnostics failed"
         http_process = http_diag.get("gateway", {}).get("process", {})
         assert isinstance(http_process.get("pid"), int), (
@@ -511,6 +525,7 @@ def main() -> int:
             f"{base}/v1/skills/web.fetch-summary/attach",
             method="POST",
             body={"target_type": "output", "target_ref": target_ref, "inputs": {}},
+            api_key=_HTTP_API_KEY,
         )
         assert code == 400, "HTTP attach invalid should return 400"
         assert http_attach_invalid.get("error", {}).get("code") == "invalid_request", (
