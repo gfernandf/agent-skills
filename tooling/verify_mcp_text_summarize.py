@@ -90,9 +90,15 @@ def main() -> int:
 
     summary = (outputs or {}).get("summary") if isinstance(outputs, dict) else None
     if not isinstance(summary, str) or not summary.strip():
-        raise RuntimeError(f"MCP summarize returned invalid summary payload: {outputs!r}")
+        raise RuntimeError(
+            f"MCP summarize returned invalid summary payload: {outputs!r}"
+        )
 
-    if binding_id in {_BINDING_ID, "python_reasoning_content_summarize", "python_text_summarize"} and len(summary) > max_length + 30:
+    if (
+        binding_id
+        in {_BINDING_ID, "python_reasoning_content_summarize", "python_text_summarize"}
+        and len(summary) > max_length + 30
+    ):
         raise RuntimeError(
             "MCP summarize output unexpectedly long relative to max_length. "
             f"max_length={max_length} actual_len={len(summary)}"

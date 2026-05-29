@@ -41,8 +41,20 @@ def main() -> int:
 
     checks: list[dict[str, object]] = []
 
-    checks.append(_check(REQUIRED_CHECKS_FILE.exists(), "required_checks_file_exists", str(REQUIRED_CHECKS_FILE)))
-    checks.append(_check(BRANCH_POLICY_FILE.exists(), "branch_policy_file_exists", str(BRANCH_POLICY_FILE)))
+    checks.append(
+        _check(
+            REQUIRED_CHECKS_FILE.exists(),
+            "required_checks_file_exists",
+            str(REQUIRED_CHECKS_FILE),
+        )
+    )
+    checks.append(
+        _check(
+            BRANCH_POLICY_FILE.exists(),
+            "branch_policy_file_exists",
+            str(BRANCH_POLICY_FILE),
+        )
+    )
 
     data: dict[str, object] = {}
     if REQUIRED_CHECKS_FILE.exists():
@@ -50,14 +62,32 @@ def main() -> int:
             data = json.loads(REQUIRED_CHECKS_FILE.read_text(encoding="utf-8"))
             checks.append(_check(True, "required_checks_file_json_valid", "valid json"))
         except Exception as exc:
-            checks.append(_check(False, "required_checks_file_json_valid", f"invalid json: {exc}"))
+            checks.append(
+                _check(False, "required_checks_file_json_valid", f"invalid json: {exc}")
+            )
 
-    required_checks = data.get("required_status_checks", []) if isinstance(data.get("required_status_checks"), list) else []
-    mapping = data.get("check_job_mapping", {}) if isinstance(data.get("check_job_mapping"), dict) else {}
-    policy_text = BRANCH_POLICY_FILE.read_text(encoding="utf-8") if BRANCH_POLICY_FILE.exists() else ""
+    required_checks = (
+        data.get("required_status_checks", [])
+        if isinstance(data.get("required_status_checks"), list)
+        else []
+    )
+    mapping = (
+        data.get("check_job_mapping", {})
+        if isinstance(data.get("check_job_mapping"), dict)
+        else {}
+    )
+    policy_text = (
+        BRANCH_POLICY_FILE.read_text(encoding="utf-8")
+        if BRANCH_POLICY_FILE.exists()
+        else ""
+    )
 
     checks.append(
-        _check(bool(required_checks), "required_checks_non_empty", f"count={len(required_checks)}")
+        _check(
+            bool(required_checks),
+            "required_checks_non_empty",
+            f"count={len(required_checks)}",
+        )
     )
 
     for check_name in required_checks:
@@ -86,7 +116,9 @@ def main() -> int:
 
         workflow_name = entry.get("workflow")
         job_id = entry.get("job_id")
-        workflow_path = WORKFLOWS.get(workflow_name) if isinstance(workflow_name, str) else None
+        workflow_path = (
+            WORKFLOWS.get(workflow_name) if isinstance(workflow_name, str) else None
+        )
 
         checks.append(
             _check(
@@ -96,7 +128,11 @@ def main() -> int:
             )
         )
 
-        if isinstance(workflow_path, Path) and workflow_path.exists() and isinstance(job_id, str):
+        if (
+            isinstance(workflow_path, Path)
+            and workflow_path.exists()
+            and isinstance(job_id, str)
+        ):
             content = workflow_path.read_text(encoding="utf-8")
             checks.append(
                 _check(
@@ -107,7 +143,11 @@ def main() -> int:
             )
         else:
             checks.append(
-                _check(False, f"workflow_job_id_present:{check_name}", f"{workflow_name}:{job_id}")
+                _check(
+                    False,
+                    f"workflow_job_id_present:{check_name}",
+                    f"{workflow_name}:{job_id}",
+                )
             )
 
     passed = sum(1 for c in checks if c.get("passed") is True)

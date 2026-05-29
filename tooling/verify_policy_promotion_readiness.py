@@ -10,7 +10,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REPORT_FILE = ROOT / "artifacts" / "policy_promotion_readiness_report.json"
-DEFAULT_VERIFY_REPORT = ROOT / "artifacts" / "policy_promotion_readiness_verify_report.json"
+DEFAULT_VERIFY_REPORT = (
+    ROOT / "artifacts" / "policy_promotion_readiness_verify_report.json"
+)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -57,7 +59,9 @@ def main() -> int:
 
     checks: list[dict[str, object]] = []
 
-    checks.append(_check(args.report_file.exists(), "report_exists", str(args.report_file)))
+    checks.append(
+        _check(args.report_file.exists(), "report_exists", str(args.report_file))
+    )
     report: dict[str, object] = {}
     if args.report_file.exists():
         try:
@@ -68,7 +72,9 @@ def main() -> int:
 
     status = str(report.get("status", "")).lower() if report else ""
     contract = report.get("contract") if report else None
-    summary = report.get("summary", {}) if isinstance(report.get("summary"), dict) else {}
+    summary = (
+        report.get("summary", {}) if isinstance(report.get("summary"), dict) else {}
+    )
     environments = (
         report.get("environments", {})
         if isinstance(report.get("environments"), dict)

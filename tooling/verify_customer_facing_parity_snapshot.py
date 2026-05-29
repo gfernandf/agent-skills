@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import socket
 import subprocess
 import sys
 import time
@@ -24,10 +25,37 @@ from customer_facing.neutral_api import NeutralRuntimeAPI
 from gateway.core import SkillGateway
 
 
+def _request_json(
+    req: urllib.request.Request,
+    *,
+    timeout: float,
+    attempts: int = 3,
+    retry_delay_seconds: float = 0.5,
+) -> dict[str, Any]:
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            # Only retry transient server-side failures.
+            if exc.code in {500, 502, 503, 504} and attempt < attempts:
+                last_error = exc
+                time.sleep(retry_delay_seconds * attempt)
+                continue
+            raise
+        except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            last_error = exc
+            if attempt < attempts:
+                time.sleep(retry_delay_seconds * attempt)
+                continue
+            raise
+    raise RuntimeError(f"request failed after retries: {last_error}")
+
+
 def _http_get_json(url: str, headers: dict[str, str] | None = None) -> dict[str, Any]:
     req = urllib.request.Request(url, headers=headers or {}, method="GET")
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    return _request_json(req, timeout=45)
 
 
 def _http_post_json(
@@ -42,8 +70,7 @@ def _http_post_json(
         headers=req_headers,
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    return _request_json(req, timeout=75)
 
 
 def _wait_for_server_ready(

@@ -152,7 +152,9 @@ def _check_registry_vocabulary() -> list[CheckResult]:
     if docs_file.exists():
         content = docs_file.read_text(encoding="utf-8")
         docs_ok = "same_tenant" in content
-        docs_detail = "same_tenant_documented" if docs_ok else "same_tenant_not_documented"
+        docs_detail = (
+            "same_tenant_documented" if docs_ok else "same_tenant_not_documented"
+        )
     checks.append(
         CheckResult(
             surface="registry_vocabulary",
@@ -173,9 +175,7 @@ def _check_registry_vocabulary() -> list[CheckResult]:
             content = capability_file.read_text(encoding="utf-8")
             capability_ok = "- same_tenant" in content
             capability_detail = (
-                "same_tenant_adopted"
-                if capability_ok
-                else "same_tenant_not_adopted"
+                "same_tenant_adopted" if capability_ok else "same_tenant_not_adopted"
             )
         if capability_ok:
             adopted_count += 1

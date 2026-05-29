@@ -100,8 +100,7 @@ def main() -> int:
     summary = outputs.get("summary") if isinstance(outputs, dict) else None
     if not isinstance(summary, str) or not summary.strip():
         raise RuntimeError(
-            "Fallback execution returned invalid output payload. "
-            f"actual={outputs!r}"
+            f"Fallback execution returned invalid output payload. actual={outputs!r}"
         )
 
     if meta.get("binding_id") != _EXPECTED_FALLBACK_BINDING_ID:

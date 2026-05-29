@@ -39,8 +39,7 @@ def _parse_args() -> argparse.Namespace:
         dest="input_reports",
         default=None,
         help=(
-            "Path to an input governance report JSON. "
-            "Can be supplied multiple times."
+            "Path to an input governance report JSON. Can be supplied multiple times."
         ),
     )
     parser.add_argument(

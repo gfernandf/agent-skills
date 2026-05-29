@@ -106,7 +106,9 @@ def main() -> int:
     if not isinstance(staging_to_prod, dict):
         staging_to_prod = {}
 
-    d2s_min_ratio = float(dev_to_staging.get("min_runtime_canary_pass_ratio", 1.0) or 1.0)
+    d2s_min_ratio = float(
+        dev_to_staging.get("min_runtime_canary_pass_ratio", 1.0) or 1.0
+    )
     d2s_requires_shadow = bool(dev_to_staging.get("require_shadow_parity", False))
 
     s2p_min_ratio = float(

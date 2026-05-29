@@ -282,7 +282,9 @@ class MCPToolBridge:
                 ),
                 execution_channel="mcp",
                 tenant_id=(
-                    args.get("tenant_id") if isinstance(args.get("tenant_id"), str) else None
+                    args.get("tenant_id")
+                    if isinstance(args.get("tenant_id"), str)
+                    else None
                 ),
             )
 

@@ -17,7 +17,9 @@ def test_checkpoint_lineage_multi_boundary_roundtrip() -> None:
     backend = InMemoryCheckpointStoreBackend()
     manager = CheckpointManager(backend)
 
-    state = create_execution_state("durability.demo", {"text": "hello"}, trace_id="trace-1")
+    state = create_execution_state(
+        "durability.demo", {"text": "hello"}, trace_id="trace-1"
+    )
     mark_started(state)
     emit_event(state, "skill_start", "start")
 

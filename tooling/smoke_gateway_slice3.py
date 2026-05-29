@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import subprocess
 import sys
 import time
@@ -86,17 +87,26 @@ def _http_json(
         data = json.dumps(body).encode("utf-8")
 
     req = urllib.request.Request(url, method=method, data=data, headers=headers)
-    try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            payload = json.loads(resp.read().decode("utf-8"))
-            return resp.getcode(), payload
-    except urllib.error.HTTPError as e:
-        payload: dict[str, Any] = {}
+    last_error: Exception | None = None
+    for attempt in range(1, 4):
         try:
-            payload = json.loads(e.read().decode("utf-8"))
-        except Exception:
-            payload = {"error": {"message": str(e)}}
-        return e.code, payload
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+                return resp.getcode(), payload
+        except urllib.error.HTTPError as e:
+            payload: dict[str, Any] = {}
+            try:
+                payload = json.loads(e.read().decode("utf-8"))
+            except Exception:
+                payload = {"error": {"message": str(e)}}
+            return e.code, payload
+        except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            last_error = exc
+            if attempt < 3:
+                time.sleep(0.4 * attempt)
+                continue
+            raise
+    raise RuntimeError(f"HTTP request failed after retries: {last_error}")
 
 
 def _start_http_server(
@@ -145,6 +155,29 @@ def _stop_proc(proc: subprocess.Popen[str]) -> None:
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
+
+
+def _wait_for_nonempty_skills(
+    base_url: str,
+    *,
+    api_key: str,
+    timeout_seconds: float = 45.0,
+) -> tuple[int, dict[str, Any]]:
+    deadline = time.time() + timeout_seconds
+    last_code = 0
+    last_payload: dict[str, Any] = {}
+    while time.time() < deadline:
+        code, payload = _http_json(
+            f"{base_url}/v1/skills/list?domain=web&invocation=attach",
+            api_key=api_key,
+        )
+        last_code = code
+        last_payload = payload if isinstance(payload, dict) else {}
+        skills = last_payload.get("skills") if isinstance(last_payload, dict) else None
+        if code == 200 and isinstance(skills, list) and len(skills) >= 1:
+            return code, last_payload
+        time.sleep(0.4)
+    return last_code, last_payload
 
 
 def _mcp_call(
@@ -460,11 +493,13 @@ def main() -> int:
     base = f"http://127.0.0.1:{args.http_port}"
     try:
         print("[smoke] http list")
-        code, http_list = _http_json(
-            f"{base}/v1/skills/list?domain=web&invocation=attach",
+        code, http_list = _wait_for_nonempty_skills(
+            base,
             api_key=_HTTP_API_KEY,
         )
-        assert code == 200 and len(http_list.get("skills", [])) >= 1, "HTTP list failed"
+        assert code == 200 and len(http_list.get("skills", [])) >= 1, (
+            f"HTTP list failed: code={code} payload={http_list!r}"
+        )
 
         print("[smoke] http discover")
         code, http_discover = _http_json(

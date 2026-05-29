@@ -153,9 +153,7 @@ def main() -> int:
     }
 
     args.slo_report_file.parent.mkdir(parents=True, exist_ok=True)
-    args.slo_report_file.write_text(
-        json.dumps(slo_report, indent=2), encoding="utf-8"
-    )
+    args.slo_report_file.write_text(json.dumps(slo_report, indent=2), encoding="utf-8")
 
     print("DX SLO evaluation")
     print(f"- metrics file: {args.metrics_file}")

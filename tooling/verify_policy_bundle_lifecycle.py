@@ -62,14 +62,14 @@ def main() -> int:
     rego_path = bundle_root / "policy_pre.rego"
     schema_path = DEFAULT_SCHEMA_PATH
 
-    checks.append(
-        _check(bundle_root.exists(), "bundle_root_exists", str(bundle_root))
-    )
+    checks.append(_check(bundle_root.exists(), "bundle_root_exists", str(bundle_root)))
     checks.append(
         _check(manifest_path.exists(), "bundle_manifest_exists", str(manifest_path))
     )
     checks.append(_check(rego_path.exists(), "policy_rego_exists", str(rego_path)))
-    checks.append(_check(schema_path.exists(), "manifest_schema_exists", str(schema_path)))
+    checks.append(
+        _check(schema_path.exists(), "manifest_schema_exists", str(schema_path))
+    )
 
     manifest: dict[str, object] = {}
     schema: dict[str, object] = {}
@@ -103,7 +103,9 @@ def main() -> int:
         else:
             try:
                 jsonschema.Draft202012Validator.check_schema(schema)
-                checks.append(_check(True, "manifest_schema_meta_valid", "valid schema"))
+                checks.append(
+                    _check(True, "manifest_schema_meta_valid", "valid schema")
+                )
             except jsonschema.SchemaError as exc:
                 message = str(exc).splitlines()[0] if str(exc) else "schema error"
                 checks.append(_check(False, "manifest_schema_meta_valid", message))
@@ -174,7 +176,8 @@ def main() -> int:
         if isinstance(tenant_scope, dict):
             checks.append(
                 _check(
-                    tenant_scope.get("mode") in {
+                    tenant_scope.get("mode")
+                    in {
                         "shared_with_tenant_constraints",
                         "tenant_scoped",
                     },
@@ -262,7 +265,9 @@ def main() -> int:
                         _check(
                             isinstance(dev_to_staging, dict),
                             "manifest_promotion_rule_dev_to_staging_present",
-                            "present" if isinstance(dev_to_staging, dict) else "missing",
+                            "present"
+                            if isinstance(dev_to_staging, dict)
+                            else "missing",
                         )
                     )
                     if isinstance(dev_to_staging, dict):
@@ -276,9 +281,7 @@ def main() -> int:
                         checks.append(
                             _check(
                                 isinstance(
-                                    dev_to_staging.get(
-                                        "min_runtime_canary_pass_ratio"
-                                    ),
+                                    dev_to_staging.get("min_runtime_canary_pass_ratio"),
                                     (int, float),
                                 )
                                 and float(
@@ -286,7 +289,9 @@ def main() -> int:
                                 )
                                 >= 1.0,
                                 "manifest_promotion_rule_dev_to_staging_canary_ratio",
-                                str(dev_to_staging.get("min_runtime_canary_pass_ratio")),
+                                str(
+                                    dev_to_staging.get("min_runtime_canary_pass_ratio")
+                                ),
                             )
                         )
 
@@ -295,7 +300,9 @@ def main() -> int:
                         _check(
                             isinstance(staging_to_prod, dict),
                             "manifest_promotion_rule_staging_to_prod_present",
-                            "present" if isinstance(staging_to_prod, dict) else "missing",
+                            "present"
+                            if isinstance(staging_to_prod, dict)
+                            else "missing",
                         )
                     )
                     if isinstance(staging_to_prod, dict):
@@ -319,12 +326,16 @@ def main() -> int:
                                 )
                                 >= 1.0,
                                 "manifest_promotion_rule_staging_to_prod_canary_ratio",
-                                str(staging_to_prod.get("min_runtime_canary_pass_ratio")),
+                                str(
+                                    staging_to_prod.get("min_runtime_canary_pass_ratio")
+                                ),
                             )
                         )
                         checks.append(
                             _check(
-                                isinstance(staging_to_prod.get("required_approvals"), int)
+                                isinstance(
+                                    staging_to_prod.get("required_approvals"), int
+                                )
                                 and int(staging_to_prod.get("required_approvals")) >= 2,
                                 "manifest_promotion_rule_staging_to_prod_required_approvals",
                                 str(staging_to_prod.get("required_approvals")),

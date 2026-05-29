@@ -171,7 +171,9 @@ def main() -> int:
             "total_scenarios": total_scenarios,
             "passed_scenarios": passed_scenarios,
             "failed_scenarios": total_scenarios - passed_scenarios,
-            "scenario_pass_ratio": (passed_scenarios / total_scenarios) if total_scenarios else 0.0,
+            "scenario_pass_ratio": (passed_scenarios / total_scenarios)
+            if total_scenarios
+            else 0.0,
             "expected_total_scenarios": expected_total_scenarios,
             "scenario_execution_complete": total_scenarios == expected_total_scenarios,
             "total_tests": total_tests,

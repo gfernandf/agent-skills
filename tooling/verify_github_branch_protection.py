@@ -86,8 +86,20 @@ def main() -> int:
     checks: list[dict[str, object]] = []
     unverified = False
 
-    checks.append({"check_id": "repository_provided", "passed": bool(args.repository), "detail": args.repository})
-    checks.append({"check_id": "github_token_present", "passed": bool(token), "detail": "present" if token else "missing"})
+    checks.append(
+        {
+            "check_id": "repository_provided",
+            "passed": bool(args.repository),
+            "detail": args.repository,
+        }
+    )
+    checks.append(
+        {
+            "check_id": "github_token_present",
+            "passed": bool(token),
+            "detail": "present" if token else "missing",
+        }
+    )
 
     if not args.repository or not token:
         unverified = True
@@ -127,7 +139,9 @@ def main() -> int:
                 {
                     "check_id": f"require_pr_reviews:{branch}",
                     "passed": isinstance(required_pr_reviews, dict),
-                    "detail": "configured" if isinstance(required_pr_reviews, dict) else "missing",
+                    "detail": "configured"
+                    if isinstance(required_pr_reviews, dict)
+                    else "missing",
                 }
             )
 

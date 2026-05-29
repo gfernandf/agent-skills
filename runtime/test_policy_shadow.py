@@ -31,7 +31,9 @@ def test_opa_adapter_parses_boolean_result(monkeypatch):
         def read(self):
             return b'{"result": true}'
 
-    monkeypatch.setattr("runtime.policy_shadow.urllib_request.urlopen", lambda *args, **kwargs: _Resp())
+    monkeypatch.setattr(
+        "runtime.policy_shadow.urllib_request.urlopen", lambda *args, **kwargs: _Resp()
+    )
 
     decision = adapter.decide_pre(_payload())
     assert decision.status == "allow"
@@ -50,7 +52,9 @@ def test_opa_adapter_parses_status_dict(monkeypatch):
         def read(self):
             return b'{"result": {"status": "require_human", "reason": "manual"}}'
 
-    monkeypatch.setattr("runtime.policy_shadow.urllib_request.urlopen", lambda *args, **kwargs: _Resp())
+    monkeypatch.setattr(
+        "runtime.policy_shadow.urllib_request.urlopen", lambda *args, **kwargs: _Resp()
+    )
 
     decision = adapter.decide_pre(_payload())
     assert decision.status == "require_human"

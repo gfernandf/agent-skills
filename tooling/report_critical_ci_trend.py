@@ -70,7 +70,9 @@ def _api_get(url: str, token: str) -> tuple[int, dict[str, object] | None, str]:
         return 0, None, str(exc)
 
 
-def _collect_runs(repo: str, token: str, workflow_file: str, window: int) -> list[dict[str, object]]:
+def _collect_runs(
+    repo: str, token: str, workflow_file: str, window: int
+) -> list[dict[str, object]]:
     q = urllib.parse.urlencode({"per_page": str(window), "status": "completed"})
     url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_file}/runs?{q}"
     status, payload, _ = _api_get(url, token)
@@ -80,7 +82,9 @@ def _collect_runs(repo: str, token: str, workflow_file: str, window: int) -> lis
     return [r for r in runs if isinstance(r, dict)] if isinstance(runs, list) else []
 
 
-def _collect_jobs_for_run(repo: str, token: str, run_id: int) -> list[dict[str, object]]:
+def _collect_jobs_for_run(
+    repo: str, token: str, run_id: int
+) -> list[dict[str, object]]:
     url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100"
     status, payload, _ = _api_get(url, token)
     if status != 200 or payload is None:
@@ -135,7 +139,12 @@ def main() -> int:
                     item["samples"] = int(item["samples"]) + 1
                     if conclusion == "success":
                         item["passed"] = int(item["passed"]) + 1
-                    elif conclusion in {"failure", "timed_out", "cancelled", "startup_failure"}:
+                    elif conclusion in {
+                        "failure",
+                        "timed_out",
+                        "cancelled",
+                        "startup_failure",
+                    }:
                         item["failed"] = int(item["failed"]) + 1
                     else:
                         item["other"] = int(item["other"]) + 1

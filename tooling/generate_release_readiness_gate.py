@@ -62,7 +62,7 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Optional JSON file with temporary approved exceptions. "
-            "Format: {\"exceptions\": [{\"check_id\":...,\"expires_at\":...,\"approved_by\":...,\"reason\":...}]}"
+            'Format: {"exceptions": [{"check_id":...,"expires_at":...,"approved_by":...,"reason":...}]}'
         ),
     )
     parser.add_argument(
@@ -110,7 +110,12 @@ def _append_check(
 
 
 def _status_is_pass(value: Any) -> bool:
-    return isinstance(value, str) and value.strip().lower() in {"pass", "passed", "ok", "success"}
+    return isinstance(value, str) and value.strip().lower() in {
+        "pass",
+        "passed",
+        "ok",
+        "success",
+    }
 
 
 def _parse_utc(value: str) -> datetime | None:
@@ -126,7 +131,9 @@ def _parse_utc(value: str) -> datetime | None:
     return parsed.astimezone(timezone.utc)
 
 
-def _load_active_exceptions(path: Path | None) -> tuple[dict[str, dict[str, str]], list[str], str | None]:
+def _load_active_exceptions(
+    path: Path | None,
+) -> tuple[dict[str, dict[str, str]], list[str], str | None]:
     if path is None:
         return {}, [], None
     if not path.exists():
@@ -238,7 +245,9 @@ def main() -> int:
             detail=f"loaded profile={args.policy_profile} from {args.policy_file}",
         )
 
-    allow_trend_unverified = bool(policy.get("allow_trend_unverified", args.allow_trend_unverified))
+    allow_trend_unverified = bool(
+        policy.get("allow_trend_unverified", args.allow_trend_unverified)
+    )
     allow_missing_runtime_exec_summary = bool(
         policy.get(
             "allow_missing_runtime_executive_summary",
@@ -254,22 +263,30 @@ def main() -> int:
         policy.get("durability_advanced_min_expected_tests", 0)
     )
 
-    dx_allowed_slo_statuses_raw = policy.get("dx_allowed_slo_statuses", ["pass", "passed"])
+    dx_allowed_slo_statuses_raw = policy.get(
+        "dx_allowed_slo_statuses", ["pass", "passed"]
+    )
     if not isinstance(dx_allowed_slo_statuses_raw, list):
         dx_allowed_slo_statuses_raw = ["pass", "passed"]
     dx_allowed_slo_statuses = {
-        str(item).strip().lower() for item in dx_allowed_slo_statuses_raw if str(item).strip()
+        str(item).strip().lower()
+        for item in dx_allowed_slo_statuses_raw
+        if str(item).strip()
     }
 
-    trend_allowed_slo_statuses_raw = policy.get("trend_allowed_slo_statuses", ["pass", "passed"])
+    trend_allowed_slo_statuses_raw = policy.get(
+        "trend_allowed_slo_statuses", ["pass", "passed"]
+    )
     if not isinstance(trend_allowed_slo_statuses_raw, list):
         trend_allowed_slo_statuses_raw = ["pass", "passed"]
     trend_allowed_slo_statuses = {
-        str(item).strip().lower() for item in trend_allowed_slo_statuses_raw if str(item).strip()
+        str(item).strip().lower()
+        for item in trend_allowed_slo_statuses_raw
+        if str(item).strip()
     }
 
-    active_exceptions, exception_issues, exceptions_load_error = _load_active_exceptions(
-        args.exceptions_file
+    active_exceptions, exception_issues, exceptions_load_error = (
+        _load_active_exceptions(args.exceptions_file)
     )
     if exceptions_load_error is not None:
         _append_check(
@@ -476,7 +493,8 @@ def main() -> int:
         _append_check(
             checks,
             check_id="durability_advanced_scenario_execution_complete",
-            passed=expected_total_scenarios > 0 and total_scenarios == expected_total_scenarios,
+            passed=expected_total_scenarios > 0
+            and total_scenarios == expected_total_scenarios,
             severity="high",
             detail=(
                 f"total_scenarios={total_scenarios}; "
@@ -510,7 +528,8 @@ def main() -> int:
         _append_check(
             checks,
             check_id="durability_advanced_expected_scenarios_meet_policy",
-            passed=expected_total_scenarios >= durability_advanced_min_expected_scenarios,
+            passed=expected_total_scenarios
+            >= durability_advanced_min_expected_scenarios,
             severity="high",
             detail=(
                 f"expected_total_scenarios={expected_total_scenarios}; "
@@ -590,7 +609,9 @@ def main() -> int:
             detail=f"slo_status={slo_status}; allowed={sorted(dx_allowed_slo_statuses)}",
         )
 
-    trend_slo_data, trend_slo_error = _load_json(artifacts_dir / "critical_ci_trend_slo_report.json")
+    trend_slo_data, trend_slo_error = _load_json(
+        artifacts_dir / "critical_ci_trend_slo_report.json"
+    )
     if trend_slo_error:
         _append_check(
             checks,
@@ -600,7 +621,9 @@ def main() -> int:
             detail=trend_slo_error,
         )
     else:
-        trend_slo_status = str(trend_slo_data.get("slo_status", "unknown")).strip().lower()
+        trend_slo_status = (
+            str(trend_slo_data.get("slo_status", "unknown")).strip().lower()
+        )
         trend_ok = trend_slo_status in trend_allowed_slo_statuses
         trend_allowed = allow_trend_unverified and trend_slo_status == "unverified"
         _append_check(
@@ -611,7 +634,9 @@ def main() -> int:
             detail=f"slo_status={trend_slo_status}; allowed={sorted(trend_allowed_slo_statuses)}",
         )
 
-    trend_data, trend_error = _load_json(artifacts_dir / "critical_ci_trend_report.json")
+    trend_data, trend_error = _load_json(
+        artifacts_dir / "critical_ci_trend_report.json"
+    )
     if trend_error:
         _append_check(
             checks,
@@ -632,8 +657,12 @@ def main() -> int:
             detail=f"status={status}",
         )
 
-    high_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "high"]
-    medium_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "medium"]
+    high_failures = [
+        c for c in checks if not c.get("passed") and c.get("severity") == "high"
+    ]
+    medium_failures = [
+        c for c in checks if not c.get("passed") and c.get("severity") == "medium"
+    ]
 
     for check in checks:
         if check.get("passed"):
@@ -657,8 +686,12 @@ def main() -> int:
             }
         )
 
-    high_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "high"]
-    medium_failures = [c for c in checks if not c.get("passed") and c.get("severity") == "medium"]
+    high_failures = [
+        c for c in checks if not c.get("passed") and c.get("severity") == "high"
+    ]
+    medium_failures = [
+        c for c in checks if not c.get("passed") and c.get("severity") == "medium"
+    ]
 
     if len(high_failures) > max_high_failures:
         decision = "no-go"
@@ -688,7 +721,9 @@ def main() -> int:
             "artifacts_dir": str(artifacts_dir),
             "allow_trend_unverified": allow_trend_unverified,
             "allow_missing_runtime_executive_summary": allow_missing_runtime_exec_summary,
-            "exceptions_file": str(args.exceptions_file) if args.exceptions_file else None,
+            "exceptions_file": str(args.exceptions_file)
+            if args.exceptions_file
+            else None,
             "policy_file": str(args.policy_file) if args.policy_file else None,
             "policy_profile": args.policy_profile,
             "max_high_failures": max_high_failures,

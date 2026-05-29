@@ -62,7 +62,9 @@ def _load_json(path: Path) -> tuple[dict[str, Any] | None, str | None]:
     return payload, None
 
 
-def _node(node_id: str, node_type: str, status: str, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+def _node(
+    node_id: str, node_type: str, status: str, metadata: dict[str, Any] | None = None
+) -> dict[str, Any]:
     return {
         "id": node_id,
         "type": node_type,
@@ -71,7 +73,9 @@ def _node(node_id: str, node_type: str, status: str, metadata: dict[str, Any] | 
     }
 
 
-def _edge(source: str, target: str, relation: str, status: str = "observed") -> dict[str, str]:
+def _edge(
+    source: str, target: str, relation: str, status: str = "observed"
+) -> dict[str, str]:
     return {
         "source": source,
         "target": target,
@@ -126,13 +130,16 @@ def main() -> int:
         "smoke_report": artifacts_dir / "smoke_report.json",
         "runtime_coverage": artifacts_dir / "runtime_coverage.json",
         "skill_executability": artifacts_dir / "skill_executability.json",
-        "policy_bundle_lifecycle": artifacts_dir / "policy_bundle_lifecycle_report.json",
+        "policy_bundle_lifecycle": artifacts_dir
+        / "policy_bundle_lifecycle_report.json",
         "promotion_readiness": artifacts_dir / "policy_promotion_readiness_report.json",
-        "promotion_readiness_verify": artifacts_dir / "policy_promotion_readiness_verify_report.json",
+        "promotion_readiness_verify": artifacts_dir
+        / "policy_promotion_readiness_verify_report.json",
         "dx_metrics_slo": artifacts_dir / "dx_metrics_slo_report.json",
         "critical_ci_trend": artifacts_dir / "critical_ci_trend_report.json",
         "critical_ci_trend_slo": artifacts_dir / "critical_ci_trend_slo_report.json",
-        "runtime_exec_summary": artifacts_dir / "runtime_governance_executive_summary.json",
+        "runtime_exec_summary": artifacts_dir
+        / "runtime_governance_executive_summary.json",
         "release_gate_report": artifacts_dir / "release_readiness_gate_report.json",
     }
 
@@ -157,7 +164,9 @@ def main() -> int:
         required_job_results[job] = str(result)
         status = "passed" if result == "success" else "failed"
         nodes.append(_node(f"job.{job}", "job", status, {"result": result}))
-        edges.append(_edge("source.workflow.smoke_verification", f"job.{job}", "triggers"))
+        edges.append(
+            _edge("source.workflow.smoke_verification", f"job.{job}", "triggers")
+        )
         completeness_checks.append(
             {
                 "check_id": f"job_present:{job}",
@@ -195,7 +204,14 @@ def main() -> int:
         elif key in {"critical_ci_trend", "critical_ci_trend_slo"}:
             producer_job = "job.ci_stability_trend"
 
-        edges.append(_edge(producer_job, f"artifact.{key}", "produces", "observed" if present else "missing"))
+        edges.append(
+            _edge(
+                producer_job,
+                f"artifact.{key}",
+                "produces",
+                "observed" if present else "missing",
+            )
+        )
         completeness_checks.append(
             {
                 "check_id": f"artifact_present:{key}",
@@ -214,7 +230,9 @@ def main() -> int:
             },
         )
     )
-    edges.append(_edge("artifact.release_gate_report", "decision.release_readiness", "drives"))
+    edges.append(
+        _edge("artifact.release_gate_report", "decision.release_readiness", "drives")
+    )
 
     gate_data, gate_error = _load_json(artifacts["release_gate_report"])
     if gate_error is None and gate_data is not None:
@@ -242,7 +260,9 @@ def main() -> int:
         {
             "check_id": "required_node_types_present",
             "passed": not missing_node_types,
-            "detail": "present" if not missing_node_types else f"missing={missing_node_types}",
+            "detail": "present"
+            if not missing_node_types
+            else f"missing={missing_node_types}",
         }
     )
 
@@ -258,7 +278,9 @@ def main() -> int:
         {
             "check_id": "edges_reference_existing_nodes",
             "passed": not missing_edge_refs,
-            "detail": "ok" if not missing_edge_refs else f"missing_refs={missing_edge_refs[:10]}",
+            "detail": "ok"
+            if not missing_edge_refs
+            else f"missing_refs={missing_edge_refs[:10]}",
         }
     )
 
@@ -296,7 +318,9 @@ def main() -> int:
     ]
 
     for source, target in required_edges:
-        exists = any(e.get("source") == source and e.get("target") == target for e in edges)
+        exists = any(
+            e.get("source") == source and e.get("target") == target for e in edges
+        )
         completeness_checks.append(
             {
                 "check_id": f"edge_present:{source}->{target}",
@@ -320,7 +344,9 @@ def main() -> int:
         edge_relation_counts[relation] = edge_relation_counts.get(relation, 0) + 1
 
     present_required_jobs = sum(
-        1 for job in required_jobs if isinstance(needs, dict) and isinstance(needs.get(job), dict)
+        1
+        for job in required_jobs
+        if isinstance(needs, dict) and isinstance(needs.get(job), dict)
     )
 
     provenance = {

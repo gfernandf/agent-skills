@@ -506,7 +506,9 @@ def test_resume_run_propagates_tenant_from_run_metadata() -> None:
         checkpoint_head=record.checkpoint_id,
     )
 
-    def _fake_execute(*, tenant_id=None, execution_channel=None, initial_state=None, **_kwargs):
+    def _fake_execute(
+        *, tenant_id=None, execution_channel=None, initial_state=None, **_kwargs
+    ):
         observed["tenant_id"] = tenant_id
         observed["execution_channel"] = execution_channel
         assert initial_state is not None
@@ -739,7 +741,9 @@ def test_replay_run_propagates_tenant_to_replay_execution() -> None:
         },
     )
 
-    def _fake_execute(*, tenant_id=None, execution_channel=None, initial_state=None, **_kwargs):
+    def _fake_execute(
+        *, tenant_id=None, execution_channel=None, initial_state=None, **_kwargs
+    ):
         observed["tenant_id"] = tenant_id
         observed["execution_channel"] = execution_channel
         assert initial_state is not None

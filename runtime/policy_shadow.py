@@ -56,7 +56,9 @@ def evaluate_internal_pre(payload: PolicyDecisionInput) -> PolicyDecision:
 
     if safety.get("requires_confirmation") is True:
         if payload.capability_id not in payload.confirmed_capabilities:
-            return PolicyDecision(status="require_human", reason="confirmation_required")
+            return PolicyDecision(
+                status="require_human", reason="confirmation_required"
+            )
 
     allowed_targets = safety.get("allowed_targets")
     if isinstance(allowed_targets, list) and "same_tenant" in allowed_targets:
@@ -68,15 +70,15 @@ def evaluate_internal_pre(payload: PolicyDecisionInput) -> PolicyDecision:
         if not context_tenant:
             return PolicyDecision(status="block", reason="same_tenant_context_missing")
 
-        if isinstance(payload.target_tenant_id, str) and payload.target_tenant_id.strip():
+        if (
+            isinstance(payload.target_tenant_id, str)
+            and payload.target_tenant_id.strip()
+        ):
             target_tenant = payload.target_tenant_id.strip()
             if target_tenant != context_tenant:
                 return PolicyDecision(
                     status="block",
-                    reason=(
-                        "same_tenant_mismatch:"
-                        f"{target_tenant}!={context_tenant}"
-                    ),
+                    reason=(f"same_tenant_mismatch:{target_tenant}!={context_tenant}"),
                 )
 
     # Gate decisions are handled by runtime gate execution and are not part of this
@@ -148,8 +150,14 @@ class OpaHttpPolicyAdapter:
         if isinstance(result, dict):
             status = result.get("status")
             reason = result.get("reason")
-            if isinstance(status, str) and status in {"allow", "block", "require_human"}:
-                return PolicyDecision(status=status, reason=reason if isinstance(reason, str) else None)
+            if isinstance(status, str) and status in {
+                "allow",
+                "block",
+                "require_human",
+            }:
+                return PolicyDecision(
+                    status=status, reason=reason if isinstance(reason, str) else None
+                )
             allow = result.get("allow")
             if isinstance(allow, bool):
                 return PolicyDecision(
@@ -161,7 +169,9 @@ class OpaHttpPolicyAdapter:
 
 
 def build_external_policy_adapter_from_env() -> ExternalPolicyAdapter | None:
-    adapter_name = os.environ.get("AGENT_SKILLS_POLICY_EXTERNAL_ADAPTER", "").strip().lower()
+    adapter_name = (
+        os.environ.get("AGENT_SKILLS_POLICY_EXTERNAL_ADAPTER", "").strip().lower()
+    )
     if not adapter_name or adapter_name == "none":
         return None
     if adapter_name == "mirror":
@@ -189,7 +199,9 @@ def compare_decisions(
 ) -> dict[str, Any]:
     internal = evaluate_internal_pre(payload)
     external = adapter.decide_pre(payload)
-    equal = (internal.status == external.status) and (internal.reason == external.reason)
+    equal = (internal.status == external.status) and (
+        internal.reason == external.reason
+    )
     return {
         "input": {
             "capability_id": payload.capability_id,

@@ -114,9 +114,7 @@ def main() -> int:
     args.report_file.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     print("Policy shadow parity summary")
-    print(
-        f"- matched: {report['summary']['matched']}/{report['summary']['total']}"
-    )
+    print(f"- matched: {report['summary']['matched']}/{report['summary']['total']}")
     print(f"- match_ratio: {report['summary']['match_ratio']:.3f}")
     print(f"- report: {args.report_file}")
 
