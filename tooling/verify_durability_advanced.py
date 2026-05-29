@@ -157,6 +157,11 @@ def main() -> int:
 
     passed_scenarios = sum(1 for item in scenario_reports if item["status"] == "passed")
     total_scenarios = len(scenario_reports)
+    expected_total_scenarios = len(SCENARIOS)
+    expected_total_tests = sum(len(scenario.test_nodes) for scenario in SCENARIOS)
+    total_tests = sum(int(item["summary"]["total"]) for item in scenario_reports)
+    passed_tests = sum(int(item["summary"]["passed"]) for item in scenario_reports)
+    failed_tests = total_tests - passed_tests
 
     report = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -167,6 +172,14 @@ def main() -> int:
             "passed_scenarios": passed_scenarios,
             "failed_scenarios": total_scenarios - passed_scenarios,
             "scenario_pass_ratio": (passed_scenarios / total_scenarios) if total_scenarios else 0.0,
+            "expected_total_scenarios": expected_total_scenarios,
+            "scenario_execution_complete": total_scenarios == expected_total_scenarios,
+            "total_tests": total_tests,
+            "passed_tests": passed_tests,
+            "failed_tests": failed_tests,
+            "test_pass_ratio": (passed_tests / total_tests) if total_tests else 0.0,
+            "expected_total_tests": expected_total_tests,
+            "test_execution_complete": total_tests == expected_total_tests,
         },
         "scenarios": scenario_reports,
         "failures": overall_failures,
@@ -176,6 +189,7 @@ def main() -> int:
 
     print("\nDurability advanced summary")
     print(f"- scenarios passed: {passed_scenarios}/{total_scenarios}")
+    print(f"- tests passed: {passed_tests}/{total_tests}")
     print(f"- status: {report['status']}")
     print(f"- report: {args.report_file}")
 

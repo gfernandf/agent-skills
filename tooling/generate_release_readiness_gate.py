@@ -451,12 +451,53 @@ def main() -> int:
         )
     else:
         status = durability_advanced_data.get("status")
+        summary = durability_advanced_data.get("summary") or {}
+        total_scenarios = int(summary.get("total_scenarios") or 0)
+        expected_total_scenarios = int(summary.get("expected_total_scenarios") or 0)
+        failed_scenarios = int(summary.get("failed_scenarios") or 0)
+        total_tests = int(summary.get("total_tests") or 0)
+        expected_total_tests = int(summary.get("expected_total_tests") or 0)
+        failed_tests = int(summary.get("failed_tests") or 0)
         _append_check(
             checks,
             check_id="durability_advanced_status_passed",
             passed=_status_is_pass(status),
             severity="high",
             detail=f"status={status}",
+        )
+        _append_check(
+            checks,
+            check_id="durability_advanced_scenario_execution_complete",
+            passed=expected_total_scenarios > 0 and total_scenarios == expected_total_scenarios,
+            severity="high",
+            detail=(
+                f"total_scenarios={total_scenarios}; "
+                f"expected_total_scenarios={expected_total_scenarios}"
+            ),
+        )
+        _append_check(
+            checks,
+            check_id="durability_advanced_scenarios_no_failures",
+            passed=failed_scenarios == 0,
+            severity="high",
+            detail=f"failed_scenarios={failed_scenarios}",
+        )
+        _append_check(
+            checks,
+            check_id="durability_advanced_test_execution_complete",
+            passed=expected_total_tests > 0 and total_tests == expected_total_tests,
+            severity="high",
+            detail=(
+                f"total_tests={total_tests}; "
+                f"expected_total_tests={expected_total_tests}"
+            ),
+        )
+        _append_check(
+            checks,
+            check_id="durability_advanced_tests_no_failures",
+            passed=failed_tests == 0,
+            severity="high",
+            detail=f"failed_tests={failed_tests}",
         )
 
     promo_verify_data, promo_verify_error = _load_json(

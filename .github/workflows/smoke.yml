@@ -543,6 +543,10 @@ jobs:
                   f"- Durability advanced: {durability_adv.get('status', 'unknown')} "
                   f"(scenarios={adv_summary.get('passed_scenarios', 'n/a')}/{adv_summary.get('total_scenarios', 'n/a')})"
               )
+              lines.append(
+                f"- Durability advanced tests: "
+                f"{adv_summary.get('passed_tests', 'n/a')}/{adv_summary.get('total_tests', 'n/a')}"
+              )
           else:
               lines.append('- Durability advanced: report missing')
 
