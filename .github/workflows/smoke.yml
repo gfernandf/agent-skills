@@ -950,6 +950,11 @@ jobs:
         run: |
           python tooling/generate_release_lineage.py --needs-json '${NEEDS_CONTEXT_JSON}' --artifacts-dir artifacts --report-file artifacts/release_lineage.json --markdown-file artifacts/release_lineage.md --fail-on-incomplete
 
+      - name: Verify release lineage contract
+        if: always()
+        run: |
+          python tooling/verify_release_lineage_contract.py --lineage-file artifacts/release_lineage.json --report-file artifacts/release_lineage_contract_report.json
+
       - name: Publish release readiness artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -960,6 +965,7 @@ jobs:
             artifacts/release_readiness_gate_summary.md
             artifacts/release_lineage.json
             artifacts/release_lineage.md
+            artifacts/release_lineage_contract_report.json
 
       - name: Append release readiness summary
         if: always()

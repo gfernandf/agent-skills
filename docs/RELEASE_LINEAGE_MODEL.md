@@ -20,10 +20,12 @@ Generated in the final release gate job:
 
 1. `artifacts/release_lineage.json`
 2. `artifacts/release_lineage.md`
+3. `artifacts/release_lineage_contract_report.json`
 
 Producer:
 
 1. `tooling/generate_release_lineage.py`
+2. `tooling/verify_release_lineage_contract.py`
 
 ## 3. Contract
 
