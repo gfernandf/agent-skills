@@ -81,9 +81,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[all]"
           pip install pytest
-          pip install pytest
-          pip install pytest
-          pip install pytest
           pip install jsonschema
 
       - name: Run smoke verifier
@@ -422,6 +419,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[all]"
+          pip install pytest
 
       - name: Run runtime canary checks
         run: |
