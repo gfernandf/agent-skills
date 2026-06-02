@@ -127,11 +127,11 @@ def _pick_skill_candidates(base_url: str, *, headers: dict[str, str]) -> list[st
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
     preferred = [
-        "text.language-summary",
-        "text.quick-summary",
         "agent.plan-and-route",
         "agent.execute-from-plan",
         "agent.orchestrate-from-prompt",
+        "text.language-summary",
+        "text.quick-summary",
     ]
     candidates = [skill_id for skill_id in preferred if skill_id in available]
     for skill_id in sorted(available):
@@ -348,10 +348,7 @@ def _stable_projection(snapshot: dict[str, Any]) -> dict[str, Any]:
             else [],
         }
 
-    projected: dict[str, Any] = {
-        "skill_id": snapshot.get("skill_id"),
-        "all_equal": snapshot.get("all_equal"),
-    }
+    projected: dict[str, Any] = {"all_equal": snapshot.get("all_equal")}
 
     for section in ("health", "describe_skill", "execute_skill", "execute_capability"):
         value = snapshot.get(section)

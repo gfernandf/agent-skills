@@ -83,6 +83,7 @@ jobs:
           pip install pytest
           pip install pytest
           pip install pytest
+          pip install pytest
           pip install jsonschema
 
       - name: Run smoke verifier
