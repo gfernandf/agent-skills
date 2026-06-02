@@ -2,6 +2,9 @@
 
 > From development install to a hardened production instance.
 
+See also: `docs/DEPLOYMENT_PRODUCT_FLOW.md` for bundle-based preview, promotion,
+and rollback operations.
+
 ---
 
 ## Prerequisites

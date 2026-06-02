@@ -1,0 +1,200 @@
+name: Deployment Promote Bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Workflow run ID that produced the bundle artifact"
+        required: true
+        type: string
+      source_artifact_name:
+        description: "Artifact name containing the release bundle"
+        required: true
+        default: "release-preview-bundle"
+        type: string
+      target_environment:
+        description: "Highest environment to promote in this run"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  REGISTRY_REF: e6a181e
+
+jobs:
+  promote_bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Resolve source run metadata
+        id: source
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          CONCLUSION=$(gh api repos/${{ github.repository }}/actions/runs/${{ inputs.source_run_id }} --jq '.conclusion // ""')
+          WORKFLOW_PATH=$(gh api repos/${{ github.repository }}/actions/runs/${{ inputs.source_run_id }} --jq '.path // ""')
+          HEAD_SHA=$(gh api repos/${{ github.repository }}/actions/runs/${{ inputs.source_run_id }} --jq '.head_sha // ""')
+          HEAD_BRANCH=$(gh api repos/${{ github.repository }}/actions/runs/${{ inputs.source_run_id }} --jq '.head_branch // ""')
+
+          if [ "${CONCLUSION}" != "success" ]; then
+            echo "source run conclusion must be success, got: ${CONCLUSION}" >&2
+            exit 1
+          fi
+
+          if [ "${WORKFLOW_PATH}" != ".github/workflows/deployment-preview.yml" ]; then
+            echo "source run path must be .github/workflows/deployment-preview.yml, got: ${WORKFLOW_PATH}" >&2
+            exit 1
+          fi
+
+          if [ -z "${HEAD_SHA}" ]; then
+            echo "source run head_sha missing" >&2
+            exit 1
+          fi
+
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "head_branch=${HEAD_BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "workflow_path=${WORKFLOW_PATH}" >> "$GITHUB_OUTPUT"
+          echo "run_conclusion=${CONCLUSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve matching smoke verification run
+        id: smoke_run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          RUNS_JSON=$(gh api "repos/${{ github.repository }}/actions/workflows/smoke.yml/runs?head_sha=${{ steps.source.outputs.head_sha }}&status=completed&per_page=20")
+          SMOKE_RUN_ID=$(printf '%s' "${RUNS_JSON}" | python -c "import json,sys; data=json.load(sys.stdin).get('workflow_runs', []); match=next((run for run in data if run.get('conclusion') == 'success'), None); print(match['id'] if match else '')")
+          if [ -z "${SMOKE_RUN_ID}" ]; then
+            echo "No successful smoke.yml run found for head_sha=${{ steps.source.outputs.head_sha }}" >&2
+            exit 1
+          fi
+          echo "run_id=${SMOKE_RUN_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ steps.source.outputs.head_sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[all]"
+
+      - name: Download source bundle artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p artifacts/imported_bundle
+          gh run download "${{ inputs.source_run_id }}" --name "${{ inputs.source_artifact_name }}" --dir artifacts/imported_bundle
+
+      - name: Download source smoke artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p artifacts
+          gh run download "${{ steps.smoke_run.outputs.run_id }}" --name smoke-report --dir artifacts
+          gh run download "${{ steps.smoke_run.outputs.run_id }}" --name runtime-canary-report --dir artifacts
+          gh run download "${{ steps.smoke_run.outputs.run_id }}" --name dx-metrics-report --dir artifacts
+          gh run download "${{ steps.smoke_run.outputs.run_id }}" --name critical-ci-trend-report --dir artifacts
+
+      - name: Resolve imported bundle path
+        id: bundle
+        shell: bash
+        run: |
+          BUNDLE_MANIFEST=$(find artifacts/imported_bundle -path '*/bundle_manifest.json' -print -quit)
+          if [ -z "${BUNDLE_MANIFEST}" ]; then
+            echo "No bundle_manifest.json found in downloaded artifact." >&2
+            exit 1
+          fi
+          BUNDLE_PATH=$(dirname "${BUNDLE_MANIFEST}")
+          python -c "import json,sys; d=json.load(open(sys.argv[1], encoding='utf-8')); source_head_sha=sys.argv[2].strip(); contract=str(d.get('contract') or '').strip(); bundle_label=str(d.get('bundle_label') or '').strip(); runtime_commit=str(((d.get('source') or {}).get('runtime_git') or {}).get('commit') or '').strip(); contract == 'release_bundle_v1' or (_ for _ in ()).throw(SystemExit(f'invalid bundle contract: {contract}')); bundle_label == 'pr-preview' or (_ for _ in ()).throw(SystemExit(f'invalid bundle label for promotion source: {bundle_label}')); runtime_commit or (_ for _ in ()).throw(SystemExit('bundle manifest missing source.runtime_git.commit')); runtime_commit == source_head_sha or (_ for _ in ()).throw(SystemExit(f'bundle runtime commit {runtime_commit} does not match source head sha {source_head_sha}'))" "${BUNDLE_MANIFEST}" "${{ steps.source.outputs.head_sha }}"
+          echo "bundle_path=${BUNDLE_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Hydrate promotion artifacts from imported bundle evidence
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cp -R "${{ steps.bundle.outputs.bundle_path }}/evidence/." artifacts/
+
+      - name: Record promotion source provenance
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/release_bundle_promotion_source.json <<EOF
+          {
+            "source_run_id": "${{ inputs.source_run_id }}",
+            "source_artifact_name": "${{ inputs.source_artifact_name }}",
+            "source_smoke_run_id": "${{ steps.smoke_run.outputs.run_id }}",
+            "source_head_sha": "${{ steps.source.outputs.head_sha }}",
+            "source_head_branch": "${{ steps.source.outputs.head_branch }}",
+            "source_workflow_path": "${{ steps.source.outputs.workflow_path }}",
+            "source_run_conclusion": "${{ steps.source.outputs.run_conclusion }}",
+            "bundle_path": "${{ steps.bundle.outputs.bundle_path }}",
+            "target_environment": "${{ inputs.target_environment }}"
+          }
+          EOF
+
+      - name: Evaluate promotion-context release gate before promotion
+        run: |
+          python tooling/generate_release_readiness_gate.py --needs-json '{}' --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --fail-on-no-go --policy-file .github/release_gate_policy.json --policy-profile promotion
+
+      - name: Verify release bundle
+        run: |
+          python skills.py release-bundle-verify "${{ steps.bundle.outputs.bundle_path }}"
+
+      - name: Promote to preview
+        run: |
+          python skills.py release-bundle-promote-gated "${{ steps.bundle.outputs.bundle_path }}" --environment preview --artifacts-dir artifacts
+
+      - name: Promote to dev
+        if: ${{ inputs.target_environment == 'dev' || inputs.target_environment == 'staging' || inputs.target_environment == 'prod' }}
+        run: |
+          python skills.py release-bundle-promote-gated "${{ steps.bundle.outputs.bundle_path }}" --environment dev --source-environment preview --artifacts-dir artifacts
+
+      - name: Promote to staging
+        if: ${{ inputs.target_environment == 'staging' || inputs.target_environment == 'prod' }}
+        run: |
+          python skills.py release-bundle-promote-gated "${{ steps.bundle.outputs.bundle_path }}" --environment staging --source-environment dev --artifacts-dir artifacts
+
+      - name: Promote to prod
+        if: ${{ inputs.target_environment == 'prod' }}
+        run: |
+          python skills.py release-bundle-promote-gated "${{ steps.bundle.outputs.bundle_path }}" --environment prod --source-environment staging --artifacts-dir artifacts
+
+      - name: Re-evaluate promotion-context release gate after promotion
+        if: always()
+        run: |
+          python tooling/generate_release_readiness_gate.py --needs-json '{}' --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --fail-on-no-go --policy-file .github/release_gate_policy.json --policy-profile promotion
+
+      - name: Upload promotion artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-promotion-${{ inputs.target_environment }}
+          path: |
+            ${{ steps.bundle.outputs.bundle_path }}
+            artifacts/release_readiness_gate_report.json
+            artifacts/release_readiness_gate_summary.md
+            artifacts/release_bundle_promotion_source.json
+            artifacts/release_bundle_promotion_preview.json
+            artifacts/release_bundle_promotion_dev.json
+            artifacts/release_bundle_promotion_staging.json
+            artifacts/release_bundle_promotion_prod.json
+            artifacts/deployments/**/current.json
+            artifacts/deployments/**/history.jsonl

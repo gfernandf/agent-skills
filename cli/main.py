@@ -32,6 +32,13 @@ from tooling.promotion_package import (
     prepare_promotion_package,
     validate_promotion_package,
 )
+from tooling.release_bundle import (
+    build_release_bundle,
+    promote_release_bundle,
+    rollback_release_bundle,
+    verify_release_bundle,
+)
+from tooling.release_promotion import execute_bundle_promotion
 
 
 def main() -> None:
@@ -543,6 +550,152 @@ def main() -> None:
         help="Emit machine-readable JSON output.",
     )
     add_root_args(package_pr_cmd)
+
+    release_bundle_build_cmd = sub.add_parser(
+        "release-bundle-build",
+        help="Build an immutable local deployment bundle from runtime, registry, and release evidence",
+    )
+    release_bundle_build_cmd.add_argument(
+        "--artifacts-dir",
+        type=Path,
+        default=None,
+        help="Artifacts directory containing release/readiness evidence (defaults to <runtime-root>/artifacts).",
+    )
+    release_bundle_build_cmd.add_argument(
+        "--out-root",
+        type=Path,
+        default=None,
+        help="Bundle output root (defaults to <runtime-root>/artifacts/release_bundles).",
+    )
+    release_bundle_build_cmd.add_argument(
+        "--bundle-label",
+        default="candidate",
+        help="Human-readable bundle label prefix (default: candidate).",
+    )
+    release_bundle_build_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
+    )
+    add_root_args(release_bundle_build_cmd)
+
+    release_bundle_verify_cmd = sub.add_parser(
+        "release-bundle-verify",
+        help="Verify an immutable release bundle manifest and checksums",
+    )
+    release_bundle_verify_cmd.add_argument(
+        "bundle_path",
+        type=Path,
+        help="Path to bundle directory produced by release-bundle-build.",
+    )
+    release_bundle_verify_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
+    )
+    add_root_args(release_bundle_verify_cmd)
+
+    release_bundle_promote_cmd = sub.add_parser(
+        "release-bundle-promote",
+        help="Promote a verified release bundle into a local deployment environment",
+    )
+    release_bundle_promote_cmd.add_argument(
+        "bundle_path",
+        type=Path,
+        help="Path to bundle directory produced by release-bundle-build.",
+    )
+    release_bundle_promote_cmd.add_argument(
+        "--environment",
+        required=True,
+        choices=["preview", "dev", "staging", "prod"],
+        help="Target deployment environment.",
+    )
+    release_bundle_promote_cmd.add_argument(
+        "--deployment-root",
+        type=Path,
+        default=None,
+        help="Deployment state root (defaults to <runtime-root>/artifacts/deployments).",
+    )
+    release_bundle_promote_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
+    )
+    add_root_args(release_bundle_promote_cmd)
+
+    release_bundle_rollback_cmd = sub.add_parser(
+        "release-bundle-rollback",
+        help="Rollback a local deployment environment to the previous or specified verified bundle",
+    )
+    release_bundle_rollback_cmd.add_argument(
+        "--environment",
+        required=True,
+        choices=["preview", "dev", "staging", "prod"],
+        help="Target deployment environment.",
+    )
+    release_bundle_rollback_cmd.add_argument(
+        "--deployment-root",
+        type=Path,
+        default=None,
+        help="Deployment state root (defaults to <runtime-root>/artifacts/deployments).",
+    )
+    release_bundle_rollback_cmd.add_argument(
+        "--target-bundle-id",
+        default=None,
+        help="Optional explicit bundle id to rollback to. Defaults to last non-current release.",
+    )
+    release_bundle_rollback_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
+    )
+    add_root_args(release_bundle_rollback_cmd)
+
+    release_bundle_promote_gated_cmd = sub.add_parser(
+        "release-bundle-promote-gated",
+        help="Promote a bundle only when bundle verification, release gate, promotion readiness, and environment sequencing pass",
+    )
+    release_bundle_promote_gated_cmd.add_argument(
+        "bundle_path",
+        type=Path,
+        help="Path to bundle directory produced by release-bundle-build.",
+    )
+    release_bundle_promote_gated_cmd.add_argument(
+        "--environment",
+        required=True,
+        choices=["preview", "dev", "staging", "prod"],
+        help="Target deployment environment.",
+    )
+    release_bundle_promote_gated_cmd.add_argument(
+        "--source-environment",
+        default=None,
+        choices=["preview", "dev", "staging"],
+        help="Optional source environment that must already point at the same bundle.",
+    )
+    release_bundle_promote_gated_cmd.add_argument(
+        "--deployment-root",
+        type=Path,
+        default=None,
+        help="Deployment state root (defaults to <runtime-root>/artifacts/deployments).",
+    )
+    release_bundle_promote_gated_cmd.add_argument(
+        "--report-file",
+        type=Path,
+        default=None,
+        help="Optional output path for promotion report (defaults to <runtime-root>/artifacts/release_bundle_promotion_<env>.json).",
+    )
+    release_bundle_promote_gated_cmd.add_argument(
+        "--artifacts-dir",
+        type=Path,
+        default=None,
+        help="Optional artifacts directory whose evidence overrides bundled evidence for gate/readiness evaluation.",
+    )
+    release_bundle_promote_gated_cmd.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON output.",
+    )
+    add_root_args(release_bundle_promote_gated_cmd)
 
     openapi_cmd = sub.add_parser(
         "openapi", help="Run OpenAPI verification and diagnostics"
@@ -1263,6 +1416,52 @@ def main() -> None:
             args.base,
             args.draft,
             args.dry_run,
+            args.json,
+        )
+
+    elif args.command == "release-bundle-build":
+        _cmd_release_bundle_build(
+            registry_root,
+            runtime_root,
+            args.artifacts_dir,
+            args.out_root,
+            args.bundle_label,
+            args.json,
+        )
+
+    elif args.command == "release-bundle-verify":
+        _cmd_release_bundle_verify(
+            args.bundle_path,
+            args.json,
+        )
+
+    elif args.command == "release-bundle-promote":
+        _cmd_release_bundle_promote(
+            runtime_root,
+            args.bundle_path,
+            args.environment,
+            args.deployment_root,
+            args.json,
+        )
+
+    elif args.command == "release-bundle-rollback":
+        _cmd_release_bundle_rollback(
+            runtime_root,
+            args.environment,
+            args.deployment_root,
+            args.target_bundle_id,
+            args.json,
+        )
+
+    elif args.command == "release-bundle-promote-gated":
+        _cmd_release_bundle_promote_gated(
+            runtime_root,
+            args.bundle_path,
+            args.environment,
+            args.source_environment,
+            args.deployment_root,
+            args.report_file,
+            args.artifacts_dir,
             args.json,
         )
 
@@ -2159,6 +2358,180 @@ def _cmd_package_pr(
     _finish_success()
 
 
+def _cmd_release_bundle_build(
+    registry_root: Path,
+    runtime_root: Path,
+    artifacts_dir: Path | None,
+    out_root: Path | None,
+    bundle_label: str,
+    json_output: bool,
+) -> None:
+    resolved_artifacts_dir = artifacts_dir or (runtime_root / "artifacts")
+    resolved_out_root = out_root or (runtime_root / "artifacts" / "release_bundles")
+    result = build_release_bundle(
+        runtime_root=runtime_root,
+        registry_root=registry_root,
+        artifacts_dir=resolved_artifacts_dir,
+        out_root=resolved_out_root,
+        bundle_label=bundle_label,
+    )
+
+    payload = {
+        "ok": True,
+        "command": "release-bundle-build",
+        "bundle_id": result.bundle_id,
+        "bundle_root": str(result.bundle_root),
+        "manifest_path": str(result.manifest_path),
+        "included_files": result.included_files,
+        "included_evidence": result.included_evidence,
+    }
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    print("[release-bundle-build] Bundle created")
+    print(f"[release-bundle-build] Bundle ID      : {result.bundle_id}")
+    print(f"[release-bundle-build] Bundle root    : {result.bundle_root}")
+    print(f"[release-bundle-build] Manifest       : {result.manifest_path}")
+    print(f"[release-bundle-build] Included files : {result.included_files}")
+    print("[release-bundle-build] Next step:")
+    print(
+        f'  python skills.py release-bundle-verify "{result.bundle_root}"'
+    )
+
+
+def _cmd_release_bundle_verify(
+    bundle_path: Path,
+    json_output: bool,
+) -> None:
+    result = verify_release_bundle(bundle_root=bundle_path)
+    payload = {
+        "ok": result.ok,
+        "command": "release-bundle-verify",
+        "bundle_id": result.bundle_id,
+        "errors": result.errors,
+        "warnings": result.warnings,
+        "verified_files": result.verified_files,
+    }
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        if not result.ok:
+            raise SystemExit(2)
+        return
+
+    print(f"[release-bundle-verify] Bundle ID     : {result.bundle_id or '(unknown)'}")
+    print(f"[release-bundle-verify] Verified files: {result.verified_files}")
+    if result.warnings:
+        print("[release-bundle-verify] Warnings:")
+        for warning in result.warnings:
+            print(f"  - {warning}")
+    if result.errors:
+        print("[release-bundle-verify] Errors:")
+        for error in result.errors:
+            print(f"  - {error}")
+        raise SystemExit(2)
+    print("[release-bundle-verify] Validation: OK")
+
+
+def _cmd_release_bundle_promote(
+    runtime_root: Path,
+    bundle_path: Path,
+    environment: str,
+    deployment_root: Path | None,
+    json_output: bool,
+) -> None:
+    resolved_deployment_root = deployment_root or (
+        runtime_root / "artifacts" / "deployments"
+    )
+    result = promote_release_bundle(
+        bundle_root=bundle_path,
+        deployment_root=resolved_deployment_root,
+        environment=environment,
+    )
+    payload = {
+        "ok": True,
+        "command": "release-bundle-promote",
+        "environment": result.environment,
+        "bundle_id": result.bundle_id,
+        "release_root": str(result.release_root),
+        "current_pointer": str(result.current_pointer),
+        "previous_bundle_id": result.previous_bundle_id,
+    }
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    print("[release-bundle-promote] Promotion applied")
+    print(f"[release-bundle-promote] Environment     : {result.environment}")
+    print(f"[release-bundle-promote] Bundle ID       : {result.bundle_id}")
+    print(f"[release-bundle-promote] Release root    : {result.release_root}")
+    print(f"[release-bundle-promote] Current pointer : {result.current_pointer}")
+
+
+def _cmd_release_bundle_rollback(
+    runtime_root: Path,
+    environment: str,
+    deployment_root: Path | None,
+    target_bundle_id: str | None,
+    json_output: bool,
+) -> None:
+    resolved_deployment_root = deployment_root or (
+        runtime_root / "artifacts" / "deployments"
+    )
+    result = rollback_release_bundle(
+        deployment_root=resolved_deployment_root,
+        environment=environment,
+        target_bundle_id=target_bundle_id,
+    )
+    payload = {
+        "ok": True,
+        "command": "release-bundle-rollback",
+        "environment": result.environment,
+        "bundle_id": result.bundle_id,
+        "previous_bundle_id": result.previous_bundle_id,
+        "current_pointer": str(result.current_pointer),
+    }
+    if json_output:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+
+    print("[release-bundle-rollback] Rollback applied")
+    print(f"[release-bundle-rollback] Environment     : {result.environment}")
+    print(f"[release-bundle-rollback] Active bundle   : {result.bundle_id}")
+    print(f"[release-bundle-rollback] Previous bundle : {result.previous_bundle_id}")
+    print(f"[release-bundle-rollback] Current pointer : {result.current_pointer}")
+
+
+def _cmd_release_bundle_promote_gated(
+    runtime_root: Path,
+    bundle_path: Path,
+    environment: str,
+    source_environment: str | None,
+    deployment_root: Path | None,
+    report_file: Path | None,
+    artifacts_dir: Path | None,
+    json_output: bool,
+) -> None:
+    resolved_deployment_root = deployment_root or (
+        runtime_root / "artifacts" / "deployments"
+    )
+    resolved_report_file = report_file or (
+        runtime_root / "artifacts" / f"release_bundle_promotion_{environment}.json"
+    )
+    exit_code = execute_bundle_promotion(
+        bundle_root=bundle_path,
+        environment=environment,
+        deployment_root=resolved_deployment_root,
+        source_environment=source_environment,
+        report_file=resolved_report_file,
+        artifacts_dir=artifacts_dir,
+    )
+    if json_output and resolved_report_file.exists():
+        print(resolved_report_file.read_text(encoding="utf-8"))
+    if exit_code != 0:
+        raise SystemExit(exit_code)
+
+
 def _cmd_openapi(args, runtime_root: Path) -> None:
     tooling_root = runtime_root / "tooling"
 
@@ -2517,6 +2890,7 @@ def _ask_map_inputs(
         "content",
         "query",
         "input",
+            args.artifacts_dir,
         "prompt",
         "message",
         "source_text",

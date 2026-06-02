@@ -1,0 +1,79 @@
+name: Deployment Preview Bundle
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY_REF: e6a181e
+
+jobs:
+  preview_bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+          git -C ../agent-skill-registry checkout "${REGISTRY_REF}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[all]"
+
+      - name: Generate preview evidence set
+        run: |
+          mkdir -p artifacts
+          python tooling/verify_smoke_capabilities.py --report-file artifacts/smoke_report.json
+          python tooling/generate_policy_promotion_readiness.py --manifest-file policies/opa/bundle_manifest.json --artifacts-dir artifacts --report-file artifacts/policy_promotion_readiness_report.json
+          python tooling/verify_policy_promotion_readiness.py --report-file artifacts/policy_promotion_readiness_report.json --verify-report-file artifacts/policy_promotion_readiness_verify_report.json || true
+          python tooling/generate_release_readiness_gate.py --needs-json '{}' --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --policy-file .github/release_gate_policy.json --policy-profile transitional || true
+          python tooling/generate_release_lineage.py --needs-json '{}' --artifacts-dir artifacts --report-file artifacts/release_lineage.json --markdown-file artifacts/release_lineage.md || true
+          python tooling/verify_release_lineage_contract.py --lineage-file artifacts/release_lineage.json --report-file artifacts/release_lineage_contract_report.json --allow-failed-lineage-status || true
+
+      - name: Build preview bundle
+        run: |
+          python skills.py release-bundle-build --runtime-root . --registry-root ../agent-skill-registry --bundle-label pr-preview
+
+      - name: Resolve latest preview bundle path
+        id: bundle
+        shell: bash
+        run: |
+          BUNDLE_PATH=$(ls -dt artifacts/release_bundles/pr-preview-* | head -n 1)
+          echo "bundle_path=${BUNDLE_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify preview bundle
+        run: |
+          python skills.py release-bundle-verify "${{ steps.bundle.outputs.bundle_path }}"
+
+      - name: Promote bundle into preview state
+        run: |
+          python skills.py release-bundle-promote-gated "${{ steps.bundle.outputs.bundle_path }}" --environment preview
+
+      - name: Upload preview bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-preview-bundle
+          path: |
+            ${{ steps.bundle.outputs.bundle_path }}
+            artifacts/deployments/preview/current.json
+            artifacts/deployments/preview/history.jsonl
+            artifacts/release_bundle_promotion_preview.json
