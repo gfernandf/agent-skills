@@ -2395,9 +2395,7 @@ def _cmd_release_bundle_build(
     print(f"[release-bundle-build] Manifest       : {result.manifest_path}")
     print(f"[release-bundle-build] Included files : {result.included_files}")
     print("[release-bundle-build] Next step:")
-    print(
-        f'  python skills.py release-bundle-verify "{result.bundle_root}"'
-    )
+    print(f'  python skills.py release-bundle-verify "{result.bundle_root}"')
 
 
 def _cmd_release_bundle_verify(
@@ -2890,7 +2888,6 @@ def _ask_map_inputs(
         "content",
         "query",
         "input",
-            args.artifacts_dir,
         "prompt",
         "message",
         "source_text",

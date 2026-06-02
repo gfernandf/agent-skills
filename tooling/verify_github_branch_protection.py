@@ -76,7 +76,9 @@ def _api_get(url: str, token: str) -> tuple[int, object | None, str]:
         return 0, None, str(exc)
 
 
-def _api_get_list(url: str, token: str) -> tuple[int, list[dict[str, object]] | None, str]:
+def _api_get_list(
+    url: str, token: str
+) -> tuple[int, list[dict[str, object]] | None, str]:
     status, payload, detail = _api_get(url, token)
     if status != 200 or not isinstance(payload, list):
         return status, None, detail
@@ -171,12 +173,17 @@ def _rules_from_matching_rulesets(
             f"https://api.github.com/repos/{owner}/{repo}/rulesets/{ruleset_id}"
             "?includes_parents=true"
         )
-        ruleset_status, ruleset_payload, ruleset_detail = _api_get_dict(ruleset_url, token)
+        ruleset_status, ruleset_payload, ruleset_detail = _api_get_dict(
+            ruleset_url, token
+        )
         if ruleset_status != 200 or ruleset_payload is None:
             continue
 
         enforcement = ruleset_payload.get("enforcement")
-        if not isinstance(enforcement, str) or enforcement.lower() not in {"active", "enabled"}:
+        if not isinstance(enforcement, str) or enforcement.lower() not in {
+            "active",
+            "enabled",
+        }:
             continue
 
         target = ruleset_payload.get("target")
@@ -276,7 +283,11 @@ def _evaluate_rules_for_branch(
             found_required_pr_reviews = True
 
         rule_type = _rule_type(rule)
-        if "status" not in rule_type and "check" not in rule_type and "workflow" not in rule_type:
+        if (
+            "status" not in rule_type
+            and "check" not in rule_type
+            and "workflow" not in rule_type
+        ):
             continue
 
         for check_name in required_checks:
@@ -348,8 +359,8 @@ def main() -> int:
                 unverified = True
                 continue
 
-            rules_checks, found_pr_reviews, found_status_checks = _evaluate_rules_for_branch(
-                payload, required_checks
+            rules_checks, found_pr_reviews, found_status_checks = (
+                _evaluate_rules_for_branch(payload, required_checks)
             )
             if found_pr_reviews and found_status_checks:
                 for item in rules_checks:
@@ -357,8 +368,10 @@ def main() -> int:
                     checks.append(item)
                 continue
 
-            ruleset_status, ruleset_rules, ruleset_detail = _rules_from_matching_rulesets(
-                args.repository, branch, token, default_branch
+            ruleset_status, ruleset_rules, ruleset_detail = (
+                _rules_from_matching_rulesets(
+                    args.repository, branch, token, default_branch
+                )
             )
             checks.append(
                 {
@@ -375,7 +388,9 @@ def main() -> int:
                 _evaluate_rules_for_branch(ruleset_rules, required_checks)
             )
             for item in ruleset_checks:
-                item["check_id"] = item["check_id"].replace("ruleset", f"{branch}:rulesets")
+                item["check_id"] = item["check_id"].replace(
+                    "ruleset", f"{branch}:rulesets"
+                )
                 checks.append(item)
 
             if not ruleset_found_pr_reviews or not ruleset_found_status_checks:

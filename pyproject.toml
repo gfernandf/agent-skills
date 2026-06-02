@@ -94,6 +94,7 @@ include = [
 
 [tool.pytest.ini_options]
 testpaths = ["runtime", "."]
+norecursedirs = ["artifacts", "build", "dist", ".venv", "venv"]
 addopts = [
     "--cov=runtime",
     "--cov=gateway",

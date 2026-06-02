@@ -206,7 +206,9 @@ def build_release_bundle(
 
     runtime_checksums = _collect_checksums(payload_runtime_root)
     registry_checksums = _collect_checksums(payload_registry_root)
-    evidence_checksums = _collect_checksums(evidence_root) if evidence_root.exists() else {}
+    evidence_checksums = (
+        _collect_checksums(evidence_root) if evidence_root.exists() else {}
+    )
 
     manifest = {
         "contract": RELEASE_BUNDLE_CONTRACT,
@@ -281,8 +283,12 @@ def verify_release_bundle(*, bundle_root: Path) -> ReleaseBundleVerifyResult:
     if manifest.get("contract") != RELEASE_BUNDLE_CONTRACT:
         errors.append(f"Unexpected contract: {manifest.get('contract')}")
 
-    payload = manifest.get("payload") if isinstance(manifest.get("payload"), dict) else {}
-    evidence = manifest.get("evidence") if isinstance(manifest.get("evidence"), dict) else {}
+    payload = (
+        manifest.get("payload") if isinstance(manifest.get("payload"), dict) else {}
+    )
+    evidence = (
+        manifest.get("evidence") if isinstance(manifest.get("evidence"), dict) else {}
+    )
 
     def _verify_section(root_rel: str, checksums: dict[str, Any], label: str) -> None:
         nonlocal verified_files
@@ -303,22 +309,30 @@ def verify_release_bundle(*, bundle_root: Path) -> ReleaseBundleVerifyResult:
 
     _verify_section(
         str(payload.get("runtime_root") or "payload/runtime"),
-        payload.get("runtime_checksums") if isinstance(payload.get("runtime_checksums"), dict) else {},
+        payload.get("runtime_checksums")
+        if isinstance(payload.get("runtime_checksums"), dict)
+        else {},
         "runtime payload",
     )
     _verify_section(
         str(payload.get("registry_root") or "payload/registry"),
-        payload.get("registry_checksums") if isinstance(payload.get("registry_checksums"), dict) else {},
+        payload.get("registry_checksums")
+        if isinstance(payload.get("registry_checksums"), dict)
+        else {},
         "registry payload",
     )
     _verify_section(
         str(evidence.get("root") or "evidence"),
-        evidence.get("checksums") if isinstance(evidence.get("checksums"), dict) else {},
+        evidence.get("checksums")
+        if isinstance(evidence.get("checksums"), dict)
+        else {},
         "evidence",
     )
 
     evidence_root = bundle_root / str(evidence.get("root") or "evidence")
-    required = evidence.get("required") if isinstance(evidence.get("required"), list) else []
+    required = (
+        evidence.get("required") if isinstance(evidence.get("required"), list) else []
+    )
     for name in required:
         if not (evidence_root / str(name)).exists():
             errors.append(f"Missing required evidence file: {name}")
@@ -335,7 +349,9 @@ def verify_release_bundle(*, bundle_root: Path) -> ReleaseBundleVerifyResult:
     )
 
 
-def _deployment_paths(deployment_root: Path, environment: str) -> tuple[Path, Path, Path]:
+def _deployment_paths(
+    deployment_root: Path, environment: str
+) -> tuple[Path, Path, Path]:
     env_root = deployment_root / environment
     releases_root = env_root / "releases"
     current_path = env_root / "current.json"
@@ -394,7 +410,9 @@ def promote_release_bundle(
         bundle_id=verify.bundle_id,
         release_root=release_root,
         current_pointer=current_path,
-        previous_bundle_id=previous_bundle_id if isinstance(previous_bundle_id, str) else None,
+        previous_bundle_id=previous_bundle_id
+        if isinstance(previous_bundle_id, str)
+        else None,
     )
 
 
@@ -409,7 +427,9 @@ def rollback_release_bundle(
     )
     current = _read_current_pointer(current_path)
     if current is None:
-        raise ValueError(f"No current deployment pointer for environment '{environment}'")
+        raise ValueError(
+            f"No current deployment pointer for environment '{environment}'"
+        )
 
     current_bundle_id = current.get("bundle_id")
     if not isinstance(current_bundle_id, str) or not current_bundle_id:
@@ -417,10 +437,16 @@ def rollback_release_bundle(
 
     if target_bundle_id is None:
         releases = sorted(
-            [p.name for p in releases_root.iterdir() if p.is_dir() and p.name != current_bundle_id]
+            [
+                p.name
+                for p in releases_root.iterdir()
+                if p.is_dir() and p.name != current_bundle_id
+            ]
         )
         if not releases:
-            raise ValueError(f"No previous release available for environment '{environment}'")
+            raise ValueError(
+                f"No previous release available for environment '{environment}'"
+            )
         target_bundle_id = releases[-1]
 
     target_root = releases_root / target_bundle_id

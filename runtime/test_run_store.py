@@ -268,7 +268,6 @@ def test_fork_run():
     )
 
 
-
 def test_find_run_by_idempotency_key():
     store = RunStore()
     store.create_run_record(

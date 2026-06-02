@@ -862,7 +862,9 @@ def main() -> int:
         )
     else:
         github_status = str(github_branch_data.get("status", "unknown")).strip().lower()
-        github_unverified = bool((github_branch_data.get("summary") or {}).get("unverified"))
+        github_unverified = bool(
+            (github_branch_data.get("summary") or {}).get("unverified")
+        )
         github_passed = github_status == "passed"
         github_allowed = github_status == "unverified"
         _append_check(
@@ -952,8 +954,8 @@ def main() -> int:
         promotion_report_path = (
             artifacts_dir / f"release_bundle_promotion_{env_name}.json"
         )
-        promotion_report, promotion_present, promotion_load_error = _load_optional_report(
-            promotion_report_path
+        promotion_report, promotion_present, promotion_load_error = (
+            _load_optional_report(promotion_report_path)
         )
         promotion_env_present[env_name] = promotion_present
         if not promotion_present:

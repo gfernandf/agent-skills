@@ -55,7 +55,9 @@ def _status_is_pass(value: Any) -> bool:
     }
 
 
-def _load_bundle_evidence(bundle_root: Path, name: str) -> tuple[dict[str, Any] | None, str | None]:
+def _load_bundle_evidence(
+    bundle_root: Path, name: str
+) -> tuple[dict[str, Any] | None, str | None]:
     evidence_root = bundle_root / "evidence"
     path = evidence_root / name
     if not path.exists():
@@ -117,7 +119,9 @@ def evaluate_bundle_promotion(
         )
 
     allowed_sources = ALLOWED_SEQUENCE.get(environment)
-    transition_ok = allowed_sources is not None and source_environment in allowed_sources
+    transition_ok = (
+        allowed_sources is not None and source_environment in allowed_sources
+    )
     _append_check(
         checks,
         check_id="environment_transition_allowed",
@@ -168,7 +172,8 @@ def evaluate_bundle_promotion(
     )
     promotion_status = (
         str(promotion_report.get("status"))
-        if isinstance(promotion_report, dict) and promotion_report.get("status") is not None
+        if isinstance(promotion_report, dict)
+        and promotion_report.get("status") is not None
         else None
     )
     promotion_contract = (
@@ -204,8 +209,16 @@ def evaluate_bundle_promotion(
         and isinstance(promotion_report.get("environments"), dict)
         else {}
     )
-    d2s = envs.get("dev_to_staging", {}) if isinstance(envs.get("dev_to_staging"), dict) else {}
-    s2p = envs.get("staging_to_prod", {}) if isinstance(envs.get("staging_to_prod"), dict) else {}
+    d2s = (
+        envs.get("dev_to_staging", {})
+        if isinstance(envs.get("dev_to_staging"), dict)
+        else {}
+    )
+    s2p = (
+        envs.get("staging_to_prod", {})
+        if isinstance(envs.get("staging_to_prod"), dict)
+        else {}
+    )
 
     if environment == "staging":
         promotion_ready = (
@@ -233,7 +246,9 @@ def evaluate_bundle_promotion(
             deployment_root / source_environment / "current.json"
         )
         source_bundle_id = (
-            source_current.get("bundle_id") if isinstance(source_current, dict) else None
+            source_current.get("bundle_id")
+            if isinstance(source_current, dict)
+            else None
         )
         source_bundle_match = source_bundle_id == verify.bundle_id
         _append_check(

@@ -74,7 +74,9 @@ def main() -> int:
 
     for nodeid in TEST_NODES:
         for repetition in range(1, repetitions + 1):
-            print(f"[replay-determinism] pass={repetition}/{repetitions} pytest -q {nodeid}")
+            print(
+                f"[replay-determinism] pass={repetition}/{repetitions} pytest -q {nodeid}"
+            )
             rc, elapsed = _run_test(nodeid)
             completed_executions += 1
             execution_id = f"{nodeid}::pass{repetition}"
@@ -110,9 +112,7 @@ def main() -> int:
             "passed_executions": passed_executions,
             "failed_executions": len(executions) - passed_executions,
             "pass_ratio": (
-                float(passed_executions) / float(len(executions))
-                if executions
-                else 0.0
+                float(passed_executions) / float(len(executions)) if executions else 0.0
             ),
         },
         "tests": executions,

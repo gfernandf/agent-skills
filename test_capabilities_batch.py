@@ -198,7 +198,9 @@ TEST_DATA = {
                 {
                     "id": "s1",
                     "uses": "reasoning.content.summarize",
-                    "with": {"text": "System health is stable with minor latency spikes."},
+                    "with": {
+                        "text": "System health is stable with minor latency spikes."
+                    },
                     "save_as": "summary",
                 }
             ],
@@ -295,9 +297,21 @@ TEST_DATA = {
             {"id": "opt-b", "label": "Option B", "description": "Aggressive approach"},
         ],
         "criteria": [
-            {"name": "time_to_market", "description": "How quickly we can deliver", "weight": 2.0},
-            {"name": "operational_risk", "description": "Likelihood of incidents and regressions", "weight": 1.5},
-            {"name": "total_cost", "description": "Implementation and run cost", "weight": 1.0},
+            {
+                "name": "time_to_market",
+                "description": "How quickly we can deliver",
+                "weight": 2.0,
+            },
+            {
+                "name": "operational_risk",
+                "description": "Likelihood of incidents and regressions",
+                "weight": 1.5,
+            },
+            {
+                "name": "total_cost",
+                "description": "Implementation and run cost",
+                "weight": 1.0,
+            },
         ],
         "goal": "Choose deployment strategy for new service",
         "risk_tolerance": "medium",
@@ -413,7 +427,9 @@ TEST_DATA = {
         "output": {"summary": "Q3 results were positive.", "confidence": 0.85},
         "validation_policy": {"coherence": True, "grounding": False, "coverage": True},
         "evidence_context": [
-            {"content": "Q3 revenue and retention improved versus Q2 based on internal dashboard."}
+            {
+                "content": "Q3 revenue and retention improved versus Q2 based on internal dashboard."
+            }
         ],
     },
     "evaluation.risk.score": {
