@@ -4,8 +4,8 @@ service: agent_baseline
 protocol: pythoncall
 operation: generate_plan
 request:
-  interpreted_goal: input.interpreted_goal
-  planning_strategy: input.planning_strategy
+  goal: input.interpreted_goal
+  context: input.planning_strategy
 response:
   macro_plan: response.plan
   stage_count: response.step_count

@@ -221,6 +221,7 @@ def test_replay_run():
         source_run_id="r1",
         source_checkpoint_id="chk-1",
         checkpoint_head="chk-1",
+        versions={"workflow_schema": "1.0.0"},
         metadata={"confirmed_capabilities": ["cap.confirm"]},
     )
     _test("replay: status replaying", replay["status"] == "replaying")
@@ -233,6 +234,10 @@ def test_replay_run():
         replay.get("metadata", {}).get("source_checkpoint_id") == "chk-1",
     )
     _test("replay: checkpoint head", replay.get("checkpoint_head") == "chk-1")
+    _test(
+        "replay: versions propagated",
+        replay.get("versions", {}).get("workflow_schema") == "1.0.0",
+    )
 
 
 def test_fork_run():
@@ -244,6 +249,7 @@ def test_fork_run():
         source_run_id="r1",
         source_checkpoint_id="chk-2",
         checkpoint_head="chk-2",
+        versions={"workflow_schema": "1.0.0"},
         metadata={"confirmed_capabilities": ["cap.confirm"]},
     )
     _test("fork: status pending", fork["status"] == "pending")
@@ -256,6 +262,11 @@ def test_fork_run():
         fork.get("metadata", {}).get("source_checkpoint_id") == "chk-2",
     )
     _test("fork: checkpoint head", fork.get("checkpoint_head") == "chk-2")
+    _test(
+        "fork: versions propagated",
+        fork.get("versions", {}).get("workflow_schema") == "1.0.0",
+    )
+
 
 
 def test_find_run_by_idempotency_key():

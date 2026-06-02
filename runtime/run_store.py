@@ -507,6 +507,7 @@ class RunStoreV2:
         source_checkpoint_id: str | None = None,
         checkpoint_head: str | None = None,
         tenant_id: str | None = None,
+        versions: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         replay_metadata = dict(metadata or {})
@@ -520,6 +521,7 @@ class RunStoreV2:
             status=RUN_STATUS_REPLAYING,
             checkpoint_head=checkpoint_head,
             tenant_id=tenant_id,
+            versions=versions,
             metadata=replay_metadata,
         )
 
@@ -533,6 +535,7 @@ class RunStoreV2:
         source_checkpoint_id: str | None = None,
         checkpoint_head: str | None = None,
         tenant_id: str | None = None,
+        versions: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         fork_metadata = dict(metadata or {})
@@ -546,6 +549,7 @@ class RunStoreV2:
             status=RUN_STATUS_PENDING,
             checkpoint_head=checkpoint_head,
             tenant_id=tenant_id,
+            versions=versions,
             metadata=fork_metadata,
         )
 

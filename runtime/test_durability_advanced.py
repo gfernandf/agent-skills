@@ -165,3 +165,36 @@ def test_replay_and_fork_preserve_lineage_metadata_integrity() -> None:
     assert fork["metadata"]["source_checkpoint_id"] == "chk-source-2"
     assert fork["metadata"]["fork_mode"] == "checkpoint_fork"
     assert replay["run_id"] != fork["run_id"]
+
+
+def test_checkpoint_record_includes_state_snapshot_reference_integrity() -> None:
+    backend = InMemoryCheckpointStoreBackend()
+    manager = CheckpointManager(backend)
+
+    state = create_execution_state(
+        "durability.provenance", {"x": 1}, trace_id="trace-provenance"
+    )
+    mark_started(state)
+
+    record = manager.save_checkpoint(
+        run_id="run-prov-1",
+        state=state,
+        step_id="s-prov",
+        kind="step_completed",
+        pending_writes=["vars.provenance"],
+        checkpoint_id="chk_prov_1",
+    )
+
+    loaded_record = manager.load_checkpoint(
+        run_id="run-prov-1",
+        checkpoint_id="chk_prov_1",
+    )
+
+    assert loaded_record is not None
+    assert loaded_record["checkpoint_id"] == "chk_prov_1"
+    assert loaded_record["run_id"] == "run-prov-1"
+    assert loaded_record["state_snapshot_ref"] == "checkpoint://run-prov-1/chk_prov_1"
+    assert loaded_record["pending_writes"] == ["vars.provenance"]
+    assert isinstance(loaded_record.get("created_at"), str)
+    assert loaded_record["created_at"]
+    assert record.state_snapshot_ref == loaded_record["state_snapshot_ref"]

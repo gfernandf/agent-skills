@@ -22,6 +22,7 @@ from .models import (
     TraceStep,
     WorkingState,
 )
+from .versioning import CURRENT_STATE_VERSION, is_state_version_compatible
 
 _CHECKPOINT_FORMAT_VERSION = 1
 
@@ -284,6 +285,12 @@ def _restore_trace(d: dict[str, Any]) -> TraceState:
 
 def dict_to_state(d: dict[str, Any]) -> ExecutionState:
     """Restore an ExecutionState from a dict produced by state_to_dict."""
+    state_version = d.get("state_version", CURRENT_STATE_VERSION)
+    if not is_state_version_compatible(str(state_version), CURRENT_STATE_VERSION):
+        raise ValueError(
+            f"Incompatible state_version '{state_version}' for runtime schema '{CURRENT_STATE_VERSION}'"
+        )
+
     return ExecutionState(
         skill_id=d["skill_id"],
         inputs=d["inputs"],
@@ -303,7 +310,7 @@ def dict_to_state(d: dict[str, Any]) -> ExecutionState:
         output=_restore_output(d.get("output", {})),
         trace=_restore_trace(d.get("trace", {})),
         extensions=d.get("extensions", {}),
-        state_version=d.get("state_version", "1.0.0"),
+        state_version=state_version,
         skill_version=d.get("skill_version"),
         iteration=d.get("iteration", 0),
         current_step=d.get("current_step"),

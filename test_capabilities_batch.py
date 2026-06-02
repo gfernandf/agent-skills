@@ -114,6 +114,98 @@ TEST_DATA = {
         "agents": ["summarizer", "analyst", "translator"],
         "routing_strategy": "keyword",
     },
+    "decision.flow.branch": {
+        "condition": "priority == 'critical'",
+        "context": {"priority": "critical", "source": "monitoring"},
+        "branches": [
+            {"label": "escalate", "match": "priority == 'critical'"},
+            {"label": "log", "match": "priority == 'low'"},
+        ],
+        "default_branch": "log",
+    },
+    "decision.flow.catch": {
+        "error": {"type": "TimeoutError", "message": "Service unavailable"},
+        "fallback_strategy": "default_value",
+        "default_value": {"status": "degraded", "result": None},
+        "max_retries": 2,
+        "context": {"attempt": 1, "component": "gateway"},
+    },
+    "decision.option.select": {
+        "options": [
+            {"id": "opt-a", "label": "Option A", "description": "Conservative"},
+            {"id": "opt-b", "label": "Option B", "description": "Aggressive"},
+        ],
+        "option_analysis": [
+            {"id": "opt-a", "pros": ["stable"], "cons": ["slower"]},
+            {"id": "opt-b", "pros": ["faster"], "cons": ["riskier"]},
+        ],
+        "option_scores": [
+            {"option_id": "opt-a", "score": 0.72},
+            {"option_id": "opt-b", "score": 0.69},
+        ],
+        "criteria": ["risk", "speed", "cost"],
+        "constraints": ["max_budget=100k", "go_live<=90d"],
+    },
+    "decision.strategy.select": {
+        "strategies": [
+            {"id": "s1", "name": "phased rollout"},
+            {"id": "s2", "name": "big bang"},
+        ],
+        "constraints": ["limited_team", "compliance_required"],
+        "objective": "Ship with minimal operational risk",
+    },
+    "decision.task.delegate": {
+        "task": {"description": "Summarize incident timeline", "priority": "high"},
+        "agent": "ops_analyst",
+        "timeout_seconds": 30,
+    },
+    "decision.uncertainty.prioritize": {
+        "scored_uncertainties": [
+            {"id": "u1", "description": "traffic spike", "score": 0.8},
+            {"id": "u2", "description": "vendor delay", "score": 0.5},
+        ],
+        "risk_tolerance": "medium",
+        "capacity_limit": 1,
+    },
+    "evaluation.assumption.validate": {
+        "assumptions": [
+            "Peak traffic remains below 3x baseline",
+            "Database failover completes under 2 minutes",
+        ],
+        "evidence": [
+            "Load tests show 2.5x sustained traffic",
+            "Failover drill median: 95 seconds",
+        ],
+    },
+    "evaluation.catalog.detect": {
+        "interpreted_goal": "Find the best framework for evaluating rollout options",
+        "candidate_items": [
+            {"id": "weighted_scoring", "description": "MCDA weighted scoring"},
+            {"id": "risk_matrix", "description": "Likelihood x impact matrix"},
+        ],
+    },
+    "evaluation.catalog.rank": {
+        "candidate_items": [
+            {"id": "weighted_scoring", "description": "MCDA weighted scoring"},
+            {"id": "risk_matrix", "description": "Likelihood x impact matrix"},
+        ],
+        "interpreted_goal": "Prioritize frameworks for operational decision making",
+    },
+    "agent.plan.execute": {
+        "compiled_plan": {
+            "plan_id": "plan-001",
+            "steps": [
+                {
+                    "id": "s1",
+                    "uses": "reasoning.content.summarize",
+                    "with": {"text": "System health is stable with minor latency spikes."},
+                    "save_as": "summary",
+                }
+            ],
+            "outputs": {"summary": "$.summary"},
+        },
+        "initial_state": {},
+    },
     "agent.option.generate": {
         "goal": "Choose a deployment strategy for the new microservice",
         "max_options": 3,
@@ -190,6 +282,7 @@ TEST_DATA = {
             },
             {"id": "opt-b", "label": "Option B", "description": "Aggressive approach"},
         ],
+        "context": "Current team has 3 engineers, strict compliance requirements, and a 3-month timeline.",
         "goal": "Choose deployment strategy for new service",
     },
     "evaluation.option.score": {
@@ -201,7 +294,13 @@ TEST_DATA = {
             },
             {"id": "opt-b", "label": "Option B", "description": "Aggressive approach"},
         ],
+        "criteria": [
+            {"name": "time_to_market", "description": "How quickly we can deliver", "weight": 2.0},
+            {"name": "operational_risk", "description": "Likelihood of incidents and regressions", "weight": 1.5},
+            {"name": "total_cost", "description": "Implementation and run cost", "weight": 1.0},
+        ],
         "goal": "Choose deployment strategy for new service",
+        "risk_tolerance": "medium",
     },
     "security.output.gate": {
         "output": {"text": "Contact me at test@example.com"},
@@ -313,9 +412,14 @@ TEST_DATA = {
     "evaluation.response.validate": {
         "output": {"summary": "Q3 results were positive.", "confidence": 0.85},
         "validation_policy": {"coherence": True, "grounding": False, "coverage": True},
+        "evidence_context": [
+            {"content": "Q3 revenue and retention improved versus Q2 based on internal dashboard."}
+        ],
     },
     "evaluation.risk.score": {
-        "output": "The system performed within normal parameters.",
+        "output": {"text": "The system performed within normal parameters."},
+        "context": "Operational status update for internal stakeholders.",
+        "dimensions": ["toxicity", "bias", "hallucination", "prompt_injection"],
     },
     # ── remaining gaps ──
     "ops.trace.analyze": {
@@ -689,6 +793,96 @@ TEST_DATA = {
 }
 
 
+def _infer_fallback_value(field: str) -> Any:
+    """Infer a simple deterministic fallback value from an input field name."""
+
+    f = field.lower()
+    if any(k in f for k in ["id", "key", "token"]):
+        return "test-id-001"
+    if any(k in f for k in ["url", "uri"]):
+        return "https://example.com"
+    if any(k in f for k in ["path", "file"]):
+        return "artifacts/test.txt"
+    if any(
+        k in f
+        for k in [
+            "text",
+            "content",
+            "prompt",
+            "query",
+            "description",
+            "goal",
+            "objective",
+            "instruction",
+            "message",
+            "context",
+        ]
+    ):
+        return "test text"
+    if any(k in f for k in ["count", "limit", "top_k", "timeout", "retries", "max_"]):
+        return 3
+    if any(k in f for k in ["score", "confidence", "ratio", "threshold", "weight"]):
+        return 0.5
+    if any(k in f for k in ["enabled", "valid", "strict", "safe"]):
+        return True
+    if any(
+        k in f
+        for k in [
+            "items",
+            "records",
+            "options",
+            "strategies",
+            "assumptions",
+            "evidence",
+            "sources",
+            "events",
+            "tasks",
+            "criteria",
+            "constraints",
+            "dimensions",
+            "violations",
+            "issues",
+            "flags",
+            "agents",
+            "branches",
+        ]
+    ):
+        return [{"id": "x1", "label": "item", "description": "test"}]
+    if any(
+        k in f
+        for k in [
+            "mapping",
+            "schema",
+            "policy",
+            "rules",
+            "gate",
+            "plan",
+            "output",
+            "input",
+            "action",
+            "task",
+            "record",
+            "payload",
+            "risk",
+            "state",
+            "error",
+        ]
+    ):
+        return {"id": "x1", "text": "test"}
+    return "test"
+
+
+def _build_fallback_test_input(binding: BindingSpec) -> Dict[str, Any]:
+    """Build fallback input payload from binding request template."""
+
+    data: Dict[str, Any] = {}
+    for _, value in binding.request_template.items():
+        if isinstance(value, str) and value.startswith("input."):
+            field = value[len("input.") :]
+            data[field] = _infer_fallback_value(field)
+    return data
+
+
 def find_service_function(binding: BindingSpec) -> Tuple[Any, str]:
     """
     Find the actual Python function to call based on binding info.
@@ -849,7 +1043,13 @@ def test_all_capabilities():
     all_capabilities = capability_loader.get_all_capabilities()
     print(f"Testing {len(all_capabilities)} capabilities...\n")
 
-    results = {"functional": [], "placeholder": [], "error": [], "skipped": []}
+    results = {
+        "functional": [],
+        "placeholder": [],
+        "error": [],
+        "skipped": [],
+        "auto_generated": [],
+    }
 
     for capability_id in sorted(all_capabilities.keys()):
         all_capabilities[capability_id]
@@ -865,10 +1065,13 @@ def test_all_capabilities():
         # Get test data
         test_input = TEST_DATA.get(capability_id)
         if not test_input:
-            results["skipped"].append(
-                {"id": capability_id, "reason": "No test data defined"}
-            )
-            continue
+            test_input = _build_fallback_test_input(binding)
+            if not test_input:
+                results["skipped"].append(
+                    {"id": capability_id, "reason": "No test data could be generated"}
+                )
+                continue
+            results["auto_generated"].append(capability_id)
 
         # Call capability
         success, reason, result = call_capability(capability_id, binding, test_input)
@@ -910,9 +1113,10 @@ def test_all_capabilities():
     print(f"  Placeholder:  {len(results['placeholder'])}")
     print(f"  Skipped:      {len(results['skipped'])}")
     print(f"  Errors:       {len(results['error'])}")
+    print(f"  Auto-Generated Inputs: {len(results['auto_generated'])}")
     if results["error"]:
         for e in results["error"]:
-            print(f"    ⚠ {e['id']}: {e['reason'][:80]}")
+            print(f"    WARN {e['id']}: {e['reason'][:80]}")
     print(f"{'=' * 60}")
     # At least 50% of tested capabilities should be functional
     tested = functional + len(results["placeholder"]) + len(results["error"])
@@ -920,6 +1124,7 @@ def test_all_capabilities():
     assert functional / tested >= 0.5, (
         f"Only {functional}/{tested} capabilities functional"
     )
+    return results
 
 
 def print_results(results: Dict):
@@ -930,26 +1135,26 @@ def print_results(results: Dict):
     print("=" * 80)
 
     # Functional
-    print(f"\n✅ FUNCTIONAL ({len(results['functional'])})")
+    print(f"\n[OK] FUNCTIONAL ({len(results['functional'])})")
     print("-" * 80)
     for item in results["functional"]:
         print(f"  {item['id']:30} | {item['binding']:30} | {item['service']}")
 
     # Placeholders
-    print(f"\n⚠️  PLACEHOLDER/STUB ({len(results['placeholder'])})")
+    print(f"\n[WARN] PLACEHOLDER/STUB ({len(results['placeholder'])})")
     print("-" * 80)
     for item in results["placeholder"]:
         print(f"  {item['id']:30} | {item['reason'][:48]}")
 
     # Errors
-    print(f"\n❌ ERROR ({len(results['error'])})")
+    print(f"\n[ERR] ERROR ({len(results['error'])})")
     print("-" * 80)
     for item in results["error"]:
         print(f"  {item['id']:30} | {item['reason'][:48]}")
 
     # Skipped
     if results["skipped"]:
-        print(f"\n⏭️  SKIPPED ({len(results['skipped'])})")
+        print(f"\n[SKIP] SKIPPED ({len(results['skipped'])})")
         print("-" * 80)
         for item in results["skipped"]:
             print(f"  {item['id']:30} | {item['reason']}")
@@ -976,7 +1181,7 @@ def main():
         success = print_results(results)
         return 0 if success else 1
     except Exception as e:
-        print(f"❌ Fatal error: {e}")
+        print(f"FATAL ERROR: {e}")
         import traceback
 
         traceback.print_exc()

@@ -672,6 +672,7 @@ def test_replay_run_executes_from_checkpoint() -> None:
         trace_id="t-7",
         status="completed",
         checkpoint_head=record.checkpoint_id,
+        versions={"workflow_schema": "1.0.0"},
         metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
     )
 
@@ -711,6 +712,8 @@ def test_replay_run_executes_from_checkpoint() -> None:
     assert isinstance(run, dict)
     assert run.get("status") == "completed"
     assert run.get("metadata", {}).get("source_run_id") == "r-source"
+    assert run.get("metadata", {}).get("source_checkpoint_id") == record.checkpoint_id
+    assert run.get("versions", {}).get("workflow_schema") == "1.0.0"
 
 
 def test_replay_run_propagates_tenant_to_replay_execution() -> None:
@@ -856,6 +859,7 @@ def test_fork_run_creates_new_pending_run() -> None:
         trace_id="t-8",
         status="completed",
         checkpoint_head=record.checkpoint_id,
+        versions={"workflow_schema": "1.0.0"},
         metadata={"inputs": {"n": 1}, "execution_channel": "http-async"},
     )
 
@@ -871,6 +875,7 @@ def test_fork_run_creates_new_pending_run() -> None:
     assert fork_run["metadata"]["source_run_id"] == "r-fork-source"
     assert fork_run["metadata"]["source_checkpoint_id"] == record.checkpoint_id
     assert fork_run["checkpoint_head"] == record.checkpoint_id
+    assert fork_run.get("versions", {}).get("workflow_schema") == "1.0.0"
 
 
 def test_fork_run_uses_unique_run_ids() -> None:

@@ -427,6 +427,10 @@ jobs:
           python tooling/verify_customer_facing_neutral.py | tee artifacts/customer_facing_neutral.log
           python tooling/verify_durability_contract.py --report-file artifacts/durability_contract_report.json
           python tooling/verify_durability_advanced.py --report-file artifacts/durability_advanced_report.json
+          python tooling/verify_replay_determinism.py --report-file artifacts/replay_determinism_report.json --repetitions 2
+          python tooling/verify_workflow_version_compatibility.py --report-file artifacts/workflow_version_compatibility_report.json
+          python tooling/verify_checkpoint_schema_provenance.py --report-file artifacts/checkpoint_schema_provenance_report.json
+          python tooling/verify_provenance_coverage.py --report-file artifacts/provenance_coverage_report.json
           python tooling/verify_policy_shadow_mode.py --report-file artifacts/policy_shadow_report.json
           python tooling/verify_tenant_isolation_matrix.py --report-file artifacts/tenant_isolation_matrix_report.json
           python tooling/verify_policy_bundle_lifecycle.py --bundle-root policies/opa --report-file artifacts/policy_bundle_lifecycle_report.json
@@ -466,6 +470,10 @@ jobs:
             --title "Governance Executive Summary (Runtime Canary)" \
             --input-report artifacts/durability_contract_report.json \
             --input-report artifacts/durability_advanced_report.json \
+            --input-report artifacts/replay_determinism_report.json \
+            --input-report artifacts/workflow_version_compatibility_report.json \
+            --input-report artifacts/checkpoint_schema_provenance_report.json \
+            --input-report artifacts/provenance_coverage_report.json \
             --input-report artifacts/policy_shadow_report.json \
             --input-report artifacts/tenant_isolation_matrix_report.json \
             --input-report artifacts/policy_bundle_lifecycle_report.json \
@@ -485,6 +493,10 @@ jobs:
             artifacts/customer_facing_neutral.log
             artifacts/durability_contract_report.json
             artifacts/durability_advanced_report.json
+            artifacts/replay_determinism_report.json
+            artifacts/workflow_version_compatibility_report.json
+            artifacts/checkpoint_schema_provenance_report.json
+            artifacts/provenance_coverage_report.json
             artifacts/policy_shadow_report.json
             artifacts/tenant_isolation_matrix_report.json
             artifacts/policy_bundle_lifecycle_report.json
@@ -509,6 +521,10 @@ jobs:
           skills_path = Path('artifacts/skill_executability.json')
           durability_path = Path('artifacts/durability_contract_report.json')
           durability_advanced_path = Path('artifacts/durability_advanced_report.json')
+          replay_determinism_path = Path('artifacts/replay_determinism_report.json')
+          workflow_version_path = Path('artifacts/workflow_version_compatibility_report.json')
+          checkpoint_schema_path = Path('artifacts/checkpoint_schema_provenance_report.json')
+          provenance_coverage_path = Path('artifacts/provenance_coverage_report.json')
           policy_path = Path('artifacts/policy_shadow_report.json')
           tenant_path = Path('artifacts/tenant_isolation_matrix_report.json')
           bundle_path = Path('artifacts/policy_bundle_lifecycle_report.json')
@@ -549,6 +565,50 @@ jobs:
               )
           else:
               lines.append('- Durability advanced: report missing')
+
+          if replay_determinism_path.exists():
+              replay_det = json.loads(replay_determinism_path.read_text(encoding='utf-8'))
+              det_summary = replay_det.get('summary', {})
+              lines.append(
+                  f"- Replay determinism: {replay_det.get('status', 'unknown')} "
+                  f"(passes={det_summary.get('passed_executions', 'n/a')}/"
+                  f"{det_summary.get('completed_executions', 'n/a')})"
+              )
+          else:
+              lines.append('- Replay determinism: report missing')
+
+          if workflow_version_path.exists():
+              workflow_version = json.loads(workflow_version_path.read_text(encoding='utf-8'))
+              wf_summary = workflow_version.get('summary', {})
+              lines.append(
+                  f"- Workflow version compatibility: {workflow_version.get('status', 'unknown')} "
+                  f"(tests={wf_summary.get('passed_tests', 'n/a')}/"
+                  f"{wf_summary.get('total_tests', 'n/a')})"
+              )
+          else:
+              lines.append('- Workflow version compatibility: report missing')
+
+          if checkpoint_schema_path.exists():
+              checkpoint_schema = json.loads(checkpoint_schema_path.read_text(encoding='utf-8'))
+              cs_summary = checkpoint_schema.get('summary', {})
+              lines.append(
+                  f"- Checkpoint schema/provenance: {checkpoint_schema.get('status', 'unknown')} "
+                  f"(tests={cs_summary.get('passed_tests', 'n/a')}/"
+                  f"{cs_summary.get('total_tests', 'n/a')})"
+              )
+          else:
+              lines.append('- Checkpoint schema/provenance: report missing')
+
+            if provenance_coverage_path.exists():
+              provenance_coverage = json.loads(provenance_coverage_path.read_text(encoding='utf-8'))
+              pc_summary = provenance_coverage.get('summary', {})
+              lines.append(
+                f"- Provenance coverage: {provenance_coverage.get('status', 'unknown')} "
+                f"(tests={pc_summary.get('passed_tests', 'n/a')}/"
+                f"{pc_summary.get('total_tests', 'n/a')})"
+              )
+            else:
+              lines.append('- Provenance coverage: report missing')
 
           if policy_path.exists():
               policy = json.loads(policy_path.read_text(encoding='utf-8'))
@@ -789,8 +849,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      CI_TREND_SLO_ENFORCE: "false"
-      CI_TREND_SLO_FAIL_ON_UNVERIFIED: "false"
+      CI_TREND_SLO_ENFORCE: "true"
+      CI_TREND_SLO_FAIL_ON_UNVERIFIED: "true"
       CI_TREND_SLO_MIN_PASS_RATE: "0.80"
       CI_TREND_SLO_MIN_SAMPLES: "5"
 
@@ -927,6 +987,14 @@ jobs:
         continue-on-error: true
         with:
           name: critical-ci-trend-report
+          path: artifacts
+
+      - name: Download policy governance artifact
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: policy-bundle-governance-report
           path: artifacts
 
       - name: Evaluate consolidated release readiness gate

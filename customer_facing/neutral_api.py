@@ -1211,6 +1211,11 @@ class NeutralRuntimeAPI:
             else restored_state.trace_id
         )
         replay_run_id = f"replay_{run_id}_{uuid4().hex[:12]}"
+        source_versions = (
+            dict(source_run.get("versions") or {})
+            if isinstance(source_run.get("versions"), dict)
+            else {}
+        )
         replay_run = run_store.replay_run(
             replay_run_id,
             skill_id=source_skill_id,
@@ -1218,6 +1223,7 @@ class NeutralRuntimeAPI:
             source_run_id=run_id,
             source_checkpoint_id=selected_checkpoint_id,
             checkpoint_head=selected_checkpoint_id,
+            versions=source_versions,
             tenant_id=(
                 (source_run.get("metadata") or {}).get("tenant_id")
                 if isinstance(source_run.get("metadata"), dict)
@@ -1414,6 +1420,11 @@ class NeutralRuntimeAPI:
             else restored_state.trace_id
         )
         fork_run_id = f"fork_{run_id}_{uuid4().hex[:12]}"
+        source_versions = (
+            dict(source_run.get("versions") or {})
+            if isinstance(source_run.get("versions"), dict)
+            else {}
+        )
         fork_run = run_store.fork_run(
             fork_run_id,
             skill_id=source_skill_id,
@@ -1421,6 +1432,7 @@ class NeutralRuntimeAPI:
             source_run_id=run_id,
             source_checkpoint_id=selected_checkpoint_id,
             checkpoint_head=selected_checkpoint_id,
+            versions=source_versions,
             tenant_id=(
                 (source_run.get("metadata") or {}).get("tenant_id")
                 if isinstance(source_run.get("metadata"), dict)

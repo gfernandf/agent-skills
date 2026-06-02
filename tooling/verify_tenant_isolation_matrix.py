@@ -20,6 +20,9 @@ REQUIRED_SAME_TENANT_CAPABILITIES: tuple[str, ...] = (
     "email.message.send.yaml",
     "message.notification.send.yaml",
     "agent.plan.execute.yaml",
+    "decision.flow.branch.yaml",
+    "data.schema.validate.yaml",
+    "data.json.parse.yaml",
 )
 
 

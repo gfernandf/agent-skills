@@ -25,6 +25,12 @@ def _parse_args() -> argparse.Namespace:
         help="JSON object from GitHub Actions needs context (for example: ${{ toJson(needs) }}).",
     )
     parser.add_argument(
+        "--needs-file",
+        type=Path,
+        default=None,
+        help="Optional path to a JSON file containing GitHub Actions needs context.",
+    )
+    parser.add_argument(
         "--artifacts-dir",
         type=Path,
         default=ROOT / "artifacts",
@@ -91,15 +97,31 @@ def main() -> int:
 
     completeness_checks: list[dict[str, Any]] = []
 
+    needs_source = "needs_json"
+    needs_raw = args.needs_json
+    if args.needs_file is not None:
+        needs_source = str(args.needs_file)
+        try:
+            needs_raw = args.needs_file.read_text(encoding="utf-8-sig")
+        except Exception as exc:
+            needs_raw = "{}"
+            completeness_checks.append(
+                {
+                    "check_id": "needs_file_read",
+                    "passed": False,
+                    "detail": f"path={args.needs_file}; error={exc}",
+                }
+            )
+
     try:
-        needs = json.loads(args.needs_json)
+        needs = json.loads(needs_raw)
     except Exception as exc:
         needs = {}
         completeness_checks.append(
             {
                 "check_id": "needs_json_parse",
                 "passed": False,
-                "detail": f"parse_error: {exc}",
+                "detail": f"source={needs_source}; parse_error: {exc}",
             }
         )
     else:

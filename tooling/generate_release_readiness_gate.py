@@ -201,6 +201,16 @@ def _load_policy(path: Path | None, profile: str) -> tuple[dict[str, Any], str |
         "trend_allowed_slo_statuses": ["pass", "passed"],
         "durability_advanced_min_expected_scenarios": 0,
         "durability_advanced_min_expected_tests": 0,
+        "required_jobs": [
+            "pin_drift_guard",
+            "smoke",
+            "contracts",
+            "registry_consistency",
+            "openapi_verification",
+            "runtime_canary",
+            "dx_metrics",
+            "ci_stability_trend",
+        ],
     }
     if path is None:
         return default_policy, None
@@ -217,6 +227,13 @@ def _load_policy(path: Path | None, profile: str) -> tuple[dict[str, Any], str |
     resolved = dict(default_policy)
     resolved.update(selected)
     return resolved, None
+
+
+def _load_optional_report(path: Path) -> tuple[dict[str, Any] | None, bool, str | None]:
+    if not path.exists():
+        return None, False, None
+    payload, error = _load_json(path)
+    return payload, True, error
 
 
 def main() -> int:
@@ -334,16 +351,9 @@ def main() -> int:
             detail="parsed" if isinstance(needs, dict) else "not an object",
         )
 
-    required_jobs = [
-        "pin_drift_guard",
-        "smoke",
-        "contracts",
-        "registry_consistency",
-        "openapi_verification",
-        "runtime_canary",
-        "dx_metrics",
-        "ci_stability_trend",
-    ]
+    required_jobs = policy.get("required_jobs", [])
+    if not isinstance(required_jobs, list):
+        required_jobs = []
 
     for job in required_jobs:
         item = needs.get(job) if isinstance(needs, dict) else None
@@ -547,6 +557,214 @@ def main() -> int:
             ),
         )
 
+    replay_determinism_data, replay_determinism_error = _load_json(
+        artifacts_dir / "replay_determinism_report.json"
+    )
+    if replay_determinism_error:
+        _append_check(
+            checks,
+            check_id="replay_determinism_report_present",
+            passed=False,
+            severity="high",
+            detail=replay_determinism_error,
+        )
+    else:
+        replay_status = replay_determinism_data.get("status")
+        replay_contract = replay_determinism_data.get("contract")
+        replay_summary = replay_determinism_data.get("summary") or {}
+        expected_total_executions = int(
+            replay_summary.get("expected_total_executions") or 0
+        )
+        completed_executions = int(replay_summary.get("completed_executions") or 0)
+        failed_executions = int(replay_summary.get("failed_executions") or 0)
+
+        _append_check(
+            checks,
+            check_id="replay_determinism_status_passed",
+            passed=_status_is_pass(replay_status),
+            severity="high",
+            detail=f"status={replay_status}",
+        )
+        _append_check(
+            checks,
+            check_id="replay_determinism_contract_valid",
+            passed=replay_contract == "replay_determinism_v1",
+            severity="high",
+            detail=f"contract={replay_contract}",
+        )
+        _append_check(
+            checks,
+            check_id="replay_determinism_execution_complete",
+            passed=expected_total_executions > 0
+            and completed_executions == expected_total_executions,
+            severity="high",
+            detail=(
+                f"completed_executions={completed_executions}; "
+                f"expected_total_executions={expected_total_executions}"
+            ),
+        )
+        _append_check(
+            checks,
+            check_id="replay_determinism_no_failures",
+            passed=failed_executions == 0,
+            severity="high",
+            detail=f"failed_executions={failed_executions}",
+        )
+
+    workflow_version_data, workflow_version_error = _load_json(
+        artifacts_dir / "workflow_version_compatibility_report.json"
+    )
+    if workflow_version_error:
+        _append_check(
+            checks,
+            check_id="workflow_version_compatibility_report_present",
+            passed=False,
+            severity="high",
+            detail=workflow_version_error,
+        )
+    else:
+        workflow_status = workflow_version_data.get("status")
+        workflow_contract = workflow_version_data.get("contract")
+        workflow_summary = workflow_version_data.get("summary") or {}
+        expected_total_tests = int(workflow_summary.get("expected_total_tests") or 0)
+        total_tests = int(workflow_summary.get("total_tests") or 0)
+        failed_tests = int(workflow_summary.get("failed_tests") or 0)
+
+        _append_check(
+            checks,
+            check_id="workflow_version_compatibility_status_passed",
+            passed=_status_is_pass(workflow_status),
+            severity="high",
+            detail=f"status={workflow_status}",
+        )
+        _append_check(
+            checks,
+            check_id="workflow_version_compatibility_contract_valid",
+            passed=workflow_contract == "workflow_version_compatibility_v1",
+            severity="high",
+            detail=f"contract={workflow_contract}",
+        )
+        _append_check(
+            checks,
+            check_id="workflow_version_compatibility_execution_complete",
+            passed=expected_total_tests > 0 and total_tests == expected_total_tests,
+            severity="high",
+            detail=(
+                f"total_tests={total_tests}; expected_total_tests={expected_total_tests}"
+            ),
+        )
+        _append_check(
+            checks,
+            check_id="workflow_version_compatibility_no_failures",
+            passed=failed_tests == 0,
+            severity="high",
+            detail=f"failed_tests={failed_tests}",
+        )
+
+    checkpoint_schema_data, checkpoint_schema_error = _load_json(
+        artifacts_dir / "checkpoint_schema_provenance_report.json"
+    )
+    if checkpoint_schema_error:
+        _append_check(
+            checks,
+            check_id="checkpoint_schema_provenance_report_present",
+            passed=False,
+            severity="high",
+            detail=checkpoint_schema_error,
+        )
+    else:
+        checkpoint_schema_status = checkpoint_schema_data.get("status")
+        checkpoint_schema_contract = checkpoint_schema_data.get("contract")
+        checkpoint_schema_summary = checkpoint_schema_data.get("summary") or {}
+        expected_total_tests = int(
+            checkpoint_schema_summary.get("expected_total_tests") or 0
+        )
+        total_tests = int(checkpoint_schema_summary.get("total_tests") or 0)
+        failed_tests = int(checkpoint_schema_summary.get("failed_tests") or 0)
+
+        _append_check(
+            checks,
+            check_id="checkpoint_schema_provenance_status_passed",
+            passed=_status_is_pass(checkpoint_schema_status),
+            severity="high",
+            detail=f"status={checkpoint_schema_status}",
+        )
+        _append_check(
+            checks,
+            check_id="checkpoint_schema_provenance_contract_valid",
+            passed=checkpoint_schema_contract == "checkpoint_schema_provenance_v1",
+            severity="high",
+            detail=f"contract={checkpoint_schema_contract}",
+        )
+        _append_check(
+            checks,
+            check_id="checkpoint_schema_provenance_execution_complete",
+            passed=expected_total_tests > 0 and total_tests == expected_total_tests,
+            severity="high",
+            detail=(
+                f"total_tests={total_tests}; expected_total_tests={expected_total_tests}"
+            ),
+        )
+        _append_check(
+            checks,
+            check_id="checkpoint_schema_provenance_no_failures",
+            passed=failed_tests == 0,
+            severity="high",
+            detail=f"failed_tests={failed_tests}",
+        )
+
+    provenance_coverage_data, provenance_coverage_error = _load_json(
+        artifacts_dir / "provenance_coverage_report.json"
+    )
+    if provenance_coverage_error:
+        _append_check(
+            checks,
+            check_id="provenance_coverage_report_present",
+            passed=False,
+            severity="high",
+            detail=provenance_coverage_error,
+        )
+    else:
+        provenance_coverage_status = provenance_coverage_data.get("status")
+        provenance_coverage_contract = provenance_coverage_data.get("contract")
+        provenance_coverage_summary = provenance_coverage_data.get("summary") or {}
+        expected_total_tests = int(
+            provenance_coverage_summary.get("expected_total_tests") or 0
+        )
+        total_tests = int(provenance_coverage_summary.get("total_tests") or 0)
+        failed_tests = int(provenance_coverage_summary.get("failed_tests") or 0)
+
+        _append_check(
+            checks,
+            check_id="provenance_coverage_status_passed",
+            passed=_status_is_pass(provenance_coverage_status),
+            severity="high",
+            detail=f"status={provenance_coverage_status}",
+        )
+        _append_check(
+            checks,
+            check_id="provenance_coverage_contract_valid",
+            passed=provenance_coverage_contract == "provenance_coverage_v1",
+            severity="high",
+            detail=f"contract={provenance_coverage_contract}",
+        )
+        _append_check(
+            checks,
+            check_id="provenance_coverage_execution_complete",
+            passed=expected_total_tests > 0 and total_tests == expected_total_tests,
+            severity="high",
+            detail=(
+                f"total_tests={total_tests}; expected_total_tests={expected_total_tests}"
+            ),
+        )
+        _append_check(
+            checks,
+            check_id="provenance_coverage_no_failures",
+            passed=failed_tests == 0,
+            severity="high",
+            detail=f"failed_tests={failed_tests}",
+        )
+
     promo_verify_data, promo_verify_error = _load_json(
         artifacts_dir / "policy_promotion_readiness_verify_report.json"
     )
@@ -587,6 +805,77 @@ def main() -> int:
             passed=str(status).strip().lower() != "failed",
             severity="high",
             detail=f"status={status}",
+        )
+
+    branch_policy_data, branch_policy_error = _load_json(
+        artifacts_dir / "branch_protection_policy_report.json"
+    )
+    if branch_policy_error:
+        _append_check(
+            checks,
+            check_id="branch_protection_policy_report_present",
+            passed=False,
+            severity="high",
+            detail=branch_policy_error,
+        )
+    else:
+        status = branch_policy_data.get("status")
+        _append_check(
+            checks,
+            check_id="branch_protection_policy_status_passed",
+            passed=_status_is_pass(status),
+            severity="high",
+            detail=f"status={status}",
+        )
+
+    required_checks_data, required_checks_error = _load_json(
+        artifacts_dir / "required_status_checks_consistency_report.json"
+    )
+    if required_checks_error:
+        _append_check(
+            checks,
+            check_id="required_status_checks_consistency_report_present",
+            passed=False,
+            severity="high",
+            detail=required_checks_error,
+        )
+    else:
+        status = required_checks_data.get("status")
+        _append_check(
+            checks,
+            check_id="required_status_checks_consistency_status_passed",
+            passed=_status_is_pass(status),
+            severity="high",
+            detail=f"status={status}",
+        )
+
+    github_branch_data, github_branch_error = _load_json(
+        artifacts_dir / "github_branch_protection_report.json"
+    )
+    if github_branch_error:
+        _append_check(
+            checks,
+            check_id="github_branch_protection_report_present",
+            passed=False,
+            severity="high",
+            detail=github_branch_error,
+        )
+    else:
+        github_status = str(github_branch_data.get("status", "unknown")).strip().lower()
+        github_unverified = bool((github_branch_data.get("summary") or {}).get("unverified"))
+        github_passed = github_status == "passed"
+        github_allowed = github_status == "unverified"
+        _append_check(
+            checks,
+            check_id="github_branch_protection_status_passed",
+            passed=github_passed or github_allowed,
+            severity="medium" if github_allowed else "high",
+            detail=(
+                f"status={github_status}; unverified={github_unverified}; "
+                "manual_ui_confirmation_required=true"
+                if github_allowed
+                else f"status={github_status}; unverified={github_unverified}"
+            ),
         )
 
     dx_slo_data, dx_slo_error = _load_json(artifacts_dir / "dx_metrics_slo_report.json")
@@ -655,6 +944,84 @@ def main() -> int:
             passed=status_ok or status_allowed,
             severity="medium" if status_allowed else "high",
             detail=f"status={status}",
+        )
+
+    promotion_env_reports: dict[str, dict[str, Any]] = {}
+    promotion_env_present: dict[str, bool] = {}
+    for env_name in ["dev", "staging", "prod"]:
+        promotion_report_path = (
+            artifacts_dir / f"release_bundle_promotion_{env_name}.json"
+        )
+        promotion_report, promotion_present, promotion_load_error = _load_optional_report(
+            promotion_report_path
+        )
+        promotion_env_present[env_name] = promotion_present
+        if not promotion_present:
+            continue
+        _append_check(
+            checks,
+            check_id=f"bundle_promotion_report_load:{env_name}",
+            passed=promotion_load_error is None,
+            severity="high",
+            detail=(promotion_load_error or f"loaded from {promotion_report_path}"),
+        )
+        if promotion_load_error is not None or promotion_report is None:
+            continue
+        promotion_env_reports[env_name] = promotion_report
+        contract = promotion_report.get("contract")
+        _append_check(
+            checks,
+            check_id=f"bundle_promotion_report_contract:{env_name}",
+            passed=contract == "release_bundle_promotion_v1",
+            severity="high",
+            detail=f"contract={contract}",
+        )
+        status = promotion_report.get("status")
+        _append_check(
+            checks,
+            check_id=f"bundle_promotion_report_status:{env_name}",
+            passed=_status_is_pass(status),
+            severity="high",
+            detail=f"status={status}",
+        )
+
+    for env_name, report_data in promotion_env_reports.items():
+        if env_name == "dev":
+            continue
+        source_environment = report_data.get("source_environment")
+        source_environment_str = (
+            str(source_environment).strip().lower()
+            if isinstance(source_environment, str)
+            else None
+        )
+        source_present = bool(
+            source_environment_str and promotion_env_present.get(source_environment_str)
+        )
+        _append_check(
+            checks,
+            check_id=f"bundle_promotion_source_report_present:{env_name}",
+            passed=source_present,
+            severity="high",
+            detail=f"source_environment={source_environment_str}",
+        )
+
+        bundle_id = report_data.get("bundle_id")
+        source_bundle_id = None
+        if source_environment_str and source_environment_str in promotion_env_reports:
+            source_bundle_id = promotion_env_reports[source_environment_str].get(
+                "bundle_id"
+            )
+        same_bundle = (
+            isinstance(bundle_id, str)
+            and isinstance(source_bundle_id, str)
+            and bundle_id == source_bundle_id
+        )
+        _append_check(
+            checks,
+            check_id=f"bundle_promotion_chain_same_bundle:{env_name}",
+            passed=same_bundle,
+            severity="high",
+            detail=f"bundle_id={bundle_id}; source_bundle_id={source_bundle_id}",
         )
 
     high_failures = [
