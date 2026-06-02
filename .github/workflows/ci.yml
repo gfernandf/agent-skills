@@ -260,8 +260,6 @@ jobs:
           pip install jsonschema
 
       - name: Verify OPA policy bundle lifecycle governance
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python tooling/verify_policy_bundle_lifecycle.py --bundle-root policies/opa --report-file artifacts/policy_bundle_lifecycle_report.json
           python tooling/verify_policy_gate_freshness.py --report-file artifacts/policy_gate_freshness_report.json
