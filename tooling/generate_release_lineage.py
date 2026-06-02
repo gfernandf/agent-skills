@@ -152,7 +152,6 @@ def main() -> int:
         "runtime_canary",
         "dx_metrics",
         "ci_stability_trend",
-        "release_readiness_gate",
     ]
 
     artifacts = {
