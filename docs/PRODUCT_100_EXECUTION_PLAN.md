@@ -6,10 +6,17 @@ Last updated: 2026-05-28
 This plan tracks the remaining work required to reach a strict 100% production
 completion bar before public launch.
 
+Current intent:
+
+1. Close remaining readiness gaps and document evidence completely
+2. Do not initiate a public release while this plan is being finalized
+
 ## 1. Rule of the Plan
 
 No public production release until every phase below is marked complete and all
 exit criteria are satisfied.
+
+This document is a readiness and closure tracker. It is not a release trigger.
 
 ## 2. Completion Baseline (Current)
 
@@ -22,12 +29,10 @@ Reference gap sources:
 
 Primary open gaps:
 
-1. Temporal-grade durability depth
-2. Unified source-to-artifact lineage model
-3. Single cross-workflow release gate (now implemented; pending hardening)
-4. Branch/ruleset operational closure evidence
-5. DX SLO hardening and release-grade enforcement
-6. Broader same_tenant rollout beyond current baseline set
+1. External/manual branch/ruleset closure evidence attachment for release records
+2. Progressive SLO threshold hardening beyond current enforced baseline
+3. Broader same_tenant rollout beyond the current expanded baseline cohort
+4. Strategic architecture migrations (Temporal/Dagster-dbt/OPA productization depth)
 
 ## 3. Phased Execution
 
@@ -58,7 +63,7 @@ Done criteria:
 
 Status:
 
-1. In progress (gate implemented and hardened with strict-mode behavior on release-branch pushes; operational closure and sustained `go` evidence still pending)
+1. Completed baseline (branch protection/required-check verifiers, release-gate integration, and ruleset runbook are in place; external GitHub UI proof remains the manual attachment path)
 
 ### Phase B — Durability to Temporal-Grade Baseline+
 
@@ -87,7 +92,7 @@ Done criteria:
 
 Status:
 
-1. In progress (lineage artifact generation and CI completeness validation now integrated in release gate job; schema hardening and broader provenance coverage still pending)
+1. Completed baseline (replay determinism, workflow version compatibility, checkpoint schema/provenance, and broader provenance coverage verifiers are integrated into runtime canary and enforced in the release gate with blocking checks)
 
 ### Phase C — Unified Lineage for Contracts/Artifacts/Promotion
 
@@ -115,7 +120,7 @@ Done criteria:
 
 Status:
 
-1. In progress (advanced durability verifier integrated into runtime_canary and release gate; deeper temporal-grade history semantics and broader failure-injection suite still pending)
+1. Completed baseline (canonical release lineage artifact generation and contract verification now pass with a complete source-to-decision graph)
 
 ### Phase D — DX SLO Hardening and Enforcement
 
@@ -144,7 +149,7 @@ Done criteria:
 
 Status:
 
-1. In progress (versioned release-gate SLO policy and strict/transitional profiles implemented; threshold tuning rollout and sustained enforcement evidence pending)
+1. Completed baseline (versioned release-gate SLO policy and strict/transitional profiles implemented; critical CI trend SLO enforcement is active in CI)
 
 Phase note:
 
@@ -176,17 +181,51 @@ Done criteria:
 
 Status:
 
-1. Not started
+1. Completed baseline (same_tenant rollout expanded beyond the 5-capability baseline and tenant isolation matrix now covers the expanded cohort)
+
+### Phase F — Deployment DX Productization (Vercel-like Outcome)
+
+Objective:
+
+1. Move from governance-only readiness to a developer-facing deployment product flow.
+
+Scope:
+
+1. PR preview execution path for runtime verification
+2. Promotion automation across `dev -> staging -> prod` using immutable release bundles
+3. Fast rollback path with post-rollback verification
+4. Single deploy runbook for daily developer usage
+
+Tasks:
+
+1. Define immutable release bundle contract (artifact + metadata + checksums + lineage ref)
+2. Add PR preview workflow that provisions a disposable runtime verification target
+3. Add promote workflow that consumes a signed/verified bundle and applies environment gates
+4. Add rollback workflow that restores last-known-good bundle and re-runs canary checks
+5. Publish one operator/developer runbook with `preview`, `promote`, and `rollback` commands
+
+Done criteria:
+
+1. Every PR can produce verifiable preview evidence for runtime behavior
+2. Promotion to each environment is bundle-based and traceable
+3. Rollback to last-known-good can be executed in one workflow run
+4. Post-rollback canary and release gate return to `go`
+5. Developers can execute the complete flow without ad hoc manual steps
+
+Status:
+
+1. Completed baseline (preview, promote, and rollback workflows plus immutable bundle tooling are implemented and lint-clean)
 
 ## 4. Global Exit Criteria (100% Claim)
 
 A strict 100% completion claim is allowed only when all are true:
 
 1. Phases A-E are complete
-2. Release readiness gate decision is `go` on candidate branch
-3. No unresolved high-severity findings in governance artifacts
-4. Ruleset/branch protection closure evidence is attached
-5. Public release use cases (UC-01 to UC-10) have complete evidence
+2. Phase F is complete
+3. Release readiness gate decision is `go` on candidate branch
+4. No unresolved high-severity findings in governance artifacts
+5. Ruleset/branch protection closure evidence is attached
+6. Public release use cases (UC-01 to UC-10) have complete evidence
 
 ## 5. Execution Order
 
@@ -197,9 +236,11 @@ Recommended order:
 3. Phase C
 4. Phase B
 5. Phase E
+6. Phase F
 
 Rationale:
 
 1. First lock release governance and decision quality
 2. Then harden operational reliability signals
 3. Then complete deeper architecture maturity and rollout scope
+4. Finally productize deployment UX on top of stable governance and reliability controls

@@ -57,7 +57,7 @@ Pillar completion: 92%
 Main gaps:
 
 1. OPA adapter wiring and tenant-scoped policy-bundle lifecycle verification are in place, including explicit environment promotion controls in manifest governance checks.
-2. `same_tenant` runtime enforcement, 5-capability baseline rollout, channel-level probes, and HTTP/MCP transport probes are in place; broader registry rollout is still pending.
+2. `same_tenant` runtime enforcement, 8-capability rollout, channel-level probes, and HTTP/MCP transport probes are in place; broader registry rollout is still pending.
 
 ### 4) Developer Experience and Distribution (Stripe-like/Vercel-like)
 
@@ -73,8 +73,8 @@ Pillar completion: 75%
 Main gaps:
 
 1. DX metrics trend and initial SLO evaluation are now in place, but thresholds still need progressive hardening.
-2. Preview/promote environment UX is not yet formalized end-to-end.
-3. Production release evidence automation is documented, but still split across workflow artifacts rather than a single cross-workflow gate.
+2. Preview/promote/rollback environment UX is now formalized at baseline; remaining work is operational polish and broader adoption evidence.
+3. Cross-workflow release gate and lineage are implemented at baseline; remaining work is strategic consolidation depth rather than missing core controls.
 
 ## Overall Completion
 

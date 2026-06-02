@@ -1,10 +1,12 @@
-# GitHub Ruleset Runbook (Main/Master)
+# GitHub Ruleset Runbook (Default Branch)
 
 Status: operational closure guide
 Last updated: 2026-05-28
 
 This runbook closes the remaining gap that cannot be enforced purely from repository code:
-GitHub branch protection/ruleset settings for `main` and `master`.
+GitHub branch protection/ruleset settings for the repository's active default branch.
+
+In this repo, the default branch is currently `master`, not `main`.
 
 ## 1. Prerequisites
 
@@ -23,8 +25,8 @@ Path in GitHub UI:
 
 Target branches:
 
-1. `main`
-2. `master`
+1. The repository's default branch (`master` in this repo)
+2. Any additional release branches you actually use
 
 Enable rules:
 
@@ -64,6 +66,10 @@ Local manual check (may be `unverified` without token permissions):
 ```bash
 python tooling/verify_github_branch_protection.py --report-file artifacts/github_branch_protection_report.json
 ```
+
+This verifier reads the active branch rules applied by GitHub rulesets for the
+target branch, so it matches the ruleset UI more closely than the legacy
+branch-protection-only endpoint.
 
 CI governance check:
 

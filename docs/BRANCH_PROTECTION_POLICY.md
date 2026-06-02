@@ -5,11 +5,15 @@ Last updated: 2026-05-28
 
 ## Scope
 
-This policy defines the minimum merge/push governance expected for `main`/`master`.
+This policy defines the minimum merge/push governance expected for the active
+default branch used for releases.
+
+In this repository, the default branch is currently `master`.
 
 ## Required Repository Settings
 
-Apply these in GitHub branch protection/rulesets for `main` and `master`:
+Apply these in GitHub branch protection/rulesets for `master` (or the active
+default branch if it changes in the future):
 
 1. Require pull request before merging.
 2. Require at least 1 approval.
@@ -38,7 +42,7 @@ Operational setup guide:
 
 Repository settings cannot be fully enforced from code inside the repository. This
 policy is enforced operationally in GitHub settings and verified in-repo via
-workflow/job consistency checks.
+workflow/job consistency checks against the active branch rules/rulesets.
 
 Production requirement:
 
