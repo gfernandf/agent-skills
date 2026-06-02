@@ -599,15 +599,15 @@ jobs:
           else:
               lines.append('- Checkpoint schema/provenance: report missing')
 
-            if provenance_coverage_path.exists():
+          if provenance_coverage_path.exists():
               provenance_coverage = json.loads(provenance_coverage_path.read_text(encoding='utf-8'))
               pc_summary = provenance_coverage.get('summary', {})
               lines.append(
-                f"- Provenance coverage: {provenance_coverage.get('status', 'unknown')} "
-                f"(tests={pc_summary.get('passed_tests', 'n/a')}/"
-                f"{pc_summary.get('total_tests', 'n/a')})"
+                  f"- Provenance coverage: {provenance_coverage.get('status', 'unknown')} "
+                  f"(tests={pc_summary.get('passed_tests', 'n/a')}/"
+                  f"{pc_summary.get('total_tests', 'n/a')})"
               )
-            else:
+          else:
               lines.append('- Provenance coverage: report missing')
 
           if policy_path.exists():
