@@ -1,164 +1,114 @@
 {
-  "skill_id": "agent.plan-and-route",
-  "all_equal": true,
-  "health": {
-    "equal": true,
-    "http": {
-      "id": null,
-      "status": "ok",
-      "top_level_keys": [
-        "status"
-      ],
-      "output_keys": [],
-      "meta_keys": []
+    "skill_id": "agent.plan-and-route",
+    "all_equal": true,
+    "health": {
+        "equal": true,
+        "http": {
+            "status": "ok",
+            "top_level_keys": [
+                "status"
+            ],
+            "output_keys": [],
+            "meta_keys": []
+        },
+        "mcp": {
+            "status": "ok",
+            "top_level_keys": [
+                "status"
+            ],
+            "output_keys": [],
+            "meta_keys": []
+        }
     },
-    "mcp": {
-      "id": null,
-      "status": "ok",
-      "top_level_keys": [
-        "status"
-      ],
-      "output_keys": [],
-      "meta_keys": []
-    }
-  },
-  "describe_skill": {
-    "equal": true,
-    "http": {
-      "id": "agent.plan-and-route",
-      "status": null,
-      "top_level_keys": [
-        "description",
-        "id",
-        "inputs",
-        "name",
-        "outputs",
-        "steps",
-        "version"
-      ],
-      "output_keys": [
-        "plan",
-        "route"
-      ],
-      "meta_keys": []
+    "describe_skill": {
+        "equal": true,
+        "http": {
+            "status": null,
+            "top_level_keys": [
+                "description",
+                "id",
+                "inputs",
+                "name",
+                "outputs",
+                "steps",
+                "version"
+            ],
+            "output_keys": [],
+            "meta_keys": []
+        },
+        "mcp": {
+            "status": null,
+            "top_level_keys": [
+                "description",
+                "id",
+                "inputs",
+                "name",
+                "outputs",
+                "steps",
+                "version"
+            ],
+            "output_keys": [],
+            "meta_keys": []
+        }
     },
-    "mcp": {
-      "id": "agent.plan-and-route",
-      "status": null,
-      "top_level_keys": [
-        "description",
-        "id",
-        "inputs",
-        "name",
-        "outputs",
-        "steps",
-        "version"
-      ],
-      "output_keys": [
-        "plan",
-        "route"
-      ],
-      "meta_keys": []
-    }
-  },
-  "execute_skill": {
-    "equal": true,
-    "http": {
-      "id": "agent.plan-and-route",
-      "status": "completed",
-      "top_level_keys": [
-        "meta",
-        "outputs",
-        "skill_id",
-        "status"
-      ],
-      "output_keys": [
-        "plan",
-        "route"
-      ],
-      "meta_keys": [
-        "capabilities_executed",
-        "completed_steps_count",
-        "execution_health",
-        "execution_warnings",
-        "failed_steps_count",
-        "fallback_severity",
-        "fallback_steps",
-        "fallback_steps_count",
-        "retries_used",
-        "skill_id",
-        "status",
-        "step_diagnostics",
-        "steps_count",
-        "trace_completeness"
-      ]
+    "execute_skill": {
+        "equal": true,
+        "http": {
+            "status": "completed",
+            "top_level_keys": [
+                "meta",
+                "outputs",
+                "skill_id",
+                "status"
+            ],
+            "output_keys": [],
+            "meta_keys": []
+        },
+        "mcp": {
+            "status": "completed",
+            "top_level_keys": [
+                "meta",
+                "outputs",
+                "skill_id",
+                "status"
+            ],
+            "output_keys": [],
+            "meta_keys": []
+        }
     },
-    "mcp": {
-      "id": "agent.plan-and-route",
-      "status": "completed",
-      "top_level_keys": [
-        "meta",
-        "outputs",
-        "skill_id",
-        "status"
-      ],
-      "output_keys": [
-        "plan",
-        "route"
-      ],
-      "meta_keys": [
-        "capabilities_executed",
-        "completed_steps_count",
-        "execution_health",
-        "execution_warnings",
-        "failed_steps_count",
-        "fallback_severity",
-        "fallback_steps",
-        "fallback_steps_count",
-        "retries_used",
-        "skill_id",
-        "status",
-        "step_diagnostics",
-        "steps_count",
-        "trace_completeness"
-      ]
+    "execute_capability": {
+        "equal": true,
+        "http": {
+            "status": null,
+            "top_level_keys": [
+                "capability_id",
+                "meta",
+                "outputs"
+            ],
+            "output_keys": [
+                "valid",
+                "violations"
+            ],
+            "meta_keys": [
+                "binding_id",
+                "service_id"
+            ]
+        },
+        "mcp": {
+            "status": null,
+            "top_level_keys": [
+                "capability_id",
+                "meta",
+                "outputs"
+            ],
+            "output_keys": [
+                "valid",
+                "violations"
+            ],
+            "meta_keys": [
+                "binding_id",
+                "service_id"
+            ]
+        }
     }
-  },
-  "execute_capability": {
-    "equal": true,
-    "http": {
-      "id": "policy.constraint.validate",
-      "status": null,
-      "top_level_keys": [
-        "capability_id",
-        "meta",
-        "outputs"
-      ],
-      "output_keys": [
-        "valid",
-        "violations"
-      ],
-      "meta_keys": [
-        "binding_id",
-        "service_id"
-      ]
-    },
-    "mcp": {
-      "id": "policy.constraint.validate",
-      "status": null,
-      "top_level_keys": [
-        "capability_id",
-        "meta",
-        "outputs"
-      ],
-      "output_keys": [
-        "valid",
-        "violations"
-      ],
-      "meta_keys": [
-        "binding_id",
-        "service_id"
-      ]
-    }
-  }
 }

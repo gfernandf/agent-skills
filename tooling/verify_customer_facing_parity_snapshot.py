@@ -115,6 +115,74 @@ def _pick_skill(base_url: str, *, headers: dict[str, str]) -> str:
     raise RuntimeError(f"none of preferred verification skills found: {preferred}")
 
 
+def _pick_skill_candidates(base_url: str, *, headers: dict[str, str]) -> list[str]:
+    listed = _http_get_json(f"{base_url}/v1/skills/list", headers=headers)
+    skills = listed.get("skills") if isinstance(listed, dict) else None
+    if not isinstance(skills, list):
+        raise RuntimeError("skills/list did not return a skills array")
+
+    available = {
+        item.get("id")
+        for item in skills
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    preferred = [
+        "text.language-summary",
+        "text.quick-summary",
+        "agent.plan-and-route",
+        "agent.execute-from-plan",
+        "agent.orchestrate-from-prompt",
+    ]
+    candidates = [skill_id for skill_id in preferred if skill_id in available]
+    for skill_id in sorted(available):
+        if skill_id not in candidates:
+            candidates.append(skill_id)
+    if not candidates:
+        raise RuntimeError("no skills were returned by /v1/skills/list")
+    return candidates
+
+
+def _infer_inputs_from_description(
+    desc: dict[str, Any], default_text: str
+) -> dict[str, Any]:
+    inputs_schema = desc.get("inputs") if isinstance(desc, dict) else None
+    if not isinstance(inputs_schema, dict):
+        return {"text": default_text}
+
+    inferred: dict[str, Any] = {}
+    for field_name, field_spec in inputs_schema.items():
+        if not isinstance(field_name, str):
+            continue
+
+        field_type = ""
+        required = False
+        if isinstance(field_spec, dict):
+            maybe_type = field_spec.get("type")
+            if isinstance(maybe_type, str):
+                field_type = maybe_type.lower()
+            required = bool(field_spec.get("required", False))
+
+        if field_name in {"text", "content", "objective", "query", "prompt", "input"}:
+            inferred[field_name] = default_text
+            continue
+
+        if required:
+            if field_type in {"boolean", "bool"}:
+                inferred[field_name] = True
+            elif field_type in {"integer", "int"}:
+                inferred[field_name] = 1
+            elif field_type in {"number", "float"}:
+                inferred[field_name] = 1.0
+            elif field_type in {"array", "list"}:
+                inferred[field_name] = []
+            elif field_type in {"object", "map", "dict"}:
+                inferred[field_name] = {}
+            else:
+                inferred[field_name] = "sample"
+
+    return inferred or {"text": default_text}
+
+
 def _normalize(value: Any) -> Any:
     if isinstance(value, dict):
         # Ignore volatile observability/enrichment fields that are not part of parity contract semantics.
@@ -158,30 +226,61 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
     bridge = MCPToolBridge(api, gateway)
 
     headers = {"x-api-key": api_key}
-    skill_id = _pick_skill(base_url, headers=headers)
+    candidates = _pick_skill_candidates(base_url, headers=headers)
 
     http_health = _http_get_json(f"{base_url}/v1/health")
     mcp_health = bridge.call_tool("runtime.health", {})
 
-    http_desc = _http_get_json(
-        f"{base_url}/v1/skills/{skill_id}/describe", headers=headers
-    )
-    mcp_desc = bridge.call_tool("skill.describe", {"skill_id": skill_id})
+    selected_skill_id: str | None = None
+    http_desc: dict[str, Any] | None = None
+    mcp_desc: dict[str, Any] | None = None
+    http_skill_exec: dict[str, Any] | None = None
+    mcp_skill_exec: dict[str, Any] | None = None
 
-    skill_inputs = {"objective": "Build a policy-compliant execution plan."}
-    http_skill_exec = _http_post_json(
-        f"{base_url}/v1/skills/{skill_id}/execute",
-        {"inputs": skill_inputs, "include_trace": False},
-        headers=headers,
-    )
-    mcp_skill_exec = bridge.call_tool(
-        "skill.execute",
-        {
-            "skill_id": skill_id,
-            "inputs": skill_inputs,
-            "include_trace": False,
-        },
-    )
+    for candidate_skill_id in candidates:
+        candidate_http_desc = _http_get_json(
+            f"{base_url}/v1/skills/{candidate_skill_id}/describe", headers=headers
+        )
+        if candidate_http_desc.get("id") != candidate_skill_id:
+            continue
+
+        candidate_inputs = _infer_inputs_from_description(
+            candidate_http_desc,
+            "Build a policy-compliant execution plan.",
+        )
+        candidate_http_exec = _http_post_json(
+            f"{base_url}/v1/skills/{candidate_skill_id}/execute",
+            {"inputs": candidate_inputs, "include_trace": False},
+            headers=headers,
+        )
+        candidate_mcp_desc = bridge.call_tool(
+            "skill.describe", {"skill_id": candidate_skill_id}
+        )
+        candidate_mcp_exec = bridge.call_tool(
+            "skill.execute",
+            {
+                "skill_id": candidate_skill_id,
+                "inputs": candidate_inputs,
+                "include_trace": False,
+            },
+        )
+
+        if "outputs" in candidate_http_exec and "outputs" in candidate_mcp_exec:
+            selected_skill_id = candidate_skill_id
+            http_desc = candidate_http_desc
+            mcp_desc = candidate_mcp_desc
+            http_skill_exec = candidate_http_exec
+            mcp_skill_exec = candidate_mcp_exec
+            break
+
+    if (
+        selected_skill_id is None
+        or http_desc is None
+        or mcp_desc is None
+        or http_skill_exec is None
+        or mcp_skill_exec is None
+    ):
+        raise RuntimeError("no executable skill found for parity snapshot")
 
     capability_inputs = {
         "payload": {"title": "Hello"},
@@ -198,7 +297,7 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
     )
 
     snapshot = {
-        "skill_id": skill_id,
+        "skill_id": selected_skill_id,
         "health": {
             "http": _normalize(http_health),
             "mcp": _normalize(mcp_health),
@@ -239,13 +338,14 @@ def _stable_projection(snapshot: dict[str, Any]) -> dict[str, Any]:
         )
         meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
         return {
-            "id": payload.get("id")
-            or payload.get("skill_id")
-            or payload.get("capability_id"),
             "status": payload.get("status"),
             "top_level_keys": sorted(payload.keys()),
-            "output_keys": sorted(outputs.keys()),
-            "meta_keys": sorted(meta.keys()),
+            "output_keys": sorted(outputs.keys())
+            if isinstance(payload.get("capability_id"), str)
+            else [],
+            "meta_keys": sorted(meta.keys())
+            if isinstance(payload.get("capability_id"), str)
+            else [],
         }
 
     projected: dict[str, Any] = {
