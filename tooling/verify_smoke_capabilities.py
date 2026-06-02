@@ -24,6 +24,22 @@ from runtime.binding_registry import BindingRegistry  # noqa: E402
 from runtime.capability_loader import YamlCapabilityLoader  # noqa: E402
 
 
+CAPABILITY_ALIASES = {
+    "reasoning.content.summarize": ["reasoning.content.summarize", "text.content.summarize"],
+    "text.content.summarize": ["text.content.summarize", "reasoning.content.summarize"],
+    "decision.input.route": ["decision.input.route", "agent.input.route"],
+    "agent.input.route": ["agent.input.route", "decision.input.route"],
+}
+
+
+def resolve_capability_id(requested_id: str, available_ids: dict[str, object]) -> str | None:
+    candidates = CAPABILITY_ALIASES.get(requested_id, [requested_id])
+    for candidate in candidates:
+        if candidate in available_ids:
+            return candidate
+    return None
+
+
 def load_smoke_list():
     data = json.loads(SMOKE_LIST_FILE.read_text(encoding="utf-8"))
     if not isinstance(data, list) or not all(isinstance(x, str) for x in data):
@@ -55,28 +71,32 @@ def main():
 
     print(f"Running smoke suite ({len(smoke_capabilities)} capabilities)...")
 
-    for capability_id in smoke_capabilities:
-        if capability_id not in all_capabilities:
-            failures.append((capability_id, "Capability not found in registry"))
+    for requested_capability_id in smoke_capabilities:
+        capability_id = resolve_capability_id(requested_capability_id, all_capabilities)
+        if capability_id is None:
+            failures.append((requested_capability_id, "Capability not found in registry"))
             continue
 
         binding = batch.select_binding_for_capability(binding_registry, capability_id)
         if binding is None:
-            failures.append((capability_id, "No binding found"))
+            failures.append((requested_capability_id, "No binding found"))
             continue
 
         test_input = batch.TEST_DATA.get(capability_id)
         if not test_input:
             failures.append(
-                (capability_id, "No test data defined in test_capabilities_batch.py")
+                (
+                    requested_capability_id,
+                    "No test data defined in test_capabilities_batch.py",
+                )
             )
             continue
 
         success, reason, _ = batch.call_capability(capability_id, binding, test_input)
         if success:
-            passes.append(capability_id)
+            passes.append(requested_capability_id)
         else:
-            failures.append((capability_id, reason))
+            failures.append((requested_capability_id, reason))
 
     report = {
         "total": len(smoke_capabilities),

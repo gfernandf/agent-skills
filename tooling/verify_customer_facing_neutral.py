@@ -107,7 +107,7 @@ def _wait_for_server_ready_or_exit(
     raise RuntimeError(f"server did not become ready at {base_url}: {last_error}")
 
 
-def _pick_skill(base_url: str, *, headers: dict[str, str]) -> str:
+def _pick_skill(base_url: str, *, headers: dict[str, str]) -> tuple[str, dict]:
     listed = _http_get_json(f"{base_url}/v1/skills/list", headers=headers)
     skills = listed.get("skills") if isinstance(listed, dict) else None
     if not isinstance(skills, list):
@@ -119,13 +119,30 @@ def _pick_skill(base_url: str, *, headers: dict[str, str]) -> str:
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
     preferred = [
-        "agent.plan-and-route",
-        "agent.execute-from-plan",
-        "agent.orchestrate-from-prompt",
+        (
+            "text.language-summary",
+            {"text": "Build a safe runtime execution plan."},
+        ),
+        (
+            "text.quick-summary",
+            {"text": "Build a safe runtime execution plan."},
+        ),
+        (
+            "agent.plan-and-route",
+            {"objective": "Build a safe runtime execution plan."},
+        ),
+        (
+            "agent.execute-from-plan",
+            {"objective": "Build a safe runtime execution plan."},
+        ),
+        (
+            "agent.orchestrate-from-prompt",
+            {"objective": "Build a safe runtime execution plan."},
+        ),
     ]
-    for skill_id in preferred:
+    for skill_id, payload in preferred:
         if skill_id in available:
-            return skill_id
+            return skill_id, payload
     raise RuntimeError(f"none of preferred verification skills found: {preferred}")
 
 
@@ -152,7 +169,7 @@ def main() -> int:
 
     try:
         _wait_for_server_ready_or_exit(http_proc, base_url)
-        skill_id = _pick_skill(base_url, headers=headers)
+        skill_id, skill_inputs = _pick_skill(base_url, headers=headers)
 
         health = _http_get_json(f"{base_url}/v1/health")
         if health.get("status") != "ok":
@@ -168,9 +185,7 @@ def main() -> int:
         exec_result = _http_post_json(
             f"{base_url}/v1/skills/{skill_id}/execute",
             {
-                "inputs": {
-                    "objective": "Build a safe runtime execution plan.",
-                },
+                "inputs": skill_inputs,
                 "include_trace": False,
             },
             headers=headers,
@@ -197,9 +212,7 @@ def main() -> int:
             "skill.execute",
             {
                 "skill_id": skill_id,
-                "inputs": {
-                    "objective": "Generate a compact plan.",
-                },
+                "inputs": skill_inputs,
             },
         )
         if "outputs" not in mcp_exec:
