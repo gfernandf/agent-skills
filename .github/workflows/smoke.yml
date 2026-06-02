@@ -82,6 +82,7 @@ jobs:
           pip install -e ".[all]"
           pip install pytest
           pip install jsonschema
+          pip install jsonschema
 
       - name: Run smoke verifier
         run: |
