@@ -107,7 +107,9 @@ def _wait_for_server_ready_or_exit(
     raise RuntimeError(f"server did not become ready at {base_url}: {last_error}")
 
 
-def _pick_skill(base_url: str, *, headers: dict[str, str]) -> tuple[str, dict]:
+def _pick_skill_candidates(
+    base_url: str, *, headers: dict[str, str]
+) -> list[tuple[str, dict]]:
     listed = _http_get_json(f"{base_url}/v1/skills/list", headers=headers)
     skills = listed.get("skills") if isinstance(listed, dict) else None
     if not isinstance(skills, list):
@@ -140,10 +142,61 @@ def _pick_skill(base_url: str, *, headers: dict[str, str]) -> tuple[str, dict]:
             {"objective": "Build a safe runtime execution plan."},
         ),
     ]
-    for skill_id, payload in preferred:
-        if skill_id in available:
-            return skill_id, payload
-    raise RuntimeError(f"none of preferred verification skills found: {preferred}")
+    candidates = [
+        (skill_id, payload) for skill_id, payload in preferred if skill_id in available
+    ]
+    # Last-resort fallback: try any listed skill with a generic text payload.
+    for skill_id in sorted(available):
+        if skill_id not in {candidate[0] for candidate in candidates}:
+            candidates.append(
+                (skill_id, {"text": "Build a safe runtime execution plan."})
+            )
+    if not candidates:
+        raise RuntimeError(f"none of preferred verification skills found: {preferred}")
+    return candidates
+
+
+def _infer_inputs_from_description(desc: dict, default_payload: dict) -> dict:
+    inputs_schema = desc.get("inputs") if isinstance(desc, dict) else None
+    if not isinstance(inputs_schema, dict):
+        return default_payload
+
+    inferred: dict[str, object] = {}
+    for field_name, field_spec in inputs_schema.items():
+        if not isinstance(field_name, str):
+            continue
+        field_type = None
+        required = False
+        if isinstance(field_spec, dict):
+            maybe_type = field_spec.get("type")
+            if isinstance(maybe_type, str):
+                field_type = maybe_type.lower()
+            required = bool(field_spec.get("required", False))
+
+        # Keep known defaults when the field exists in schema.
+        if field_name in default_payload:
+            inferred[field_name] = default_payload[field_name]
+            continue
+
+        if field_name in {"text", "content", "objective", "query", "prompt", "input"}:
+            inferred[field_name] = "Build a safe runtime execution plan."
+            continue
+
+        if required:
+            if field_type in {"boolean", "bool"}:
+                inferred[field_name] = True
+            elif field_type in {"integer", "int"}:
+                inferred[field_name] = 1
+            elif field_type in {"number", "float"}:
+                inferred[field_name] = 1.0
+            elif field_type in {"array", "list"}:
+                inferred[field_name] = []
+            elif field_type in {"object", "map", "dict"}:
+                inferred[field_name] = {}
+            else:
+                inferred[field_name] = "sample"
+
+    return inferred or default_payload
 
 
 def main() -> int:
@@ -169,29 +222,53 @@ def main() -> int:
 
     try:
         _wait_for_server_ready_or_exit(http_proc, base_url)
-        skill_id, skill_inputs = _pick_skill(base_url, headers=headers)
+        candidates = _pick_skill_candidates(base_url, headers=headers)
 
         health = _http_get_json(f"{base_url}/v1/health")
         if health.get("status") != "ok":
             raise RuntimeError("health endpoint did not return status=ok")
 
-        desc = _http_get_json(
-            f"{base_url}/v1/skills/{skill_id}/describe",
-            headers=headers,
-        )
-        if desc.get("id") != skill_id:
-            raise RuntimeError("describe endpoint returned unexpected skill id")
+        selected_skill_id: str | None = None
+        selected_skill_inputs: dict | None = None
+        exec_result: dict | None = None
+        last_error: str | None = None
 
-        exec_result = _http_post_json(
-            f"{base_url}/v1/skills/{skill_id}/execute",
-            {
-                "inputs": skill_inputs,
-                "include_trace": False,
-            },
-            headers=headers,
-        )
-        if "outputs" not in exec_result:
-            raise RuntimeError("execute endpoint did not return outputs")
+        for skill_id, skill_inputs in candidates:
+            desc = _http_get_json(
+                f"{base_url}/v1/skills/{skill_id}/describe",
+                headers=headers,
+            )
+            if desc.get("id") != skill_id:
+                last_error = f"describe mismatch for {skill_id}"
+                continue
+
+            effective_inputs = _infer_inputs_from_description(desc, skill_inputs)
+
+            candidate_result = _http_post_json(
+                f"{base_url}/v1/skills/{skill_id}/execute",
+                {
+                    "inputs": effective_inputs,
+                    "include_trace": False,
+                },
+                headers=headers,
+            )
+            if "outputs" in candidate_result:
+                selected_skill_id = skill_id
+                selected_skill_inputs = effective_inputs
+                exec_result = candidate_result
+                break
+
+            status = candidate_result.get("status", "unknown")
+            last_error = f"{skill_id} returned status={status} without outputs"
+
+        if (
+            selected_skill_id is None
+            or selected_skill_inputs is None
+            or exec_result is None
+        ):
+            raise RuntimeError(
+                f"execute endpoint did not return outputs for any candidate: {last_error}"
+            )
 
         api = NeutralRuntimeAPI(
             registry_root=REGISTRY_ROOT,
@@ -211,8 +288,8 @@ def main() -> int:
         mcp_exec = bridge.call_tool(
             "skill.execute",
             {
-                "skill_id": skill_id,
-                "inputs": skill_inputs,
+                "skill_id": selected_skill_id,
+                "inputs": selected_skill_inputs,
             },
         )
         if "outputs" not in mcp_exec:

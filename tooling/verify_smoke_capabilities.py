@@ -25,14 +25,19 @@ from runtime.capability_loader import YamlCapabilityLoader  # noqa: E402
 
 
 CAPABILITY_ALIASES = {
-    "reasoning.content.summarize": ["reasoning.content.summarize", "text.content.summarize"],
+    "reasoning.content.summarize": [
+        "reasoning.content.summarize",
+        "text.content.summarize",
+    ],
     "text.content.summarize": ["text.content.summarize", "reasoning.content.summarize"],
     "decision.input.route": ["decision.input.route", "agent.input.route"],
     "agent.input.route": ["agent.input.route", "decision.input.route"],
 }
 
 
-def resolve_capability_id(requested_id: str, available_ids: dict[str, object]) -> str | None:
+def resolve_capability_id(
+    requested_id: str, available_ids: dict[str, object]
+) -> str | None:
     candidates = CAPABILITY_ALIASES.get(requested_id, [requested_id])
     for candidate in candidates:
         if candidate in available_ids:
@@ -74,7 +79,9 @@ def main():
     for requested_capability_id in smoke_capabilities:
         capability_id = resolve_capability_id(requested_capability_id, all_capabilities)
         if capability_id is None:
-            failures.append((requested_capability_id, "Capability not found in registry"))
+            failures.append(
+                (requested_capability_id, "Capability not found in registry")
+            )
             continue
 
         binding = batch.select_binding_for_capability(binding_registry, capability_id)

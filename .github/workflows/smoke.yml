@@ -81,6 +81,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[all]"
           pip install pytest
+          pip install pytest
+          pip install pytest
           pip install jsonschema
 
       - name: Run smoke verifier
@@ -1001,7 +1003,8 @@ jobs:
       - name: Evaluate consolidated release readiness gate
         if: always()
         run: |
-          ARGS="--needs-json \"${NEEDS_CONTEXT_JSON}\" --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --fail-on-no-go --policy-file .github/release_gate_policy.json"
+          printf '%s' "${NEEDS_CONTEXT_JSON}" > artifacts/needs_context.json
+          ARGS="--needs-json @artifacts/needs_context.json --artifacts-dir artifacts --report-file artifacts/release_readiness_gate_report.json --markdown-file artifacts/release_readiness_gate_summary.md --fail-on-no-go --policy-file .github/release_gate_policy.json"
           if [ -f .github/release_exceptions.json ]; then
             ARGS="$ARGS --exceptions-file .github/release_exceptions.json"
           fi
@@ -1017,7 +1020,7 @@ jobs:
       - name: Generate release lineage artifact
         if: always()
         run: |
-          python tooling/generate_release_lineage.py --needs-json "${NEEDS_CONTEXT_JSON}" --artifacts-dir artifacts --report-file artifacts/release_lineage.json --markdown-file artifacts/release_lineage.md --fail-on-incomplete
+          python tooling/generate_release_lineage.py --needs-json @artifacts/needs_context.json --artifacts-dir artifacts --report-file artifacts/release_lineage.json --markdown-file artifacts/release_lineage.md --fail-on-incomplete
 
       - name: Verify release lineage contract
         if: always()

@@ -79,6 +79,13 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _resolve_needs_json_arg(raw: str) -> str:
+    if isinstance(raw, str) and raw.startswith("@"):
+        path = Path(raw[1:])
+        return path.read_text(encoding="utf-8")
+    return raw
+
+
 def _load_json(path: Path) -> tuple[dict[str, Any] | None, str | None]:
     if not path.exists():
         return None, "missing"
@@ -332,7 +339,7 @@ def main() -> int:
         )
 
     try:
-        needs = json.loads(args.needs_json)
+        needs = json.loads(_resolve_needs_json_arg(args.needs_json))
     except Exception as exc:
         needs = {}
         _append_check(
