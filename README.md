@@ -13,8 +13,8 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
   <a href="https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml"><img src="https://github.com/gfernandf/agent-skills/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11%2B-blue.svg" alt="Python"></a>
-  <img src="https://img.shields.io/badge/Capabilities-190-blueviolet.svg" alt="Capabilities">
-  <img src="https://img.shields.io/badge/Skills-39-blueviolet.svg" alt="Skills">
+  <img src="https://img.shields.io/badge/Capabilities-122-blueviolet.svg" alt="Capabilities">
+  <img src="https://img.shields.io/badge/Skills-35-blueviolet.svg" alt="Skills">
   <a href="https://doi.org/10.5281/zenodo.19438943"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.19438943.svg" alt="DOI"></a>
 </p>
 
@@ -437,7 +437,7 @@ Software citation:
   title        = {Agent Skills Runtime},
   year         = {2026},
   url          = {https://github.com/gfernandf/agent-skills},
-  version      = {1.0.0},
+  version      = {1.0.2},
   license      = {Apache-2.0}
 }
 ```

@@ -152,6 +152,7 @@ def main() -> int:
         "runtime_canary",
         "dx_metrics",
         "ci_stability_trend",
+        "policy_bundle_governance",
     ]
 
     artifacts = {

@@ -60,6 +60,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -72,6 +79,10 @@ jobs:
 
       - name: Ruff format check
         run: ruff format --check .
+
+      - name: Verify doc/version drift
+        run: |
+          python tooling/verify_doc_version_drift.py
 
   type-check:
     runs-on: ubuntu-latest
