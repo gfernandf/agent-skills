@@ -10,6 +10,13 @@ This document is the single source of truth for what we are building at a high l
 Build a local-first, policy-safe agent runtime where capability contracts remain canonical,
 execution is durable, promotion is governed, and external developer experience is productized.
 
+Why this shape matters:
+
+1. It keeps the runtime easy to run locally while still behaving like a production system.
+2. It turns governance into an auditable contract, not a loose convention.
+3. It lets us improve durability, policy, and DX independently without changing capability IDs.
+4. It favors optional adapters over lock-in, so the core stays portable and maintainable.
+
 ## Strategic Stance (OSS-first)
 
 ORCA remains open source and production-capable on its own.
@@ -72,6 +79,11 @@ These invariants must stay true across all migrations.
 2. Dagster/dbt-based contract and promotion pipelines.
 3. Stripe/Vercel developer-experience platform layer.
 
+These are future platform alignments, not blockers for the current architecture.
+The present stack already delivers the core advantages we care about: stable
+contracts, local-first execution, reproducible governance, and clear promotion
+evidence.
+
 ## Decision Rules
 
 1. Do not treat LangGraph as mandatory runtime substrate.
@@ -114,6 +126,12 @@ What we recover as value:
 2. Deterministic orchestration guarantees for long-running skill execution.
 3. Failure recovery model with explicit workflow state transitions.
 
+Why this is better than a brittle ad hoc runner:
+
+1. Retries and recovery become deliberate, not accidental.
+2. Long-running work can be resumed without losing provenance.
+3. The execution model stays inspectable enough to support governance.
+
 What we are not doing:
 
 1. Replacing ORCA contracts/skills model with vendor-specific workflow definitions.
@@ -126,6 +144,13 @@ What we recover as value:
 1. Orchestrated delivery pipelines for contract validation, catalog regeneration, and promotion.
 2. Asset lineage and materialization mindset for reproducible artifacts.
 3. Declarative data/contract checks as enforceable gates.
+
+Why this matters for ORCA today:
+
+1. It makes release evidence materialize from the same source that defines the
+	contracts.
+2. It reduces duplication between CI checks, reports, and promotion inputs.
+3. It gives maintainers a clean line between source, artifact, and decision.
 
 What we are not doing:
 

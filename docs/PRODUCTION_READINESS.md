@@ -37,7 +37,22 @@ A release candidate is **Go** only when all required controls below are satisfie
 6. `artifacts/policy_promotion_readiness_report.json`: `status = passed`
 7. `artifacts/policy_promotion_readiness_verify_report.json`: `status = passed`
 
-### 2.3 Executive summary acceptance
+### 2.3 Required durability and workflow-version artifact status
+
+1. `artifacts/replay_determinism_report.json`: `status = passed`
+2. `summary.execution_complete = true`
+3. `summary.failed_executions = 0`
+4. `artifacts/workflow_version_compatibility_report.json`: `status = passed`
+5. `summary.test_execution_complete = true`
+6. `summary.failed_tests = 0`
+7. `artifacts/checkpoint_schema_provenance_report.json`: `status = passed`
+8. `summary.test_execution_complete = true`
+9. `summary.failed_tests = 0`
+10. `artifacts/provenance_coverage_report.json`: `status = passed`
+11. `summary.test_execution_complete = true`
+12. `summary.failed_tests = 0`
+
+### 2.4 Executive summary acceptance
 
 1. `artifacts/governance_executive_summary.json` must be present
 2. `artifacts/runtime_governance_executive_summary.json` must be present
@@ -46,7 +61,7 @@ A release candidate is **Go** only when all required controls below are satisfie
    - `unverified`: acceptable only for controls that are operationally external to repo code
    - `failed`: not acceptable
 
-### 2.4 Allowed exception window (`unverified`)
+### 2.5 Allowed exception window (`unverified`)
 
 `unverified` is allowed only when all are true:
 
@@ -93,7 +108,8 @@ Attach at least:
 4. `critical-ci-trend-report` artifact
 5. `release-readiness-gate-report` artifact
 6. `release_lineage` artifact (`artifacts/release_lineage.json`)
-7. If applicable, screenshot/export of GitHub ruleset settings for target branch
+7. If bundle-based promotion was used, corresponding `artifacts/release_bundle_promotion_<environment>.json`
+8. If applicable, screenshot/export of GitHub ruleset settings for target branch
 
 ## 5. Incident Response Triggers
 

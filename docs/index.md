@@ -14,6 +14,7 @@ Runtime for composable AI agent skills — deterministic execution of capability
 - **Policy Bundles:** [OPA Policy Bundle Lifecycle](OPA_POLICY_BUNDLE_LIFECYCLE.md)
 - **Governance Ops:** [GitHub Ruleset Runbook](GITHUB_RULESET_RUNBOOK.md)
 - **Production Ops:** [Production Readiness Playbook](PRODUCTION_READINESS.md)
+- **Deployment Flow:** [Deployment Product Flow](DEPLOYMENT_PRODUCT_FLOW.md)
 - **Release Use Cases:** [Public Release Use Cases](PUBLIC_RELEASE_USE_CASES.md)
 - **100% Plan:** [Product 100% Completion Plan](PRODUCT_100_EXECUTION_PLAN.md)
 - **Release Exceptions:** [Release Exceptions Policy](RELEASE_EXCEPTIONS_POLICY.md)

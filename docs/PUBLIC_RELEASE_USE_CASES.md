@@ -11,6 +11,13 @@ validated, and evidenced before a public release.
 Use this catalog to answer one question: "Are we truly ready to expose this
 publicly without ambiguity?"
 
+Why this catalog is useful now:
+
+1. It turns readiness into evidence, so the team can prove progress instead of debating it.
+2. It keeps the release bar explicit, which reduces last-minute guesswork.
+3. It separates durable repo-backed proof from manual operational checks, which makes the process honest and auditable.
+4. It gives reviewers a single narrative for why the current system is safer and more repeatable than an ad hoc release process.
+
 A release candidate is considered clear and publishable only when each required
 use case below has:
 
@@ -103,6 +110,10 @@ Acceptance criteria:
 
 1. Runtime canary job passes.
 2. Durability, shadow parity, and tenant isolation reports pass.
+3. Replay determinism report passes with complete repeated execution set.
+4. Workflow version compatibility report passes with full execution set and no failed tests.
+5. Checkpoint schema/provenance report passes with full execution set and no failed tests.
+6. Provenance coverage report passes with full execution set and no failed tests.
 
 Evidence:
 
@@ -110,6 +121,10 @@ Evidence:
 2. `artifacts/policy_shadow_report.json`
 3. `artifacts/tenant_isolation_matrix_report.json`
 4. `artifacts/durability_advanced_report.json`
+5. `artifacts/replay_determinism_report.json`
+6. `artifacts/workflow_version_compatibility_report.json`
+7. `artifacts/checkpoint_schema_provenance_report.json`
+8. `artifacts/provenance_coverage_report.json`
 
 ### UC-05: Promotion-readiness decision path
 
@@ -136,7 +151,13 @@ Evidence:
 
 Goal:
 
-1. Public release branch is effectively protected in GitHub.
+1. The repository's public release branch is effectively protected in GitHub.
+
+Why this matters:
+
+1. Governance closes the gap between code state and release authority.
+2. Required checks and review rules protect the release path from accidental bypass.
+3. The manual UI proof path acknowledges that some controls live outside the repo while still keeping the evidence package complete.
 
 How to validate:
 
@@ -154,6 +175,16 @@ Evidence:
 1. `artifacts/branch_protection_policy_report.json`
 2. `artifacts/required_status_checks_consistency_report.json`
 3. `artifacts/github_branch_protection_report.json` or manual UI proof when `unverified`
+
+## 4. Why This Release Model Is Stronger
+
+The current model is intentionally stricter than a typical "works on my machine" or
+"push and hope" release process. It is stronger because:
+
+1. Every release claim is backed by concrete artifacts, not just tribal knowledge.
+2. Runtime safety, governance, and promotion readiness are checked independently.
+3. Evidence is reusable across release decisions, so the same work supports multiple gates.
+4. Operators can understand the release state quickly from the reports without reverse engineering the system.
 
 ### UC-07: Workflow integrity against regressions
 

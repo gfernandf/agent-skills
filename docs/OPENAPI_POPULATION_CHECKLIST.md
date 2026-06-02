@@ -8,6 +8,13 @@ Scope: Gate criteria, verification steps, and transition rules for each smoke ca
 
 This checklist guides the population phase: systematically adding OpenAPI bindings to each smoke capability until all have mock + real service paths.
 
+Why this staged model works:
+
+1. Mock bindings let us validate contract shape and error handling without waiting on external services.
+2. Real service pilots can be introduced one capability at a time, so regressions stay small and easy to isolate.
+3. The official python path remains the stable baseline, which makes comparisons trustworthy.
+4. CI can enforce each layer independently, so progress is measurable instead of anecdotal.
+
 **Starting Point**: Construction phase complete
 - ✅ OpenAPI runtime hardened (invoker, error contract)
 - ✅ Verification infrastructure deployed (harness, mocks, CI)
@@ -36,43 +43,43 @@ Based on [tooling/verify_smoke_capabilities.py](tooling/verify_smoke_capabilitie
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_text_summarize_mock)
-- **Real Service**: ⚪ TODO
-- **Notes**: Core text capability; consider mock first, then simple text provider
+- **Real Service**: ⚪ Pending
+- **Notes**: Core text capability; mock coverage gives us a safe baseline before a provider-specific integration
 
 ### 2. code.snippet.execute
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_code_execute_mock)
-- **Real Service**: ⚪ TODO
-- **Notes**: Execution capability; mock can return static code output
+- **Real Service**: ⚪ Pending
+- **Notes**: Execution capability; the mock path proves request/response shape before any live execution backend is attached
 
 ### 3. web.page.fetch
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_web_fetch_mock)
-- **Real Service**: ⚪ TODO
-- **Notes**: Fetches external URLs; mock can return hardcoded HTML
+- **Real Service**: ⚪ Pending
+- **Notes**: Fetches external URLs; the mock path keeps network variability out of baseline validation
 
 ### 4. pdf.document.read
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_pdf_read_mock)
-- **Real Service**: ⚪ TODO
-- **Notes**: PDF extraction; mock returns mock text content
+- **Real Service**: ⚪ Pending
+- **Notes**: PDF extraction; the mock path verifies extraction contracts without depending on PDF parser drift
 
 ### 5. audio.speech.transcribe
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_audio_transcribe_mock)
-- **Real Service**: ⚪ TODO
-- **Notes**: Audio to text; mock returns static transcription
+- **Real Service**: ⚪ Pending
+- **Notes**: Audio to text; the mock path lets us validate orchestration and payload handling before codec complexity arrives
 
 ### 6. fs.file.read
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_fs_read_mock)
-- **Real Service**: ⚪ TODO
-- **Notes**: File system read; mock returns test file contents
+- **Real Service**: ⚪ Pending
+- **Notes**: File system read; the mock path is a low-risk way to validate local-file contract semantics
 
 ### 7. data.schema.validate
 - **Status**: ✅ COMPLETE
@@ -86,8 +93,8 @@ Based on [tooling/verify_smoke_capabilities.py](tooling/verify_smoke_capabilitie
 - **Status**: 🟡 Mock Complete
 - **Smoke Status**: ✅ PASS (official/pythoncall)
 - **Mock Binding**: ✅ PASS (openapi_agent_route_mock)
-- **Real Service**: ⚪ TODO
-- **Notes**: Agent routing; mock can return static routing decision
+- **Real Service**: ⚪ Pending
+- **Notes**: Agent routing; the mock path gives us a stable contract before wiring live routing policy
 
 ---
 
