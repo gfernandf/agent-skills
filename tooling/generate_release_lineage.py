@@ -203,6 +203,25 @@ def main() -> int:
             }
         )
 
+    # The release readiness job generates lineage artifacts itself, so it is not
+    # available inside the `needs` context. Model it explicitly to keep producer
+    # edges valid without requiring an impossible self-reference in `needs`.
+    nodes.append(
+        _node(
+            "job.release_readiness_gate",
+            "job",
+            "active",
+            {"result": "self"},
+        )
+    )
+    edges.append(
+        _edge(
+            "source.workflow.smoke_verification",
+            "job.release_readiness_gate",
+            "triggers",
+        )
+    )
+
     for key, path in artifacts.items():
         payload, error = _load_json(path)
         present = error is None
