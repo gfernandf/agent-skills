@@ -135,7 +135,9 @@ def _run_pytest_node(surface: str, nodeid: str) -> CheckResult:
     )
 
 
-def _check_registry_vocabulary(enforce_registry_capabilities: bool) -> list[CheckResult]:
+def _check_registry_vocabulary(
+    enforce_registry_capabilities: bool,
+) -> list[CheckResult]:
     checks: list[CheckResult] = []
 
     vocab_file = REGISTRY_ROOT / "vocabulary" / "safety_vocabulary.yaml"
