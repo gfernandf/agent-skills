@@ -1306,7 +1306,7 @@ def main() -> None:
         )
 
     elif args.command == "activate":
-        _cmd_activate(runtime_root, host_root, args.capability)
+        _cmd_activate(registry_root, runtime_root, host_root, args.capability)
 
     elif args.command == "trace":
         _cmd_trace(
@@ -3383,9 +3383,15 @@ def _cmd_trace(
     print(json.dumps(result.outputs, indent=2, ensure_ascii=False))
 
 
-def _cmd_activate(runtime_root: Path, host_root: Path, capability: str | None) -> None:
+def _cmd_activate(
+    registry_root: Path,
+    runtime_root: Path,
+    host_root: Path,
+    capability: str | None,
+) -> None:
 
     binding_registry = BindingRegistry(runtime_root, host_root)
+    capability_loader = YamlCapabilityLoader(registry_root)
 
     service_loader = ServiceDescriptorLoader(host_root)
     override_loader = OverrideIntentLoader(host_root)
@@ -3394,9 +3400,10 @@ def _cmd_activate(runtime_root: Path, host_root: Path, capability: str | None) -
     quality_gate = QualityGate()
 
     activation = BindingActivationService(
-        runtime_root=runtime_root,
+        repo_root=registry_root,
         host_root=host_root,
         binding_registry=binding_registry,
+        capability_loader=capability_loader,
         service_loader=service_loader,
         override_loader=override_loader,
         state_store=state_store,

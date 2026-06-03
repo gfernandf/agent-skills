@@ -118,20 +118,20 @@ Note on counts:
 
 Basic run:
 
-- python cli/main.py run <skill_id>
+- agent-skills run <skill_id>
 
 With inline input:
 
-- python cli/main.py run <skill_id> --input "{\"key\":\"value\"}"
+- agent-skills run <skill_id> --input "{\"key\":\"value\"}"
 
 With input file:
 
-- python cli/main.py run <skill_id> --input-file input.json
+- agent-skills run <skill_id> --input-file input.json
 
 With trace correlation:
 
-- python cli/main.py run <skill_id> --trace-id onboarding-001
-- python cli/main.py trace <skill_id> --trace-id onboarding-001
+- agent-skills run <skill_id> --trace-id onboarding-001
+- agent-skills trace <skill_id> --trace-id onboarding-001
 
 Use trace_id to correlate runtime and service logs.
 

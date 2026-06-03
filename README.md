@@ -92,40 +92,53 @@ Same reasoning pattern. Reusable. Testable. Observable. Bindable to Python, Open
 
 ---
 
-## Try it locally in 3 minutes
+## Try it locally in 5 minutes
+
+Important: clone both repositories as siblings. The runtime loads contracts from `../agent-skill-registry` by default.
+
+### Linux/macOS
 
 ```bash
 git clone https://github.com/gfernandf/agent-skills.git
+git clone https://github.com/gfernandf/agent-skill-registry.git
 cd agent-skills
-make bootstrap
-python skills.py doctor
-python skills.py run text.language-summary \
-  --input '{"text": "ORCA turns agent reasoning into reusable executable skills."}'
+python -m pip install -e ".[all]"
+agent-skills doctor
+'{"text":"ORCA turns agent reasoning into reusable executable skills."}' > input_qs.json
+agent-skills run text.language-summary --input-file input_qs.json
+rm input_qs.json
 ```
+
+### Windows PowerShell
+
+```powershell
+git clone https://github.com/gfernandf/agent-skills.git
+git clone https://github.com/gfernandf/agent-skill-registry.git
+cd agent-skills
+python -m pip install -e ".[all]"
+python -m cli.main doctor
+'{"text":"ORCA turns agent reasoning into reusable executable skills."}' | Set-Content input_qs.json -Encoding ascii
+python -m cli.main run text.language-summary --input-file input_qs.json
+Remove-Item input_qs.json
+```
+
+### One-command setup alternative
+
+If you already have `make`, you can use:
+
+```bash
+make bootstrap
+agent-skills doctor
+```
+
+If `agent-skills` is not available on your PATH, use `python -m cli.main ...` from the repo root.
 
 What to expect:
 
 - No API key required
 - Runs offline with deterministic Python baselines
 - First run may take 30-60 seconds
-
-<details>
-<summary>Windows PowerShell setup and run</summary>
-
-```powershell
-git clone https://github.com/gfernandf/agent-skills.git
-cd agent-skills
-pip install -e ".[all,dev]"
-git clone https://github.com/gfernandf/agent-skill-registry.git ../agent-skill-registry
-python skills.py doctor
-
-$env:OPENAI_API_KEY = ""
-'{ "text": "ORCA turns agent reasoning into reusable executable skills." }' | Set-Content input_qs.json -Encoding ascii
-python skills.py run text.language-summary --input-file input_qs.json
-Remove-Item input_qs.json
-```
-
-</details>
+- Success signal: you should see a JSON object with `language` and `summary`.
 
 ---
 
@@ -451,7 +464,7 @@ See also [CITATION.cff](CITATION.cff).
 | Problem | Solution |
 |---------|----------|
 | Registry not found | Run doctor and ensure agent-skill-registry is cloned next to this repo |
-| Command not found on Windows | Use python skills.py ... from repo root |
+| Command not found on Windows | Use `agent-skills ...` after install, or `python -m cli.main ...` from repo root as fallback |
 | Unexpected runtime error | Check [docs/ERROR_TAXONOMY.md](docs/ERROR_TAXONOMY.md) |
 | Environment mismatch | Review [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) |
 

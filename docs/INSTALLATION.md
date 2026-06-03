@@ -8,7 +8,7 @@
 ## Quick Install
 
 ```bash
-# 1. Clone both repositories side by side
+# 1. Clone both repositories side by side (required)
 git clone https://github.com/gfernandf/agent-skills.git
 git clone https://github.com/gfernandf/agent-skill-registry.git
 
@@ -25,10 +25,23 @@ That's it. The `agent-skills` CLI is now available.
 # Check CLI
 agent-skills --help
 
-# Run health check (uses Python baselines, no API key needed)
-agent-skills run text.detect-language-and-classify \
-  --input '{"text": "Hello world"}'
+# Validate local setup first
+agent-skills doctor
+
+# Run first skill (uses Python baselines, no API key needed)
+echo '{"text":"ORCA turns agent reasoning into reusable executable skills."}' > input_qs.json
+agent-skills run text.language-summary --input-file input_qs.json
+rm input_qs.json
 ```
+
+If `agent-skills` is not available on your PATH, run the same commands via:
+
+```bash
+python -m cli.main doctor
+python -m cli.main run text.language-summary --input-file input_qs.json
+```
+
+On Windows PowerShell, this module form is the most reliable in a fresh shell.
 
 ## Optional: LLM Provider
 
