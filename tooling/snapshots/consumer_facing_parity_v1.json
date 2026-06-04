@@ -85,6 +85,9 @@
                 "outputs"
             ],
             "output_keys": [
+                "rationale",
+                "status",
+                "trace_ref",
                 "valid",
                 "violations"
             ],
@@ -101,6 +104,9 @@
                 "outputs"
             ],
             "output_keys": [
+                "rationale",
+                "status",
+                "trace_ref",
                 "valid",
                 "violations"
             ],

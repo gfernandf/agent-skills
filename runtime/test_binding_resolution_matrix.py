@@ -19,7 +19,9 @@ class _DummyProtocolRouter:
     pass
 
 
-def _make_executor(repo_root: Path, host_root: Path) -> tuple[BindingExecutor, YamlCapabilityLoader]:
+def _make_executor(
+    repo_root: Path, host_root: Path
+) -> tuple[BindingExecutor, YamlCapabilityLoader]:
     registry_root = repo_root.parent / "agent-skill-registry"
     registry = BindingRegistry(repo_root, host_root)
     resolver = BindingResolver(registry, ActiveBindingMap(host_root))
@@ -35,7 +37,9 @@ def _make_executor(repo_root: Path, host_root: Path) -> tuple[BindingExecutor, Y
     return executor, loader
 
 
-def test_environment_without_openai_prefers_python_and_avoids_openai_terminal_default() -> None:
+def test_environment_without_openai_prefers_python_and_avoids_openai_terminal_default() -> (
+    None
+):
     previous = os.environ.pop("OPENAI_API_KEY", None)
     try:
         repo_root = Path(__file__).resolve().parent.parent
@@ -82,7 +86,9 @@ def test_local_selection_keeps_terminal_official_default_safety_net() -> None:
             agent_dir = host_root / ".agent-skills"
             agent_dir.mkdir(parents=True, exist_ok=True)
             (agent_dir / "active_bindings.json").write_text(
-                json.dumps({"decision.input.route": "python_decision_input_route"}, indent=2),
+                json.dumps(
+                    {"decision.input.route": "python_decision_input_route"}, indent=2
+                ),
                 encoding="utf-8",
             )
 

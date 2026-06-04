@@ -559,7 +559,9 @@ def _decision_input_route(**kwargs: Any) -> dict[str, Any]:
         route = "evaluation.risk.score"
     elif any(token in low for token in ("plan", "roadmap", "pasos", "steps")):
         route = "reasoning.plan.generate"
-    elif any(token in low for token in ("resumen", "summary", "sintetiza", "summarize")):
+    elif any(
+        token in low for token in ("resumen", "summary", "sintetiza", "summarize")
+    ):
         route = "reasoning.content.summarize"
     else:
         route = "reasoning.request.normalize"

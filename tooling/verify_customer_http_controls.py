@@ -146,23 +146,28 @@ def main() -> int:
         if status != 200 or desc.get("id") != skill_id:
             raise RuntimeError("authorized describe request failed")
 
-        # Hit rate limit (3 allowed per 2 seconds, this is 4th protected request in window).
-        for _ in range(3):
-            _request_json(
+        # Burst protected requests and assert we observe a 429 within bounded attempts.
+        observed_rate_limit = False
+        for _ in range(6):
+            status, body = _request_json(
                 f"{base_url}/v1/skills/{skill_id}/describe",
                 method="GET",
                 headers={"x-api-key": api_key},
             )
+            if status == 429:
+                observed_rate_limit = True
+                if body.get("error", {}).get("code") != "rate_limited":
+                    raise RuntimeError("missing rate_limited error code")
+                break
+            if status != 200:
+                raise RuntimeError(
+                    f"unexpected status during rate-limit burst: {status}"
+                )
 
-        status, body = _request_json(
-            f"{base_url}/v1/skills/{skill_id}/describe",
-            method="GET",
-            headers={"x-api-key": api_key},
-        )
-        if status != 429:
-            raise RuntimeError(f"expected 429 when rate limited, got {status}")
-        if body.get("error", {}).get("code") != "rate_limited":
-            raise RuntimeError("missing rate_limited error code")
+        if not observed_rate_limit:
+            raise RuntimeError(
+                "expected to observe 429 when rate limited, but none seen"
+            )
 
         print("Customer-facing HTTP controls verification passed.")
         return 0

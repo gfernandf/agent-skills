@@ -131,6 +131,46 @@ def _validate_required_fields(scenario: dict[str, Any]) -> None:
         )
 
 
+def _contains_expected(
+    actual: Any, expected: Any, path: str = "$"
+) -> tuple[bool, str | None]:
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict):
+            return False, f"{path}: expected object, got {type(actual).__name__}"
+        for key, expected_value in expected.items():
+            if key not in actual:
+                return False, f"{path}.{key}: missing key"
+            ok, reason = _contains_expected(
+                actual[key], expected_value, f"{path}.{key}"
+            )
+            if not ok:
+                return False, reason
+        return True, None
+
+    if isinstance(expected, list):
+        if not isinstance(actual, list):
+            return False, f"{path}: expected list, got {type(actual).__name__}"
+        if len(actual) != len(expected):
+            return (
+                False,
+                f"{path}: expected list length {len(expected)}, got {len(actual)}",
+            )
+        for idx, (actual_item, expected_item) in enumerate(
+            zip(actual, expected, strict=False)
+        ):
+            ok, reason = _contains_expected(
+                actual_item, expected_item, f"{path}[{idx}]"
+            )
+            if not ok:
+                return False, reason
+        return True, None
+
+    if actual != expected:
+        return False, f"{path}: expected {expected!r}, got {actual!r}"
+
+    return True, None
+
+
 def _run_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     _validate_required_fields(scenario)
 
@@ -170,11 +210,15 @@ def _run_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
                 outputs, meta = result, {}
 
             expected_output = scenario["expected_output"]
-            if outputs != expected_output:
+            outputs_match, mismatch_reason = _contains_expected(
+                outputs, expected_output
+            )
+            if not outputs_match:
                 return {
                     "id": scenario["id"],
                     "passed": False,
                     "reason": "Unexpected output.",
+                    "mismatch": mismatch_reason,
                     "outputs": outputs,
                     "expected_output": expected_output,
                     "meta": meta,

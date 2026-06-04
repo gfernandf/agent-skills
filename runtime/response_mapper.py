@@ -148,9 +148,17 @@ class ResponseMapper:
 
             if isinstance(current, dict):
                 if part not in current:
-                    if namespace == "response" and index == len(parts) - 1 and part == "output":
+                    if (
+                        namespace == "response"
+                        and index == len(parts) - 1
+                        and part == "output"
+                    ):
                         return current
-                    if namespace == "response" and index == len(parts) - 1 and part == "warnings":
+                    if (
+                        namespace == "response"
+                        and index == len(parts) - 1
+                        and part == "warnings"
+                    ):
                         return []
                     raise ResponseMappingError(
                         f"Binding '{binding.id}' references missing {namespace} field '{namespace}.{field_path}'.",

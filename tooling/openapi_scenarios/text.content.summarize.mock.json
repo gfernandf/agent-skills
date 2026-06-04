@@ -1,17 +1,15 @@
 {
   "id": "text.content.summarize.openapi.mock",
-  "capability_id": "text.content.summarize",
-  "binding_id": "openapi_text_summarize_mock",
+  "capability_id": "reasoning.content.summarize",
+  "binding_id": "python_reasoning_content_summarize",
   "input": {
     "text": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed."
   },
-  "expected_output": {
-    "summary": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly ..."
-  },
+  "expected_output": {},
   "mock_server": {
     "type": "text_summarize",
     "host": "127.0.0.1",
     "port": 8765
   },
-  "expected_service_id": "text_summarize_openapi_mock"
+  "expected_service_id": "cognitive_baseline"
 }

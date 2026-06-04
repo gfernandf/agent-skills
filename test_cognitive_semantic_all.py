@@ -240,36 +240,52 @@ def _validate_family_specific_semantics(
         recommendation = output_payload.get("recommendation")
         alternatives = output_payload.get("alternatives_considered")
         if not isinstance(recommendation, str) or len(recommendation.strip()) < 12:
-            errors.append("decision.option.justify recommendation lacks actionable detail")
+            errors.append(
+                "decision.option.justify recommendation lacks actionable detail"
+            )
         if not isinstance(alternatives, list) or not alternatives:
-            errors.append("decision.option.justify requires non-empty alternatives_considered")
+            errors.append(
+                "decision.option.justify requires non-empty alternatives_considered"
+            )
 
     if capability_id == "evaluation.plan.validate":
         vr = output_payload.get("validation_result")
         validation_errors = output_payload.get("validation_errors")
         validation_warnings = output_payload.get("validation_warnings")
         if not isinstance(vr, dict):
-            errors.append("evaluation.plan.validate validation_result must be an object")
+            errors.append(
+                "evaluation.plan.validate validation_result must be an object"
+            )
             return
 
         status = vr.get("status")
         if status not in {"passed", "failed"}:
-            errors.append("evaluation.plan.validate validation_result.status must be passed|failed")
+            errors.append(
+                "evaluation.plan.validate validation_result.status must be passed|failed"
+            )
 
         if not isinstance(validation_errors, list):
             errors.append("evaluation.plan.validate validation_errors must be an array")
         if not isinstance(validation_warnings, list):
-            errors.append("evaluation.plan.validate validation_warnings must be an array")
+            errors.append(
+                "evaluation.plan.validate validation_warnings must be an array"
+            )
 
         # Validation should always provide at least one evaluative signal.
-        if isinstance(validation_errors, list) and isinstance(validation_warnings, list):
+        if isinstance(validation_errors, list) and isinstance(
+            validation_warnings, list
+        ):
             if len(validation_errors) + len(validation_warnings) == 0:
-                errors.append("evaluation.plan.validate needs at least one validation signal")
+                errors.append(
+                    "evaluation.plan.validate needs at least one validation signal"
+                )
 
     if capability_id == "reasoning.option.generate":
         options = output_payload.get("options")
         if not isinstance(options, list) or len(options) < 2:
-            errors.append("reasoning.option.generate should produce at least two options")
+            errors.append(
+                "reasoning.option.generate should produce at least two options"
+            )
 
     if capability_id == "reasoning.plan.generate":
         plan = output_payload.get("plan")

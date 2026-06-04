@@ -1,19 +1,18 @@
 {
   "id": "agent.input.route.openapi.mock",
-  "capability_id": "agent.input.route",
-  "binding_id": "openapi_agent_route_mock",
+  "capability_id": "decision.input.route",
+  "binding_id": "python_decision_input_route",
   "input": {
-    "query": "What is machine learning?",
+    "query": "What are the next steps for this project plan?",
     "agents": ["summarizer", "analyst"]
   },
   "expected_output": {
-    "route": "summarizer",
-    "confidence": 0.95
+    "route": "reasoning.plan.generate"
   },
   "mock_server": {
     "type": "agent_route",
     "host": "127.0.0.1",
     "port": 8765
   },
-  "expected_service_id": "agent_route_openapi_mock"
+  "expected_service_id": "cognitive_baseline"
 }

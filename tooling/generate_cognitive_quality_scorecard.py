@@ -141,7 +141,9 @@ def main() -> int:
 
     for cid in capabilities:
         e2e_row = e2e_rows.get(cid, {"status": "failed", "errors": ["missing e2e row"]})
-        sem_row = sem_rows.get(cid, {"status": "failed", "errors": ["missing semantic row"]})
+        sem_row = sem_rows.get(
+            cid, {"status": "failed", "errors": ["missing semantic row"]}
+        )
 
         scores = _merge_scores(e2e_row, sem_row)
         row = {
@@ -201,7 +203,9 @@ def main() -> int:
     }
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    args.out.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
 
     print(f"Wrote scorecard: {args.out}")
     print(

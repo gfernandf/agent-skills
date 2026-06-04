@@ -490,7 +490,7 @@ Software citation:
   title        = {Agent Skills Runtime},
   year         = {2026},
   url          = {https://github.com/gfernandf/agent-skills},
-  version      = {1.0.0},
+  version      = {1.0.2},
   license      = {Apache-2.0}
 }
 ```

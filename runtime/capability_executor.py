@@ -190,7 +190,9 @@ class DefaultCapabilityExecutor:
             if field_spec.required
         }
         missing_required_outputs = required_outputs - set(outputs.keys())
-        non_managed_missing = missing_required_outputs - RUNTIME_MANAGED_REQUIRED_OUTPUTS
+        non_managed_missing = (
+            missing_required_outputs - RUNTIME_MANAGED_REQUIRED_OUTPUTS
+        )
         if non_managed_missing:
             missing_list = sorted(non_managed_missing)
             log_event(
