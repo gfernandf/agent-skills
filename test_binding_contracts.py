@@ -4,7 +4,8 @@
 For every binding YAML under bindings/official/, verify:
 1. The referenced capability exists in the registry.
 2. Every *required* capability input has an ``input.*`` mapping in the binding request template.
-3. Every *required* capability output has a ``response.*`` mapping in the binding response template.
+3. Every *required* capability output has a ``response.*`` mapping in the binding response template,
+   except runtime-managed required outputs.
 4. No binding request references an input that does not exist in the capability.
 """
 
@@ -15,6 +16,7 @@ from typing import Any, Dict, Set
 
 import pytest
 import yaml
+from runtime.contract_policy import RUNTIME_MANAGED_REQUIRED_OUTPUTS
 
 REPO_ROOT = Path(__file__).resolve().parent
 REGISTRY_ROOT = REPO_ROOT.parent / "agent-skill-registry"
@@ -212,7 +214,7 @@ class TestBindingContract:
 
         resp_keys: Set[str] = set()
         _collect_response_refs(data.get("response", {}), resp_keys)
-        missing = required_out - resp_keys
+        missing = required_out - resp_keys - set(RUNTIME_MANAGED_REQUIRED_OUTPUTS)
         assert not missing, (
             f"{path.name}: required outputs not mapped in response template: {sorted(missing)}"
         )

@@ -9,6 +9,9 @@ request:
   state_schema: input.state_schema
 response:
   validation_result: response.validation_result
+  validation_errors: response.validation_result.errors
+  validation_warnings: response.validation_result.warnings
+  repairable: response.validation_result.repairable
 metadata:
   description: Python fallback for evaluation.plan.validate using cognitive_baseline service.
   status: stable

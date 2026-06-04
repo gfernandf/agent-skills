@@ -15,6 +15,9 @@ request:
     type: json_object
 response:
   validation_result: response.choices.0.message.content_json.validation_result
+  validation_errors: response.choices.0.message.content_json.validation_result.errors
+  validation_warnings: response.choices.0.message.content_json.validation_result.warnings
+  repairable: response.choices.0.message.content_json.validation_result.repairable
 metadata:
   method: POST
   response_mode: json

@@ -551,6 +551,26 @@ def _reasoning_goal_interpret(**kwargs: Any) -> dict[str, Any]:
     return {"interpreted_goal": interpreted, "requires_clarification": False}
 
 
+def _decision_input_route(**kwargs: Any) -> dict[str, Any]:
+    query = _to_text(kwargs.get("query") or kwargs.get("user_message") or "")
+    low = query.lower()
+
+    if any(token in low for token in ("riesgo", "risk", "seguridad", "security")):
+        route = "evaluation.risk.score"
+    elif any(token in low for token in ("plan", "roadmap", "pasos", "steps")):
+        route = "reasoning.plan.generate"
+    elif any(token in low for token in ("resumen", "summary", "sintetiza", "summarize")):
+        route = "reasoning.content.summarize"
+    else:
+        route = "reasoning.request.normalize"
+
+    confidence = round(max(0.55, _hash_score(route + low)), 2)
+    return {
+        "route": route,
+        "confidence": confidence,
+    }
+
+
 def _reasoning_option_generate(**kwargs: Any) -> dict[str, Any]:
     goal = _to_text(kwargs.get("goal") or "the stated goal")
     options = [
@@ -851,6 +871,95 @@ def _evaluation_failure_analyze(**kwargs: Any) -> dict[str, Any]:
         "failure_class": "execution_alignment_failure",
         "recurrence_risk": 0.58,
     }
+
+
+def _evaluation_plan_validate(**kwargs: Any) -> dict[str, Any]:
+    expanded_plan = _as_dict(kwargs.get("expanded_plan"))
+    bound_steps = _as_list(expanded_plan.get("bound_steps"))
+
+    errors: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = []
+
+    if not bound_steps:
+        errors.append(
+            {
+                "step_id": None,
+                "check": "plan.non_empty",
+                "message": "expanded_plan.bound_steps must contain at least one step.",
+            }
+        )
+
+    seen_ids: set[str] = set()
+    for idx, step in enumerate(bound_steps):
+        sobj = _as_dict(step)
+        step_id = _pick_first(sobj.get("id"), default=f"step-{idx + 1}")
+        step_type = sobj.get("type")
+        step_ref = sobj.get("ref")
+        outputs = _as_dict(sobj.get("outputs"))
+
+        if step_id in seen_ids:
+            errors.append(
+                {
+                    "step_id": step_id,
+                    "check": "step.id.unique",
+                    "message": "Duplicate step id detected.",
+                }
+            )
+        seen_ids.add(step_id)
+
+        if step_type not in {"capability", "skill"}:
+            errors.append(
+                {
+                    "step_id": step_id,
+                    "check": "step.type.valid",
+                    "message": "Step type must be either 'capability' or 'skill'.",
+                }
+            )
+
+        if not isinstance(step_ref, str) or not step_ref.strip():
+            errors.append(
+                {
+                    "step_id": step_id,
+                    "check": "step.ref.present",
+                    "message": "Step ref must be a non-empty capability or skill reference.",
+                }
+            )
+
+        if not outputs:
+            warnings.append(
+                {
+                    "step_id": step_id,
+                    "check": "step.outputs.present",
+                    "message": "Step has no declared outputs mapping.",
+                }
+            )
+
+    status = "passed" if not errors else "failed"
+    if not warnings:
+        warnings.append(
+            {
+                "step_id": None,
+                "check": "validation.summary",
+                "message": "Validation completed; review warnings for governance and operability context.",
+            }
+        )
+    repairable = bool(errors) and all(
+        e.get("check") != "plan.non_empty" for e in errors
+    )
+
+    validation_result = {
+        "status": status,
+        "errors": errors,
+        "warnings": warnings,
+        "repairable": repairable,
+        "check_count": max(1, len(bound_steps) * 3),
+    }
+
+    result: dict[str, Any] = {"validation_result": validation_result}
+    if status == "passed":
+        result["validated_plan"] = expanded_plan
+
+    return result
 
 
 def _evaluation_framework_detect(**kwargs: Any) -> dict[str, Any]:
@@ -1849,6 +1958,7 @@ _SPECIALS = {
     "perception_entity_extract": _perception_entity_extract,
     "perception_keyword_extract": _perception_keyword_extract,
     "reasoning_goal_interpret": _reasoning_goal_interpret,
+    "decision_input_route": _decision_input_route,
     "reasoning_assumption_extract": _reasoning_assumption_extract,
     "reasoning_constraint_extract": _reasoning_constraint_extract,
     "reasoning_constraint_reconcile": _reasoning_constraint_reconcile,
@@ -1868,6 +1978,7 @@ _SPECIALS = {
     "evaluation_failure_analyze": _evaluation_failure_analyze,
     "evaluation_framework_detect": _evaluation_framework_detect,
     "evaluation_framework_rank": _evaluation_framework_rank,
+    "evaluation_plan_validate": _evaluation_plan_validate,
     "evaluation_hypothesis_evaluate": _evaluation_hypothesis_evaluate,
     "evaluation_hypothesis_compare": _evaluation_hypothesis_compare,
     "evaluation_uncertainty_score": _evaluation_uncertainty_score,

@@ -35,6 +35,9 @@ class ResponseMapper:
         self,
         binding: BindingSpec,
         invocation_response: InvocationResponse,
+        *,
+        step_input: dict[str, Any] | None = None,
+        request_payload: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         raw_response = invocation_response.raw_response
 
@@ -63,6 +66,8 @@ class ResponseMapper:
                 response_ref,
                 raw_response=raw_response,
                 binding=binding,
+                step_input=step_input,
+                request_payload=request_payload,
             )
 
         return mapped
@@ -73,14 +78,13 @@ class ResponseMapper:
         *,
         raw_response: Any,
         binding: BindingSpec,
+        step_input: dict[str, Any] | None,
+        request_payload: dict[str, Any] | None,
     ) -> Any:
         if "." not in value:
             return value
 
         namespace, field_path = value.split(".", 1)
-
-        if namespace != "response":
-            return value
 
         if not field_path:
             raise ResponseMappingError(
@@ -88,37 +92,68 @@ class ResponseMapper:
                 capability_id=binding.capability_id,
             )
 
-        return self._resolve_response_path(
-            field_path,
-            raw_response=raw_response,
-            binding=binding,
-        )
+        if namespace == "response":
+            return self._resolve_path(
+                root=raw_response,
+                field_path=field_path,
+                binding=binding,
+                namespace=namespace,
+            )
 
-    def _resolve_response_path(
+        if namespace == "input":
+            if step_input is None:
+                raise ResponseMappingError(
+                    f"Binding '{binding.id}' cannot resolve '{value}' because step input is unavailable.",
+                    capability_id=binding.capability_id,
+                )
+            return self._resolve_path(
+                root=step_input,
+                field_path=field_path,
+                binding=binding,
+                namespace=namespace,
+            )
+
+        if namespace == "request":
+            if request_payload is None:
+                raise ResponseMappingError(
+                    f"Binding '{binding.id}' cannot resolve '{value}' because request payload is unavailable.",
+                    capability_id=binding.capability_id,
+                )
+            return self._resolve_path(
+                root=request_payload,
+                field_path=field_path,
+                binding=binding,
+                namespace=namespace,
+            )
+
+        return value
+
+    def _resolve_path(
         self,
-        field_path: str,
         *,
-        raw_response: Any,
+        root: Any,
+        field_path: str,
         binding: BindingSpec,
+        namespace: str,
     ) -> Any:
-        current: Any = raw_response
+        current: Any = root
         parts = field_path.split(".")
 
         for index, part in enumerate(parts):
             if not part:
                 raise ResponseMappingError(
-                    f"Binding '{binding.id}' contains an invalid response path 'response.{field_path}'.",
+                    f"Binding '{binding.id}' contains an invalid {namespace} path '{namespace}.{field_path}'.",
                     capability_id=binding.capability_id,
                 )
 
             if isinstance(current, dict):
                 if part not in current:
-                    if index == len(parts) - 1 and part == "output":
+                    if namespace == "response" and index == len(parts) - 1 and part == "output":
                         return current
-                    if index == len(parts) - 1 and part == "warnings":
+                    if namespace == "response" and index == len(parts) - 1 and part == "warnings":
                         return []
                     raise ResponseMappingError(
-                        f"Binding '{binding.id}' references missing response field 'response.{field_path}'.",
+                        f"Binding '{binding.id}' references missing {namespace} field '{namespace}.{field_path}'.",
                         capability_id=binding.capability_id,
                     )
                 current = current[part]
@@ -127,22 +162,22 @@ class ResponseMapper:
             if isinstance(current, list):
                 if not part.isdigit():
                     raise ResponseMappingError(
-                        f"Binding '{binding.id}' cannot resolve 'response.{field_path}' because '{part}' is not a valid list index.",
+                        f"Binding '{binding.id}' cannot resolve '{namespace}.{field_path}' because '{part}' is not a valid list index.",
                         capability_id=binding.capability_id,
                     )
 
-                index = int(part)
-                if index < 0 or index >= len(current):
+                idx = int(part)
+                if idx < 0 or idx >= len(current):
                     raise ResponseMappingError(
-                        f"Binding '{binding.id}' references out-of-range list index '{part}' in 'response.{field_path}'.",
+                        f"Binding '{binding.id}' references out-of-range list index '{part}' in '{namespace}.{field_path}'.",
                         capability_id=binding.capability_id,
                     )
 
-                current = current[index]
+                current = current[idx]
                 continue
 
             raise ResponseMappingError(
-                f"Binding '{binding.id}' cannot resolve 'response.{field_path}' because '{part}' is accessed on a non-mapping value.",
+                f"Binding '{binding.id}' cannot resolve '{namespace}.{field_path}' because '{part}' is accessed on a non-mapping value.",
                 capability_id=binding.capability_id,
             )
 

@@ -8,6 +8,10 @@ from runtime.errors import (
     CapabilityNotFoundError,
     InputMappingError,
 )
+from runtime.contract_policy import (
+    RUNTIME_MANAGED_REQUIRED_OUTPUTS,
+    enrich_runtime_managed_outputs,
+)
 from runtime.models import CapabilitySpec
 from runtime.observability import elapsed_ms, log_event
 
@@ -170,6 +174,36 @@ class DefaultCapabilityExecutor:
             )
             raise CapabilityExecutionError(
                 f"Capability '{capability.id}' returned a non-mapping result.",
+                capability_id=capability.id,
+            )
+
+        outputs = enrich_runtime_managed_outputs(
+            outputs,
+            capability_id=capability.id,
+            trace_id=trace_id,
+            binding_id=(meta.get("binding_id") if isinstance(meta, dict) else None),
+        )
+
+        required_outputs = {
+            field_name
+            for field_name, field_spec in capability.outputs.items()
+            if field_spec.required
+        }
+        missing_required_outputs = required_outputs - set(outputs.keys())
+        non_managed_missing = missing_required_outputs - RUNTIME_MANAGED_REQUIRED_OUTPUTS
+        if non_managed_missing:
+            missing_list = sorted(non_managed_missing)
+            log_event(
+                "capability.execute.failed",
+                level="error",
+                trace_id=trace_id,
+                capability_id=capability.id,
+                duration_ms=elapsed_ms(start_time),
+                error_type="MissingRequiredOutputs",
+                missing_outputs=missing_list,
+            )
+            raise CapabilityExecutionError(
+                f"Capability '{capability.id}' returned outputs missing required fields: {missing_list}.",
                 capability_id=capability.id,
             )
 

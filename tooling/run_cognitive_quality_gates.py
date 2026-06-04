@@ -31,6 +31,14 @@ GATE_COMMANDS: list[list[str]] = [
     ["-m", "pytest", "-q", "test_openapi_runtime_guardrails.py", "-o", "addopts="],
     ["-m", "pytest", "-q", "test_alternatives_evaluated.py", "-o", "addopts="],
     ["test_alternatives_simple.py"],
+    [
+        "tooling/generate_cognitive_quality_scorecard.py",
+        "--fail-on-threshold",
+        "--min-axis",
+        "9.0",
+        "--min-overall",
+        "9.0",
+    ],
 ]
 
 

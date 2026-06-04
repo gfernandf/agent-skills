@@ -1045,8 +1045,8 @@ def call_capability(
         return False, f"Error: {str(e)[:100]}", None
 
 
-def test_all_capabilities():
-    """Test all 33 capabilities."""
+def _run_all_capabilities() -> Dict[str, list]:
+    """Execute batch capability checks and return aggregated results."""
 
     # Initialize
     registry_root = Path(__file__).parent.parent / "agent-skill-registry"
@@ -1143,6 +1143,11 @@ def test_all_capabilities():
     return results
 
 
+def test_all_capabilities():
+    """Test all capabilities."""
+    _run_all_capabilities()
+
+
 def print_results(results: Dict):
     """Pretty print results."""
 
@@ -1193,7 +1198,7 @@ def print_results(results: Dict):
 
 def main():
     try:
-        results = test_all_capabilities()
+        results = _run_all_capabilities()
         success = print_results(results)
         return 0 if success else 1
     except Exception as e:
