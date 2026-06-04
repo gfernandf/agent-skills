@@ -41,6 +41,14 @@ The binding resolution chain found no binding for this capability.
 2. Run `python validate_bindings.py` to check binding validity.
 3. If using local overrides, verify `.agent-skills/overrides.yaml`.
 
+### "Capability 'X' returned outputs missing required fields: [...]"
+
+The capability executed, but returned payload is missing non-managed required outputs.
+
+1. Check capability contract outputs in registry.
+2. Confirm binding `response` mapping includes all required non-managed fields.
+3. Remember runtime-managed fields (`status`, `rationale`, `trace_ref`) are synthesized automatically.
+
 ### "Module 'official_services.X' does not expose callable 'Y'"
 
 The binding references an operation that doesn't exist in the service module.
@@ -54,6 +62,16 @@ An OpenAPI binding is trying to invoke a service without a `base_url`.
 
 1. Check `services/official/<service>.yaml` has a `base_url` field.
 2. If the URL uses environment substitution (`${VAR}`), ensure the var is set.
+
+### OpenAPI fallback still tries provider without credentials
+
+Expected behavior in current resolver:
+
+1. `environment_preferred` path prefers `pythoncall` when no provider credential is present.
+2. Terminal official-default fallback is only forced for `local_selection` path.
+3. For environment/default paths, fallback follows explicit `fallback_binding_id` only.
+
+If behavior differs, inspect binding metadata chain and active local overrides.
 
 ---
 
@@ -128,6 +146,16 @@ The default threshold is 75%. Focus on `runtime/`, `gateway/`, and
 ```bash
 pytest --cov=runtime --cov=gateway --cov=customer_facing --cov-report=html
 ```
+
+### Cognitive quality scorecard threshold failure
+
+Quality gate command failed because one or more capability axes dropped below threshold.
+
+1. Run `python tooling/generate_cognitive_quality_scorecard.py --fail-on-threshold --min-axis 9.0 --min-overall 9.0`.
+2. Inspect `artifacts/cognitive_quality_scorecard.json`.
+3. Review related reports:
+  - `artifacts/cognitive_e2e_contract_report.json`
+  - `artifacts/cognitive_semantic_all_report.json`
 
 ---
 

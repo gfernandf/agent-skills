@@ -46,9 +46,28 @@ This means:
   errors, no wasted HTTP calls.
 
 After Step 2 picks the primary binding, the **fallback chain** in the executor
-still applies.  If the primary binding fails at runtime (e.g. network error,
-rate limit), the executor tries the `fallback_binding_id` declared in the
-binding metadata, and finally the official default.
+still applies, but with a selection-source guard:
+
+- `local_selection`: runtime appends the official default as a terminal safety net.
+- `environment_preferred` and `official_default`: runtime follows explicit
+  `fallback_binding_id` metadata only (no forced terminal default).
+
+This avoids escalating to credential-dependent providers when no matching
+credential is available.
+
+---
+
+## Runtime-managed required outputs
+
+Capability outputs require an execution envelope. The runtime synthesizes the
+following required fields when missing:
+
+- `status`
+- `rationale`
+- `trace_ref`
+
+Bindings should focus on domain outputs and are not required to map these
+envelope fields explicitly.
 
 ---
 

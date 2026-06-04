@@ -365,8 +365,38 @@ It can run standalone, but its strongest use case is as a reusable execution lay
 - Plugin extension points
 - Audit modes and runtime observability
 - CognitiveState v1 and cognitive hints
+- Runtime-managed output envelope (`status`, `rationale`, `trace_ref`)
 - JSON Schema generation and validation
 - Skill governance and conformance tooling
+
+---
+
+## Cognitive quality gates (>9)
+
+The runtime includes a quality gate bundle for pure cognitive capabilities.
+
+Run the gate pack:
+
+```bash
+python tooling/run_cognitive_quality_gates.py \
+  --report-file artifacts/cognitive_quality_gates_local_report.json
+```
+
+Generate scorecard only:
+
+```bash
+python tooling/generate_cognitive_quality_scorecard.py \
+  --fail-on-threshold \
+  --min-axis 9.0 \
+  --min-overall 9.0
+```
+
+Primary artifacts:
+
+- `artifacts/cognitive_e2e_contract_report.json`
+- `artifacts/cognitive_semantic_all_report.json`
+- `artifacts/cognitive_quality_scorecard.json`
+- `artifacts/cognitive_quality_gates_local_report.json`
 
 See docs index below for details.
 
@@ -382,6 +412,8 @@ See docs index below for details.
 | Environment variables | [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) |
 | Error taxonomy | [docs/ERROR_TAXONOMY.md](docs/ERROR_TAXONOMY.md) |
 | Runner architecture | [docs/RUNNER_GUIDE.md](docs/RUNNER_GUIDE.md) |
+| Binding selection policy | [docs/BINDING_SELECTION.md](docs/BINDING_SELECTION.md) |
+| Binding authoring guide | [docs/BINDING_GUIDE.md](docs/BINDING_GUIDE.md) |
 | DAG scheduler | [docs/SCHEDULER.md](docs/SCHEDULER.md) |
 | Step control flow | [docs/STEP_CONTROL_FLOW.md](docs/STEP_CONTROL_FLOW.md) |
 | Streaming | [docs/STREAMING.md](docs/STREAMING.md) |
@@ -393,6 +425,8 @@ See docs index below for details.
 | Plugins | [docs/PLUGINS.md](docs/PLUGINS.md) |
 | JSON schemas | [docs/JSON_SCHEMAS.md](docs/JSON_SCHEMAS.md) |
 | Skill authoring | [docs/SKILL_AUTHORING.md](docs/SKILL_AUTHORING.md) |
+| Troubleshooting | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) |
+| Public release use cases | [docs/PUBLIC_RELEASE_USE_CASES.md](docs/PUBLIC_RELEASE_USE_CASES.md) |
 | Project status | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) |
 | ORCA specification | [ORCA.md](ORCA.md) |
 

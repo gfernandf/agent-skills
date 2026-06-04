@@ -146,12 +146,32 @@ defines the base URL, authentication headers, and other HTTP configuration.
 
 The runtime selects a binding using this priority:
 
-1. **Official default** — from the binding registry's default policy.
-2. **User override** — from the host's override intent configuration.
-3. **First available** — alphabetical fallback.
+1. **User override** (`local_selection`) — from host active binding map.
+2. **Environment preferred** (`environment_preferred`) — credential-aware official binding preference.
+3. **Official default** (`official_default`) — from default-selection policy.
+4. **Error** — no binding resolved.
 
 When a binding declares `fallback_binding_id`, the runtime can chain to the
 fallback on execution failure.
+
+Fallback-chain behavior:
+
+- Local selection keeps terminal official-default safety net.
+- Environment/official resolution paths follow explicit fallback metadata only.
+
+---
+
+## 5.1 Runtime-managed required output envelope
+
+The runtime contract policy manages these required output fields:
+
+- `status`
+- `rationale`
+- `trace_ref`
+
+Bindings are not required to map these keys explicitly. They should map
+domain-specific required outputs (for example `validation_errors`,
+`validation_warnings`, `repairable`) so contracts remain complete.
 
 ---
 

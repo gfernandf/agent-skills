@@ -265,6 +265,30 @@ Evidence:
 1. `docs/PRODUCTION_READINESS.md` incident section
 2. `docs/TROUBLESHOOTING.md` and related runbooks
 
+### UC-11: Cognitive quality threshold compliance
+
+Goal:
+
+1. Pure cognitive capability quality remains above release threshold.
+
+How to validate:
+
+1. Run cognitive gate bundle.
+2. Generate quality scorecard with threshold enforcement.
+
+Acceptance criteria:
+
+1. Cognitive gates report status is `passed`.
+2. Scorecard threshold failures count is `0`.
+3. Average axis and overall scores are greater than or equal to configured threshold.
+
+Evidence:
+
+1. `artifacts/cognitive_quality_gates_local_report.json`
+2. `artifacts/cognitive_quality_scorecard.json`
+3. `artifacts/cognitive_e2e_contract_report.json`
+4. `artifacts/cognitive_semantic_all_report.json`
+
 ## 3. Public Launch Decision Matrix
 
 Release decision:

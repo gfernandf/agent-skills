@@ -31,6 +31,7 @@ Execution path (high-level):
    - RequestBuilder builds protocol payload from input.* template
    - ProtocolRouter dispatches to protocol invoker
    - ResponseMapper maps response.* into capability outputs
+   - CapabilityExecutor applies runtime contract policy and required-output checks
 6. OutputMapper writes step outputs to vars.* and outputs.*
 7. ExecutionEngine validates required final outputs
 8. SkillExecutionResult is returned
@@ -69,6 +70,7 @@ Binding execution layer:
 - runtime/response_mapper.py: maps invocation response to capability output
 - runtime/binding_executor.py: full binding execution pipeline
 - runtime/capability_executor.py: runtime adapter around binding executor
+- runtime/contract_policy.py: runtime-managed required output policy
 
 Protocol invokers:
 
@@ -76,6 +78,15 @@ Protocol invokers:
 - runtime/openapi_invoker.py
 - runtime/openrpc_invoker.py
 - runtime/mcp_invoker.py
+
+Runtime-managed output envelope:
+
+- The runtime guarantees required envelope fields for capability outputs:
+   - `status`
+   - `rationale`
+   - `trace_ref`
+- Bindings are not required to map these fields explicitly.
+- Non-managed required outputs are still enforced strictly at runtime.
 
 OpenAPI invoker runtime knobs (metadata-driven):
 
@@ -165,6 +176,11 @@ OpenAPI checks from CLI:
 - python cli/main.py openapi verify-invoker
 - python cli/main.py openapi verify-errors
 
+Cognitive quality gates:
+
+- python tooling/run_cognitive_quality_gates.py --report-file artifacts/cognitive_quality_gates_local_report.json
+- python tooling/generate_cognitive_quality_scorecard.py --fail-on-threshold --min-axis 9.0 --min-overall 9.0
+
 ## 7) Validation and Health Commands
 
 Contracts:
@@ -196,6 +212,7 @@ Common failure categories:
 - Service resolution errors: binding points to missing/invalid service
 - Request/response mapping errors: template points to missing fields
 - Protocol routing/invocation errors: unsupported or failing protocol path
+- Missing required outputs: capability returned without required non-managed fields
 - Final output validation errors: required skill outputs not produced
 
 Debug order that works well:
