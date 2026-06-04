@@ -92,53 +92,40 @@ Same reasoning pattern. Reusable. Testable. Observable. Bindable to Python, Open
 
 ---
 
-## Try it locally in 5 minutes
-
-Important: clone both repositories as siblings. The runtime loads contracts from `../agent-skill-registry` by default.
-
-### Linux/macOS
+## Try it locally in 3 minutes
 
 ```bash
 git clone https://github.com/gfernandf/agent-skills.git
-git clone https://github.com/gfernandf/agent-skill-registry.git
 cd agent-skills
-python -m pip install -e ".[all]"
-agent-skills doctor
-'{"text":"ORCA turns agent reasoning into reusable executable skills."}' > input_qs.json
-agent-skills run text.language-summary --input-file input_qs.json
-rm input_qs.json
-```
-
-### Windows PowerShell
-
-```powershell
-git clone https://github.com/gfernandf/agent-skills.git
-git clone https://github.com/gfernandf/agent-skill-registry.git
-cd agent-skills
-python -m pip install -e ".[all]"
-python -m cli.main doctor
-'{"text":"ORCA turns agent reasoning into reusable executable skills."}' | Set-Content input_qs.json -Encoding ascii
-python -m cli.main run text.language-summary --input-file input_qs.json
-Remove-Item input_qs.json
-```
-
-### One-command setup alternative
-
-If you already have `make`, you can use:
-
-```bash
 make bootstrap
-agent-skills doctor
+python skills.py doctor
+python skills.py run text.language-summary \
+  --input '{"text": "ORCA turns agent reasoning into reusable executable skills."}'
 ```
-
-If `agent-skills` is not available on your PATH, use `python -m cli.main ...` from the repo root.
 
 What to expect:
 
 - No API key required
 - Runs offline with deterministic Python baselines
 - First run may take 30-60 seconds
-- Success signal: you should see a JSON object with `language` and `summary`.
+
+<details>
+<summary>Windows PowerShell setup and run</summary>
+
+```powershell
+git clone https://github.com/gfernandf/agent-skills.git
+cd agent-skills
+pip install -e ".[all,dev]"
+git clone https://github.com/gfernandf/agent-skill-registry.git ../agent-skill-registry
+python skills.py doctor
+
+$env:OPENAI_API_KEY = ""
+'{ "text": "ORCA turns agent reasoning into reusable executable skills." }' | Set-Content input_qs.json -Encoding ascii
+python skills.py run text.language-summary --input-file input_qs.json
+Remove-Item input_qs.json
+```
+
+</details>
 
 ---
 
@@ -214,6 +201,25 @@ Think of Agent Skills as:
 - Bindings: how that operation is executed (backend)
 - Skills: how operations compose into workflows (DAG)
 - Runtime: how workflows execute safely and observably
+
+## Cognitive Taxonomy
+
+The pure cognitive layer is intentionally narrower than the full runtime.
+The current taxonomy separates:
+
+- **Pure cognitive capabilities**: decision, evaluation, evidence, memory,
+  perception, and reasoning.
+- **Compatibility surfaces**: legacy or transitional names such as `eval.*`
+  that remain in the live registry during migration.
+- **Operational capabilities**: routing, delegation, workflow control, and
+  other runtime helpers that should not be counted as core cognition.
+
+The registry-level reference for that taxonomy is:
+
+- [agent-skill-registry/docs/COGNITIVE_TAXONOMY.md](../agent-skill-registry/docs/COGNITIVE_TAXONOMY.md)
+
+Use that document as the source of truth when deciding whether a capability
+belongs to the cognitive core or to the operational layer.
 
 ---
 
@@ -450,7 +456,7 @@ Software citation:
   title        = {Agent Skills Runtime},
   year         = {2026},
   url          = {https://github.com/gfernandf/agent-skills},
-  version      = {1.0.2},
+  version      = {1.0.0},
   license      = {Apache-2.0}
 }
 ```
@@ -464,7 +470,7 @@ See also [CITATION.cff](CITATION.cff).
 | Problem | Solution |
 |---------|----------|
 | Registry not found | Run doctor and ensure agent-skill-registry is cloned next to this repo |
-| Command not found on Windows | Use `agent-skills ...` after install, or `python -m cli.main ...` from repo root as fallback |
+| Command not found on Windows | Use python skills.py ... from repo root |
 | Unexpected runtime error | Check [docs/ERROR_TAXONOMY.md](docs/ERROR_TAXONOMY.md) |
 | Environment mismatch | Review [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) |
 
