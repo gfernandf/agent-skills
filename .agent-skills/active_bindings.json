@@ -1,1 +1,4 @@
-{"model.output.generate":"openapi_model_output_generate_openai_chat","model.response.validate":"openapi_model_response_validate_openai_chat"}
+{
+  "model.output.generate": "openapi_model_output_generate_openai_chat",
+  "model.response.validate": "openapi_model_response_validate_openai_chat"
+}

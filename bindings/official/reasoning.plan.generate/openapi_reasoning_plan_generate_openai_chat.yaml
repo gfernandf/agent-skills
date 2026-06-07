@@ -14,12 +14,22 @@ request:
   response_format:
     type: json_object
 response:
-  plan: response.choices.0.message.content_json.plan
-  step_count: response.choices.0.message.content_json.step_count
+  plan:
+  - response.choices.0.message.content_json.plan
+  - response.choices.0.message.content_json.steps
+  - response.choices.0.message.content_json.execution_plan
+  - response.choices.0.message.content_json.plan_steps
+  - response.choices.0.message.content_json
+  step_count:
+  - response.choices.0.message.content_json.step_count
+  - response.choices.0.message.content_json.steps_count
+  - response.choices.0.message.content_json.count
+  - response.choices.0.message.content_json.plan
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_reasoning_plan_generate
   description: OpenAI binding for reasoning.plan.generate using gpt-4o-mini.
   status: experimental
-  timeout_seconds: 30
+  timeout_seconds: 60
+  retry_count: 15

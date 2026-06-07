@@ -22,4 +22,5 @@ metadata:
   fallback_binding_id: python_evidence_source_assess
   description: OpenAI binding for evidence.source.assess using gpt-4o-mini.
   status: experimental
+  retry_count: 10
   timeout_seconds: 30

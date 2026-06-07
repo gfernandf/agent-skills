@@ -14,12 +14,20 @@ request:
   response_format:
     type: json_object
 response:
-  normalized_request: response.choices.0.message.content_json.normalized_request
-  language: response.choices.0.message.content_json.language
+  normalized_request:
+  - response.choices.0.message.content_json.normalized_request
+  - response.choices.0.message.content_json.request
+  - response.choices.0.message.content_json.output
+  - response.choices.0.message.content_json
+  language:
+  - response.choices.0.message.content_json.language
+  - response.choices.0.message.content_json.locale
+  - response.choices.0.message.content_json.detected_language
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_reasoning_request_normalize
   description: OpenAI binding for reasoning.request.normalize using gpt-4o-mini.
   status: experimental
-  timeout_seconds: 30
+  timeout_seconds: 60
+  retry_count: 10

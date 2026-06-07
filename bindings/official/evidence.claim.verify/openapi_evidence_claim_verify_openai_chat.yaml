@@ -23,4 +23,5 @@ metadata:
   fallback_binding_id: python_evidence_claim_verify
   description: OpenAI binding for evidence.claim.verify using gpt-4o-mini.
   status: experimental
+  retry_count: 10
   timeout_seconds: 30

@@ -14,7 +14,12 @@ request:
   response_format:
     type: json_object
 response:
-  translation: response.choices.0.message.content_json.translation
+  translation:
+  - response.choices.0.message.content_json.translation
+  - response.choices.0.message.content_json.translated_text
+  - response.choices.0.message.content_json.text
+  - response.choices.0.message.content_json.output
+  - response.choices.0.message.content_json.content
 metadata:
   method: POST
   response_mode: json

@@ -22,4 +22,5 @@ metadata:
   fallback_binding_id: python_reasoning_content_merge
   description: OpenAI binding for reasoning.content.merge using gpt-4o-mini.
   status: experimental
+  retry_count: 10
   timeout_seconds: 30

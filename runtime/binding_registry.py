@@ -117,6 +117,7 @@ class BindingRegistry:
             "text.entity.extract": "perception.entity.extract",
             "text.keyword.extract": "perception.keyword.extract",
         }
+
         mapped = explicit_aliases.get(capability_id)
         if mapped:
             candidates.append(mapped)
@@ -454,17 +455,38 @@ class BindingRegistry:
                     f"Binding '{binding_id}' in '{relpath}' has invalid metadata.conformance_profile '{conformance_profile}'. Allowed values: {allowed}."
                 )
 
-        normalized_response_mapping: dict[str, str] = {}
+        normalized_response_mapping: dict[str, str | list[str]] = {}
         for output_name, response_ref in response_mapping.items():
             if not isinstance(output_name, str) or not output_name:
                 raise BindingRegistryError(
                     f"Binding '{binding_id}' in '{relpath}' has an invalid response output name."
                 )
-            if not isinstance(response_ref, str) or not response_ref:
-                raise BindingRegistryError(
-                    f"Binding '{binding_id}' in '{relpath}' response mapping for '{output_name}' must be a non-empty string."
-                )
-            normalized_response_mapping[output_name] = response_ref
+            if isinstance(response_ref, str):
+                if not response_ref:
+                    raise BindingRegistryError(
+                        f"Binding '{binding_id}' in '{relpath}' response mapping for '{output_name}' must be a non-empty string."
+                    )
+                normalized_response_mapping[output_name] = response_ref
+                continue
+
+            if isinstance(response_ref, list):
+                if not response_ref:
+                    raise BindingRegistryError(
+                        f"Binding '{binding_id}' in '{relpath}' response mapping list for '{output_name}' must not be empty."
+                    )
+                normalized_refs: list[str] = []
+                for item in response_ref:
+                    if not isinstance(item, str) or not item:
+                        raise BindingRegistryError(
+                            f"Binding '{binding_id}' in '{relpath}' response mapping list for '{output_name}' must contain non-empty strings only."
+                        )
+                    normalized_refs.append(item)
+                normalized_response_mapping[output_name] = normalized_refs
+                continue
+
+            raise BindingRegistryError(
+                f"Binding '{binding_id}' in '{relpath}' response mapping for '{output_name}' must be a string or a list of strings."
+            )
 
         return BindingSpec(
             id=binding_id,

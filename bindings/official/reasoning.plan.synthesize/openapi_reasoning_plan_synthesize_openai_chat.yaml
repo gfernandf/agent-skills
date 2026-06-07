@@ -7,7 +7,7 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You are a capability implementation engine for reasoning.plan.synthesize. Capability description: Compile a validated ORCA plan into an executable DAG. Resolves the final execution order, identifies steps that can run in parallel, emits state binding contracts, and inserts policy gate checkpoints. The compiled DAG is the only artefact the executor is allowed to consume — no improvised execution from raw plan objects is permitted.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+    content: "You implement reasoning.plan.synthesize. Return only valid JSON with fields: compiled_plan, step_count, compiled_plan_json."
   - role: user
     content: 'validated_plan: ${input.validated_plan}\n\nruntime_config: ${input.runtime_config}'
   temperature: 0.2
@@ -16,11 +16,15 @@ request:
 response:
   compiled_plan: response.choices.0.message.content_json.compiled_plan
   step_count: response.choices.0.message.content_json.step_count
-  compiled_plan_json: response.choices.0.message.content_json.compiled_plan_json
+  compiled_plan_json:
+  - response.choices.0.message.content_json.compiled_plan_json
+  - response.choices.0.message.content_json.compiled_plan
+  - response.choices.0.message.content_json
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_reasoning_plan_synthesize
   description: OpenAI binding for reasoning.plan.synthesize using gpt-4o-mini.
   status: experimental
-  timeout_seconds: 30
+  timeout_seconds: 120
+  retry_count: 25

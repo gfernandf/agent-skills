@@ -502,7 +502,42 @@ class OpenAPIInvoker:
         try:
             return json.loads(value)
         except (TypeError, json.JSONDecodeError):
+            pass
+
+        if not isinstance(value, str):
             return None
+
+        stripped = value.strip()
+        if not stripped:
+            return None
+
+        fenced_match = re.search(r"```(?:json)?\s*(\{[\s\S]*?\}|\[[\s\S]*?\])\s*```", stripped, re.IGNORECASE)
+        if fenced_match:
+            candidate = fenced_match.group(1).strip()
+            try:
+                return json.loads(candidate)
+            except (TypeError, json.JSONDecodeError):
+                pass
+
+        start = min(
+            [idx for idx in (stripped.find("{"), stripped.find("[")) if idx >= 0],
+            default=-1,
+        )
+        if start < 0:
+            return None
+
+        for end in range(len(stripped), start + 1, -1):
+            candidate = stripped[start:end].strip()
+            if not candidate:
+                continue
+            if candidate[-1] not in ("}", "]"):
+                continue
+            try:
+                return json.loads(candidate)
+            except (TypeError, json.JSONDecodeError):
+                continue
+
+        return None
 
     def _resolve_env_placeholders(
         self,

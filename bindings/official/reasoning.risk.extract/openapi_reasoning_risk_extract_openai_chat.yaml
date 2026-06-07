@@ -25,4 +25,5 @@ metadata:
   fallback_binding_id: python_reasoning_risk_extract
   description: OpenAI binding for reasoning.risk.extract using gpt-4o-mini.
   status: experimental
-  timeout_seconds: 30
+  timeout_seconds: 60
+  retry_count: 15

@@ -14,9 +14,18 @@ request:
   response_format:
     type: json_object
 response:
-  scores: response.choices.0.message.content_json.scores
-  overall: response.choices.0.message.content_json.overall
-  rationale: response.choices.0.message.content_json.rationale
+  scores:
+  - response.choices.0.message.content_json.scores
+  - response.choices.0.message.content_json.dimension_scores
+  - response.choices.0.message.content_json.metrics
+  overall:
+  - response.choices.0.message.content_json.overall
+  - response.choices.0.message.content_json.overall_score
+  - response.choices.0.message.content_json.score
+  rationale:
+  - response.choices.0.message.content_json.rationale
+  - response.choices.0.message.content_json.summary
+  - response.choices.0.message.content_json.explanation
 metadata:
   method: POST
   response_mode: json

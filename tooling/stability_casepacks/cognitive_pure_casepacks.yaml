@@ -1,0 +1,27 @@
+decision.input.route:
+  - case_id: summary_case
+    description: Route a summarization task with constrained agents
+    inputs:
+      query: Summarize this quarterly earnings report
+      agents: [summarizer, analyst, translator]
+      routing_strategy: keyword
+    expected_signals:
+      route: [summar]
+
+reasoning.content.summarize:
+  - case_id: finance_summary
+    description: Summarize structured business text
+    inputs:
+      text: "Revenue increased 12% year-over-year while operating margin improved by 3 points due to cost controls."
+      max_length: 30
+    expected_signals:
+      summary: [revenue, margin]
+
+evaluation.risk.score:
+  - case_id: benign_finance_output
+    description: Score low-risk financial output
+    inputs:
+      output:
+        text: "The quarterly results show moderate growth and stable costs."
+      context: "Financial analysis task"
+      dimensions: [toxicity, bias, hallucination]

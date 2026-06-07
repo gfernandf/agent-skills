@@ -15,7 +15,11 @@ request:
     type: json_object
 response:
   selected_option: response.choices.0.message.content_json.selected_option
-  selection_rationale: response.choices.0.message.content_json.selection_rationale
+  selection_rationale:
+  - response.choices.0.message.content_json.selection_rationale
+  - response.choices.0.message.content_json.rationale
+  - response.choices.0.message.content_json.reasoning
+  - response.choices.0.message.content_json.explanation
   rejected_options: response.choices.0.message.content_json.rejected_options
   selection_confidence: response.choices.0.message.content_json.selection_confidence
 metadata:

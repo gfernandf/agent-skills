@@ -14,8 +14,14 @@ request:
   response_format:
     type: json_object
 response:
-  validated_assumptions: response.choices.0.message.content_json.validated_assumptions
-  confidence_summary: response.choices.0.message.content_json.confidence_summary
+  validated_assumptions:
+  - response.choices.0.message.content_json.validated_assumptions
+  - response.choices.0.message.content_json.assumptions
+  - response.choices.0.message.content_json.validation_results
+  confidence_summary:
+  - response.choices.0.message.content_json.confidence_summary
+  - response.choices.0.message.content_json.summary
+  - response.choices.0.message.content_json.rationale
 metadata:
   method: POST
   response_mode: json

@@ -14,7 +14,11 @@ request:
   response_format:
     type: json_object
 response:
-  validation_result: response.choices.0.message.content_json.validation_result
+  validation_result:
+  - response.choices.0.message.content_json.validation_result
+  - response.choices.0.message.content_json.result
+  - response.choices.0.message.content_json.validation
+  - response.choices.0.message.content_json.status
   violations: response.choices.0.message.content_json.violations
   satisfied_constraints: response.choices.0.message.content_json.satisfied_constraints
 metadata:

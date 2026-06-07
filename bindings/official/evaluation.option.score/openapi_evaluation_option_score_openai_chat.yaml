@@ -15,9 +15,18 @@ request:
     type: json_object
 response:
   scored_options: response.choices.0.message.content_json.scored_options
-  criteria_used: response.choices.0.message.content_json.criteria_used
-  comparative_summary: response.choices.0.message.content_json.comparative_summary
-  tradeoffs: response.choices.0.message.content_json.tradeoffs
+  criteria_used:
+  - response.choices.0.message.content_json.criteria_used
+  - response.choices.0.message.content_json.criteria
+  - response.choices.0.message.content_json.applied_criteria
+  comparative_summary:
+  - response.choices.0.message.content_json.comparative_summary
+  - response.choices.0.message.content_json.summary
+  - response.choices.0.message.content_json.rationale
+  tradeoffs:
+  - response.choices.0.message.content_json.tradeoffs
+  - response.choices.0.message.content_json.trade_offs
+  - response.choices.0.message.content_json.option_tradeoffs
 metadata:
   method: POST
   response_mode: json

@@ -14,8 +14,14 @@ request:
   response_format:
     type: json_object
 response:
-  stored: response.choices.0.message.content_json.stored
-  context_id: response.choices.0.message.content_json.context_id
+  stored:
+  - response.choices.0.message.content_json.stored
+  - response.choices.0.message.content_json.success
+  - response.choices.0.message.content_json.saved
+  - response.choices.0.message.content_json.status
+  context_id:
+  - response.choices.0.message.content_json.context_id
+  - response.choices.0.message.content_json.id
 metadata:
   method: POST
   response_mode: json

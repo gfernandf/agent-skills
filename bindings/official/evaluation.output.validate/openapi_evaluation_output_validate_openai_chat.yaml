@@ -14,7 +14,10 @@ request:
   response_format:
     type: json_object
 response:
-  evaluation: response.choices.0.message.content_json.evaluation
+  evaluation:
+  - response.choices.0.message.content_json.evaluation
+  - response.choices.0.message.content_json.validation_result
+  - response.choices.0.message.content_json.result
 metadata:
   method: POST
   response_mode: json

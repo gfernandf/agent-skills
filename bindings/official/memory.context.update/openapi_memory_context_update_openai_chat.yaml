@@ -22,4 +22,5 @@ metadata:
   fallback_binding_id: python_memory_context_update
   description: OpenAI binding for memory.context.update using gpt-4o-mini.
   status: experimental
+  retry_count: 10
   timeout_seconds: 30

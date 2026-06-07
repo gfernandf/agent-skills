@@ -14,7 +14,10 @@ request:
   response_format:
     type: json_object
 response:
-  authorization_result: response.choices.0.message.content_json.authorization_result
+  authorization_result:
+  - response.choices.0.message.content_json.authorization_result
+  - response.choices.0.message.content_json.gate_result
+  - response.choices.0.message.content_json.result
 metadata:
   method: POST
   response_mode: json

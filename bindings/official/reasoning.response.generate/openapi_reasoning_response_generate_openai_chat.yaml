@@ -15,7 +15,11 @@ request:
     type: json_object
 response:
   report: response.choices.0.message.content_json.report
-  report_status: response.choices.0.message.content_json.report_status
+  report_status:
+  - response.choices.0.message.content_json.report_status
+  - response.choices.0.message.content_json.status
+  - response.choices.0.message.content_json.state
+  - response.choices.0.message.content_json.outcome
 metadata:
   method: POST
   response_mode: json

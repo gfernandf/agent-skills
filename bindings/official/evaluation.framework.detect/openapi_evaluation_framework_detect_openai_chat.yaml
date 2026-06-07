@@ -14,9 +14,18 @@ request:
   response_format:
     type: json_object
 response:
-  missing_capabilities: response.choices.0.message.content_json.missing_capabilities
-  missing_skills: response.choices.0.message.content_json.missing_skills
-  gap_severity: response.choices.0.message.content_json.gap_severity
+  missing_capabilities:
+  - response.choices.0.message.content_json.missing_capabilities
+  - response.choices.0.message.content_json.capability_gaps
+  - response.choices.0.message.content_json.gaps.capabilities
+  missing_skills:
+  - response.choices.0.message.content_json.missing_skills
+  - response.choices.0.message.content_json.skill_gaps
+  - response.choices.0.message.content_json.gaps.skills
+  gap_severity:
+  - response.choices.0.message.content_json.gap_severity
+  - response.choices.0.message.content_json.severity
+  - response.choices.0.message.content_json.gap_level
 metadata:
   method: POST
   response_mode: json

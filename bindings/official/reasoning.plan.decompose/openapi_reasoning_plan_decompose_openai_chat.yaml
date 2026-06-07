@@ -14,8 +14,18 @@ request:
   response_format:
     type: json_object
 response:
-  expanded_steps: response.choices.0.message.content_json.expanded_steps
-  step_count: response.choices.0.message.content_json.step_count
+  expanded_steps:
+  - response.choices.0.message.content_json.expanded_steps
+  - response.choices.0.message.content_json.steps
+  - response.choices.0.message.content_json.decomposed_steps
+  - response.choices.0.message.content_json.plan.steps
+  - response.choices.0.message.content_json.plan
+  - response.choices.0.message.content_json
+  step_count:
+  - response.choices.0.message.content_json.step_count
+  - response.choices.0.message.content_json.steps_count
+  - response.choices.0.message.content_json.count
+  - response.choices.0.message.content_json.expanded_steps
 metadata:
   method: POST
   response_mode: json

@@ -14,9 +14,19 @@ request:
   response_format:
     type: json_object
 response:
-  score: response.choices.0.message.content_json.score
-  dimensions: response.choices.0.message.content_json.dimensions
-  quality_level: response.choices.0.message.content_json.quality_level
+  score:
+  - response.choices.0.message.content_json.score
+  - response.choices.0.message.content_json.overall
+  - response.choices.0.message.content_json.overall_score
+  - response.choices.0.message.content_json.quality_score
+  dimensions:
+  - response.choices.0.message.content_json.dimensions
+  - response.choices.0.message.content_json.dimension_scores
+  - response.choices.0.message.content_json.scores
+  quality_level:
+  - response.choices.0.message.content_json.quality_level
+  - response.choices.0.message.content_json.quality
+  - response.choices.0.message.content_json.label
 metadata:
   method: POST
   response_mode: json

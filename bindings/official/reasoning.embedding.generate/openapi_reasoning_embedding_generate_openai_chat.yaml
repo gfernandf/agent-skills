@@ -2,24 +2,19 @@ id: openapi_reasoning_embedding_generate_openai_chat
 capability: reasoning.embedding.generate
 service: model_openai_chat
 protocol: openapi
-operation: chat/completions
+operation: embeddings
 request:
-  model: gpt-4o-mini
-  messages:
-  - role: system
-    content: "You are a capability implementation engine for reasoning.embedding.generate. Capability description: Generate a vector embedding for a text input using a model-level embedding service.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
-  - role: user
-    content: 'text: ${input.text}\n\nmodel: ${input.model}\n\ndimensions: ${input.dimensions}'
-  temperature: 0.2
-  response_format:
-    type: json_object
+  model: text-embedding-3-small
+  input: input.text
+  dimensions: input.dimensions
 response:
-  embedding: response.choices.0.message.content_json.embedding
-  model: response.choices.0.message.content_json.model
+  embedding: response.data.0.embedding
+  model: response.model
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_reasoning_embedding_generate
-  description: OpenAI binding for reasoning.embedding.generate using gpt-4o-mini.
+  description: OpenAI binding for reasoning.embedding.generate using text-embedding-3-small.
   status: experimental
-  timeout_seconds: 30
+  retry_count: 10
+  timeout_seconds: 60

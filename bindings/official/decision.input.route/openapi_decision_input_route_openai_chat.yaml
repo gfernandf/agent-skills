@@ -14,8 +14,13 @@ request:
   response_format:
     type: json_object
 response:
-  route: response.choices.0.message.content_json.route
-  confidence: response.choices.0.message.content_json.confidence
+  route:
+  - response.choices.0.message.content_json.route
+  - response.choices.0.message.content_json.route_id
+  - response.choices.0.message.content_json.selected_route
+  confidence:
+  - response.choices.0.message.content_json.confidence
+  - response.choices.0.message.content_json.confidence_score
 metadata:
   method: POST
   response_mode: json

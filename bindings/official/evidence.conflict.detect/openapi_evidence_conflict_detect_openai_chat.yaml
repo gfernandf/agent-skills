@@ -15,11 +15,16 @@ request:
     type: json_object
 response:
   conflicts: response.choices.0.message.content_json.conflicts
-  conflict_severity: response.choices.0.message.content_json.conflict_severity
+  conflict_severity:
+  - response.choices.0.message.content_json.conflict_severity
+  - response.choices.0.message.content_json.severity
+  - response.choices.0.message.content_json.overall_severity
+  - response.choices.0.message.content_json.risk_level
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_evidence_conflict_detect
   description: OpenAI binding for evidence.conflict.detect using gpt-4o-mini.
   status: experimental
+  retry_count: 6
   timeout_seconds: 30

@@ -554,6 +554,12 @@ def _reasoning_goal_interpret(**kwargs: Any) -> dict[str, Any]:
 def _decision_input_route(**kwargs: Any) -> dict[str, Any]:
     query = _to_text(kwargs.get("query") or kwargs.get("user_message") or "")
     low = query.lower()
+    agents_raw = kwargs.get("agents")
+    agents = []
+    if isinstance(agents_raw, list):
+        for item in agents_raw:
+            if isinstance(item, str) and item.strip():
+                agents.append(item.strip())
 
     if any(token in low for token in ("riesgo", "risk", "seguridad", "security")):
         route = "evaluation.risk.score"
@@ -565,6 +571,40 @@ def _decision_input_route(**kwargs: Any) -> dict[str, Any]:
         route = "reasoning.content.summarize"
     else:
         route = "reasoning.request.normalize"
+
+    if agents:
+        agent_lows = [a.lower() for a in agents]
+        chosen = None
+
+        for idx, name in enumerate(agent_lows):
+            if name and name in low:
+                chosen = agents[idx]
+                break
+
+        if chosen is None:
+            if any(tok in route for tok in ("summarize", "summary")):
+                for idx, name in enumerate(agent_lows):
+                    if any(tok in name for tok in ("summar", "resum")):
+                        chosen = agents[idx]
+                        break
+            elif "risk" in route:
+                for idx, name in enumerate(agent_lows):
+                    if any(tok in name for tok in ("risk", "segur", "safety")):
+                        chosen = agents[idx]
+                        break
+            elif "plan" in route:
+                for idx, name in enumerate(agent_lows):
+                    if any(tok in name for tok in ("plan", "planner")):
+                        chosen = agents[idx]
+                        break
+
+        if chosen is None and route in agents:
+            chosen = route
+
+        if chosen is None:
+            chosen = agents[0]
+
+        route = chosen
 
     confidence = round(max(0.55, _hash_score(route + low)), 2)
     return {
@@ -1828,9 +1868,23 @@ def _generic_capability(operation: str, **kwargs: Any) -> dict[str, Any]:
                 or "notes" in name
                 or "explanation" in name
             ):
-                result[name] = (
-                    f"{name.replace('_', ' ').capitalize()} produced from structured baseline analysis."
+                source_text = _to_text(
+                    _pick_first(
+                        kwargs.get("text"),
+                        kwargs.get("content"),
+                        kwargs.get("query"),
+                        kwargs.get("input"),
+                        default="",
+                    )
                 )
+                if source_text:
+                    compact = " ".join(source_text.split())
+                    snippet = compact[:180]
+                    result[name] = f"{name.replace('_', ' ').capitalize()}: {snippet}"
+                else:
+                    result[name] = (
+                        f"{name.replace('_', ' ').capitalize()} produced from structured baseline analysis."
+                    )
             elif "status" in name:
                 result[name] = "success"
             elif "severity" in name:

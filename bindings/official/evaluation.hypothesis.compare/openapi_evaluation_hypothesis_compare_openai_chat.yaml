@@ -14,9 +14,18 @@ request:
   response_format:
     type: json_object
 response:
-  ranked_hypotheses: response.choices.0.message.content_json.ranked_hypotheses
-  tradeoffs: response.choices.0.message.content_json.tradeoffs
-  recommendation: response.choices.0.message.content_json.recommendation
+  ranked_hypotheses:
+  - response.choices.0.message.content_json.ranked_hypotheses
+  - response.choices.0.message.content_json.hypotheses_ranked
+  - response.choices.0.message.content_json.ranked
+  tradeoffs:
+  - response.choices.0.message.content_json.tradeoffs
+  - response.choices.0.message.content_json.trade_offs
+  - response.choices.0.message.content_json.comparisons
+  recommendation:
+  - response.choices.0.message.content_json.recommendation
+  - response.choices.0.message.content_json.recommended_hypothesis
+  - response.choices.0.message.content_json.lead_hypothesis
 metadata:
   method: POST
   response_mode: json
