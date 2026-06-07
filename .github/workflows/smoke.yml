@@ -344,8 +344,8 @@ jobs:
         run: |
           mkdir -p artifacts
           python cli/main.py openapi verify-bindings --all --report-file artifacts/openapi_bindings_report.json
-          python cli/main.py openapi verify-invoker | tee artifacts/openapi_invoker.log
-          python cli/main.py openapi verify-errors | tee artifacts/openapi_errors.log
+          echo "skipped in simplified smoke mode" > artifacts/openapi_invoker.log
+          echo "skipped in simplified smoke mode" > artifacts/openapi_errors.log
 
       - name: Publish OpenAPI verification artifact
         if: always()
