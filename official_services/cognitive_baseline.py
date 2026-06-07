@@ -648,6 +648,16 @@ def _evaluation_option_score(**kwargs: Any) -> dict[str, Any]:
             {"name": "risk", "description": "Downside exposure", "weight": 1.0},
         ]
 
+    criterion_names: list[str] = []
+    for i, c in enumerate(criteria):
+        if isinstance(c, dict):
+            name = c.get("name")
+            criterion_names.append(str(name) if isinstance(name, str) and name.strip() else f"criterion_{i + 1}")
+        elif isinstance(c, str) and c.strip():
+            criterion_names.append(c.strip())
+        else:
+            criterion_names.append(f"criterion_{i + 1}")
+
     scored = []
     for idx, opt in enumerate(options):
         oid = opt.get("id") if isinstance(opt, dict) else f"option_{idx + 1}"
@@ -655,10 +665,8 @@ def _evaluation_option_score(**kwargs: Any) -> dict[str, Any]:
         seed = f"{oid}|{label}|{idx}"
         overall = _hash_score(seed)
         per = {
-            c.get("name", f"criterion_{i + 1}")
-            if isinstance(c, dict)
-            else f"criterion_{i + 1}": _hash_score(seed + str(i))
-            for i, c in enumerate(criteria)
+            criterion_names[i]: _hash_score(seed + str(i))
+            for i, _ in enumerate(criteria)
         }
         scored.append(
             {
@@ -671,7 +679,8 @@ def _evaluation_option_score(**kwargs: Any) -> dict[str, Any]:
         )
 
     scored.sort(key=lambda x: x.get("overall_score", 0.0), reverse=True)
-    summary = "Scoring completed with deterministic multi-criteria baseline logic."
+    joined_criteria = ", ".join(criterion_names[:4]) if criterion_names else "criteria"
+    summary = f"Scoring completed with deterministic multi-criteria baseline logic over {joined_criteria}."
     tradeoffs = [
         "Top option shows strongest blended performance under current criteria weights."
     ]

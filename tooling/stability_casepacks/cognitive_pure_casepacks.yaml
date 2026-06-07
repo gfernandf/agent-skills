@@ -25,3 +25,104 @@ evaluation.risk.score:
         text: "The quarterly results show moderate growth and stable costs."
       context: "Financial analysis task"
       dimensions: [toxicity, bias, hallucination]
+    expected_signals:
+      rationale: [risk, evidence, dimension]
+
+decision.option.select:
+  - case_id: choose_low_risk_option
+    description: Select best option from alternatives with explicit rationale
+    inputs:
+      options:
+        - id: opt_a
+          description: "Fast rollout with low validation"
+        - id: opt_b
+          description: "Phased rollout with validation gates"
+      criteria:
+        safety: 0.5
+        reliability: 0.3
+        speed: 0.2
+      context: "Production launch for critical workflow"
+    expected_signals:
+      selection_rationale: [option, selected]
+
+evaluation.option.score:
+  - case_id: score_release_options
+    description: Score options and produce comparative summary
+    inputs:
+      options:
+        - id: opt_a
+          description: "Aggressive cutover"
+        - id: opt_b
+          description: "Staged migration"
+      criteria:
+        - reliability
+        - operability
+      goal: "Choose the safest migration option"
+      risk_tolerance: medium
+    expected_signals:
+      comparative_summary: [reliability, operability]
+
+evaluation.response.score:
+  - case_id: assess_response_quality
+    description: Evaluate generated response quality
+    inputs:
+      output:
+        text: "We should proceed immediately without additional checks."
+      instruction: "Evaluate the response quality and completeness"
+      dimensions: [relevance, completeness, faithfulness]
+    expected_signals:
+      rationale: [rationale, relevance, completeness]
+
+reasoning.content.translate:
+  - case_id: translate_policy_note
+    description: Translate English policy note to Spanish
+    inputs:
+      text: "Deployment requires rollback readiness and monitoring coverage."
+      source_language: en
+      target_language: es
+    expected_signals:
+      status: [success, ok]
+
+reasoning.response.generate:
+  - case_id: generate_structured_report
+    description: Generate response report from normalized request
+    inputs:
+      normalized_request:
+        objective: "Summarize risk posture"
+        constraints: ["concise", "evidence-first"]
+      context:
+        domain: operations
+    expected_signals:
+      report_status: [success]
+
+reasoning.risk.extract:
+  - case_id: extract_plan_risks
+    description: Extract risks and assumptions from rollout plan
+    inputs:
+      target:
+        type: plan
+        title: "Data migration rollout"
+        body: "Move all tenants in one batch during low-traffic window."
+      risk_scope: operational
+    expected_signals:
+      status: [success, ok]
+
+reasoning.sentiment.analyze:
+  - case_id: mixed_feedback_sentiment
+    description: Detect mixed sentiment from customer feedback
+    inputs:
+      text: "Great performance improvements, but setup docs are confusing and incomplete."
+      dimensions: [polarity, emotion]
+    expected_signals:
+      sentiment: [positive, negative, neutral, mixed]
+      rationale: [polarity, classification]
+
+reasoning.problem.decompose:
+  - case_id: decompose_migration_problem
+    description: Decompose migration challenge into components
+    inputs:
+      problem: "Migrate legacy billing service with zero downtime"
+      strategy: phases
+      context: "Must preserve auditability and service continuity"
+    expected_signals:
+      status: [success, ok]

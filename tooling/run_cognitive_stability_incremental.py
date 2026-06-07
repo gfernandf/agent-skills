@@ -90,6 +90,9 @@ def _default_state(args: argparse.Namespace, capability_ids: list[str]) -> dict[
             "end_index": args.end_index,
             "max_capabilities": args.max_capabilities,
             "allow_remote_openapi": bool(args.allow_remote_openapi),
+            "semantic_strict": bool(args.semantic_strict),
+            "semantic_min_pass_rate": float(args.semantic_min_pass_rate),
+            "require_semantic_casepack": bool(args.require_semantic_casepack),
         },
         "capability_order": capability_ids,
         "capabilities": {},
@@ -119,6 +122,9 @@ def _reconcile_state(
         "end_index": args.end_index,
         "max_capabilities": args.max_capabilities,
         "allow_remote_openapi": bool(args.allow_remote_openapi),
+        "semantic_strict": bool(args.semantic_strict),
+        "semantic_min_pass_rate": float(args.semantic_min_pass_rate),
+        "require_semantic_casepack": bool(args.require_semantic_casepack),
     }
     state["capability_order"] = capability_ids
     state.setdefault("capabilities", {})
@@ -343,6 +349,22 @@ def parse_args() -> argparse.Namespace:
         help="Run OpenAPI lane even when service appears remote/external",
     )
     parser.add_argument(
+        "--semantic-strict",
+        action="store_true",
+        help="Require semantic checks on every evaluated case",
+    )
+    parser.add_argument(
+        "--semantic-min-pass-rate",
+        type=float,
+        default=0.8,
+        help="Minimum semantic pass rate per lane (default: 0.8)",
+    )
+    parser.add_argument(
+        "--require-semantic-casepack",
+        action="store_true",
+        help="Fail capability assessment when any case lacks semantic expected_signals",
+    )
+    parser.add_argument(
         "--resume",
         action="store_true",
         help="Resume from existing state file and skip completed capabilities",
@@ -440,6 +462,9 @@ def main() -> int:
                 casepacks=casepacks,
                 registry=registry,
                 allow_remote_openapi=args.allow_remote_openapi,
+                semantic_strict=args.semantic_strict,
+                semantic_min_pass_rate=args.semantic_min_pass_rate,
+                require_semantic_casepack=args.require_semantic_casepack,
             )
             report_path = args.out_dir / f"{matrix._safe_slug(capability_id)}.json"
             _json_dump(report_path, report)

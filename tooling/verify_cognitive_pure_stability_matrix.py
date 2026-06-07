@@ -341,6 +341,10 @@ def _build_cases(raw_capability: dict[str, Any], pack_override: list[CaseSpec] |
     return cases
 
 
+def _has_semantic_signals(case: CaseSpec) -> bool:
+    return bool(case.expected_signals)
+
+
 def _choose_bindings(registry: BindingRegistry, capability_id: str) -> dict[str, Any]:
     bindings = registry.get_bindings_for_capability(capability_id)
     python_binding = None
@@ -481,6 +485,7 @@ def _validate_result(
     result: dict[str, Any],
     output_specs: dict[str, dict[str, Any]],
     expected_primary_binding: str | None,
+    semantic_required: bool,
 ) -> dict[str, Any]:
     issues: list[dict[str, str]] = []
 
@@ -604,7 +609,15 @@ def _validate_result(
                     }
                 )
     else:
-        semantic_pass = invariants_pass
+        if semantic_required:
+            semantic_pass = False
+            issues.append(
+                {
+                    "severity": "high",
+                    "category": "semantic_coverage",
+                    "reason": "semantic evaluation missing expected_signals for this case",
+                }
+            )
 
     if expected_primary_binding is not None and final_binding != expected_primary_binding:
         category = "selection_or_fallback"
@@ -656,6 +669,7 @@ def _run_lane(
     input_keys: list[str],
     python_binding_id: str | None,
     openapi_binding_id: str | None,
+    semantic_required: bool,
 ) -> dict[str, Any]:
     if lane.mode == "baseline" and python_binding_id is None:
         return {
@@ -712,10 +726,14 @@ def _run_lane(
                 result=result,
                 output_specs=output_specs,
                 expected_primary_binding=expected_primary_binding,
+                semantic_required=semantic_required,
             )
             runs.append(
                 {
                     "case_id": case.case_id,
+                    "case": {
+                        "has_semantic_signals": _has_semantic_signals(case),
+                    },
                     "inputs": case.inputs,
                     "result": result,
                     "evaluation": evaluation,
@@ -743,15 +761,23 @@ def _summarize_lane(lane_result: dict[str, Any]) -> dict[str, Any]:
     inv_pass = 0
     sem_pass = 0
     fb_true = 0
+    semantic_eval_runs = 0
+    semantic_eval_pass = 0
 
     for run in runs:
         ev = run.get("evaluation") if isinstance(run, dict) else None
         if not isinstance(ev, dict):
             continue
+        case_obj = run.get("case") if isinstance(run.get("case"), dict) else None
+        has_semantic = bool(case_obj.get("has_semantic_signals")) if case_obj else False
         if ev.get("invariants_pass") is True:
             inv_pass += 1
         if ev.get("semantic_pass") is True:
             sem_pass += 1
+        if has_semantic:
+            semantic_eval_runs += 1
+            if ev.get("semantic_pass") is True:
+                semantic_eval_pass += 1
         if ev.get("fallback_used") is True:
             fb_true += 1
         rv = ev.get("route_like")
@@ -776,13 +802,21 @@ def _summarize_lane(lane_result: dict[str, Any]) -> dict[str, Any]:
         "runs": total,
         "invariant_pass_rate": round(inv_pass / total, 4) if total else 0.0,
         "semantic_pass_rate": round(sem_pass / total, 4) if total else 0.0,
+        "semantic_eval_runs": semantic_eval_runs,
+        "semantic_eval_pass_rate": round(semantic_eval_pass / semantic_eval_runs, 4) if semantic_eval_runs else None,
         "fallback_activation_rate": round(fb_true / total, 4) if total else 0.0,
         "route_entropy": _route_entropy(route_like),
         "issue_categories": dict(cat_counts),
     }
 
 
-def _assess_capability(lane_summaries: list[dict[str, Any]]) -> dict[str, Any]:
+def _assess_capability(
+    lane_summaries: list[dict[str, Any]],
+    *,
+    semantic_min_pass_rate: float,
+    require_semantic_casepack: bool,
+    semantic_case_coverage: float,
+) -> dict[str, Any]:
     by_id = {s.get("lane_id"): s for s in lane_summaries}
     baseline = by_id.get("baseline_forced", {})
     openapi = by_id.get("openapi_forced", {})
@@ -805,12 +839,12 @@ def _assess_capability(lane_summaries: list[dict[str, Any]]) -> dict[str, Any]:
                     "evidence": baseline,
                 }
             )
-        if baseline.get("semantic_pass_rate", 0.0) < 0.8:
+        if baseline.get("semantic_pass_rate", 0.0) < semantic_min_pass_rate:
             findings.append(
                 {
                     "severity": "medium",
                     "category": "baseline_implementation",
-                    "reason": "baseline semantic pass rate below 0.8",
+                    "reason": f"baseline semantic pass rate below {semantic_min_pass_rate}",
                     "evidence": baseline,
                 }
             )
@@ -834,6 +868,15 @@ def _assess_capability(lane_summaries: list[dict[str, Any]]) -> dict[str, Any]:
                     "evidence": openapi,
                 }
             )
+        if openapi.get("semantic_pass_rate", 0.0) < semantic_min_pass_rate:
+            findings.append(
+                {
+                    "severity": "high",
+                    "category": "integration_or_binding",
+                    "reason": f"openapi semantic pass rate below {semantic_min_pass_rate}",
+                    "evidence": openapi,
+                }
+            )
 
     if fallback.get("status") == "ok":
         if fallback.get("fallback_activation_rate", 0.0) < 0.95:
@@ -845,6 +888,18 @@ def _assess_capability(lane_summaries: list[dict[str, Any]]) -> dict[str, Any]:
                     "evidence": fallback,
                 }
             )
+
+    if require_semantic_casepack and semantic_case_coverage < 1.0:
+        findings.append(
+            {
+                "severity": "high",
+                "category": "semantic_coverage",
+                "reason": "semantic case coverage below 1.0",
+                "evidence": {
+                    "semantic_case_coverage": round(semantic_case_coverage, 4),
+                },
+            }
+        )
 
     stable = len(findings) == 0
     return {
@@ -860,6 +915,9 @@ def _run_for_capability(
     casepacks: dict[str, list[CaseSpec]],
     registry: BindingRegistry,
     allow_remote_openapi: bool,
+    semantic_strict: bool = False,
+    semantic_min_pass_rate: float = 0.8,
+    require_semantic_casepack: bool = False,
 ) -> dict[str, Any]:
     capability_id = str(raw_capability.get("id"))
     inputs_spec = raw_capability.get("inputs") if isinstance(raw_capability.get("inputs"), dict) else {}
@@ -896,6 +954,9 @@ def _run_for_capability(
             openapi_binding_id = None
 
     lane_results: list[dict[str, Any]] = []
+    semantic_case_count = len([c for c in cases if _has_semantic_signals(c)])
+    semantic_case_coverage = (semantic_case_count / len(cases)) if cases else 0.0
+
     for lane in LANES:
         if lane.mode == "openapi" and openapi_policy_skip_reason is not None:
             lane_results.append(
@@ -916,11 +977,17 @@ def _run_for_capability(
                 input_keys=input_keys,
                 python_binding_id=python_binding_id,
                 openapi_binding_id=openapi_binding_id,
+                semantic_required=semantic_strict,
             )
         )
 
     lane_summaries = [_summarize_lane(l) for l in lane_results]
-    overall = _assess_capability(lane_summaries)
+    overall = _assess_capability(
+        lane_summaries,
+        semantic_min_pass_rate=semantic_min_pass_rate,
+        require_semantic_casepack=require_semantic_casepack,
+        semantic_case_coverage=semantic_case_coverage,
+    )
 
     return {
         "capability_id": capability_id,
@@ -936,9 +1003,17 @@ def _run_for_capability(
                 "description": c.description,
                 "inputs": c.inputs,
                 "expected_signals": c.expected_signals,
+                "has_semantic_signals": _has_semantic_signals(c),
             }
             for c in cases
         ],
+        "semantic_quality": {
+            "strict_mode": semantic_strict,
+            "semantic_min_pass_rate": semantic_min_pass_rate,
+            "require_semantic_casepack": require_semantic_casepack,
+            "semantic_case_count": semantic_case_count,
+            "semantic_case_coverage": round(semantic_case_coverage, 4),
+        },
         "lane_summaries": lane_summaries,
         "lane_results": lane_results,
         "overall_assessment": overall,
@@ -984,6 +1059,22 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Run OpenAPI lane even when service appears remote/external",
     )
+    parser.add_argument(
+        "--semantic-strict",
+        action="store_true",
+        help="Require semantic checks on every evaluated case",
+    )
+    parser.add_argument(
+        "--semantic-min-pass-rate",
+        type=float,
+        default=0.8,
+        help="Minimum semantic pass rate per lane (default: 0.8)",
+    )
+    parser.add_argument(
+        "--require-semantic-casepack",
+        action="store_true",
+        help="Fail capability assessment when any case lacks semantic expected_signals",
+    )
     return parser.parse_args()
 
 
@@ -1012,6 +1103,9 @@ def main() -> int:
             casepacks=casepacks,
             registry=registry,
             allow_remote_openapi=args.allow_remote_openapi,
+            semantic_strict=args.semantic_strict,
+            semantic_min_pass_rate=args.semantic_min_pass_rate,
+            require_semantic_casepack=args.require_semantic_casepack,
         )
         capability_reports.append(report)
 
@@ -1048,6 +1142,9 @@ def main() -> int:
         "environment": {
             "openai_api_key_present": bool(os.getenv("OPENAI_API_KEY")),
             "allow_remote_openapi": bool(args.allow_remote_openapi),
+            "semantic_strict": bool(args.semantic_strict),
+            "semantic_min_pass_rate": float(args.semantic_min_pass_rate),
+            "require_semantic_casepack": bool(args.require_semantic_casepack),
         },
         "scope": {
             "layer": "cognitive",
