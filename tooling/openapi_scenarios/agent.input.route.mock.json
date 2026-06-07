@@ -7,7 +7,7 @@
     "agents": ["summarizer", "analyst"]
   },
   "expected_output": {
-    "route": "reasoning.plan.generate"
+    "route": "summarizer"
   },
   "mock_server": {
     "type": "agent_route",
