@@ -1,0 +1,33 @@
+id: openapi_perception_input_collect_openai_chat
+capability: perception.input.collect
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for perception.input.collect. Capability description: Collect structured input from a user or external source using required fields. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'fields: ${input.fields}\n\ninstruction: ${input.instruction}\n\ncontext: ${input.context}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  response:
+  - response.choices.0.message.content_json.response
+  - response.choices.0.message.content_json.structured_input
+  - response.choices.0.message.content_json
+  complete:
+  - response.choices.0.message.content_json.complete
+  - response.choices.0.message.content_json.is_complete
+  missing_fields:
+  - response.choices.0.message.content_json.missing_fields
+  - response.choices.0.message.content_json.missing
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_perception_input_collect
+  description: OpenAI binding for perception.input.collect using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

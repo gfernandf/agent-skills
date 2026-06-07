@@ -1,0 +1,38 @@
+id: openapi_reasoning_output_sanitize_openai_chat
+capability: reasoning.output.sanitize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.output.sanitize. Capability description: Sanitize a model-generated output by removing or masking harmful content and disallowed patterns. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'output: ${input.output}\n\npolicy: ${input.policy}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  sanitized_output: response.choices.0.message.content_json.sanitized_output
+  removals:
+  - response.choices.0.message.content_json.removals
+  - response.choices.0.message.content_json.removed_items
+  - response.choices.0.message.content_json.redactions
+  - response.choices.0.message.content_json.issues
+  - response.choices.0.message.content_json.actions
+  - response.choices.0.message.content_json.status
+  - response.choices.0.message.content_json
+  clean:
+  - response.choices.0.message.content_json.clean
+  - response.choices.0.message.content_json.is_clean
+  - response.choices.0.message.content_json.safe
+  - response.choices.0.message.content_json.status
+  - response.choices.0.message.content_json.removals
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_output_sanitize
+  description: OpenAI binding for reasoning.output.sanitize using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30
