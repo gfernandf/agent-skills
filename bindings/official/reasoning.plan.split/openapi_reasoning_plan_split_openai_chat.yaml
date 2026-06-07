@@ -1,0 +1,43 @@
+id: openapi_reasoning_plan_split_openai_chat
+capability: reasoning.plan.split
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.plan.split. Capability description: Expand one macro plan stage into concrete ORCA-executable steps. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'macro_stage: ${input.macro_stage}\n\ncandidate_skills: ${input.candidate_skills}\n\ncandidate_capabilities: ${input.candidate_capabilities}\n\ncurrent_state: ${input.current_state}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  expanded_steps:
+  - response.choices.0.message.content_json.expanded_steps
+  - response.choices.0.message.content_json.steps
+  - response.choices.0.message.content_json.decomposed_steps
+  - response.choices.0.message.content_json.plan.steps
+  - response.choices.0.message.content_json.plan
+  - response.choices.0.message.content_json
+  step_count:
+  - response.choices.0.message.content_json.step_count
+  - response.choices.0.message.content_json.steps_count
+  - response.choices.0.message.content_json.count
+  - response.choices.0.message.content_json.expanded_steps
+  status:
+  - response.choices.0.message.content_json.status
+  - response.choices.0.message.content_json.result
+  trace_ref:
+  - response.choices.0.message.content_json.trace_ref
+  - response.choices.0.message.content_json.trace_id
+  - response.id
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_plan_split
+  description: OpenAI binding for reasoning.plan.split using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30
+  retry_count: 10

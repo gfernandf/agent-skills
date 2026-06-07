@@ -1,0 +1,47 @@
+id: openapi_reasoning_plan_create_openai_chat
+capability: reasoning.plan.create
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.plan.create. Capability description: Generate a valid skill YAML definition from a natural language intent description. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'intent_description: ${input.intent_description}\n\nregistry_root: ${input.registry_root}\n\ntarget_channel: ${input.target_channel}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  skill_yaml:
+  - response.choices.0.message.content_json.skill_yaml
+  - response.choices.0.message.content_json.yaml
+  - response.choices.0.message.content_json.plan
+  suggested_id:
+  - response.choices.0.message.content_json.suggested_id
+  - response.choices.0.message.content_json.id
+  capabilities_used:
+  - response.choices.0.message.content_json.capabilities_used
+  - response.choices.0.message.content_json.capabilities
+  validation_errors:
+  - response.choices.0.message.content_json.validation_errors
+  - response.choices.0.message.content_json.errors
+  status:
+  - response.choices.0.message.content_json.status
+  - response.choices.0.message.content_json.result
+  rationale:
+  - response.choices.0.message.content_json.rationale
+  - response.choices.0.message.content_json.summary
+  trace_ref:
+  - response.choices.0.message.content_json.trace_ref
+  - response.choices.0.message.content_json.trace_id
+  - response.id
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_plan_create
+  description: OpenAI binding for reasoning.plan.create using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 60
+  retry_count: 10
