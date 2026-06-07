@@ -33,7 +33,9 @@ def _load_json(path: Path, default: Any) -> Any:
 
 def _save_json(path: Path, data: Any) -> None:
     _ensure_dir(path.parent)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def _cap_report_path(capability_id: str) -> Path:
@@ -74,8 +76,12 @@ def parse_args() -> argparse.Namespace:
             "Run a cognitive capability slice with per-capability checkpoints and resume support."
         )
     )
-    parser.add_argument("--start", type=int, required=True, help="Slice start index (inclusive)")
-    parser.add_argument("--end", type=int, required=True, help="Slice end index (exclusive)")
+    parser.add_argument(
+        "--start", type=int, required=True, help="Slice start index (inclusive)"
+    )
+    parser.add_argument(
+        "--end", type=int, required=True, help="Slice end index (exclusive)"
+    )
     parser.add_argument(
         "--run-name",
         type=str,
@@ -113,7 +119,9 @@ def main() -> int:
 
     run_name = args.run_name.strip()
     if not run_name:
-        run_name = f"{_now_iso().replace(':', '').replace('-', '')}_{args.start}_{args.end}"
+        run_name = (
+            f"{_now_iso().replace(':', '').replace('-', '')}_{args.start}_{args.end}"
+        )
 
     run_dir = RUNS_ROOT / run_name
     progress_path = run_dir / "progress.json"
@@ -143,14 +151,19 @@ def main() -> int:
 
     if args.resume:
         existing_slice = progress.get("slice") or {}
-        if int(existing_slice.get("start", -1)) != args.start or int(existing_slice.get("end", -1)) != args.end:
+        if (
+            int(existing_slice.get("start", -1)) != args.start
+            or int(existing_slice.get("end", -1)) != args.end
+        ):
             raise SystemExit("Slice does not match existing run progress.")
 
     completed: set[str] = set(progress.get("completed") or [])
     failed: set[str] = set(progress.get("failed") or [])
     results: dict[str, dict[str, Any]] = dict(progress.get("results") or {})
 
-    casepacks = m._load_casepacks(Path("tooling/stability_casepacks/cognitive_pure_casepacks.yaml"))
+    casepacks = m._load_casepacks(
+        Path("tooling/stability_casepacks/cognitive_pure_casepacks.yaml")
+    )
     registry = m.BindingRegistry(repo_root=m.ROOT, host_root=m.ROOT)
 
     for raw_cap in selected:
@@ -183,7 +196,9 @@ def main() -> int:
                 "stable": bool((report.get("overall_assessment") or {}).get("stable")),
                 "report_path": str(out_path),
             }
-            journal_path.write_text("", encoding="utf-8") if not journal_path.exists() else None
+            journal_path.write_text(
+                "", encoding="utf-8"
+            ) if not journal_path.exists() else None
             with journal_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
@@ -208,7 +223,9 @@ def main() -> int:
                 "status": "error",
                 "error": f"{type(exc).__name__}: {exc}",
             }
-            journal_path.write_text("", encoding="utf-8") if not journal_path.exists() else None
+            journal_path.write_text(
+                "", encoding="utf-8"
+            ) if not journal_path.exists() else None
             with journal_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
             print(f"ERROR {capability_id}: {row['error']}", flush=True)

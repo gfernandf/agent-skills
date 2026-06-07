@@ -511,7 +511,9 @@ class OpenAPIInvoker:
         if not stripped:
             return None
 
-        fenced_match = re.search(r"```(?:json)?\s*(\{[\s\S]*?\}|\[[\s\S]*?\])\s*```", stripped, re.IGNORECASE)
+        fenced_match = re.search(
+            r"```(?:json)?\s*(\{[\s\S]*?\}|\[[\s\S]*?\])\s*```", stripped, re.IGNORECASE
+        )
         if fenced_match:
             candidate = fenced_match.group(1).strip()
             try:

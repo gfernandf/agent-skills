@@ -319,7 +319,9 @@ def _write_failing_openapi_override(
     return failing_binding_id
 
 
-def _execute_once(host_root: Path, capability_id: str, inputs: dict[str, Any]) -> dict[str, Any]:
+def _execute_once(
+    host_root: Path, capability_id: str, inputs: dict[str, Any]
+) -> dict[str, Any]:
     api = NeutralRuntimeAPI(
         registry_root=REGISTRY_ROOT,
         runtime_root=ROOT,
@@ -445,7 +447,9 @@ def _validate_result(
 
     semantic_pass = True
     if case.expected_route_signals:
-        semantic_pass = any(token in route_norm for token in case.expected_route_signals)
+        semantic_pass = any(
+            token in route_norm for token in case.expected_route_signals
+        )
         if not semantic_pass:
             issue_records.append(
                 {
@@ -459,7 +463,10 @@ def _validate_result(
                 }
             )
 
-    if expected_primary_binding is not None and final_binding != expected_primary_binding:
+    if (
+        expected_primary_binding is not None
+        and final_binding != expected_primary_binding
+    ):
         category = "selection_or_fallback"
         attempts = meta.get("attempts") if isinstance(meta, dict) else None
         if isinstance(attempts, list) and attempts:
@@ -655,12 +662,8 @@ def _summarize_lane(lane_result: dict[str, Any]) -> dict[str, Any]:
         issue_dist = case_issue_categories.get(case_id, Counter())
         per_case[case_id] = {
             "runs": case_runs,
-            "invariant_pass_rate": round(inv / case_runs, 4)
-            if case_runs
-            else 0.0,
-            "semantic_pass_rate": round(sem / case_runs, 4)
-            if case_runs
-            else 0.0,
+            "invariant_pass_rate": round(inv / case_runs, 4) if case_runs else 0.0,
+            "semantic_pass_rate": round(sem / case_runs, 4) if case_runs else 0.0,
             "issue_categories": dict(issue_dist),
         }
 
@@ -712,7 +715,9 @@ def _run_alias_diagnostics(capability_id: str, repetitions: int) -> dict[str, An
             result = _execute_once(host_root, ALIAS_ID, case.inputs)
             outputs = result.get("outputs") if isinstance(result, dict) else None
             route = outputs.get("route") if isinstance(outputs, dict) else None
-            confidence = outputs.get("confidence") if isinstance(outputs, dict) else None
+            confidence = (
+                outputs.get("confidence") if isinstance(outputs, dict) else None
+            )
             runs.append(
                 {
                     "iteration": idx + 1,
@@ -812,10 +817,7 @@ def parse_args() -> argparse.Namespace:
         "--report-file",
         type=Path,
         default=DEFAULT_REPORT,
-        help=(
-            "Path to write JSON report "
-            f"(default: {_safe_rel(DEFAULT_REPORT)})"
-        ),
+        help=(f"Path to write JSON report (default: {_safe_rel(DEFAULT_REPORT)})"),
     )
     parser.add_argument(
         "--skip-openapi",
@@ -875,7 +877,9 @@ def main() -> int:
 
     alias_diag = None
     if not args.skip_alias_diagnostics:
-        alias_diag = _run_alias_diagnostics(capability_id, repetitions=min(5, args.repetitions))
+        alias_diag = _run_alias_diagnostics(
+            capability_id, repetitions=min(5, args.repetitions)
+        )
 
     overall = _build_overall_assessment(lane_summaries)
 

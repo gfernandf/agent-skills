@@ -9,6 +9,8 @@ request:
 response:
   macro_plan: response.plan
   stage_count: response.step_count
+  status: response.status
+  trace_ref: response.trace_ref
 metadata:
   description: Python fallback for reasoning.task.plan using agent_baseline plan generation.
   status: stable

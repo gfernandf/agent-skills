@@ -8,6 +8,8 @@ request:
 response:
   language: response.language
   confidence: response.confidence
+  status: response.status
+  trace_ref: response.trace_ref
 metadata:
   description: Python fallback for reasoning.language.detect using perception language detection baseline.
   status: stable

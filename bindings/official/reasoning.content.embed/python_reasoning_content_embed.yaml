@@ -7,6 +7,8 @@ request:
   text: input.text
 response:
   embedding: response.embedding
+  status: response.status
+  trace_ref: response.trace_ref
 metadata:
   description: Python fallback for reasoning.content.embed via reasoning.embedding.generate baseline implementation.
   status: stable

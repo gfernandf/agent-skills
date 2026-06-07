@@ -11,6 +11,8 @@ request:
 response:
   expanded_steps: response.expanded_steps
   step_count: response.step_count
+  status: response.status
+  trace_ref: response.trace_ref
 metadata:
   description: Python fallback for reasoning.plan.split using reasoning plan decomposition baseline.
   status: stable

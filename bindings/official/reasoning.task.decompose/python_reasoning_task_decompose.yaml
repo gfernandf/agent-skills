@@ -11,6 +11,8 @@ request:
 response:
   macro_plan: response.macro_plan
   stage_count: response.stage_count
+  status: response.status
+  trace_ref: response.trace_ref
 metadata:
   description: Python fallback for reasoning.task.decompose using macro planning baseline.
   status: stable

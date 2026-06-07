@@ -652,7 +652,11 @@ def _evaluation_option_score(**kwargs: Any) -> dict[str, Any]:
     for i, c in enumerate(criteria):
         if isinstance(c, dict):
             name = c.get("name")
-            criterion_names.append(str(name) if isinstance(name, str) and name.strip() else f"criterion_{i + 1}")
+            criterion_names.append(
+                str(name)
+                if isinstance(name, str) and name.strip()
+                else f"criterion_{i + 1}"
+            )
         elif isinstance(c, str) and c.strip():
             criterion_names.append(c.strip())
         else:

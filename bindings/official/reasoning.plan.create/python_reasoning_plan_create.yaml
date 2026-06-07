@@ -12,6 +12,9 @@ response:
   suggested_id: response.suggested_id
   capabilities_used: response.capabilities_used
   validation_errors: response.validation_errors
+  status: response.status
+  rationale: response.rationale
+  trace_ref: response.trace_ref
 metadata:
   description: Python fallback for reasoning.plan.create using scaffold generation service.
   status: stable

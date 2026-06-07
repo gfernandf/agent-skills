@@ -21,10 +21,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import tooling.verify_cognitive_pure_stability_matrix as matrix
+
 DEFAULT_OUT_DIR = ROOT / "artifacts" / "cognitive_stability"
 DEFAULT_STATE_FILE = ROOT / "artifacts" / "cognitive_stability_incremental_state.json"
 DEFAULT_MATRIX_FILE = ROOT / "artifacts" / "cognitive_stability_incremental_matrix.json"
-DEFAULT_CASEPACK_FILE = ROOT / "tooling" / "stability_casepacks" / "cognitive_pure_casepacks.yaml"
+DEFAULT_CASEPACK_FILE = (
+    ROOT / "tooling" / "stability_casepacks" / "cognitive_pure_casepacks.yaml"
+)
 
 
 def _iso_now() -> str:
@@ -40,7 +43,9 @@ def _safe_rel(path: Path) -> str:
 
 def _json_dump(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def _load_json(path: Path) -> dict[str, Any] | None:
@@ -58,7 +63,11 @@ def _build_capability_scope(args: argparse.Namespace) -> list[dict[str, Any]]:
     raw_caps = sorted(raw_caps, key=lambda c: str(c.get("id", "")))
 
     if args.capability_prefix:
-        raw_caps = [c for c in raw_caps if str(c.get("id", "")).startswith(args.capability_prefix)]
+        raw_caps = [
+            c
+            for c in raw_caps
+            if str(c.get("id", "")).startswith(args.capability_prefix)
+        ]
 
     if args.capability_ids:
         wanted = {item.strip() for item in args.capability_ids if item.strip()}
@@ -75,7 +84,9 @@ def _build_capability_scope(args: argparse.Namespace) -> list[dict[str, Any]]:
     return raw_caps
 
 
-def _default_state(args: argparse.Namespace, capability_ids: list[str]) -> dict[str, Any]:
+def _default_state(
+    args: argparse.Namespace, capability_ids: list[str]
+) -> dict[str, Any]:
     return {
         "version": 1,
         "created_at": _iso_now(),
@@ -134,7 +145,11 @@ def _reconcile_state(
 def _capability_status(report: dict[str, Any]) -> str:
     if report.get("status") != "ok":
         return str(report.get("status") or "error")
-    overall = report.get("overall_assessment") if isinstance(report.get("overall_assessment"), dict) else {}
+    overall = (
+        report.get("overall_assessment")
+        if isinstance(report.get("overall_assessment"), dict)
+        else {}
+    )
     if overall.get("stable") is True:
         return "stable"
     return "unstable"
@@ -142,8 +157,14 @@ def _capability_status(report: dict[str, Any]) -> str:
 
 def _entry_from_report(report: dict[str, Any], report_path: Path) -> dict[str, Any]:
     status = _capability_status(report)
-    overall = report.get("overall_assessment") if isinstance(report.get("overall_assessment"), dict) else {}
-    findings = overall.get("findings") if isinstance(overall.get("findings"), list) else []
+    overall = (
+        report.get("overall_assessment")
+        if isinstance(report.get("overall_assessment"), dict)
+        else {}
+    )
+    findings = (
+        overall.get("findings") if isinstance(overall.get("findings"), list) else []
+    )
     return {
         "status": status,
         "updated_at": _iso_now(),
@@ -216,8 +237,14 @@ def _write_matrix_snapshot(
     state: dict[str, Any],
     matrix_file: Path,
 ) -> dict[str, Any]:
-    order = state.get("capability_order") if isinstance(state.get("capability_order"), list) else []
-    capabilities = state.get("capabilities") if isinstance(state.get("capabilities"), dict) else {}
+    order = (
+        state.get("capability_order")
+        if isinstance(state.get("capability_order"), list)
+        else []
+    )
+    capabilities = (
+        state.get("capabilities") if isinstance(state.get("capabilities"), dict) else {}
+    )
 
     counts: Counter[str] = Counter()
     category_counts: Counter[str] = Counter()
@@ -244,8 +271,14 @@ def _write_matrix_snapshot(
             )
             continue
 
-        overall = report.get("overall_assessment") if isinstance(report.get("overall_assessment"), dict) else {}
-        findings = overall.get("findings") if isinstance(overall.get("findings"), list) else []
+        overall = (
+            report.get("overall_assessment")
+            if isinstance(report.get("overall_assessment"), dict)
+            else {}
+        )
+        findings = (
+            overall.get("findings") if isinstance(overall.get("findings"), list) else []
+        )
         for finding in findings:
             if isinstance(finding, dict):
                 category = finding.get("category")
@@ -276,7 +309,9 @@ def _write_matrix_snapshot(
         },
         "scope": {
             "capabilities_considered": len(order),
-            "allow_remote_openapi": bool((state.get("config") or {}).get("allow_remote_openapi")),
+            "allow_remote_openapi": bool(
+                (state.get("config") or {}).get("allow_remote_openapi")
+            ),
         },
         "capability_reports": reports,
     }
@@ -407,14 +442,22 @@ def main() -> int:
         raise SystemExit("--start-index must be >= 0")
     if args.end_index is not None and args.end_index < 0:
         raise SystemExit("--end-index must be >= 0")
-    if args.end_index is not None and args.start_index is not None and args.end_index < args.start_index:
+    if (
+        args.end_index is not None
+        and args.start_index is not None
+        and args.end_index < args.start_index
+    ):
         raise SystemExit("--end-index must be >= --start-index")
 
     raw_caps = _build_capability_scope(args)
     capability_ids = [str(cap.get("id")) for cap in raw_caps]
 
     existing_state = _load_json(args.state_file)
-    state = _reconcile_state(existing_state if args.resume else None, args=args, capability_ids=capability_ids)
+    state = _reconcile_state(
+        existing_state if args.resume else None,
+        args=args,
+        capability_ids=capability_ids,
+    )
     state["state_file"] = str(args.state_file)
 
     seeded_count = 0
@@ -425,10 +468,14 @@ def main() -> int:
             capability_ids=capability_ids,
         )
 
-    rerun_statuses = {item.strip().lower() for item in args.rerun_status if item and item.strip()}
+    rerun_statuses = {
+        item.strip().lower() for item in args.rerun_status if item and item.strip()
+    }
     capabilities_state = state.setdefault("capabilities", {})
     pending_caps: list[dict[str, Any]] = []
-    honor_existing_entries = args.resume or seeded_count > 0 or existing_state is not None
+    honor_existing_entries = (
+        args.resume or seeded_count > 0 or existing_state is not None
+    )
 
     for cap in raw_caps:
         capability_id = str(cap.get("id"))
@@ -437,7 +484,10 @@ def main() -> int:
             current_status = str(existing_entry.get("status") or "pending").lower()
             if current_status in {"stable"} and "stable" not in rerun_statuses:
                 continue
-            if current_status in {"unstable", "error", "skipped"} and current_status not in rerun_statuses:
+            if (
+                current_status in {"unstable", "error", "skipped"}
+                and current_status not in rerun_statuses
+            ):
                 continue
         pending_caps.append(cap)
 

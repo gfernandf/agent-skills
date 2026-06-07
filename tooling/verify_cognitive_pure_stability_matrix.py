@@ -34,7 +34,9 @@ ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_ROOT = ROOT.parent / "agent-skill-registry"
 DEFAULT_OUT_DIR = ROOT / "artifacts" / "cognitive_stability"
 DEFAULT_MATRIX_FILE = ROOT / "artifacts" / "cognitive_stability_matrix.json"
-DEFAULT_CASEPACK_FILE = ROOT / "tooling" / "stability_casepacks" / "cognitive_pure_casepacks.yaml"
+DEFAULT_CASEPACK_FILE = (
+    ROOT / "tooling" / "stability_casepacks" / "cognitive_pure_casepacks.yaml"
+)
 
 import sys
 
@@ -73,7 +75,11 @@ class LaneSpec:
 LANES: tuple[LaneSpec, ...] = (
     LaneSpec("baseline_forced", "Force python baseline binding", "baseline"),
     LaneSpec("openapi_forced", "Force OpenAPI primary binding", "openapi"),
-    LaneSpec("fallback_induced", "Force failing OpenAPI primary and verify fallback", "fallback"),
+    LaneSpec(
+        "fallback_induced",
+        "Force failing OpenAPI primary and verify fallback",
+        "fallback",
+    ),
 )
 
 
@@ -159,7 +165,9 @@ def _load_casepacks(casepack_file: Path) -> dict[str, list[CaseSpec]]:
                     if not isinstance(out_name, str):
                         continue
                     if isinstance(tokens, list):
-                        clean = tuple(str(t).strip().lower() for t in tokens if str(t).strip())
+                        clean = tuple(
+                            str(t).strip().lower() for t in tokens if str(t).strip()
+                        )
                     elif isinstance(tokens, str) and tokens.strip():
                         clean = (tokens.strip().lower(),)
                     else:
@@ -243,7 +251,9 @@ def _required_inputs(raw_capability: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _signals_from_example_outputs(example: dict[str, Any]) -> dict[str, tuple[str, ...]]:
+def _signals_from_example_outputs(
+    example: dict[str, Any],
+) -> dict[str, tuple[str, ...]]:
     outputs = example.get("outputs")
     if not isinstance(outputs, dict):
         return {}
@@ -272,11 +282,12 @@ def _extract_examples(raw_capability: dict[str, Any]) -> list[dict[str, Any]]:
     return [e for e in examples if isinstance(e, dict)]
 
 
-def _build_cases(raw_capability: dict[str, Any], pack_override: list[CaseSpec] | None) -> list[CaseSpec]:
+def _build_cases(
+    raw_capability: dict[str, Any], pack_override: list[CaseSpec] | None
+) -> list[CaseSpec]:
     if pack_override:
         return pack_override
 
-    cap_id = str(raw_capability.get("id", "unknown"))
     required_inputs = _required_inputs(raw_capability)
     if not required_inputs:
         return []
@@ -452,7 +463,9 @@ def _write_failing_openapi_override(
     return failing_binding_id
 
 
-def _execute_once(host_root: Path, capability_id: str, inputs: dict[str, Any]) -> dict[str, Any]:
+def _execute_once(
+    host_root: Path, capability_id: str, inputs: dict[str, Any]
+) -> dict[str, Any]:
     api = NeutralRuntimeAPI(
         registry_root=REGISTRY_ROOT,
         runtime_root=ROOT,
@@ -619,7 +632,10 @@ def _validate_result(
                 }
             )
 
-    if expected_primary_binding is not None and final_binding != expected_primary_binding:
+    if (
+        expected_primary_binding is not None
+        and final_binding != expected_primary_binding
+    ):
         category = "selection_or_fallback"
         attempts = meta.get("attempts") if isinstance(meta, dict) else None
         if isinstance(attempts, list) and attempts:
@@ -707,7 +723,9 @@ def _run_lane(
             expected_primary_binding = openapi_binding_id
             _write_active_binding(host_root, capability_id, openapi_binding_id)
         else:
-            output_keys = [k for k, spec in output_specs.items() if spec.get("required")]
+            output_keys = [
+                k for k, spec in output_specs.items() if spec.get("required")
+            ]
             if not output_keys:
                 output_keys = list(output_specs.keys())[:2] or ["status"]
             expected_primary_binding = _write_failing_openapi_override(
@@ -803,7 +821,9 @@ def _summarize_lane(lane_result: dict[str, Any]) -> dict[str, Any]:
         "invariant_pass_rate": round(inv_pass / total, 4) if total else 0.0,
         "semantic_pass_rate": round(sem_pass / total, 4) if total else 0.0,
         "semantic_eval_runs": semantic_eval_runs,
-        "semantic_eval_pass_rate": round(semantic_eval_pass / semantic_eval_runs, 4) if semantic_eval_runs else None,
+        "semantic_eval_pass_rate": round(semantic_eval_pass / semantic_eval_runs, 4)
+        if semantic_eval_runs
+        else None,
         "fallback_activation_rate": round(fb_true / total, 4) if total else 0.0,
         "route_entropy": _route_entropy(route_like),
         "issue_categories": dict(cat_counts),
@@ -827,7 +847,9 @@ def _assess_capability(
 
     for lane in (baseline, openapi, fallback):
         if lane.get("status") == "skipped":
-            skips.append({"lane_id": str(lane.get("lane_id")), "reason": str(lane.get("reason"))})
+            skips.append(
+                {"lane_id": str(lane.get("lane_id")), "reason": str(lane.get("reason"))}
+            )
 
     if baseline.get("status") == "ok":
         if baseline.get("invariant_pass_rate", 0.0) < 1.0:
@@ -920,8 +942,16 @@ def _run_for_capability(
     require_semantic_casepack: bool = False,
 ) -> dict[str, Any]:
     capability_id = str(raw_capability.get("id"))
-    inputs_spec = raw_capability.get("inputs") if isinstance(raw_capability.get("inputs"), dict) else {}
-    outputs_spec = raw_capability.get("outputs") if isinstance(raw_capability.get("outputs"), dict) else {}
+    inputs_spec = (
+        raw_capability.get("inputs")
+        if isinstance(raw_capability.get("inputs"), dict)
+        else {}
+    )
+    outputs_spec = (
+        raw_capability.get("outputs")
+        if isinstance(raw_capability.get("outputs"), dict)
+        else {}
+    )
 
     input_keys = [k for k in inputs_spec.keys() if isinstance(k, str)]
     normalized_output_specs: dict[str, dict[str, Any]] = {}
@@ -950,7 +980,9 @@ def _run_for_capability(
     openapi_policy_skip_reason = None
     if openapi_binding is not None and not allow_remote_openapi:
         if not _service_is_local_openapi(registry, openapi_binding.service_id):
-            openapi_policy_skip_reason = "openapi lane disabled for remote service (use --allow-remote-openapi)"
+            openapi_policy_skip_reason = (
+                "openapi lane disabled for remote service (use --allow-remote-openapi)"
+            )
             openapi_binding_id = None
 
     lane_results: list[dict[str, Any]] = []
@@ -995,7 +1027,9 @@ def _run_for_capability(
         "bindings": {
             "python": python_binding.id if python_binding is not None else None,
             "openapi": openapi_binding.id if openapi_binding is not None else None,
-            "openapi_service": openapi_binding.service_id if openapi_binding is not None else None,
+            "openapi_service": openapi_binding.service_id
+            if openapi_binding is not None
+            else None,
         },
         "cases": [
             {
@@ -1083,7 +1117,11 @@ def main() -> int:
 
     raw_caps = _read_capability_docs()
     if args.capability_prefix:
-        raw_caps = [c for c in raw_caps if str(c.get("id", "")).startswith(args.capability_prefix)]
+        raw_caps = [
+            c
+            for c in raw_caps
+            if str(c.get("id", "")).startswith(args.capability_prefix)
+        ]
     raw_caps = sorted(raw_caps, key=lambda c: str(c.get("id", "")))
 
     if args.max_capabilities and args.max_capabilities > 0:
@@ -1125,8 +1163,14 @@ def main() -> int:
         if report.get("status") != "ok":
             skipped += 1
             continue
-        overall = report.get("overall_assessment") if isinstance(report.get("overall_assessment"), dict) else {}
-        findings = overall.get("findings") if isinstance(overall.get("findings"), list) else []
+        overall = (
+            report.get("overall_assessment")
+            if isinstance(report.get("overall_assessment"), dict)
+            else {}
+        )
+        findings = (
+            overall.get("findings") if isinstance(overall.get("findings"), list) else []
+        )
         if overall.get("stable") is True:
             stable += 1
         else:

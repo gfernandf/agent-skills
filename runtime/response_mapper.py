@@ -177,10 +177,7 @@ class ResponseMapper:
             obj = self._as_object(value)
             if obj is not None:
                 return obj
-            context_id = (step_input or {}).get("context_id")
             context_obj: dict[str, Any] = {}
-            if isinstance(context_id, str) and context_id.strip():
-                context_obj["context_id"] = context_id.strip()
             text = self._as_text(value)
             if text is not None:
                 context_obj["value"] = text
@@ -199,7 +196,11 @@ class ResponseMapper:
                 return {"summary": text}
             return {"status": "unknown"}
 
-        if key in {"confidence_summary", "prioritization_summary", "selection_rationale"}:
+        if key in {
+            "confidence_summary",
+            "prioritization_summary",
+            "selection_rationale",
+        }:
             text = self._as_text(value)
             return text if text is not None else value
 
@@ -241,7 +242,12 @@ class ResponseMapper:
                         row.setdefault("dimension", str(dim))
                         normalized.append(row)
                     elif raw is not None:
-                        normalized.append({"dimension": str(dim), "summary": self._as_text(raw) or str(raw)})
+                        normalized.append(
+                            {
+                                "dimension": str(dim),
+                                "summary": self._as_text(raw) or str(raw),
+                            }
+                        )
                 return normalized
             if isinstance(value, str) and value.strip():
                 return [{"summary": value.strip()}]
@@ -323,7 +329,9 @@ class ResponseMapper:
                 }
             return {"id": "reasoning-plan-synthesize", "steps": [], "status": "ready"}
 
-        if key in {"selection_confidence", "recurrence_risk"} or key.endswith("_confidence"):
+        if key in {"selection_confidence", "recurrence_risk"} or key.endswith(
+            "_confidence"
+        ):
             number = self._as_number(value)
             return number if number is not None else value
 
@@ -332,7 +340,15 @@ class ResponseMapper:
             if text is None:
                 return "success"
             lowered = text.strip().lower()
-            if lowered in {"ok", "done", "complete", "completed", "ready", "pass", "passed"}:
+            if lowered in {
+                "ok",
+                "done",
+                "complete",
+                "completed",
+                "ready",
+                "pass",
+                "passed",
+            }:
                 return "success"
             if lowered in {"fail", "failed", "error", "blocked"}:
                 return "failed"
@@ -355,9 +371,27 @@ class ResponseMapper:
                 return len(value) == 0
             if isinstance(value, str):
                 lowered = value.strip().lower()
-                if lowered in {"true", "yes", "clean", "safe", "ok", "none", "pass", "passed", "success"}:
+                if lowered in {
+                    "true",
+                    "yes",
+                    "clean",
+                    "safe",
+                    "ok",
+                    "none",
+                    "pass",
+                    "passed",
+                    "success",
+                }:
                     return True
-                if lowered in {"false", "no", "unclean", "unsafe", "fail", "failed", "error"}:
+                if lowered in {
+                    "false",
+                    "no",
+                    "unclean",
+                    "unsafe",
+                    "fail",
+                    "failed",
+                    "error",
+                }:
                     return False
             return False
 
@@ -439,7 +473,11 @@ class ResponseMapper:
         if key.endswith("_summary") and not isinstance(value, str):
             text = self._first_text(
                 self._as_text(value),
-                self._as_text(self._find_first_scalar_by_keys(raw_response, ["summary", "rationale", "content", "message"])),
+                self._as_text(
+                    self._find_first_scalar_by_keys(
+                        raw_response, ["summary", "rationale", "content", "message"]
+                    )
+                ),
             )
             if text:
                 return text
@@ -607,7 +645,9 @@ class ResponseMapper:
             mapped.get("rationale"),
             mapped.get("reasoning"),
             mapped.get("explanation"),
-            self._find_first_scalar_by_keys(raw_response, ["rationale", "reasoning", "explanation", "summary"]),
+            self._find_first_scalar_by_keys(
+                raw_response, ["rationale", "reasoning", "explanation", "summary"]
+            ),
         )
 
         if key.endswith("_rationale"):
@@ -620,7 +660,10 @@ class ResponseMapper:
         if key == "rationale":
             if narrative:
                 return narrative
-            return self._first_text(self._as_text(raw_response), "Partial rationale inferred from OpenAPI response.")
+            return self._first_text(
+                self._as_text(raw_response),
+                "Partial rationale inferred from OpenAPI response.",
+            )
 
         if key == "analysis_notes":
             inferred = self._find_first_scalar_by_keys(
@@ -662,7 +705,9 @@ class ResponseMapper:
             score = self._as_number(score_value)
             if score is None:
                 score = self._as_number(
-                    self._find_first_scalar_by_keys(raw_response, ["score", "polarity_score", "sentiment_score"])
+                    self._find_first_scalar_by_keys(
+                        raw_response, ["score", "polarity_score", "sentiment_score"]
+                    )
                 )
             if score is not None:
                 if score >= 0.15:
@@ -696,24 +741,52 @@ class ResponseMapper:
                 return {
                     "id": "reasoning-plan-generate",
                     "steps": [
-                        {"id": "step-1", "action": "analyze", "description": objective.strip()},
-                        {"id": "step-2", "action": "execute", "description": "Execute generated plan."},
+                        {
+                            "id": "step-1",
+                            "action": "analyze",
+                            "description": objective.strip(),
+                        },
+                        {
+                            "id": "step-2",
+                            "action": "execute",
+                            "description": "Execute generated plan.",
+                        },
                     ],
                     "status": "ready",
                 }
             return {"id": "reasoning-plan-generate", "steps": [], "status": "ready"}
 
         if key == "clean":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["clean", "is_clean", "safe", "status"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["clean", "is_clean", "safe", "status"]
+            )
             if isinstance(inferred, bool):
                 return inferred
             if isinstance(inferred, (int, float)):
                 return bool(inferred)
             if isinstance(inferred, str):
                 lowered = inferred.strip().lower()
-                if lowered in {"true", "yes", "clean", "safe", "ok", "none", "pass", "passed", "success"}:
+                if lowered in {
+                    "true",
+                    "yes",
+                    "clean",
+                    "safe",
+                    "ok",
+                    "none",
+                    "pass",
+                    "passed",
+                    "success",
+                }:
                     return True
-                if lowered in {"false", "no", "unclean", "unsafe", "fail", "failed", "error"}:
+                if lowered in {
+                    "false",
+                    "no",
+                    "unclean",
+                    "unsafe",
+                    "fail",
+                    "failed",
+                    "error",
+                }:
                     return False
             removals_value = mapped.get("removals")
             if isinstance(removals_value, list):
@@ -723,8 +796,12 @@ class ResponseMapper:
             return False
 
         if key == "gap_severity":
-            caps = self._find_first_scalar_by_keys(raw_response, ["missing_capabilities", "capability_gaps"])
-            skills = self._find_first_scalar_by_keys(raw_response, ["missing_skills", "skill_gaps"])
+            caps = self._find_first_scalar_by_keys(
+                raw_response, ["missing_capabilities", "capability_gaps"]
+            )
+            skills = self._find_first_scalar_by_keys(
+                raw_response, ["missing_skills", "skill_gaps"]
+            )
             cap_count = len(caps) if isinstance(caps, list) else 0
             skill_count = len(skills) if isinstance(skills, list) else 0
             total = cap_count + skill_count
@@ -735,7 +812,9 @@ class ResponseMapper:
             return "minor"
 
         if key == "label":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["label", "classification", "category"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["label", "classification", "category"]
+            )
             text = self._as_text(inferred)
             if text:
                 return text
@@ -745,7 +824,9 @@ class ResponseMapper:
                 if isinstance(first, str) and first.strip():
                     return first.strip()
                 if isinstance(first, dict):
-                    candidate = self._first_text(first.get("label"), first.get("id"), first.get("name"))
+                    candidate = self._first_text(
+                        first.get("label"), first.get("id"), first.get("name")
+                    )
                     if candidate:
                         return candidate
             return "unknown"
@@ -754,7 +835,9 @@ class ResponseMapper:
             items = (step_input or {}).get("items")
             if isinstance(items, list):
                 return len(items)
-            inferred = self._find_first_scalar_by_keys(raw_response, ["item_count", "count", "items_count"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["item_count", "count", "items_count"]
+            )
             parsed = self._as_number(inferred)
             if parsed is not None:
                 return int(parsed)
@@ -784,7 +867,9 @@ class ResponseMapper:
                 return "medium"
 
         if key == "ranked_hypotheses":
-            ranked = self._find_first_scalar_by_keys(raw_response, ["ranked_hypotheses", "hypotheses_ranked", "ranked"])
+            ranked = self._find_first_scalar_by_keys(
+                raw_response, ["ranked_hypotheses", "hypotheses_ranked", "ranked"]
+            )
             if isinstance(ranked, list) and ranked:
                 return ranked
             evaluated = (step_input or {}).get("evaluated_hypotheses")
@@ -794,21 +879,31 @@ class ResponseMapper:
                     if isinstance(item, dict):
                         normalized.append(
                             {
-                                "hypothesis_id": item.get("hypothesis_id", item.get("id", f"h{i}")),
+                                "hypothesis_id": item.get(
+                                    "hypothesis_id", item.get("id", f"h{i}")
+                                ),
                                 "rank": i,
-                                "score": item.get("support_score", item.get("score", 0.5)),
+                                "score": item.get(
+                                    "support_score", item.get("score", 0.5)
+                                ),
                             }
                         )
                     else:
-                        normalized.append({"hypothesis_id": f"h{i}", "rank": i, "score": 0.5})
+                        normalized.append(
+                            {"hypothesis_id": f"h{i}", "rank": i, "score": 0.5}
+                        )
                 return normalized
 
         if key == "score":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["score", "overall", "overall_score", "quality_score"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["score", "overall", "overall_score", "quality_score"]
+            )
             parsed = self._as_number(inferred)
             if parsed is not None:
                 return parsed
-            dims = self._find_first_scalar_by_keys(raw_response, ["dimensions", "dimension_scores", "scores"])
+            dims = self._find_first_scalar_by_keys(
+                raw_response, ["dimensions", "dimension_scores", "scores"]
+            )
             if isinstance(dims, dict):
                 values: list[float] = []
                 for item in dims.values():
@@ -837,7 +932,10 @@ class ResponseMapper:
             score = self._as_number(score_value)
             if score is None:
                 score = self._as_number(
-                    self._find_first_scalar_by_keys(raw_response, ["score", "overall", "overall_score", "quality_score"])
+                    self._find_first_scalar_by_keys(
+                        raw_response,
+                        ["score", "overall", "overall_score", "quality_score"],
+                    )
                 )
             if score is None:
                 return "fair"
@@ -861,39 +959,6 @@ class ResponseMapper:
             if isinstance(label, str) and label.strip():
                 return 0.5
             return 0.5
-
-        if key == "label":
-            text = self._as_text(value)
-            return text if text is not None else value
-
-        if key == "item_count":
-            number = self._as_number(value)
-            if number is not None:
-                return int(number)
-            return value
-
-        if key == "differences":
-            if isinstance(value, list):
-                return value
-            if isinstance(value, dict):
-                return [value]
-            inferred = self._find_first_scalar_by_keys(
-                raw_response,
-                ["differences", "difference_list", "delta", "deltas"],
-            )
-            if isinstance(inferred, list):
-                return inferred
-            if isinstance(inferred, dict):
-                return [inferred]
-            text = self._as_text(inferred)
-            if text:
-                return [{"summary": text}]
-            summary = self._first_text(
-                self._as_text(self._find_first_scalar_by_keys(raw_response, ["summary", "rationale", "message", "content"])),
-            )
-            if summary:
-                return [{"summary": summary}]
-            return []
 
         if key == "risk_score":
             inferred = self._find_first_scalar_by_keys(
@@ -1059,12 +1124,18 @@ class ResponseMapper:
                         found_value = raw_input.get("objective_text")
                     if found_value is None and lower_name == "constraints":
                         found_value = raw_input.get("hard_constraints")
-                    structured[field_name] = found_value if found_value is not None else f"missing:{field_name}"
+                    structured[field_name] = (
+                        found_value
+                        if found_value is not None
+                        else f"missing:{field_name}"
+                    )
                 return structured
             return {}
 
         if key == "complete":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["complete", "is_complete", "finished"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["complete", "is_complete", "finished"]
+            )
             if isinstance(inferred, bool):
                 return inferred
             if isinstance(inferred, (int, float)):
@@ -1112,7 +1183,9 @@ class ResponseMapper:
                     if isinstance(item, dict):
                         synthesized.append(
                             {
-                                "source": item.get("id", item.get("name", f"source-{i}")),
+                                "source": item.get(
+                                    "id", item.get("name", f"source-{i}")
+                                ),
                                 "score": 0.5,
                             }
                         )
@@ -1122,13 +1195,20 @@ class ResponseMapper:
             return []
 
         if key == "verified":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["verified", "is_verified", "supported"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["verified", "is_verified", "supported"]
+            )
             if isinstance(inferred, bool):
                 return inferred
             if isinstance(inferred, (int, float)):
                 return bool(inferred)
             if isinstance(inferred, str):
-                return inferred.strip().lower() in {"true", "yes", "verified", "supported"}
+                return inferred.strip().lower() in {
+                    "true",
+                    "yes",
+                    "verified",
+                    "supported",
+                }
 
             evidence = mapped.get("evidence")
             if isinstance(evidence, list):
@@ -1136,17 +1216,29 @@ class ResponseMapper:
             if isinstance(evidence, dict):
                 return True
 
-            status = self._first_text(mapped.get("status"), self._find_first_scalar_by_keys(raw_response, ["status"]))
+            status = self._first_text(
+                mapped.get("status"),
+                self._find_first_scalar_by_keys(raw_response, ["status"]),
+            )
             if status:
                 lowered = status.strip().lower()
-                if lowered in {"verified", "supported", "success", "ok", "passed", "true"}:
+                if lowered in {
+                    "verified",
+                    "supported",
+                    "success",
+                    "ok",
+                    "passed",
+                    "true",
+                }:
                     return True
                 if lowered in {"failed", "false", "unverified", "unsupported", "error"}:
                     return False
             return False
 
         if key == "safe":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["safe", "is_safe"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["safe", "is_safe"]
+            )
             if isinstance(inferred, bool):
                 return inferred
             if isinstance(inferred, (int, float)):
@@ -1161,7 +1253,9 @@ class ResponseMapper:
             risk_score = self._as_number(mapped.get("risk_score"))
             if risk_score is None:
                 risk_score = self._as_number(
-                    self._find_first_scalar_by_keys(raw_response, ["risk_score", "score", "overall"])
+                    self._find_first_scalar_by_keys(
+                        raw_response, ["risk_score", "score", "overall"]
+                    )
                 )
             if risk_score is not None:
                 return risk_score <= 0.4
@@ -1172,19 +1266,19 @@ class ResponseMapper:
             return True
 
         if key == "scores":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["scores", "dimension_scores", "metrics"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["scores", "dimension_scores", "metrics"]
+            )
             if isinstance(inferred, dict) and inferred:
                 return inferred
             dims = (step_input or {}).get("dimensions")
             if isinstance(dims, list) and dims:
-                return {
-                    str(d): 0.5
-                    for d in dims
-                    if isinstance(d, (str, int, float))
-                }
+                return {str(d): 0.5 for d in dims if isinstance(d, (str, int, float))}
 
         if key == "overall":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["overall", "overall_score", "score"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["overall", "overall_score", "score"]
+            )
             parsed = self._as_number(inferred)
             if parsed is not None:
                 return parsed
@@ -1199,13 +1293,17 @@ class ResponseMapper:
             criteria = (step_input or {}).get("criteria")
             if isinstance(criteria, list) and criteria:
                 return criteria
-            inferred = self._find_first_scalar_by_keys(raw_response, ["criteria", "applied_criteria", "criteria_used"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["criteria", "applied_criteria", "criteria_used"]
+            )
             if isinstance(inferred, list) and inferred:
                 return inferred
             return []
 
         if key == "tradeoffs":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["tradeoffs", "trade_offs", "option_tradeoffs"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["tradeoffs", "trade_offs", "option_tradeoffs"]
+            )
             if isinstance(inferred, list):
                 return inferred
             if isinstance(inferred, str) and inferred.strip():
@@ -1223,7 +1321,10 @@ class ResponseMapper:
                     if isinstance(item, dict):
                         row = dict(item)
                         row.setdefault("status", "weak")
-                        row.setdefault("rationale", "Validation inferred from partial OpenAPI response.")
+                        row.setdefault(
+                            "rationale",
+                            "Validation inferred from partial OpenAPI response.",
+                        )
                         normalized.append(row)
                     else:
                         normalized.append(
@@ -1265,7 +1366,12 @@ class ResponseMapper:
         if key == "reconciled_constraints":
             inferred = self._find_first_scalar_by_keys(
                 raw_response,
-                ["reconciled_constraints", "constraints", "reconciled", "resolved_constraints"],
+                [
+                    "reconciled_constraints",
+                    "constraints",
+                    "reconciled",
+                    "resolved_constraints",
+                ],
             )
             if isinstance(inferred, list) and inferred:
                 normalized: list[dict[str, Any]] = []
@@ -1273,11 +1379,15 @@ class ResponseMapper:
                     if isinstance(item, dict):
                         row = dict(item)
                         row.setdefault("id", f"rc{i}")
-                        row.setdefault("statement", row.get("constraint", f"Constraint {i}"))
+                        row.setdefault(
+                            "statement", row.get("constraint", f"Constraint {i}")
+                        )
                         row.setdefault("precedence", i)
                         normalized.append(row)
                     else:
-                        normalized.append({"id": f"rc{i}", "statement": str(item), "precedence": i})
+                        normalized.append(
+                            {"id": f"rc{i}", "statement": str(item), "precedence": i}
+                        )
                 return normalized
 
             constraints = (step_input or {}).get("constraints")
@@ -1285,7 +1395,11 @@ class ResponseMapper:
                 synthesized: list[dict[str, Any]] = []
                 for i, item in enumerate(constraints, start=1):
                     if isinstance(item, dict):
-                        statement = self._first_text(item.get("statement"), item.get("constraint"), item.get("text"))
+                        statement = self._first_text(
+                            item.get("statement"),
+                            item.get("constraint"),
+                            item.get("text"),
+                        )
                         synthesized.append(
                             {
                                 "id": item.get("id", f"rc{i}"),
@@ -1294,17 +1408,23 @@ class ResponseMapper:
                             }
                         )
                     else:
-                        synthesized.append({"id": f"rc{i}", "statement": str(item), "precedence": i})
+                        synthesized.append(
+                            {"id": f"rc{i}", "statement": str(item), "precedence": i}
+                        )
                 return synthesized
             return []
 
         if key.endswith("_summary"):
             if narrative:
                 return narrative
-            return self._find_first_scalar_by_keys(raw_response, ["summary", "text", "message"])
+            return self._find_first_scalar_by_keys(
+                raw_response, ["summary", "text", "message"]
+            )
 
         if key == "text":
-            inferred = self._find_first_scalar_by_keys(raw_response, ["text", "content", "output"])
+            inferred = self._find_first_scalar_by_keys(
+                raw_response, ["text", "content", "output"]
+            )
             text = self._as_text(inferred)
             if text:
                 return text
@@ -1317,22 +1437,41 @@ class ResponseMapper:
 
         if key.endswith("_result"):
             if key == "validation_result":
-                violations = self._find_first_scalar_by_keys(raw_response, ["violations"])
-                satisfied = self._find_first_scalar_by_keys(raw_response, ["satisfied_constraints", "constraints"])
-                coverage = self._find_first_scalar_by_keys(raw_response, ["coverage", "pass_rate"])
+                violations = self._find_first_scalar_by_keys(
+                    raw_response, ["violations"]
+                )
+                satisfied = self._find_first_scalar_by_keys(
+                    raw_response, ["satisfied_constraints", "constraints"]
+                )
+                coverage = self._find_first_scalar_by_keys(
+                    raw_response, ["coverage", "pass_rate"]
+                )
                 status = self._first_text(
                     mapped.get("status"),
                     self._find_first_scalar_by_keys(raw_response, ["status", "result"]),
                 )
-                if isinstance(violations, list) or isinstance(satisfied, list) or isinstance(coverage, (int, float)):
-                    violation_count = len(violations) if isinstance(violations, list) else 0
-                    inferred_status = status or ("failed" if violation_count > 0 else "passed")
+                if (
+                    isinstance(violations, list)
+                    or isinstance(satisfied, list)
+                    or isinstance(coverage, (int, float))
+                ):
+                    violation_count = (
+                        len(violations) if isinstance(violations, list) else 0
+                    )
+                    inferred_status = status or (
+                        "failed" if violation_count > 0 else "passed"
+                    )
                     return {
                         "status": inferred_status,
                         "blocking_violations": violation_count,
-                        "pass_rate": coverage if isinstance(coverage, (int, float)) else None,
+                        "pass_rate": coverage
+                        if isinstance(coverage, (int, float))
+                        else None,
                     }
-            status = self._first_text(mapped.get("status"), self._find_first_scalar_by_keys(raw_response, ["status", "result"]))
+            status = self._first_text(
+                mapped.get("status"),
+                self._find_first_scalar_by_keys(raw_response, ["status", "result"]),
+            )
             if status:
                 return status
 
@@ -1340,23 +1479,37 @@ class ResponseMapper:
             if key == "stored":
                 has_context_id = bool(
                     mapped.get("context_id")
-                    or self._find_first_scalar_by_keys(raw_response, ["context_id", "id"])
+                    or self._find_first_scalar_by_keys(
+                        raw_response, ["context_id", "id"]
+                    )
                 )
                 if has_context_id:
                     return True
             if key == "updated":
-                inferred = self._find_first_scalar_by_keys(raw_response, ["updated", "updated_state", "applied"])
+                inferred = self._find_first_scalar_by_keys(
+                    raw_response, ["updated", "updated_state", "applied"]
+                )
                 if isinstance(inferred, bool):
                     return inferred
                 if isinstance(inferred, (int, float)):
                     return bool(inferred)
                 if isinstance(inferred, str):
                     lowered = inferred.strip().lower()
-                    if lowered in {"true", "yes", "updated", "applied", "success", "ok"}:
+                    if lowered in {
+                        "true",
+                        "yes",
+                        "updated",
+                        "applied",
+                        "success",
+                        "ok",
+                    }:
                         return True
                     if lowered in {"false", "no", "not_updated", "failed"}:
                         return False
-                status = self._first_text(mapped.get("status"), self._find_first_scalar_by_keys(raw_response, ["status"]))
+                status = self._first_text(
+                    mapped.get("status"),
+                    self._find_first_scalar_by_keys(raw_response, ["status"]),
+                )
                 if status:
                     lowered = status.strip().lower()
                     if lowered in {"success", "ok", "updated", "applied", "done"}:
@@ -1365,7 +1518,9 @@ class ResponseMapper:
                         return False
                 return True
             if key == "found":
-                inferred = self._find_first_scalar_by_keys(raw_response, ["found", "exists", "present"])
+                inferred = self._find_first_scalar_by_keys(
+                    raw_response, ["found", "exists", "present"]
+                )
                 if isinstance(inferred, bool):
                     return inferred
                 if isinstance(inferred, (int, float)):
@@ -1378,14 +1533,19 @@ class ResponseMapper:
                         return False
                 context_value = mapped.get("context")
                 if isinstance(context_value, dict) and context_value:
-                    status_value = self._first_text(context_value.get("status"), context_value.get("state"))
+                    status_value = self._first_text(
+                        context_value.get("status"), context_value.get("state")
+                    )
                     if status_value:
                         lowered = status_value.strip().lower()
                         if lowered in {"found", "present", "available"}:
                             return True
                         if lowered in {"not_found", "missing", "absent"}:
                             return False
-                status = self._first_text(mapped.get("status"), self._find_first_scalar_by_keys(raw_response, ["status"]))
+                status = self._first_text(
+                    mapped.get("status"),
+                    self._find_first_scalar_by_keys(raw_response, ["status"]),
+                )
                 if status:
                     lowered = status.strip().lower()
                     if lowered in {"success", "ok", "found", "present", "available"}:
@@ -1393,12 +1553,25 @@ class ResponseMapper:
                     if lowered in {"missing", "not_found", "absent", "error"}:
                         return False
                 return True
-            status = self._first_text(mapped.get("status"), self._find_first_scalar_by_keys(raw_response, ["status"]))
+            status = self._first_text(
+                mapped.get("status"),
+                self._find_first_scalar_by_keys(raw_response, ["status"]),
+            )
             if status:
-                return status.strip().lower() in {"success", "ok", "true", "completed", "done", "found", "verified"}
+                return status.strip().lower() in {
+                    "success",
+                    "ok",
+                    "true",
+                    "completed",
+                    "done",
+                    "found",
+                    "verified",
+                }
 
         if "confidence" in key:
-            conf = self._find_first_scalar_by_keys(raw_response, ["confidence", "confidence_score", "score"])
+            conf = self._find_first_scalar_by_keys(
+                raw_response, ["confidence", "confidence_score", "score"]
+            )
             if isinstance(conf, (int, float)):
                 return conf
 
@@ -1623,7 +1796,9 @@ class ResponseMapper:
                     pass
 
         lower_to_actual = {
-            str(key).strip().lower(): key for key in current.keys() if isinstance(key, str)
+            str(key).strip().lower(): key
+            for key in current.keys()
+            if isinstance(key, str)
         }
 
         # Direct synonym candidates for common model variations.

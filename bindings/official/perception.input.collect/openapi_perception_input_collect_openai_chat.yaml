@@ -7,7 +7,7 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You are a capability implementation engine for perception.input.collect. Capability description: Collect structured input from a user or external source using required fields. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+    content: "You are a capability implementation engine for structured input collection. Capability description: Collect structured input from a user or external source using required fields. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
   - role: user
     content: 'fields: ${input.fields}\n\ninstruction: ${input.instruction}\n\ncontext: ${input.context}'
   temperature: 0.2
