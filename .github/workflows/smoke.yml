@@ -343,7 +343,7 @@ jobs:
       - name: Run OpenAPI verifications
         run: |
           mkdir -p artifacts
-          python cli/main.py openapi verify-bindings --scenario tooling/openapi_scenarios/agent.input.route.mock.json --report-file artifacts/openapi_bindings_report.json
+          python cli/main.py openapi verify-bindings --scenario tooling/openapi_scenarios/data.schema.validate.mock.json --report-file artifacts/openapi_bindings_report.json
           echo "skipped in simplified smoke mode" > artifacts/openapi_invoker.log
           echo "skipped in simplified smoke mode" > artifacts/openapi_errors.log
 
