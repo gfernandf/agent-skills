@@ -622,6 +622,25 @@ class ResponseMapper:
                 return narrative
             return self._first_text(self._as_text(raw_response), "Partial rationale inferred from OpenAPI response.")
 
+        if key == "analysis_notes":
+            inferred = self._find_first_scalar_by_keys(
+                raw_response,
+                ["analysis_notes", "notes", "methodology", "summary", "rationale"],
+            )
+            text = self._as_text(inferred)
+            if isinstance(text, str) and text.strip():
+                return text.strip()
+
+            analyzed_options = mapped.get("analyzed_options")
+            if isinstance(analyzed_options, list):
+                option_count = len(analyzed_options)
+                if option_count > 0:
+                    return (
+                        f"Qualitative analysis generated for {option_count} option(s), "
+                        "covering tradeoffs, risks, and assumptions."
+                    )
+            return "Qualitative analysis completed with available context."
+
         if key == "sentiment":
             inferred = self._find_first_scalar_by_keys(
                 raw_response,
@@ -802,6 +821,33 @@ class ResponseMapper:
                             values.append(n2)
                 if values:
                     return sum(values) / len(values)
+
+        if key == "quality_level":
+            inferred = self._find_first_scalar_by_keys(
+                raw_response,
+                ["quality_level", "quality", "label", "rating"],
+            )
+            text = self._as_text(inferred)
+            if isinstance(text, str) and text.strip():
+                lowered = text.strip().lower()
+                if lowered in {"excellent", "good", "fair", "poor"}:
+                    return lowered
+
+            score_value = mapped.get("score")
+            score = self._as_number(score_value)
+            if score is None:
+                score = self._as_number(
+                    self._find_first_scalar_by_keys(raw_response, ["score", "overall", "overall_score", "quality_score"])
+                )
+            if score is None:
+                return "fair"
+            if score >= 0.9:
+                return "excellent"
+            if score >= 0.7:
+                return "good"
+            if score >= 0.5:
+                return "fair"
+            return "poor"
 
         if key == "confidence":
             inferred = self._find_first_scalar_by_keys(
