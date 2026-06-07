@@ -312,7 +312,6 @@ jobs:
           PY
 
   openapi_verification:
-    if: ${{ false }}
     needs: pin_drift_guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
