@@ -1,0 +1,41 @@
+id: openapi_reasoning_task_plan_openai_chat
+capability: reasoning.task.plan
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for reasoning.task.plan. Capability description: Generate a high-level macro plan that decomposes an interpreted goal into major stages. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'interpreted_goal: ${input.interpreted_goal}\n\ncandidate_skills: ${input.candidate_skills}\n\ncandidate_capabilities: ${input.candidate_capabilities}\n\nplanning_strategy: ${input.planning_strategy}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  macro_plan:
+  - response.choices.0.message.content_json.macro_plan
+  - response.choices.0.message.content_json.plan
+  - response.choices.0.message.content_json
+  stage_count:
+  - response.choices.0.message.content_json.stage_count
+  - response.choices.0.message.content_json.step_count
+  - response.choices.0.message.content_json.count
+  - response.choices.0.message.content_json.macro_plan.stages
+  - response.choices.0.message.content_json.plan.stages
+  status:
+  - response.choices.0.message.content_json.status
+  - response.choices.0.message.content_json.result
+  trace_ref:
+  - response.choices.0.message.content_json.trace_ref
+  - response.choices.0.message.content_json.trace_id
+  - response.id
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_reasoning_task_plan
+  description: OpenAI binding for reasoning.task.plan using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30
+  retry_count: 10

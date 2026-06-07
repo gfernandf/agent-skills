@@ -375,6 +375,20 @@ class ResponseMapper:
                 return 0
             return 0
 
+        if key == "stage_count":
+            number = self._as_number(value)
+            if number is not None:
+                return int(number)
+            if isinstance(value, list):
+                return len(value)
+            if isinstance(value, dict):
+                for candidate_key in ("stages", "steps", "plan", "items"):
+                    candidate_value = value.get(candidate_key)
+                    if isinstance(candidate_value, list):
+                        return len(candidate_value)
+                return 0
+            return 0
+
         if key in {"score", "overall", "risk_score"}:
             number = self._as_number(value)
             if number is None:
