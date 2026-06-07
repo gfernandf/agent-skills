@@ -1,0 +1,35 @@
+id: openapi_evaluation_catalog_detect_openai_chat
+capability: evaluation.catalog.detect
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for evaluation.catalog.detect. Capability description: Detect gaps in the ORCA registry relative to an interpreted goal and its candidate items. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'interpreted_goal: ${input.interpreted_goal}\n\ncandidate_items: ${input.candidate_items}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  missing_capabilities:
+  - response.choices.0.message.content_json.missing_capabilities
+  - response.choices.0.message.content_json.capability_gaps
+  - response.choices.0.message.content_json.gaps.capabilities
+  missing_skills:
+  - response.choices.0.message.content_json.missing_skills
+  - response.choices.0.message.content_json.skill_gaps
+  - response.choices.0.message.content_json.gaps.skills
+  gap_severity:
+  - response.choices.0.message.content_json.gap_severity
+  - response.choices.0.message.content_json.severity
+  - response.choices.0.message.content_json.gap_level
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_evaluation_catalog_detect
+  description: OpenAI binding for evaluation.catalog.detect using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

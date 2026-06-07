@@ -1,0 +1,39 @@
+id: openapi_memory_context_summarize_openai_chat
+capability: memory.context.summarize
+service: model_openai_chat
+protocol: openapi
+operation: chat/completions
+request:
+  model: gpt-4o-mini
+  messages:
+  - role: system
+    content: "You are a capability implementation engine for memory.context.summarize. Capability description: Summarize context state into a compressed representation preserving key constraints and decisions. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+  - role: user
+    content: 'context: ${input.context}\n\ntarget_length: ${input.target_length}'
+  temperature: 0.2
+  response_format:
+    type: json_object
+response:
+  summary_context:
+  - response.choices.0.message.content_json.summary_context
+  - response.choices.0.message.content_json.context_summary
+  - response.choices.0.message.content_json.compressed_context
+  summary_notes:
+  - response.choices.0.message.content_json.summary_notes
+  - response.choices.0.message.content_json.notes
+  - response.choices.0.message.content_json.rationale
+  status:
+  - response.choices.0.message.content_json.status
+  - response.choices.0.message.content_json.result
+  - response.choices.0.message.content_json.outcome
+  trace_ref:
+  - response.choices.0.message.content_json.trace_ref
+  - response.choices.0.message.content_json.trace_id
+  - response.id
+metadata:
+  method: POST
+  response_mode: json
+  fallback_binding_id: python_memory_context_summarize
+  description: OpenAI binding for memory.context.summarize using gpt-4o-mini.
+  status: experimental
+  timeout_seconds: 30

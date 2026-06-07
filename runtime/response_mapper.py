@@ -190,6 +190,15 @@ class ResponseMapper:
                 return {"status": "unknown"}
             return context_obj
 
+        if key == "summary_context":
+            obj = self._as_object(value)
+            if obj is not None:
+                return obj
+            text = self._as_text(value)
+            if text is not None:
+                return {"summary": text}
+            return {"status": "unknown"}
+
         if key in {"confidence_summary", "prioritization_summary", "selection_rationale"}:
             text = self._as_text(value)
             return text if text is not None else value
