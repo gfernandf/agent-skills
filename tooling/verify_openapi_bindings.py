@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -175,8 +176,28 @@ def _run_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     _validate_required_fields(scenario)
 
     mock = None
+    env_backup: dict[str, str | None] = {}
     if "mock_server" in scenario:
         mock = start_mock_server(scenario["mock_server"])
+        mock_server_config = scenario["mock_server"]
+        if isinstance(mock_server_config, dict):
+            base_url_env = mock_server_config.get("base_url_env")
+            if base_url_env is not None:
+                if not isinstance(base_url_env, str) or not base_url_env:
+                    raise ValueError(
+                        "Scenario mock_server.base_url_env must be a non-empty string when provided."
+                    )
+                if (
+                    not base_url_env.replace("_", "").isalnum()
+                    or not base_url_env[0].isalpha()
+                ):
+                    raise ValueError(
+                        f"Scenario mock_server.base_url_env '{base_url_env}' is not a valid environment variable name."
+                    )
+
+                bound_host, bound_port = mock.server.server_address
+                env_backup[base_url_env] = os.environ.get(base_url_env)
+                os.environ[base_url_env] = f"http://{bound_host}:{int(bound_port)}"
 
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -251,6 +272,11 @@ def _run_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
                 "meta": meta,
             }
     finally:
+        for env_name, previous_value in env_backup.items():
+            if previous_value is None:
+                os.environ.pop(env_name, None)
+            else:
+                os.environ[env_name] = previous_value
         if mock is not None:
             mock.stop()
 

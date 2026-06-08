@@ -116,7 +116,13 @@ class OpenAPIInvoker:
                 capability_id=capability_id,
             )
 
-        url = self._build_url(service.base_url, binding.operation_id)
+        resolved_base_url = self._resolve_base_url_placeholders(
+            base_url=service.base_url,
+            service_id=service.id,
+            capability_id=capability_id,
+        )
+
+        url = self._build_url(resolved_base_url, binding.operation_id)
 
         method = self._resolve_method(
             binding.metadata.get("method", "POST"), capability_id
@@ -209,7 +215,7 @@ class OpenAPIInvoker:
                 headers.update(tp_headers)
 
             try:
-                session = self._get_session(service.base_url)
+                session = self._get_session(resolved_base_url)
                 response = session.request(
                     method=method,
                     url=url,
@@ -570,6 +576,28 @@ class OpenAPIInvoker:
             return env_value
 
         return self._ENV_PLACEHOLDER.sub(_replace, value)
+
+    def _resolve_base_url_placeholders(
+        self,
+        *,
+        base_url: str,
+        service_id: str,
+        capability_id: str | None,
+    ) -> str:
+        def _replace(match: re.Match[str]) -> str:
+            env_name = match.group(1)
+            env_value = os.getenv(env_name)
+            if env_value is None:
+                raise OpenAPIInvocationError(
+                    (
+                        f"OpenAPI service '{service_id}' base_url references missing "
+                        f"environment variable '{env_name}'."
+                    ),
+                    capability_id=capability_id,
+                )
+            return env_value
+
+        return self._ENV_PLACEHOLDER.sub(_replace, base_url)
 
     def _resolve_response_mode(self, raw_mode: Any, capability_id: str | None) -> str:
         if not isinstance(raw_mode, str) or not raw_mode:

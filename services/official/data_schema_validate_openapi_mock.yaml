@@ -1,6 +1,6 @@
 id: data_schema_validate_openapi_mock
 kind: openapi
-base_url: http://127.0.0.1:8765
+base_url: ${DATA_SCHEMA_VALIDATE_OPENAPI_MOCK_BASE_URL}
 spec_ref: services/official/specs/data_schema_validate_openapi_mock.yaml
 
 metadata:
