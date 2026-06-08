@@ -541,7 +541,11 @@ def start_mock_server(mock_config: dict[str, Any]) -> RunningMockServer:
         except OSError as exc:
             last_bind_error = exc
             # Retry transient port collisions for fixed ports used by smoke scenarios.
-            if port != 0 and exc.errno == errno.EADDRINUSE and attempt < max_bind_attempts:
+            if (
+                port != 0
+                and exc.errno == errno.EADDRINUSE
+                and attempt < max_bind_attempts
+            ):
                 time.sleep(bind_backoff_seconds * attempt)
                 continue
             raise
