@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import errno
+import socket
 import threading
+import time
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
@@ -494,6 +497,22 @@ class RunningMockServer:
         self.thread.join(timeout=2)
 
 
+class ReusableThreadingHTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+    daemon_threads = True
+
+
+def _wait_until_listening(host: str, port: int, timeout_seconds: float = 2.0) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection((host, port), timeout=0.2):
+                return
+        except OSError:
+            time.sleep(0.05)
+    raise RuntimeError(f"Mock server did not start listening on {host}:{port}")
+
+
 def start_mock_server(mock_config: dict[str, Any]) -> RunningMockServer:
     mock_type = mock_config.get("type")
     if not isinstance(mock_type, str) or not mock_type:
@@ -510,7 +529,30 @@ def start_mock_server(mock_config: dict[str, Any]) -> RunningMockServer:
     if not isinstance(port, int):
         raise ValueError("Mock server config field 'port' must be an integer.")
 
-    server = ThreadingHTTPServer((host, port), handler)
+    max_bind_attempts = 5
+    bind_backoff_seconds = 0.1
+    last_bind_error: OSError | None = None
+    server: ReusableThreadingHTTPServer | None = None
+
+    for attempt in range(1, max_bind_attempts + 1):
+        try:
+            server = ReusableThreadingHTTPServer((host, port), handler)
+            break
+        except OSError as exc:
+            last_bind_error = exc
+            # Retry transient port collisions for fixed ports used by smoke scenarios.
+            if port != 0 and exc.errno == errno.EADDRINUSE and attempt < max_bind_attempts:
+                time.sleep(bind_backoff_seconds * attempt)
+                continue
+            raise
+
+    if server is None:
+        if last_bind_error is not None:
+            raise last_bind_error
+        raise RuntimeError("Failed to create mock server for an unknown reason.")
+
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
+    bound_host, bound_port = server.server_address[0], int(server.server_address[1])
+    _wait_until_listening(bound_host, bound_port)
     return RunningMockServer(server=server, thread=thread)

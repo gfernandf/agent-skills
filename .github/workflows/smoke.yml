@@ -315,6 +315,8 @@ jobs:
     needs: pin_drift_guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      OPENAPI_SMOKE_SCENARIO: tooling/openapi_scenarios/data.schema.validate.mock.json
 
     steps:
       - name: Checkout agent-skills
@@ -340,12 +342,52 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[all]"
 
-      - name: Run OpenAPI verifications
+      - name: Precheck scenario compatibility with pinned registry
+        run: |
+          python - << 'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          scenario_path = Path(os.environ["OPENAPI_SMOKE_SCENARIO"])
+          if not scenario_path.exists():
+              raise SystemExit(f"Scenario file not found: {scenario_path}")
+
+          raw = json.loads(scenario_path.read_text(encoding="utf-8"))
+          capability_id = raw.get("capability_id")
+          if not isinstance(capability_id, str) or not capability_id:
+              raise SystemExit(
+                  f"Scenario {scenario_path} must define non-empty string capability_id"
+              )
+
+          capability_file = Path("../agent-skill-registry/capabilities") / f"{capability_id}.yaml"
+          if not capability_file.exists():
+              registry_ref = os.environ.get("REGISTRY_REF", "<unknown>")
+              raise SystemExit(
+                  "OpenAPI smoke scenario is incompatible with pinned registry ref "
+                  f"{registry_ref}: capability '{capability_id}' is missing at "
+                  f"{capability_file}."
+              )
+
+          print(
+              "OpenAPI smoke precheck passed: "
+              f"scenario={scenario_path}, capability_id={capability_id}, registry_ref={os.environ.get('REGISTRY_REF', '<unknown>')}"
+          )
+          PY
+
+      - name: Run OpenAPI canary verification
         run: |
           mkdir -p artifacts
-          python cli/main.py openapi verify-bindings --scenario tooling/openapi_scenarios/data.schema.validate.mock.json --report-file artifacts/openapi_bindings_report.json
+          python cli/main.py openapi verify-bindings --scenario "${OPENAPI_SMOKE_SCENARIO}" --report-file artifacts/openapi_bindings_report.json
           echo "skipped in simplified smoke mode" > artifacts/openapi_invoker.log
           echo "skipped in simplified smoke mode" > artifacts/openapi_errors.log
+
+      - name: Run OpenAPI extended verification batch
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_full_batch == true) }}
+        run: |
+          python cli/main.py openapi verify-bindings --all --report-file artifacts/openapi_bindings_full_report.json
+          python cli/main.py openapi verify-invoker | tee artifacts/openapi_invoker.log
+          python cli/main.py openapi verify-errors | tee artifacts/openapi_errors.log
 
       - name: Publish OpenAPI verification artifact
         if: always()
@@ -354,6 +396,7 @@ jobs:
           name: openapi-verification-report
           path: |
             artifacts/openapi_bindings_report.json
+            artifacts/openapi_bindings_full_report.json
             artifacts/openapi_invoker.log
             artifacts/openapi_errors.log
 
@@ -373,12 +416,23 @@ jobs:
           if report_path.exists():
               report = json.loads(report_path.read_text(encoding='utf-8'))
               summary.extend([
-                  f"- Scenarios total: {report.get('total', 0)}",
-                  f"- Scenarios passed: {report.get('passed', 0)}",
-                  f"- Scenarios failed: {report.get('failed', 0)}",
+                f"- Canary total: {report.get('total', 0)}",
+                f"- Canary passed: {report.get('passed', 0)}",
+                f"- Canary failed: {report.get('failed', 0)}",
               ])
           else:
               summary.append("- Scenario report file not generated.")
+
+          full_report_path = Path('artifacts/openapi_bindings_full_report.json')
+          if full_report_path.exists():
+              full_report = json.loads(full_report_path.read_text(encoding='utf-8'))
+              summary.extend([
+                  f"- Extended total: {full_report.get('total', 0)}",
+                  f"- Extended passed: {full_report.get('passed', 0)}",
+                  f"- Extended failed: {full_report.get('failed', 0)}",
+              ])
+          else:
+              summary.append("- Extended batch: skipped")
 
           invoker_log = Path('artifacts/openapi_invoker.log')
           errors_log = Path('artifacts/openapi_errors.log')
