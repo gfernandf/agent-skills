@@ -23,6 +23,7 @@ REQUIRED_SAME_TENANT_CAPABILITIES: tuple[str, ...] = (
     "decision.flow.branch.yaml",
     "data.schema.validate.yaml",
     "data.json.parse.yaml",
+    "identity.role.assign.yaml",
 )
 
 
