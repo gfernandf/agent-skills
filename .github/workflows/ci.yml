@@ -71,7 +71,6 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
-          git -C ../agent-skill-registry checkout "${REGISTRY_REF}"
 
       - uses: actions/setup-python@v5
         with:
