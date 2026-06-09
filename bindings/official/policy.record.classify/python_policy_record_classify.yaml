@@ -1,0 +1,20 @@
+id: python_policy_record_classify
+capability: policy.record.classify
+service: policy_baseline
+protocol: pythoncall
+operation: classify_record
+
+request:
+  record: input.record
+  context: input.context
+
+response:
+  sensitivity_level: response.sensitivity_level
+  categories: response.categories
+  sensitivity_score: response.sensitivity_score
+  rationale: response.rationale
+  evidence: response.evidence
+
+metadata:
+  description: Official pythoncall binding for policy.record.classify.
+  status: experimental

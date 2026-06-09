@@ -58,6 +58,70 @@ def detect_secret(text):
     return {"contains_secret": len(findings) > 0, "findings": findings}
 
 
+def classify_content(payload, context=None):
+    """Classify sensitive content categories in a payload."""
+    ctx = context if isinstance(context, dict) else {}
+    data = payload if isinstance(payload, dict) else {"text": payload}
+
+    text = " ".join(
+        str(part)
+        for part in [data.get("text", ""), data.get("content", ""), data.get("body", "")]
+        if part is not None
+    ).lower()
+    labels = data.get("labels") if isinstance(data.get("labels"), list) else []
+    label_text = " ".join(str(label).lower() for label in labels)
+    haystack = f"{text} {label_text} {ctx}".lower()
+
+    categories = []
+    scores = {}
+    detectors = {
+        "pii": ["@", "ssn", "social security", "phone", "customer", "email"],
+        "phi": ["patient", "diagnosis", "medical", "health"],
+        "financial": ["invoice", "account number", "bank", "payment", "refund", "card"],
+        "legal": ["contract", "nda", "attorney", "privileged", "case"],
+        "credentials": ["password", "api key", "secret", "token", "credential", "bearer"],
+        "source_code": ["def ", "class ", "import ", "function", "{", "}"],
+    }
+
+    for category, hints in detectors.items():
+        hit = any(hint in haystack for hint in hints)
+        if hit:
+            categories.append(category)
+            scores[category] = 0.85 if category in {"credentials", "pii", "financial"} else 0.65
+
+    if not categories and labels:
+        for label in labels:
+            normalized = str(label).lower()
+            if normalized in detectors:
+                categories.append(normalized)
+                scores[normalized] = 0.6
+
+    severity = len(categories) + (1 if ctx.get("external") else 0)
+    if severity >= 4:
+        sensitivity_level = "critical"
+    elif severity >= 2:
+        sensitivity_level = "high"
+    elif severity == 1:
+        sensitivity_level = "medium"
+    else:
+        sensitivity_level = "low"
+
+    rationale = (
+        f"Detected categories: {', '.join(categories)}."
+        if categories
+        else "No sensitive categories detected."
+    )
+    evidence = {"labels": labels, "signals": categories, "context": ctx}
+
+    return {
+        "categories": categories,
+        "sensitivity_level": sensitivity_level,
+        "category_scores": scores,
+        "rationale": rationale,
+        "evidence": evidence,
+    }
+
+
 def gate_output(output, policy):
     if not isinstance(output, dict):
         return {"allowed": False, "reasons": ["output_must_be_object"]}

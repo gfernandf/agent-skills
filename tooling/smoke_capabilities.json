@@ -6,5 +6,8 @@
   "audio.speech.transcribe",
   "fs.file.read",
   "data.schema.validate",
-  "decision.input.route"
+  "decision.input.route",
+  "policy.decision.evaluate",
+  "policy.record.classify",
+  "security.content.classify"
 ]

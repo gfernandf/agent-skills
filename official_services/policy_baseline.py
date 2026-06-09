@@ -240,3 +240,150 @@ def score_risk(action, dimensions=None):
         "dimension_scores": {k: round(v, 3) for k, v in dim_scores.items()},
         "safe": risk_score < 0.5,
     }
+
+
+def evaluate_decision(decision_context, violations=None, risk=None):
+    """Evaluate a policy decision from context, violations, and risk signals."""
+    context = decision_context if isinstance(decision_context, dict) else {}
+    violation_items = violations if isinstance(violations, list) else []
+    risk_obj = risk if isinstance(risk, dict) else {}
+
+    action = context.get("action") if isinstance(context.get("action"), dict) else {}
+    resource = context.get("resource") if isinstance(context.get("resource"), dict) else {}
+
+    flags = []
+    conditions = []
+    transforms = []
+
+    if violation_items:
+        flags.append(f"violations:{len(violation_items)}")
+        if any("pii" in str(item).lower() for item in violation_items):
+            conditions.append("redact_pii")
+            transforms.append("redact_pii")
+        if any("secret" in str(item).lower() for item in violation_items):
+            conditions.append("remove_secret_material")
+
+    if action.get("destructive") or action.get("irreversible"):
+        flags.append("destructive_action")
+        conditions.append("require_human_review")
+    if action.get("external") or action.get("public"):
+        flags.append("external_exposure")
+        conditions.append("log_execution")
+    if action.get("involves_pii") or action.get("pii"):
+        flags.append("pii_involved")
+        conditions.append("redact_pii")
+        transforms.append("redact_pii")
+
+    sensitivity = str(resource.get("sensitivity_level", "")).lower()
+    if sensitivity in {"restricted", "critical"}:
+        flags.append(f"resource_sensitivity:{sensitivity}")
+        conditions.append("require_human_review")
+
+    risk_score = 0.0
+    if isinstance(risk_obj.get("risk_score"), (int, float)):
+        risk_score = float(risk_obj["risk_score"])
+    elif isinstance(risk_obj.get("dimension_scores"), dict):
+        dim_scores = [
+            float(v)
+            for v in risk_obj["dimension_scores"].values()
+            if isinstance(v, (int, float))
+        ]
+        risk_score = max(dim_scores) if dim_scores else 0.0
+
+    score = len(flags) + (2 if risk_score >= 0.75 else 1 if risk_score >= 0.5 else 0)
+    if score >= 4:
+        decision = "deny"
+    elif score >= 2:
+        decision = "conditional_allow"
+    elif score == 1:
+        decision = "escalate"
+    else:
+        decision = "allow"
+
+    rationale_bits = []
+    if flags:
+        rationale_bits.append(f"{len(flags)} policy signal(s)")
+    if risk_score:
+        rationale_bits.append(f"risk={round(risk_score, 3)}")
+    if not rationale_bits:
+        rationale_bits.append("no policy blockers detected")
+
+    evidence = {
+        "principal": context.get("principal"),
+        "action": action or context.get("action"),
+        "resource": resource or context.get("resource"),
+        "violations": violation_items,
+        "risk": risk_obj,
+        "flags": flags,
+    }
+
+    return {
+        "decision": decision,
+        "conditions": sorted(set(conditions)),
+        "transforms": sorted(set(transforms)),
+        "evidence": evidence,
+        "risk": risk_obj,
+        "rationale": "; ".join(rationale_bits),
+    }
+
+
+def classify_record(record, context=None):
+    """Classify a record's policy sensitivity."""
+    rec = record if isinstance(record, dict) else {}
+    ctx = context if isinstance(context, dict) else {}
+
+    labels = rec.get("labels") if isinstance(rec.get("labels"), list) else []
+    fields = rec.get("fields") if isinstance(rec.get("fields"), dict) else {}
+    destination = str(rec.get("destination", ctx.get("destination", ""))).lower()
+
+    categories = []
+    category_pool = {
+        "pii": ["pii", "ssn", "email", "phone", "customer"],
+        "financial": ["financial", "invoice", "payment", "bank", "billing"],
+        "legal": ["legal", "contract", "attorney", "case"],
+        "security": ["security", "credential", "secret", "token", "key"],
+    }
+    search_space = " ".join([str(rec.get("type", "")), destination] + [str(x) for x in labels])
+    search_space = f"{search_space} {fields}"
+
+    for category, hints in category_pool.items():
+        if any(hint in search_space.lower() for hint in hints):
+            categories.append(category)
+
+    score = len(categories)
+    if destination in {"external", "public"}:
+        score += 1
+    if rec.get("critical") or ctx.get("critical"):
+        score += 1
+
+    if score >= 4:
+        sensitivity_level = "critical"
+    elif score == 3:
+        sensitivity_level = "restricted"
+    elif score == 2:
+        sensitivity_level = "confidential"
+    elif score == 1:
+        sensitivity_level = "internal"
+    else:
+        sensitivity_level = "public"
+
+    sensitivity_score = round(min(score * 0.25, 1.0), 3)
+    rationale = (
+        f"Record classified as {sensitivity_level} due to categories: {', '.join(categories)}."
+        if categories
+        else f"No sensitive categories detected; classified as {sensitivity_level}."
+    )
+    evidence = {
+        "labels": labels,
+        "fields": list(fields.keys()),
+        "destination": destination or None,
+        "context": ctx,
+    }
+
+    return {
+        "sensitivity_level": sensitivity_level,
+        "categories": categories,
+        "sensitivity_score": sensitivity_score,
+        "rationale": rationale,
+        "evidence": evidence,
+    }

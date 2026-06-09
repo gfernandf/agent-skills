@@ -320,6 +320,10 @@ TEST_DATA = {
         "output": {"text": "Contact me at test@example.com"},
         "policy": {"block_pii": True, "block_secrets": True},
     },
+    "security.content.classify": {
+        "payload": {"text": "Customer SSN 123-45-6789 and invoice 9921 were shared."},
+        "context": {"external": True},
+    },
     "security.pii.detect": {"text": "Email me at test@example.com"},
     "security.pii.redact": {"text": "Phone +1 650 555 1234 and email test@example.com"},
     "security.secret.detect": {"text": "token=sk-1234567890ABCDEFGHIJ"},
@@ -478,6 +482,24 @@ TEST_DATA = {
             {"id": "R1", "description": "Budget under 10k", "outcome": "approved"},
             {"id": "R2", "description": "Requires VP sign-off", "outcome": "denied"},
         ],
+    },
+    "policy.decision.evaluate": {
+        "decision_context": {
+            "principal": {"id": "alice", "roles": ["analyst"]},
+            "action": {"type": "release_output", "external": True},
+            "resource": {"id": "report-7", "sensitivity_level": "restricted"},
+        },
+        "violations": [{"type": "pii_detected"}],
+        "risk": {"risk_score": 0.72, "dimension_scores": {"data_exposure": 0.8}},
+    },
+    "policy.record.classify": {
+        "record": {
+            "id": "crm-export",
+            "type": "dataset",
+            "labels": ["customer", "pii"],
+            "destination": "external",
+        },
+        "context": {"destination": "external"},
     },
     "policy.risk.classify": {
         "action": {"type": "deploy", "destructive": False, "external": True},

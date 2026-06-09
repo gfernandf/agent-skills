@@ -31,10 +31,13 @@ defaults:
   pdf.document.read: python_pdf_read
   policy.constraint.validate: python_policy_constraint_validate
   policy.constraint.gate: python_policy_constraint_gate
+  policy.decision.evaluate: python_policy_decision_evaluate
   policy.decision.justify: python_policy_decision_justify
+  policy.record.classify: python_policy_record_classify
   policy.risk.classify: python_policy_risk_classify
   policy.risk.score: python_policy_risk_score
   security.output.gate: python_security_output_gate
+  security.content.classify: python_security_content_classify
   security.pii.detect: python_security_pii_detect
   security.pii.redact: python_security_pii_redact
   security.secret.detect: python_security_secret_detect
