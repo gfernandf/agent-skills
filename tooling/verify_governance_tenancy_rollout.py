@@ -96,6 +96,24 @@ def _collect_governance_capabilities(registry_root: Path) -> list[dict]:
     return entries
 
 
+def _recommended_next_cohort(entries: list[dict]) -> list[str]:
+    # Prioritize identity permission/role reads because they are tenant-sensitive
+    # and user-facing in governance workflows, while avoiding broad contract shifts.
+    prioritized_prefixes = (
+        "identity.permission.",
+        "identity.role.get",
+        "identity.role.list",
+    )
+    candidates = [
+        item["id"]
+        for item in entries
+        if not item["same_tenant"]
+        and isinstance(item["id"], str)
+        and item["id"].startswith(prioritized_prefixes)
+    ]
+    return sorted(candidates)
+
+
 def main() -> int:
     args = _parse_args()
     entries = _collect_governance_capabilities(args.registry_root)
@@ -127,6 +145,7 @@ def main() -> int:
             ),
         },
         "side_effect_gaps": side_effect_gaps,
+        "recommended_next_cohort": _recommended_next_cohort(entries),
         "capabilities": entries,
     }
 
@@ -144,6 +163,13 @@ def main() -> int:
         f"{side_effect_total - len(side_effect_gaps)}/{side_effect_total}"
     )
     print(f"- report: {args.report_file}")
+    if report["recommended_next_cohort"]:
+        print(
+            "- recommended_next_cohort: "
+            + ", ".join(report["recommended_next_cohort"])
+        )
+    else:
+        print("- recommended_next_cohort: none")
 
     if side_effect_gaps and args.fail_on_side_effect_gaps:
         return 1

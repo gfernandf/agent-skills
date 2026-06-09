@@ -60,11 +60,12 @@ Hecho:
 3. Se agrego verificador recurrente `tooling/verify_governance_tenancy_rollout.py`.
 4. Se integro en `smoke.yml` con log + artifact (`governance_tenancy_rollout.log` y `governance_tenancy_rollout_report.json`).
 5. El verificador falla solo si existen gaps `same_tenant` en capacidades governance con `side_effects=true`.
+6. El verificador ahora publica `recommended_next_cohort` para ejecutar el rollout incremental sin perder foco.
 
 Pendiente inmediato:
 
 1. Ejecutar smoke local con el nuevo verificador para registrar evidencia end-to-end del Paso 2.
-2. Definir cohort governance siguiente (no side-effecting) con criterio de riesgo/exposure y posible enforcement incremental.
+2. Tomar `recommended_next_cohort` como entrada del Paso 3 y definir el alcance contractual por capacidad.
 3. Mantener trazabilidad por commit y actualizar este tracker al cerrar cada sub-slice.
 
 ## Backlog Priorizado (Sin Fechas)
