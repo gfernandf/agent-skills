@@ -12,7 +12,8 @@ Este archivo es el registro operativo vivo para ejecutar el plan de mejora de go
 
 1. Slice MCP governance completo integrado en runtime y smoke.
 2. Verificador dedicado `tooling/verify_mcp_governance_slices.py` activo en smoke.
-3. Gap abierto relevante para tenancy governance: capacidades governance side-effecting sin `same_tenant` suficiente.
+3. Baseline de gap tenancy side-effecting governance cerrado (`identity.role.assign` ya exige `same_tenant`).
+4. Verificacion de rollout tenancy governance incorporada como evidencia recurrente en smoke.
 
 ## Registro De Ejecucion
 
@@ -45,6 +46,26 @@ Pendiente inmediato:
    - repo registry (`agent-skill-registry`): capability contract + catalog regenerado.
 2. Definir y ejecutar el siguiente cohort governance para same_tenant (capabilities de mayor riesgo/exposure).
 3. Mantener este tracker como bitacora de avance por iteracion (hecho/falta/evidencia).
+
+Estado:
+
+1. Cerrado y empujado en ambos repos.
+
+### Paso 2 - En Ejecucion
+
+Hecho:
+
+1. Push runtime: `fda0078` (`agent-skills`).
+2. Push registry: `b217d4b` (`agent-skill-registry`).
+3. Se agrego verificador recurrente `tooling/verify_governance_tenancy_rollout.py`.
+4. Se integro en `smoke.yml` con log + artifact (`governance_tenancy_rollout.log` y `governance_tenancy_rollout_report.json`).
+5. El verificador falla solo si existen gaps `same_tenant` en capacidades governance con `side_effects=true`.
+
+Pendiente inmediato:
+
+1. Ejecutar smoke local con el nuevo verificador para registrar evidencia end-to-end del Paso 2.
+2. Definir cohort governance siguiente (no side-effecting) con criterio de riesgo/exposure y posible enforcement incremental.
+3. Mantener trazabilidad por commit y actualizar este tracker al cerrar cada sub-slice.
 
 ## Backlog Priorizado (Sin Fechas)
 

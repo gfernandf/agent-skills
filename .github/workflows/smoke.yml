@@ -94,6 +94,7 @@ jobs:
           python tooling/verify_mcp_text_summarize.py | tee artifacts/mcp_text_summarize.log
           python tooling/verify_mcp_data_web_slices.py | tee artifacts/mcp_data_web_slices.log
           python tooling/verify_mcp_governance_slices.py | tee artifacts/mcp_governance_slices.log
+          python tooling/verify_governance_tenancy_rollout.py --registry-root ../agent-skill-registry --report-file artifacts/governance_tenancy_rollout_report.json | tee artifacts/governance_tenancy_rollout.log
 
       - name: Build attach target index and run gateway smoke
         run: |
@@ -112,6 +113,8 @@ jobs:
             artifacts/mcp_text_summarize.log
             artifacts/mcp_data_web_slices.log
             artifacts/mcp_governance_slices.log
+            artifacts/governance_tenancy_rollout.log
+            artifacts/governance_tenancy_rollout_report.json
             artifacts/attach_target_index.log
             artifacts/gateway_slice3.log
             artifacts/attach_targets/index.json
@@ -162,6 +165,7 @@ jobs:
               (Path('artifacts/mcp_text_summarize.log'), 'MCP text.content.summarize verification passed.'),
               (Path('artifacts/mcp_data_web_slices.log'), 'MCP data/web slice verification passed.'),
               (Path('artifacts/mcp_governance_slices.log'), 'MCP governance slice verification passed.'),
+                (Path('artifacts/governance_tenancy_rollout.log'), 'Governance tenancy rollout verification completed.'),
               (Path('artifacts/gateway_slice3.log'), '[smoke] slice3 PASSED'),
           ]
 
