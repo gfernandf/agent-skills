@@ -249,7 +249,9 @@ def evaluate_decision(decision_context, violations=None, risk=None):
     risk_obj = risk if isinstance(risk, dict) else {}
 
     action = context.get("action") if isinstance(context.get("action"), dict) else {}
-    resource = context.get("resource") if isinstance(context.get("resource"), dict) else {}
+    resource = (
+        context.get("resource") if isinstance(context.get("resource"), dict) else {}
+    )
 
     flags = []
     conditions = []
@@ -343,7 +345,9 @@ def classify_record(record, context=None):
         "legal": ["legal", "contract", "attorney", "case"],
         "security": ["security", "credential", "secret", "token", "key"],
     }
-    search_space = " ".join([str(rec.get("type", "")), destination] + [str(x) for x in labels])
+    search_space = " ".join(
+        [str(rec.get("type", "")), destination] + [str(x) for x in labels]
+    )
     search_space = f"{search_space} {fields}"
 
     for category, hints in category_pool.items():

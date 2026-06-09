@@ -65,7 +65,11 @@ def classify_content(payload, context=None):
 
     text = " ".join(
         str(part)
-        for part in [data.get("text", ""), data.get("content", ""), data.get("body", "")]
+        for part in [
+            data.get("text", ""),
+            data.get("content", ""),
+            data.get("body", ""),
+        ]
         if part is not None
     ).lower()
     labels = data.get("labels") if isinstance(data.get("labels"), list) else []
@@ -79,7 +83,14 @@ def classify_content(payload, context=None):
         "phi": ["patient", "diagnosis", "medical", "health"],
         "financial": ["invoice", "account number", "bank", "payment", "refund", "card"],
         "legal": ["contract", "nda", "attorney", "privileged", "case"],
-        "credentials": ["password", "api key", "secret", "token", "credential", "bearer"],
+        "credentials": [
+            "password",
+            "api key",
+            "secret",
+            "token",
+            "credential",
+            "bearer",
+        ],
         "source_code": ["def ", "class ", "import ", "function", "{", "}"],
     }
 
@@ -87,7 +98,9 @@ def classify_content(payload, context=None):
         hit = any(hint in haystack for hint in hints)
         if hit:
             categories.append(category)
-            scores[category] = 0.85 if category in {"credentials", "pii", "financial"} else 0.65
+            scores[category] = (
+                0.85 if category in {"credentials", "pii", "financial"} else 0.65
+            )
 
     if not categories and labels:
         for label in labels:

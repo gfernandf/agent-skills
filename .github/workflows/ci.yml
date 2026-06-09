@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # Keep CI aligned with smoke/deploy registry baseline.
+  REGISTRY_REF: 74a939653093d0342a2b3e123a4c6fe937f95e05
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -28,6 +32,7 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+          git -C ../agent-skill-registry checkout "${REGISTRY_REF}"
 
       - uses: actions/setup-python@v5
         with:
@@ -66,6 +71,7 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+          git -C ../agent-skill-registry checkout "${REGISTRY_REF}"
 
       - uses: actions/setup-python@v5
         with:
@@ -200,6 +206,7 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+          git -C ../agent-skill-registry checkout "${REGISTRY_REF}"
 
       - uses: actions/setup-python@v5
         with:
@@ -230,6 +237,7 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+          git -C ../agent-skill-registry checkout "${REGISTRY_REF}"
 
       - uses: actions/setup-python@v5
         with:
