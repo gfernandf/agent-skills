@@ -1,0 +1,14 @@
+id: mcp_identity_role_list_inprocess
+capability: identity.role.list
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.role.list
+request:
+  scope: input.scope
+response:
+  roles: response.roles
+  total: response.total
+metadata:
+  description: Official MCP binding for identity.role.list using the in-process MCP
+    governance server.
+  status: experimental

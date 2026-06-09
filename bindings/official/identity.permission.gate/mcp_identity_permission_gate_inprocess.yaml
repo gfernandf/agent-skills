@@ -1,0 +1,16 @@
+id: mcp_identity_permission_gate_inprocess
+capability: identity.permission.gate
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.permission.gate
+request:
+  principal_id: input.principal_id
+  permission: input.permission
+  context: input.context
+response:
+  allowed: response.allowed
+  reason: response.reason
+metadata:
+  description: Official MCP binding for identity.permission.gate using the in-process
+    MCP governance server.
+  status: experimental

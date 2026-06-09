@@ -1,0 +1,16 @@
+id: mcp_identity_risk_score_inprocess
+capability: identity.risk.score
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.risk.score
+request:
+  principal_id: input.principal_id
+  signals: input.signals
+response:
+  risk_score: response.risk_score
+  factors: response.factors
+  safe: response.safe
+metadata:
+  description: Official MCP binding for identity.risk.score using the in-process MCP
+    governance server.
+  status: experimental

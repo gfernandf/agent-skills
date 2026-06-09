@@ -1,0 +1,14 @@
+id: mcp_identity_permission_get_inprocess
+capability: identity.permission.get
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.permission.get
+request:
+  permission_id: input.permission_id
+response:
+  permission: response.permission
+  found: response.found
+metadata:
+  description: Official MCP binding for identity.permission.get using the in-process
+    MCP governance server.
+  status: experimental

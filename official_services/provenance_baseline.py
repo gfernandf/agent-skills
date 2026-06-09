@@ -23,6 +23,32 @@ def generate_citation(source, excerpt=None, locator=None):
     return {"citation": citation}
 
 
+def generate_governance_citation(source, excerpt=None, locator=None):
+    citation_payload = generate_citation(
+        source=source, excerpt=excerpt, locator=locator
+    )
+    citation = (
+        citation_payload.get("citation") if isinstance(citation_payload, dict) else {}
+    )
+
+    source_obj = source if isinstance(source, dict) else {"raw": str(source)}
+    trace_ref = source_obj.get("trace_ref") or source_obj.get("id")
+    if trace_ref is not None:
+        trace_ref = str(trace_ref)
+
+    return {
+        "citation": citation,
+        "status": "ok",
+        "trace_ref": trace_ref,
+        "evidence": {
+            "source_fields": sorted(list(source_obj.keys())),
+            "has_excerpt": isinstance(excerpt, str) and bool(excerpt.strip()),
+            "has_locator": isinstance(locator, str) and bool(locator.strip()),
+        },
+        "rationale": "Citation generated from normalized source fields.",
+    }
+
+
 def verify_claim(claim, sources):
     """
     Verify claim support by checking token overlap against source text fields.
@@ -108,4 +134,50 @@ def store_decision(
             "Decision stored for auditability: "
             f"decision_id={normalized_decision_id}, outcome={outcome}, action={action_type}."
         ),
+    }
+
+
+def summarize_trace(execution_trace):
+    trace = execution_trace if isinstance(execution_trace, dict) else {}
+    step_results = (
+        trace.get("step_results") if isinstance(trace.get("step_results"), list) else []
+    )
+
+    total_steps = len(step_results)
+    failed_steps = sum(
+        1
+        for step in step_results
+        if isinstance(step, dict)
+        and str(step.get("status", "")).lower() in {"failed", "error"}
+    )
+
+    overall_status = str(trace.get("status") or "unknown")
+    if failed_steps > 0:
+        status = "partial"
+    elif overall_status in {"success", "ok", "completed"}:
+        status = "ok"
+    else:
+        status = "partial"
+
+    trace_ref = trace.get("trace_ref") or trace.get("run_id")
+    if trace_ref is not None:
+        trace_ref = str(trace_ref)
+
+    return {
+        "trace_summary": {
+            "overall_status": overall_status,
+            "total_steps": total_steps,
+            "failed_steps": failed_steps,
+            "successful_steps": max(0, total_steps - failed_steps),
+        },
+        "status": status,
+        "trace_ref": trace_ref,
+        "evidence": {
+            "observed_step_statuses": [
+                str(step.get("status", "unknown"))
+                for step in step_results
+                if isinstance(step, dict)
+            ]
+        },
+        "rationale": "Trace summary generated from execution status and step outcomes.",
     }

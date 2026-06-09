@@ -1,0 +1,7 @@
+id: governance_mcp_inprocess
+kind: mcp
+server: official_governance_tools
+
+metadata:
+  description: "In-process MCP server for governance capability integration slices."
+  maintained_by: "agent-skills"

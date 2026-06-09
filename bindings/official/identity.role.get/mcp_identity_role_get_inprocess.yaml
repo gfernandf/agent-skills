@@ -1,0 +1,14 @@
+id: mcp_identity_role_get_inprocess
+capability: identity.role.get
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.role.get
+request:
+  role_id: input.role_id
+response:
+  role: response.role
+  found: response.found
+metadata:
+  description: Official MCP binding for identity.role.get using the in-process MCP
+    governance server.
+  status: experimental

@@ -1,0 +1,15 @@
+id: mcp_policy_constraint_validate_inprocess
+capability: policy.constraint.validate
+service: governance_mcp_inprocess
+protocol: mcp
+operation: policy.constraint.validate
+request:
+  payload: input.payload
+  constraint: input.constraint
+response:
+  valid: response.valid
+  violations: response.violations
+metadata:
+  description: Official MCP binding for policy.constraint.validate using the in-process
+    MCP governance server.
+  status: experimental

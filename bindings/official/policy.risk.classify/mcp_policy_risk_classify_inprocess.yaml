@@ -1,0 +1,16 @@
+id: mcp_policy_risk_classify_inprocess
+capability: policy.risk.classify
+service: governance_mcp_inprocess
+protocol: mcp
+operation: policy.risk.classify
+request:
+  action: input.action
+  categories: input.categories
+response:
+  risk_level: response.risk_level
+  factors: response.factors
+  rationale: response.rationale
+metadata:
+  description: Official MCP binding for policy.risk.classify using the in-process
+    MCP governance server.
+  status: experimental

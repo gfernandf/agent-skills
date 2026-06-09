@@ -1,0 +1,17 @@
+id: mcp_identity_decision_justify_inprocess
+capability: identity.decision.justify
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.decision.justify
+request:
+  decision: input.decision
+  subject: input.subject
+  policies: input.policies
+response:
+  justification: response.justification
+  applicable_policies: response.applicable_policies
+  confidence: response.confidence
+metadata:
+  description: Official MCP binding for identity.decision.justify using the in-process
+    MCP governance server.
+  status: experimental

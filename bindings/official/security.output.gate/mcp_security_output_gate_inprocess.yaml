@@ -1,0 +1,15 @@
+id: mcp_security_output_gate_inprocess
+capability: security.output.gate
+service: governance_mcp_inprocess
+protocol: mcp
+operation: security.output.gate
+request:
+  output: input.output
+  policy: input.policy
+response:
+  allowed: response.allowed
+  reasons: response.reasons
+metadata:
+  description: Official MCP binding for security.output.gate using the in-process
+    MCP governance server.
+  status: experimental

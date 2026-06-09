@@ -1,0 +1,15 @@
+id: mcp_identity_role_assign_inprocess
+capability: identity.role.assign
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.role.assign
+request:
+  principal_id: input.principal_id
+  role_id: input.role_id
+response:
+  assigned: response.assigned
+  effective_permissions: response.effective_permissions
+metadata:
+  description: Official MCP binding for identity.role.assign using the in-process
+    MCP governance server.
+  status: experimental

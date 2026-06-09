@@ -1,0 +1,15 @@
+id: mcp_identity_permission_list_inprocess
+capability: identity.permission.list
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.permission.list
+request:
+  principal_id: input.principal_id
+  resource_filter: input.resource_filter
+response:
+  permissions: response.permissions
+  total: response.total
+metadata:
+  description: Official MCP binding for identity.permission.list using the in-process
+    MCP governance server.
+  status: experimental

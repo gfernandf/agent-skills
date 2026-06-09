@@ -11,6 +11,7 @@ For every binding YAML under bindings/official/, verify:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Dict, Set
 
@@ -19,7 +20,9 @@ import yaml
 from runtime.contract_policy import RUNTIME_MANAGED_REQUIRED_OUTPUTS
 
 REPO_ROOT = Path(__file__).resolve().parent
-REGISTRY_ROOT = REPO_ROOT.parent / "agent-skill-registry"
+REGISTRY_ROOT = Path(
+    os.getenv("REGISTRY_ROOT", str(REPO_ROOT.parent / "agent-skill-registry"))
+)
 BINDINGS_DIR = REPO_ROOT / "bindings" / "official"
 CAPABILITIES_DIR = REGISTRY_ROOT / "capabilities"
 

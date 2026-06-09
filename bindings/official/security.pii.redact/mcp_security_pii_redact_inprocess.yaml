@@ -1,0 +1,14 @@
+id: mcp_security_pii_redact_inprocess
+capability: security.pii.redact
+service: governance_mcp_inprocess
+protocol: mcp
+operation: security.pii.redact
+request:
+  text: input.text
+response:
+  redacted_text: response.redacted_text
+  findings: response.findings
+metadata:
+  description: Official MCP binding for security.pii.redact using the in-process MCP
+    governance server.
+  status: experimental

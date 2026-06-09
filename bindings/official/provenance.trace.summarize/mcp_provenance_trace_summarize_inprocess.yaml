@@ -1,0 +1,17 @@
+id: mcp_provenance_trace_summarize_inprocess
+capability: provenance.trace.summarize
+service: governance_mcp_inprocess
+protocol: mcp
+operation: provenance.trace.summarize
+request:
+  execution_trace: input.execution_trace
+response:
+  trace_summary: response.trace_summary
+  status: response.status
+  trace_ref: response.trace_ref
+  evidence: response.evidence
+  rationale: response.rationale
+metadata:
+  description: Official MCP binding for provenance.trace.summarize using the in-process
+    MCP governance server.
+  status: experimental

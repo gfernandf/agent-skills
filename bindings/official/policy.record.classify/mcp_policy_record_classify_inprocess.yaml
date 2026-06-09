@@ -1,0 +1,18 @@
+id: mcp_policy_record_classify_inprocess
+capability: policy.record.classify
+service: governance_mcp_inprocess
+protocol: mcp
+operation: policy.record.classify
+request:
+  record: input.record
+  context: input.context
+response:
+  sensitivity_level: response.sensitivity_level
+  categories: response.categories
+  sensitivity_score: response.sensitivity_score
+  rationale: response.rationale
+  evidence: response.evidence
+metadata:
+  description: Official MCP binding for policy.record.classify using the in-process
+    MCP governance server.
+  status: experimental

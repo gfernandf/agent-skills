@@ -1,0 +1,18 @@
+id: mcp_security_content_classify_inprocess
+capability: security.content.classify
+service: governance_mcp_inprocess
+protocol: mcp
+operation: security.content.classify
+request:
+  payload: input.payload
+  context: input.context
+response:
+  categories: response.categories
+  sensitivity_level: response.sensitivity_level
+  category_scores: response.category_scores
+  rationale: response.rationale
+  evidence: response.evidence
+metadata:
+  description: Official MCP binding for security.content.classify using the in-process
+    MCP governance server.
+  status: experimental

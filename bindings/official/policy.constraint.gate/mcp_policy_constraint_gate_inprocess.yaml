@@ -1,0 +1,16 @@
+id: mcp_policy_constraint_gate_inprocess
+capability: policy.constraint.gate
+service: governance_mcp_inprocess
+protocol: mcp
+operation: policy.constraint.gate
+request:
+  payload: input.payload
+  gate: input.gate
+response:
+  decision: response.decision
+  violations: response.violations
+  rationale: response.rationale
+metadata:
+  description: Official MCP binding for policy.constraint.gate using the in-process
+    MCP governance server.
+  status: experimental

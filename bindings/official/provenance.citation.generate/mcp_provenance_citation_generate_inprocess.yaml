@@ -1,0 +1,19 @@
+id: mcp_provenance_citation_generate_inprocess
+capability: provenance.citation.generate
+service: governance_mcp_inprocess
+protocol: mcp
+operation: provenance.citation.generate
+request:
+  source: input.source
+  excerpt: input.excerpt
+  locator: input.locator
+response:
+  citation: response.citation
+  status: response.status
+  trace_ref: response.trace_ref
+  evidence: response.evidence
+  rationale: response.rationale
+metadata:
+  description: Official MCP binding for provenance.citation.generate using the in-process
+    MCP governance server.
+  status: experimental

@@ -1,0 +1,14 @@
+id: mcp_security_pii_detect_inprocess
+capability: security.pii.detect
+service: governance_mcp_inprocess
+protocol: mcp
+operation: security.pii.detect
+request:
+  text: input.text
+response:
+  contains_pii: response.contains_pii
+  findings: response.findings
+metadata:
+  description: Official MCP binding for security.pii.detect using the in-process MCP
+    governance server.
+  status: experimental

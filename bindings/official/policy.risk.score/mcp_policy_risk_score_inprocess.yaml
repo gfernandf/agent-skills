@@ -1,0 +1,16 @@
+id: mcp_policy_risk_score_inprocess
+capability: policy.risk.score
+service: governance_mcp_inprocess
+protocol: mcp
+operation: policy.risk.score
+request:
+  action: input.action
+  dimensions: input.dimensions
+response:
+  risk_score: response.risk_score
+  dimension_scores: response.dimension_scores
+  safe: response.safe
+metadata:
+  description: Official MCP binding for policy.risk.score using the in-process MCP
+    governance server.
+  status: experimental

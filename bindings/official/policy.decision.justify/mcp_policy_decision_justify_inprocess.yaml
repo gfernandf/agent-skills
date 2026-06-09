@@ -1,0 +1,17 @@
+id: mcp_policy_decision_justify_inprocess
+capability: policy.decision.justify
+service: governance_mcp_inprocess
+protocol: mcp
+operation: policy.decision.justify
+request:
+  decision: input.decision
+  rules: input.rules
+  context: input.context
+response:
+  justification: response.justification
+  applicable_rules: response.applicable_rules
+  confidence: response.confidence
+metadata:
+  description: Official MCP binding for policy.decision.justify using the in-process
+    MCP governance server.
+  status: experimental

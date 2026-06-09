@@ -1,0 +1,16 @@
+id: mcp_identity_assignee_identify_inprocess
+capability: identity.assignee.identify
+service: governance_mcp_inprocess
+protocol: mcp
+operation: identity.assignee.identify
+request:
+  task: input.task
+  candidates: input.candidates
+response:
+  assignee: response.assignee
+  alternatives: response.alternatives
+  rationale: response.rationale
+metadata:
+  description: Official MCP binding for identity.assignee.identify using the in-process
+    MCP governance server.
+  status: experimental
