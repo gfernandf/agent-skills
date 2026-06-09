@@ -16,6 +16,7 @@ REPORT_FILE = ROOT / "artifacts" / "governance_tenancy_rollout_report.json"
 class RepoGate:
     repo: str
     workflow_name: str
+    workflow_path: str
     branch: str
 
 
@@ -23,20 +24,22 @@ GATES = [
     RepoGate(
         repo="gfernandf/agent-skills",
         workflow_name="CI \u2014 Test \u00b7 Lint \u00b7 Type-check \u00b7 Security",
+        workflow_path=".github/workflows/ci.yml",
         branch="master",
     ),
     RepoGate(
         repo="gfernandf/agent-skill-registry",
         workflow_name="Validate Registry",
+        workflow_path=".github/workflows/validate.yml",
         branch="main",
     ),
 ]
 
 
-def _latest_workflow_run(gate: RepoGate) -> dict:
+def _latest_workflow_run(gate: RepoGate, expected_head: str) -> dict:
     url = (
         "https://api.github.com/repos/"
-        f"{gate.repo}/actions/runs?branch={gate.branch}&per_page=20"
+        f"{gate.repo}/actions/runs?branch={gate.branch}&per_page=50"
     )
     req = urllib.request.Request(
         url,
@@ -48,7 +51,24 @@ def _latest_workflow_run(gate: RepoGate) -> dict:
     with urllib.request.urlopen(req, timeout=30) as response:
         payload = json.loads(response.read().decode("utf-8"))
 
-    for run in payload.get("workflow_runs", []):
+    runs = payload.get("workflow_runs", [])
+    if not isinstance(runs, list):
+        return {}
+
+    by_path = [run for run in runs if run.get("path") == gate.workflow_path]
+    if by_path:
+        matching_head = [
+            run
+            for run in by_path
+            if isinstance(run.get("head_sha"), str)
+            and expected_head.startswith(run.get("head_sha"))
+        ]
+        if matching_head:
+            return matching_head[0]
+        return by_path[0]
+
+    # Fallback for older workflow runs that may not expose path consistently.
+    for run in runs:
         if run.get("name") == gate.workflow_name:
             return run
     return {}
@@ -97,7 +117,8 @@ def main() -> int:
     print(f"  * agent-skill-registry: {registry_head}")
 
     for gate in GATES:
-        run = _latest_workflow_run(gate)
+        expected = expected_heads[gate.repo]
+        run = _latest_workflow_run(gate, expected)
         if not run:
             print(f"- {gate.repo}: workflow not found ({gate.workflow_name})")
             all_green = False
@@ -108,8 +129,6 @@ def main() -> int:
         head_sha = run.get("head_sha")
         run_id = run.get("id")
         html_url = run.get("html_url")
-        expected = expected_heads[gate.repo]
-
         current_head_ok = isinstance(head_sha, str) and expected.startswith(head_sha)
         completed_ok = status == "completed" and conclusion == "success"
         gate_ok = current_head_ok and completed_ok
