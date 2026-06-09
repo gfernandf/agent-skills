@@ -162,13 +162,21 @@ Hecho:
    - secuencia CI-equivalente del registry: pass
    - `governance_tenancy_rollout`: `status=passed`, `same_tenant enabled=20/21`, `side_effect coverage=1/1`
    - `recommended_next_cohort`: `security.pii.redact`
+27. Se ejecuto siguiente corte uno-por-uno con capability:
+   - `security.pii.redact`
+28. Se agrego en registry `safety.allowed_targets: [same_tenant]` + `trust_level: standard` para `security.pii.redact`.
+29. Validacion local ejecutada en verde para este corte final del cohort:
+   - tenant matrix con enforcement: `adopted=29/29`, `passed=46/46`
+   - secuencia CI-equivalente del registry: pass
+   - `governance_tenancy_rollout`: `status=passed`, `same_tenant enabled=21/21`, `side_effect coverage=1/1`
+   - `recommended_next_cohort`: `none`
 
 Pendiente inmediato:
 
 1. Ejecutar el siguiente cohort recomendado:
-   - `security.pii.redact`
+   - no aplica (cohort governance same_tenant actual completo)
 2. Evaluar cohort posterior sobre capacidades governance restantes no cubiertas por same_tenant:
-   - sin pendientes despues de cerrar `security.pii.redact`
+   - sin pendientes
 
 ## Backlog Priorizado (Sin Fechas)
 
