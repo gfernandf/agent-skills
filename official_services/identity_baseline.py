@@ -197,6 +197,61 @@ def verify_permission(principal_id, permission):
     return {"verified": False, "source": "none", "evidence": {}}
 
 
+def evaluate_permission(
+    principal,
+    action,
+    resource,
+    context=None,
+    policy_refs=None,
+):
+    principal_obj = principal if isinstance(principal, dict) else {}
+    action_obj = action if isinstance(action, dict) else {}
+    resource_obj = resource if isinstance(resource, dict) else {}
+    context_obj = context if isinstance(context, dict) else {}
+
+    principal_id = str(principal_obj.get("id", ""))
+    action_type = str(action_obj.get("type", "read") or "read")
+    resource_type = str(resource_obj.get("type", "resource") or "resource")
+    permission_id = f"{resource_type}:{action_type}"
+
+    verification = verify_permission(principal_id, permission_id)
+    verified = bool(verification.get("verified"))
+
+    risk_score = 0.05
+    if bool(context_obj.get("elevated_risk")):
+        risk_score = 0.6
+
+    if not principal_id:
+        decision = "deny"
+        rationale = "Principal identifier is required."
+    elif verified and risk_score < 0.5:
+        decision = "allow"
+        rationale = "Permission verified and risk is acceptable."
+    elif verified:
+        decision = "conditional_allow"
+        rationale = "Permission verified but elevated risk requires extra controls."
+    else:
+        decision = "deny"
+        rationale = "Permission could not be verified for the requested action."
+
+    conditions = []
+    if decision == "conditional_allow":
+        conditions.append("require_additional_approval")
+
+    return {
+        "decision": decision,
+        "conditions": conditions,
+        "rationale": rationale,
+        "evidence": {
+            "principal_id": principal_id,
+            "permission": permission_id,
+            "verification": verification,
+            "policy_refs": policy_refs if isinstance(policy_refs, list) else [],
+        },
+        "risk": {"score": round(risk_score, 3), "source": "identity_baseline"},
+    }
+
+
 def score_risk(principal_id, signals=None):
     signals = signals if isinstance(signals, dict) else {}
     factors = []
