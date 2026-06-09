@@ -41,6 +41,7 @@ REQUIRED_SAME_TENANT_CAPABILITIES: tuple[str, ...] = (
     "policy.risk.classify.yaml",
     "policy.risk.score.yaml",
     "security.output.gate.yaml",
+    "security.pii.detect.yaml",
     "security.secret.detect.yaml",
 )
 
