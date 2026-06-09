@@ -68,6 +68,26 @@ Pendiente inmediato:
 2. Tomar `recommended_next_cohort` como entrada del Paso 3 y definir el alcance contractual por capacidad.
 3. Mantener trazabilidad por commit y actualizar este tracker al cerrar cada sub-slice.
 
+### Paso 3 - En Ejecucion
+
+Hecho:
+
+1. Se ejecuto cohort recomendado del reporte de tenancy governance:
+   - `identity.permission.gate`
+   - `identity.permission.get`
+   - `identity.permission.list`
+   - `identity.permission.verify`
+   - `identity.role.get`
+   - `identity.role.list`
+2. Se agrego en registry `safety.allowed_targets: [same_tenant]` + `trust_level: standard` para esas capacidades.
+3. Se amplio `tooling/verify_tenant_isolation_matrix.py` para exigir tambien ese cohort en el threshold de adopcion.
+
+Pendiente inmediato:
+
+1. Ejecutar tenant matrix con enforcement para confirmar adopcion expandida.
+2. Ejecutar secuencia completa CI-equivalente del registry y regenerar catalog artifacts.
+3. Commit/push separado por repo y registrar evidencia final de cierre del Paso 3.
+
 ## Backlog Priorizado (Sin Fechas)
 
 1. Expandir same_tenant en governance capabilities adicionales segun riesgo y exposure.

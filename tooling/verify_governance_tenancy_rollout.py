@@ -71,10 +71,14 @@ def _collect_governance_capabilities(registry_root: Path) -> list[dict]:
         if not capability_id.startswith(GOVERNANCE_PREFIXES):
             continue
 
-        properties = data.get("properties") if isinstance(data.get("properties"), dict) else {}
+        properties = (
+            data.get("properties") if isinstance(data.get("properties"), dict) else {}
+        )
         safety = data.get("safety") if isinstance(data.get("safety"), dict) else {}
         allowed_targets = (
-            safety.get("allowed_targets") if isinstance(safety.get("allowed_targets"), list) else []
+            safety.get("allowed_targets")
+            if isinstance(safety.get("allowed_targets"), list)
+            else []
         )
 
         entries.append(
@@ -139,7 +143,9 @@ def main() -> int:
                 round(same_tenant_total / len(entries), 4) if entries else 0.0
             ),
             "side_effect_coverage_ratio": (
-                round((side_effect_total - len(side_effect_gaps)) / side_effect_total, 4)
+                round(
+                    (side_effect_total - len(side_effect_gaps)) / side_effect_total, 4
+                )
                 if side_effect_total
                 else 1.0
             ),
@@ -165,8 +171,7 @@ def main() -> int:
     print(f"- report: {args.report_file}")
     if report["recommended_next_cohort"]:
         print(
-            "- recommended_next_cohort: "
-            + ", ".join(report["recommended_next_cohort"])
+            "- recommended_next_cohort: " + ", ".join(report["recommended_next_cohort"])
         )
     else:
         print("- recommended_next_cohort: none")
