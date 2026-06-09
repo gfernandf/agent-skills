@@ -138,13 +138,20 @@ Hecho:
    - secuencia CI-equivalente del registry: pass
    - `governance_tenancy_rollout`: `status=passed`, `same_tenant enabled=17/21`, `side_effect coverage=1/1`
    - `recommended_next_cohort`: `identity.risk.score`, `security.output.gate`, `security.pii.detect`, `security.pii.redact`
+18. Se ejecuto siguiente corte uno-por-uno con capability:
+   - `identity.risk.score`
+19. Se agrego en registry `safety.allowed_targets: [same_tenant]` + `trust_level: standard` para `identity.risk.score`.
+20. Validacion local ejecutada en verde para este corte:
+   - tenant matrix con enforcement: `adopted=26/26`, `passed=43/43`
+   - secuencia CI-equivalente del registry: pass
+   - `governance_tenancy_rollout`: `status=passed`, `same_tenant enabled=18/21`, `side_effect coverage=1/1`
+   - `recommended_next_cohort`: `security.output.gate`, `security.pii.detect`, `security.pii.redact`
 
 Pendiente inmediato:
 
 1. Ejecutar el siguiente cohort recomendado:
-   - `identity.risk.score`
-2. Evaluar cohort posterior sobre capacidades governance restantes no cubiertas por same_tenant:
    - `security.output.gate`
+2. Evaluar cohort posterior sobre capacidades governance restantes no cubiertas por same_tenant:
    - `security.pii.detect`
    - `security.pii.redact`
 

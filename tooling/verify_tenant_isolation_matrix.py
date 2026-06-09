@@ -25,6 +25,7 @@ REQUIRED_SAME_TENANT_CAPABILITIES: tuple[str, ...] = (
     "data.json.parse.yaml",
     "identity.assignee.identify.yaml",
     "identity.decision.justify.yaml",
+    "identity.risk.score.yaml",
     "identity.role.assign.yaml",
     "identity.permission.gate.yaml",
     "identity.permission.get.yaml",
