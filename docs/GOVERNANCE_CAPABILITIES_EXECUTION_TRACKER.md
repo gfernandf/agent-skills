@@ -88,7 +88,7 @@ Hecho adicional de cierre:
 2. Secuencia CI-equivalente del registry ejecutada en verde y catalog regenerado.
 3. Commit/push separado por repo completado para runtime y registry.
 
-### Paso 4 - En Ejecucion
+### Paso 4 - Cerrado
 
 Hecho:
 
@@ -103,17 +103,30 @@ Hecho:
    - tenant matrix con enforcement: `adopted=19/19`, `passed=36/36`
    - secuencia CI-equivalente del registry: pass
    - `governance_tenancy_rollout`: `status=passed`, `same_tenant enabled=11/21`, `side_effect coverage=1/1`
-
-Pendiente inmediato:
-
-1. Commit/push separado por repo para el Paso 4.
-2. Mantener `recommended_next_cohort` alineado con el estado real tras este corte.
-3. Seleccionar y ejecutar el siguiente cohort de bajo riesgo:
+5. Se ejecuto cohort policy incremental siguiente:
    - `policy.constraint.gate`
    - `policy.decision.justify`
    - `policy.risk.classify`
+6. Se agrego en registry `safety.allowed_targets: [same_tenant]` + `trust_level: standard` para esas capacidades.
+7. Se amplio `tooling/verify_tenant_isolation_matrix.py` para exigir tambien ese cohort.
+8. Validacion local ejecutada en verde para este corte:
+   - tenant matrix con enforcement: `adopted=22/22`, `passed=39/39`
+   - secuencia CI-equivalente del registry: pass
+   - `governance_tenancy_rollout`: `status=passed`, `same_tenant enabled=14/21`, `side_effect coverage=1/1`
+   - `recommended_next_cohort`: `security.secret.detect`
+
+Pendiente inmediato:
+
+1. Commit/push separado por repo para el corte actual (runtime + registry).
+2. Ejecutar el siguiente cohort recomendado:
    - `security.secret.detect`
-   - `provenance.citation.generate`
+3. Evaluar cohort posterior sobre capacidades governance restantes no cubiertas por same_tenant:
+   - `identity.assignee.identify`
+   - `identity.decision.justify`
+   - `identity.risk.score`
+   - `security.output.gate`
+   - `security.pii.detect`
+   - `security.pii.redact`
 
 ## Backlog Priorizado (Sin Fechas)
 

@@ -31,8 +31,11 @@ REQUIRED_SAME_TENANT_CAPABILITIES: tuple[str, ...] = (
     "identity.role.get.yaml",
     "identity.role.list.yaml",
     "policy.constraint.validate.yaml",
+    "policy.constraint.gate.yaml",
     "policy.decision.evaluate.yaml",
+    "policy.decision.justify.yaml",
     "policy.record.classify.yaml",
+    "policy.risk.classify.yaml",
     "policy.risk.score.yaml",
 )
 

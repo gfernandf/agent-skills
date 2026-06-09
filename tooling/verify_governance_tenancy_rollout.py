@@ -128,9 +128,13 @@ def _recommended_next_cohort(entries: list[dict]) -> list[str]:
         for item in entries
         if isinstance(item.get("id"), str) and not item.get("same_tenant")
     }
-    return [
+    prioritized = [
         capability_id for capability_id in priority_order if capability_id in remaining
     ]
+    # Include any remaining governance capabilities not explicitly prioritized
+    # so the report never hides open rollout gaps.
+    overflow = sorted(remaining.difference(prioritized))
+    return prioritized + overflow
 
 
 def main() -> int:
