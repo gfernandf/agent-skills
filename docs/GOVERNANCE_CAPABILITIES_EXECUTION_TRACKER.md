@@ -68,7 +68,7 @@ Pendiente inmediato:
 2. Tomar `recommended_next_cohort` como entrada del Paso 3 y definir el alcance contractual por capacidad.
 3. Mantener trazabilidad por commit y actualizar este tracker al cerrar cada sub-slice.
 
-### Paso 3 - En Ejecucion
+### Paso 3 - Cerrado
 
 Hecho:
 
@@ -82,11 +82,38 @@ Hecho:
 2. Se agrego en registry `safety.allowed_targets: [same_tenant]` + `trust_level: standard` para esas capacidades.
 3. Se amplio `tooling/verify_tenant_isolation_matrix.py` para exigir tambien ese cohort en el threshold de adopcion.
 
+Hecho adicional de cierre:
+
+1. Tenant matrix con enforcement validada en verde para el cohort expandido.
+2. Secuencia CI-equivalente del registry ejecutada en verde y catalog regenerado.
+3. Commit/push separado por repo completado para runtime y registry.
+
+### Paso 4 - En Ejecucion
+
+Hecho:
+
+1. Se selecciono cohort policy de menor riesgo por uso actual nulo en skills:
+   - `policy.constraint.validate`
+   - `policy.decision.evaluate`
+   - `policy.record.classify`
+   - `policy.risk.score`
+2. Se agrego en registry `safety.allowed_targets: [same_tenant]` + `trust_level: standard` para esas capacidades.
+3. Se amplio `tooling/verify_tenant_isolation_matrix.py` para exigir tambien ese cohort.
+4. Validacion local ejecutada en verde:
+   - tenant matrix con enforcement: `adopted=19/19`, `passed=36/36`
+   - secuencia CI-equivalente del registry: pass
+   - `governance_tenancy_rollout`: `status=passed`, `same_tenant enabled=11/21`, `side_effect coverage=1/1`
+
 Pendiente inmediato:
 
-1. Ejecutar tenant matrix con enforcement para confirmar adopcion expandida.
-2. Ejecutar secuencia completa CI-equivalente del registry y regenerar catalog artifacts.
-3. Commit/push separado por repo y registrar evidencia final de cierre del Paso 3.
+1. Commit/push separado por repo para el Paso 4.
+2. Mantener `recommended_next_cohort` alineado con el estado real tras este corte.
+3. Seleccionar y ejecutar el siguiente cohort de bajo riesgo:
+   - `policy.constraint.gate`
+   - `policy.decision.justify`
+   - `policy.risk.classify`
+   - `security.secret.detect`
+   - `provenance.citation.generate`
 
 ## Backlog Priorizado (Sin Fechas)
 
