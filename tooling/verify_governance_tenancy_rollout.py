@@ -128,7 +128,9 @@ def _recommended_next_cohort(entries: list[dict]) -> list[str]:
         for item in entries
         if isinstance(item.get("id"), str) and not item.get("same_tenant")
     }
-    return [capability_id for capability_id in priority_order if capability_id in remaining]
+    return [
+        capability_id for capability_id in priority_order if capability_id in remaining
+    ]
 
 
 def main() -> int:
