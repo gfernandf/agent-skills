@@ -211,6 +211,34 @@ def _normalize(value: Any) -> Any:
     return value
 
 
+def _equal_execute_skill(http_payload: dict[str, Any], mcp_payload: dict[str, Any]) -> bool:
+    """Compare execute-skill parity using stable structure, not model-generated content.
+
+    Some preferred skills depend on non-deterministic model backends; output text can
+    differ across equivalent HTTP and MCP executions even when routing/meta contracts match.
+    """
+    http_norm = _normalize(http_payload)
+    mcp_norm = _normalize(mcp_payload)
+
+    if not isinstance(http_norm, dict) or not isinstance(mcp_norm, dict):
+        return False
+
+    if http_norm.get("status") != mcp_norm.get("status"):
+        return False
+
+    if http_norm.get("skill_id") != mcp_norm.get("skill_id"):
+        return False
+
+    http_outputs = http_norm.get("outputs") if isinstance(http_norm.get("outputs"), dict) else {}
+    mcp_outputs = mcp_norm.get("outputs") if isinstance(mcp_norm.get("outputs"), dict) else {}
+    if sorted(http_outputs.keys()) != sorted(mcp_outputs.keys()):
+        return False
+
+    http_meta = http_norm.get("meta") if isinstance(http_norm.get("meta"), dict) else {}
+    mcp_meta = mcp_norm.get("meta") if isinstance(mcp_norm.get("meta"), dict) else {}
+    return http_meta == mcp_meta
+
+
 def _compute_snapshot(api_key: str) -> dict[str, Any]:
     base_url = "http://127.0.0.1:8086"
     api = NeutralRuntimeAPI(
@@ -311,7 +339,7 @@ def _compute_snapshot(api_key: str) -> dict[str, Any]:
         "execute_skill": {
             "http": _normalize(http_skill_exec),
             "mcp": _normalize(mcp_skill_exec),
-            "equal": _normalize(http_skill_exec) == _normalize(mcp_skill_exec),
+            "equal": _equal_execute_skill(http_skill_exec, mcp_skill_exec),
         },
         "execute_capability": {
             "http": _normalize(http_cap_exec),

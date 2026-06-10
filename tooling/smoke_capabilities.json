@@ -9,5 +9,5 @@
   "decision.input.route",
   "policy.decision.evaluate",
   "policy.record.classify",
-  "security.content.classify"
+  "security.pii.detect"
 ]

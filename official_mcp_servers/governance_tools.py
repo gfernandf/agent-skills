@@ -9,7 +9,6 @@ from official_services import security_baseline
 _SUPPORTED_TOOLS = {
     "identity.assignee.identify": identity_baseline.identify_assignee,
     "identity.decision.justify": identity_baseline.justify_decision,
-    "identity.permission.evaluate": identity_baseline.evaluate_permission,
     "identity.permission.gate": identity_baseline.gate_permission,
     "identity.permission.get": identity_baseline.get_permission,
     "identity.permission.list": identity_baseline.list_permissions,
@@ -26,9 +25,7 @@ _SUPPORTED_TOOLS = {
     "policy.risk.classify": policy_baseline.classify_risk,
     "policy.risk.score": policy_baseline.score_risk,
     "provenance.citation.generate": provenance_baseline.generate_governance_citation,
-    "provenance.decision.store": provenance_baseline.store_decision,
     "provenance.trace.summarize": provenance_baseline.summarize_trace,
-    "security.content.classify": security_baseline.classify_content,
     "security.output.gate": security_baseline.gate_output,
     "security.pii.detect": security_baseline.detect_pii,
     "security.pii.redact": security_baseline.redact_pii,

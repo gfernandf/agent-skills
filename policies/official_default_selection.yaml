@@ -37,7 +37,6 @@ defaults:
   policy.risk.classify: python_policy_risk_classify
   policy.risk.score: python_policy_risk_score
   security.output.gate: python_security_output_gate
-  security.content.classify: python_security_content_classify
   security.pii.detect: python_security_pii_detect
   security.pii.redact: python_security_pii_redact
   security.secret.detect: python_security_secret_detect
@@ -53,7 +52,6 @@ defaults:
   web.source.normalize: python_web_source_normalize
   identity.assignee.identify: python_identity_assignee_identify
   identity.decision.justify: python_identity_decision_justify
-  identity.permission.evaluate: python_identity_permission_evaluate
   identity.permission.gate: python_identity_permission_gate
   identity.permission.get: python_identity_permission_get
   identity.permission.list: python_identity_permission_list
@@ -74,7 +72,6 @@ defaults:
   integration.record.reconcile: python_integration_record_reconcile
   integration.record.update: python_integration_record_update
   integration.record.upsert: python_integration_record_upsert
-  provenance.decision.store: python_provenance_decision_store
   task.approval.approve: python_task_approval_approve
   task.approval.reject: python_task_approval_reject
   task.assignee.assign: python_task_assignee_assign

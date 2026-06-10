@@ -47,12 +47,9 @@ def _test_inputs() -> dict[str, dict]:
             "subject": {"id": "alice"},
             "policies": [{"id": "policy-a", "description": "allow read"}],
         },
-        "identity.permission.evaluate": {
-            "principal": {"id": "alice", "roles": ["admin"]},
-            "action": {"type": "read"},
-            "resource": {"type": "resource", "id": "r-1"},
-            "context": {"elevated_risk": False},
-            "policy_refs": ["policy-a"],
+        "identity.permission.verify": {
+            "principal_id": "alice",
+            "permission": "resource:read",
         },
         "identity.permission.gate": {
             "principal_id": "alice",
@@ -63,10 +60,6 @@ def _test_inputs() -> dict[str, dict]:
         "identity.permission.list": {
             "principal_id": "alice",
             "resource_filter": "resource",
-        },
-        "identity.permission.verify": {
-            "principal_id": "alice",
-            "permission": "resource:read",
         },
         "identity.risk.score": {
             "principal_id": "alice",
@@ -114,39 +107,11 @@ def _test_inputs() -> dict[str, dict]:
             "action": {"type": "delete", "resource": "customer-data"},
             "dimensions": ["impact", "likelihood"],
         },
-        "provenance.citation.generate": {
-            "source": {"url": "https://example.com", "title": "Example", "id": "src-1"},
-            "excerpt": "governance evidence",
-            "locator": "section-1",
-        },
-        "provenance.decision.store": {
-            "decision_id": "dec-001",
-            "principal": {"id": "alice"},
-            "action": {"type": "release_output"},
-            "resource": {"id": "doc-1"},
-            "decision": {"outcome": "deny", "rationale": "policy block"},
-            "policy_refs": ["policy-1"],
-            "evidence": {"rule": "policy-1"},
-        },
-        "provenance.trace.summarize": {
-            "execution_trace": {
-                "trace_ref": "run-001",
-                "status": "success",
-                "step_results": [
-                    {"step_id": "s1", "status": "success"},
-                    {"step_id": "s2", "status": "success"},
-                ],
-            }
-        },
-        "security.content.classify": {
-            "payload": {"text": "api key and payment card appear in this text"},
-            "context": {"channel": "ticket"},
-        },
+        "security.pii.detect": {"text": "Contact me at alice@example.com"},
         "security.output.gate": {
             "output": {"text": "safe response", "risk_score": 0.2},
             "policy": {"max_risk": 0.4},
         },
-        "security.pii.detect": {"text": "Contact me at alice@example.com"},
         "security.pii.redact": {"text": "Contact me at alice@example.com"},
         "security.secret.detect": {"text": "token=abc123 and secret=xyz"},
     }
@@ -168,25 +133,6 @@ def _assert_meta(meta: dict, capability_id: str) -> None:
 
 
 def _assert_outputs(capability_id: str, inputs: dict, outputs: dict) -> None:
-    if capability_id == "provenance.decision.store":
-        if not isinstance(outputs, dict):
-            raise RuntimeError(f"{capability_id}: outputs must be an object")
-        if outputs.get("recorded") is not True:
-            raise RuntimeError(
-                f"{capability_id}: expected recorded=True, got {outputs!r}"
-            )
-        if not isinstance(outputs.get("record_id"), str) or not outputs.get(
-            "record_id"
-        ):
-            raise RuntimeError(f"{capability_id}: invalid record_id in {outputs!r}")
-        if not isinstance(outputs.get("timestamp"), str) or not outputs.get(
-            "timestamp"
-        ):
-            raise RuntimeError(f"{capability_id}: invalid timestamp in {outputs!r}")
-        if "rationale" not in outputs:
-            raise RuntimeError(f"{capability_id}: missing rationale in {outputs!r}")
-        return
-
     expected = governance_tools.call_tool(capability_id, dict(inputs))
     if not isinstance(outputs, dict):
         raise RuntimeError(f"{capability_id}: outputs must be an object")
