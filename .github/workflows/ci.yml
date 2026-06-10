@@ -85,6 +85,10 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
+      - name: Verify registry capability references
+        run: |
+          python tooling/verify_registry_capability_references.py
+
       - name: Verify doc/version drift
         run: |
           python tooling/verify_doc_version_drift.py

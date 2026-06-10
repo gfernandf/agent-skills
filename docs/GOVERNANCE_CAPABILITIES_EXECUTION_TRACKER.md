@@ -178,6 +178,35 @@ Pendiente inmediato:
 2. Evaluar cohort posterior sobre capacidades governance restantes no cubiertas por same_tenant:
    - sin pendientes
 
+### Paso 5 - Cerrado
+
+Hecho:
+
+1. Se atendio incidente CI/Smoke posterior al refresh de pin registry con dos sintomas:
+   - `binding-contracts` fallo por bindings oficiales apuntando a capabilities removidas del registry.
+   - `dx_metrics` fallo por comparacion estricta de paridad HTTP/MCP en ejecucion de skill con salida no determinista de modelo.
+2. Se retiro deuda de referencias deprecadas en runtime:
+   - eliminados bindings oficiales para `identity.permission.evaluate`, `provenance.decision.store` y `security.content.classify`.
+   - actualizado `tooling/smoke_capabilities.json` para usar `security.pii.detect`.
+   - alineados `policies/official_default_selection.yaml` y `official_mcp_servers/governance_tools.py` con capabilities vigentes en registry.
+3. Se estabilizo verificacion de paridad customer-facing:
+   - `tooling/verify_customer_facing_parity_snapshot.py` ahora compara estructura/meta estable en `execute_skill` y no contenido generativo variable.
+4. Se cerro hardening preventivo para evitar repeticion del incidente:
+   - agregado `tooling/verify_registry_capability_references.py`.
+   - integrado en CI lint (`Verify registry capability references`).
+5. Evidencia local del cierre:
+   - `test_binding_contracts.py` + `test_atomic_properties.py`: verde.
+   - `tooling/verify_smoke_capabilities.py`: verde.
+   - `tooling/verify_customer_facing_parity_snapshot.py`: verde.
+   - `tooling/measure_dx_metrics.py`: verde.
+6. Resultado de CI posterior:
+   - CI `27264477388`: success.
+   - Smoke `27264476925`: success.
+
+Pendiente inmediato:
+
+1. Ejecutar corrida `full_batch` en workflow dispatch para completar evidencia de fase extendida OpenAPI/runtime.
+
 ## Backlog Priorizado (Sin Fechas)
 
 1. Expandir same_tenant en governance capabilities adicionales segun riesgo y exposure.
