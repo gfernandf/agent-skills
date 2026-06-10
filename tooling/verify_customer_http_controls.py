@@ -21,6 +21,9 @@ def _request_json(
     method: str = "GET",
     payload: dict | None = None,
     headers: dict | None = None,
+    timeout_seconds: float = 20.0,
+    attempts: int = 3,
+    retry_delay_seconds: float = 0.5,
 ) -> tuple[int, dict]:
     body = None
     request_headers = {"Content-Type": "application/json"}
@@ -31,14 +34,28 @@ def _request_json(
         body = json.dumps(payload).encode("utf-8")
 
     req = urllib.request.Request(url, data=body, headers=request_headers, method=method)
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            raw = resp.read().decode("utf-8")
-            return resp.getcode(), json.loads(raw) if raw else {}
-    except urllib.error.HTTPError as e:
-        raw = e.read().decode("utf-8")
-        parsed = json.loads(raw) if raw else {}
-        return e.code, parsed
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:
+                raw = resp.read().decode("utf-8")
+                return resp.getcode(), json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as e:
+            raw = e.read().decode("utf-8")
+            parsed = json.loads(raw) if raw else {}
+            return e.code, parsed
+        except (urllib.error.URLError, TimeoutError) as exc:
+            last_error = exc
+            if attempt < attempts:
+                time.sleep(retry_delay_seconds * attempt)
+                continue
+            raise RuntimeError(
+                f"request failed after retries: method={method} url={url} error={exc}"
+            ) from exc
+
+    raise RuntimeError(
+        f"request failed after retries: method={method} url={url} error={last_error}"
+    )
 
 
 def _wait_for_server_ready(base_url: str, *, timeout_seconds: float = 20.0) -> None:
