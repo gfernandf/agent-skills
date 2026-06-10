@@ -111,6 +111,37 @@ This is a compiled summary of all checks:
 - `overall_status`: `passed` if all checks pass, `failed` otherwise.
 - `governance_checks`: Dictionary with status of each individual check.
 
+## Alerting and Escalation
+
+### Automatic Issue Creation
+
+When the workflow detects failed checks, it automatically creates a GitHub issue with:
+- **Title**: `❌ Governance Validation Failed - [Check Name]`
+- **Labels**: `governance`, `validation`, `automated`
+- **Body**: Pre-populated with check details, links to runbook, and remediation steps
+- **Smart Deduplication**: If an issue already exists from today, adds a comment instead of creating duplicates
+
+### Issue Lifecycle
+
+1. **Issue Created**: When first check fails on a given day
+2. **Updates**: Subsequent failures on the same day add comments to the same issue
+3. **Resolution**: Issue is manually closed once remediation is confirmed passing
+4. **Archival**: Closed issues remain in the repository for audit trail
+
+### Watching Governance Issues
+
+To receive real-time notifications:
+
+```bash
+# Subscribe to governance validation issues
+gh issue list --label governance,validation,automated --state open
+```
+
+Or configure GitHub notifications:
+1. Go to repository Settings → Notifications
+2. Create custom filter for `governance` + `validation` labels
+3. Select your notification channel (email, GitHub notifications, etc.)
+
 ## Responding to Failures
 
 ### Daily monitoring
@@ -119,9 +150,15 @@ This is a compiled summary of all checks:
    `https://github.com/gfernandf/agent-skills/actions/workflows/governance_continuous_validation.yml`
 
 2. If `overall_status` is `failed`:
-   - Review individual check failures above.
-   - Follow remediation steps for the failing check(s).
-   - Do NOT ignore; address within 24 hours to prevent promotion gate issues.
+   - GitHub issue will be automatically created
+   - Review individual check failures
+   - Follow remediation steps for the failing check(s)
+   - Do NOT ignore; address within 24 hours to prevent promotion gate issues
+
+3. After remediation:
+   - Manually re-run: `gh workflow run governance_continuous_validation.yml`
+   - Confirm validation passes
+   - Close the GitHub issue
 
 ### Manual re-run
 
@@ -130,6 +167,10 @@ If you make configuration changes (e.g., branch protection), re-run the validati
 ```bash
 gh workflow run governance_continuous_validation.yml --repo gfernandf/agent-skills
 ```
+
+Or via GitHub UI:
+1. Go to Actions → Governance Continuous Validation
+2. Click "Run workflow" → "Run workflow" (uses default branch)
 
 ### Disabling/Modifying the Schedule
 

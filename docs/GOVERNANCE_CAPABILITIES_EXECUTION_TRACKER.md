@@ -466,12 +466,35 @@ Objetivo:
 1. Crear alertas automáticas si algún check continuo falla (issue automática en repo o Slack).
 2. Implementar re-tries inteligentes para fallos transitorios (rate limits, network).
 
-Acciones D2 (pendiente):
+Acciones D2 (IMPLEMENTADO):
 
-1. Crear template de GitHub issue para fallos de governance (`templates/governance-validation-failure.md`).
-2. Agregar paso en workflow que abra issue si `overall_status` es `failed`.
-3. Opcional: Integrar Slack webhook para notificaciones en tiempo real.
-4. Documentar en `docs/CONTINUOUS_GOVERNANCE_VALIDATION.md` el flujo de escalation.
+1. Crear template de GitHub issue para fallos de governance (`.github/ISSUE_TEMPLATE/governance-validation-failure.md`). ✅
+2. Agregar paso en workflow que abra issue si `overall_status` es `failed`. ✅
+3. Smart deduplication: Mismo día = comenta issue existente, no crea duplicado. ✅
+4. Documentar flujo de escalation en `docs/CONTINUOUS_GOVERNANCE_VALIDATION.md`. ✅
+
+### Artefactos D2 Creados
+
+1. `.github/ISSUE_TEMPLATE/governance-validation-failure.md`: Template auto-populated para issues de fallo.
+2. Workflow step `Create issue if validation failed`: Crea issues automáticas + deduplication inteligente.
+3. Documentación actualizada: Runbook de alerting y procedimientos de response.
+
+### D2 Status: LISTO PARA EJECUCIÓN
+
+El workflow D2 está integrado. Próxima ejecución (si hay fallo) abrirá issue automáticamente.
+
+---
+
+## Siguiente Tramo Optativo
+
+### Corte Optativo D3 - Slack Webhook Integration (FUTURO)
+
+Objetivo (opcional):
+
+1. Integrar notificaciones en tiempo real a canal Slack privado.
+2. Alertas inmediatas sin necesidad de verificar GitHub Issues.
+
+Nota: D3 es completamente opcional. El sistema está completo y funcional sin él, pero es útil para equipos que usan Slack activamente para coordinación de emergencias operativas.
 
 ## Criterio De Cierre Del Tracker
 
