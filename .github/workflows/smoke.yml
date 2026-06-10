@@ -973,8 +973,8 @@ jobs:
     timeout-minutes: 10
     env:
       CI_TREND_SLO_ENFORCE: "true"
-      CI_TREND_SLO_FAIL_ON_UNVERIFIED: "false"
-      CI_TREND_SLO_MIN_PASS_RATE: "0.00"
+      CI_TREND_SLO_FAIL_ON_UNVERIFIED: "true"
+      CI_TREND_SLO_MIN_PASS_RATE: "0.80"
       CI_TREND_SLO_MIN_SAMPLES: "5"
 
     steps:

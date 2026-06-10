@@ -47,17 +47,16 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _api_get(url: str, token: str) -> tuple[int, dict[str, object] | None, str]:
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "agent-skills-ci-trend",
-        },
-        method="GET",
-    )
+def _api_get_once(url: str, token: str) -> tuple[int, dict[str, object] | None, str]:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "agent-skills-ci-trend",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    req = urllib.request.Request(url, headers=headers, method="GET")
     try:
         with urllib.request.urlopen(req, timeout=25) as resp:
             raw = resp.read().decode("utf-8")
@@ -68,6 +67,18 @@ def _api_get(url: str, token: str) -> tuple[int, dict[str, object] | None, str]:
         return int(exc.code), None, detail
     except Exception as exc:
         return 0, None, str(exc)
+
+
+def _api_get(url: str, token: str) -> tuple[int, dict[str, object] | None, str]:
+    status, payload, detail = _api_get_once(url, token)
+    if status in {401, 403} and token:
+        # For public repositories, retry without Authorization when local token is
+        # invalid/expired so trend evidence can still be collected.
+        fallback_status, fallback_payload, fallback_detail = _api_get_once(url, "")
+        if fallback_status == 200:
+            return fallback_status, fallback_payload, ""
+        return fallback_status, fallback_payload, fallback_detail or detail
+    return status, payload, detail
 
 
 def _collect_runs(
@@ -114,6 +125,7 @@ def main() -> int:
 
     notes: list[str] = []
     status = "passed"
+    collected_samples = 0
 
     if not repo or not token:
         status = "unverified"
@@ -137,6 +149,7 @@ def main() -> int:
                     conclusion = str(job.get("conclusion", "unknown")).lower()
                     item = trend[name]
                     item["samples"] = int(item["samples"]) + 1
+                    collected_samples += 1
                     if conclusion == "success":
                         item["passed"] = int(item["passed"]) + 1
                     elif conclusion in {
@@ -163,6 +176,10 @@ def main() -> int:
             samples = int(data["samples"])
             passed = int(data["passed"])
             data["pass_rate"] = (passed / samples) if samples else 0.0
+
+        if collected_samples == 0:
+            status = "unverified"
+            notes.append("No workflow job samples were collected from GitHub Actions")
 
     report = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

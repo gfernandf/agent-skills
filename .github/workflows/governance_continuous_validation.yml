@@ -1,0 +1,153 @@
+name: Governance Continuous Validation
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  continuous_validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create artifacts directory
+        run: mkdir -p artifacts
+
+      - name: Verify GitHub branch protection
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python tooling/verify_github_branch_protection.py \
+            --report-file artifacts/governance_branch_protection_check.json
+
+      - name: Generate critical CI trend report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python tooling/report_critical_ci_trend.py \
+            --report-file artifacts/governance_trend_report.json \
+            --window 20
+
+      - name: Evaluate critical CI trend SLO
+        run: |
+          python tooling/evaluate_critical_ci_trend.py \
+            --trend-report-file artifacts/governance_trend_report.json \
+            --slo-report-file artifacts/governance_trend_slo_report.json \
+            --min-pass-rate 0.80 \
+            --min-samples 5
+
+      - name: Verify required status checks consistency
+        run: |
+          python tooling/verify_required_status_checks_consistency.py \
+            --report-file artifacts/governance_status_checks_consistency.json
+
+      - name: Verify release gate policy configuration
+        run: |
+          python tooling/verify_release_gate_policy.py \
+            --report-file artifacts/governance_release_gate_policy.json
+
+      - name: Compile continuous validation report
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          from pathlib import Path
+          import time
+
+          artifacts_dir = Path('artifacts')
+          report = {
+              "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+              "governance_checks": {}
+          }
+
+          checks = [
+              "governance_branch_protection_check.json",
+              "governance_trend_report.json",
+              "governance_trend_slo_report.json",
+              "governance_status_checks_consistency.json",
+              "governance_release_gate_policy.json"
+          ]
+
+          all_passed = True
+          for check_file in checks:
+              check_path = artifacts_dir / check_file
+              if check_path.exists():
+                  try:
+                      data = json.loads(check_path.read_text(encoding='utf-8'))
+                      status = data.get('status', 'unknown')
+                      report["governance_checks"][check_file] = {
+                          "status": status,
+                          "passed": status in {'passed', 'pass'}
+                      }
+                      if status not in {'passed', 'pass'}:
+                          all_passed = False
+                  except Exception as e:
+                      report["governance_checks"][check_file] = {
+                          "status": "error",
+                          "error": str(e),
+                          "passed": False
+                      }
+                      all_passed = False
+              else:
+                  report["governance_checks"][check_file] = {
+                      "status": "missing",
+                      "passed": False
+                  }
+                  all_passed = False
+
+          report["overall_status"] = "passed" if all_passed else "failed"
+          report_path = artifacts_dir / "governance_continuous_validation_report.json"
+          report_path.write_text(json.dumps(report, indent=2), encoding='utf-8')
+          print(f"Continuous validation report: {report['overall_status']}")
+          print(f"Checks: {sum(1 for c in report['governance_checks'].values() if c['passed'])}/{len(report['governance_checks'])}")
+          PY
+
+      - name: Publish continuous validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-continuous-validation-report
+          path: |
+            artifacts/governance_branch_protection_check.json
+            artifacts/governance_trend_report.json
+            artifacts/governance_trend_slo_report.json
+            artifacts/governance_status_checks_consistency.json
+            artifacts/governance_release_gate_policy.json
+            artifacts/governance_continuous_validation_report.json
+
+      - name: Report validation status to summary
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          from pathlib import Path
+
+          report_path = Path('artifacts/governance_continuous_validation_report.json')
+          if report_path.exists():
+              report = json.loads(report_path.read_text(encoding='utf-8'))
+              summary = ['## Governance Continuous Validation', '']
+              summary.append(f"**Overall Status**: {report.get('overall_status', 'unknown').upper()}")
+              summary.append('')
+              summary.append('### Check Results')
+              for check, result in report.get('governance_checks', {}).items():
+                  status = "✅" if result.get('passed') else "❌"
+                  summary.append(f"- {status} {check}: {result.get('status', 'unknown')}")
+
+              with open(Path(os.environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as f:
+                  f.write('\n'.join(summary) + '\n')
+          PY
+        env:
+          GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}

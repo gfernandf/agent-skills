@@ -12,7 +12,7 @@
       "trend_allowed_slo_statuses": ["pass", "passed"]
     },
     "transitional": {
-      "allow_trend_unverified": true,
+      "allow_trend_unverified": false,
       "allow_missing_runtime_executive_summary": false,
       "max_high_failures": 0,
       "max_medium_failures": 2,
@@ -22,7 +22,7 @@
       "trend_allowed_slo_statuses": ["pass", "passed"]
     },
     "promotion": {
-      "allow_trend_unverified": true,
+      "allow_trend_unverified": false,
       "allow_missing_runtime_executive_summary": false,
       "max_high_failures": 0,
       "max_medium_failures": 0,

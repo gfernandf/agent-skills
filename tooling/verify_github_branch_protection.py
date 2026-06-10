@@ -53,17 +53,16 @@ def _load_required_checks() -> list[str]:
     return [c for c in checks if isinstance(c, str)] if isinstance(checks, list) else []
 
 
-def _api_get(url: str, token: str) -> tuple[int, object | None, str]:
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "agent-skills-branch-protection-verifier",
-        },
-        method="GET",
-    )
+def _api_get_once(url: str, token: str) -> tuple[int, object | None, str]:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "agent-skills-branch-protection-verifier",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    req = urllib.request.Request(url, headers=headers, method="GET")
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
             raw = resp.read().decode("utf-8")
@@ -74,6 +73,16 @@ def _api_get(url: str, token: str) -> tuple[int, object | None, str]:
         return int(exc.code), None, detail
     except Exception as exc:
         return 0, None, str(exc)
+
+
+def _api_get(url: str, token: str) -> tuple[int, object | None, str]:
+    status, payload, detail = _api_get_once(url, token)
+    if status in {401, 403} and token:
+        fallback_status, fallback_payload, fallback_detail = _api_get_once(url, "")
+        if fallback_status == 200:
+            return fallback_status, fallback_payload, ""
+        return fallback_status, fallback_payload, fallback_detail or detail
+    return status, payload, detail
 
 
 def _api_get_list(
@@ -315,6 +324,54 @@ def _evaluate_rules_for_branch(
     return checks, found_required_pr_reviews, all(found_required_checks.values())
 
 
+def _evaluate_branch_metadata(
+    metadata: dict[str, object], required_checks: list[str], branch: str
+) -> tuple[list[dict[str, object]], bool]:
+    checks: list[dict[str, object]] = []
+    protected = metadata.get("protected") is True
+    checks.append(
+        {
+            "check_id": f"branch_protected:{branch}",
+            "passed": protected,
+            "detail": "enabled" if protected else "disabled",
+        }
+    )
+
+    protection = metadata.get("protection")
+    required_status_checks = (
+        protection.get("required_status_checks")
+        if isinstance(protection, dict)
+        else {}
+    )
+    contexts = []
+    if isinstance(required_status_checks, dict):
+        raw_contexts = required_status_checks.get("contexts")
+        if isinstance(raw_contexts, list):
+            contexts.extend([item for item in raw_contexts if isinstance(item, str)])
+        raw_checks = required_status_checks.get("checks")
+        if isinstance(raw_checks, list):
+            for item in raw_checks:
+                if isinstance(item, dict):
+                    context = item.get("context")
+                    if isinstance(context, str):
+                        contexts.append(context)
+
+    context_set = set(contexts)
+    found_all = True
+    for check_name in required_checks:
+        passed = check_name in context_set
+        found_all = found_all and passed
+        checks.append(
+            {
+                "check_id": f"required_check_present:{branch}:branch_metadata:{check_name}",
+                "passed": passed,
+                "detail": check_name,
+            }
+        )
+
+    return checks, found_all
+
+
 def main() -> int:
     args = _parse_args()
     args.report_file.parent.mkdir(parents=True, exist_ok=True)
@@ -341,11 +398,12 @@ def main() -> int:
         }
     )
 
-    if not args.repository or not token:
+    if not args.repository:
         unverified = True
     else:
         default_branch = _get_default_branch(args.repository, token)
         for branch in branches:
+            branch_verified = False
             rules_url = f"https://api.github.com/repos/{args.repository}/rules/branches/{branch}"
             status, payload, detail = _api_get_list(rules_url, token)
             checks.append(
@@ -355,18 +413,16 @@ def main() -> int:
                     "detail": f"status={status} {detail[:200]}",
                 }
             )
-            if status != 200 or payload is None:
-                unverified = True
-                continue
-
-            rules_checks, found_pr_reviews, found_status_checks = (
-                _evaluate_rules_for_branch(payload, required_checks)
-            )
-            if found_pr_reviews and found_status_checks:
+            if status == 200 and payload is not None:
+                branch_verified = True
+                rules_checks, found_pr_reviews, found_status_checks = (
+                    _evaluate_rules_for_branch(payload, required_checks)
+                )
                 for item in rules_checks:
                     item["check_id"] = item["check_id"].replace("ruleset", branch)
                     checks.append(item)
-                continue
+                if found_pr_reviews and found_status_checks:
+                    continue
 
             ruleset_status, ruleset_rules, ruleset_detail = (
                 _rules_from_matching_rulesets(
@@ -380,23 +436,40 @@ def main() -> int:
                     "detail": f"status={ruleset_status} {ruleset_detail[:200]}",
                 }
             )
-            if ruleset_status != 200 or ruleset_rules is None:
-                unverified = True
-                continue
-
-            ruleset_checks, ruleset_found_pr_reviews, ruleset_found_status_checks = (
-                _evaluate_rules_for_branch(ruleset_rules, required_checks)
-            )
-            for item in ruleset_checks:
-                item["check_id"] = item["check_id"].replace(
-                    "ruleset", f"{branch}:rulesets"
+            if ruleset_status == 200 and ruleset_rules is not None:
+                branch_verified = True
+                ruleset_checks, ruleset_found_pr_reviews, ruleset_found_status_checks = (
+                    _evaluate_rules_for_branch(ruleset_rules, required_checks)
                 )
-                checks.append(item)
+                for item in ruleset_checks:
+                    item["check_id"] = item["check_id"].replace(
+                        "ruleset", f"{branch}:rulesets"
+                    )
+                    checks.append(item)
 
-            if not ruleset_found_pr_reviews or not ruleset_found_status_checks:
-                # Verification succeeded but required controls were not found.
-                # Keep status as failed instead of unverified.
-                pass
+                if ruleset_found_pr_reviews and ruleset_found_status_checks:
+                    continue
+
+            branch_url = f"https://api.github.com/repos/{args.repository}/branches/{branch}"
+            branch_status, branch_payload, branch_detail = _api_get_dict(branch_url, token)
+            checks.append(
+                {
+                    "check_id": f"branch_metadata_api_call:{branch}",
+                    "passed": branch_status == 200,
+                    "detail": f"status={branch_status} {branch_detail[:200]}",
+                }
+            )
+            if branch_status == 200 and branch_payload is not None:
+                branch_verified = True
+                metadata_checks, metadata_found_status_checks = _evaluate_branch_metadata(
+                    branch_payload, required_checks, branch
+                )
+                checks.extend(metadata_checks)
+                if metadata_found_status_checks:
+                    continue
+
+            if not branch_verified:
+                unverified = True
 
     passed = sum(1 for c in checks if c.get("passed") is True)
     total = len(checks)
