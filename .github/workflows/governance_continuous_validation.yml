@@ -133,6 +133,7 @@ jobs:
         run: |
           python - << 'PY'
           import json
+          import os
           from pathlib import Path
 
           report_path = Path('artifacts/governance_continuous_validation_report.json')
