@@ -160,71 +160,48 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
-            // Read the validation report
             const reportPath = path.join(process.env.GITHUB_WORKSPACE, 'artifacts', 'governance_continuous_validation_report.json');
             let report = {};
             try {
               report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
             } catch (e) {
-              console.log('Could not read validation report:', e.message);
+              console.log('Could not read validation report');
             }
             
-            // Find failed checks
             const failedChecks = [];
             for (const [check, result] of Object.entries(report.governance_checks || {})) {
               if (!result.passed) {
-                failedChecks.push({
-                  name: check,
-                  status: result.status,
-                  error: result.error || 'Check failed'
-                });
+                failedChecks.push(check);
               }
             }
             
             if (failedChecks.length === 0) {
-              console.log('No failed checks detected; skipping issue creation');
+              console.log('No failed checks detected');
               return;
             }
             
-            // Build issue body
-            const failedChecksList = failedChecks
-              .map(c => `- **${c.name}**: ${c.status}${c.error ? ' (' + c.error + ')' : ''}`)
-              .join('\n');
+            const failedList = failedChecks.map(c => '- ' + c).join('\n');
+            const runId = context.runId;
+            const branch = context.ref.replace('refs/heads/', '');
             
-            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
-            const reportUrl = `${runUrl}/attempts/${{ github.run_attempt }}#artifacts`;
+            const body = [
+              '## Continuous Governance Validation Failure',
+              '',
+              'Automated Report: This issue was created by governance_continuous_validation workflow.',
+              '',
+              '### Failed Checks',
+              '',
+              failedList,
+              '',
+              '### Details',
+              '',
+              '- Workflow Run: #' + runId,
+              '- Branch: ' + branch,
+              '- Timestamp: ' + new Date().toISOString(),
+              '',
+              'See artifacts for details. Refer to docs/CONTINUOUS_GOVERNANCE_VALIDATION.md for remediation.'
+            ].join('\n');
             
-            const issueBody = `## Continuous Governance Validation Failure
-            
-**Automated Report**: This issue was created by the \`governance_continuous_validation\` workflow.
-            
-### Failed Checks
-            
-${failedChecksList}
-            
-### Details
-            
-- **Workflow Run**: [${github.run_id}](${runUrl})
-- **Branch**: ${{ github.ref }}
-- **Timestamp**: ${new Date().toISOString()}
-            
-### Artifacts
-            
-- [Validation Report](${reportUrl})
-            
-### Remediation
-            
-Please refer to [\`docs/CONTINUOUS_GOVERNANCE_VALIDATION.md\`](../../blob/${{ github.ref }}/docs/CONTINUOUS_GOVERNANCE_VALIDATION.md) for remediation steps for each check.
-            
-### Next Steps
-            
-1. Review the failed checks above
-2. Follow remediation guidance in the runbook
-3. Manually re-run: \`gh workflow run governance_continuous_validation.yml\`
-4. Close this issue once validation passes`;
-            
-            // Check if issue already exists for this run
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -233,7 +210,6 @@ Please refer to [\`docs/CONTINUOUS_GOVERNANCE_VALIDATION.md\`](../../blob/${{ gi
               per_page: 10
             });
             
-            // If we have recent open issue (from today), add comment instead of creating new one
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
@@ -244,21 +220,21 @@ Please refer to [\`docs/CONTINUOUS_GOVERNANCE_VALIDATION.md\`](../../blob/${{ gi
             });
             
             if (recentIssue) {
-              console.log(`Adding comment to existing issue #${recentIssue.number}`);
+              console.log('Adding comment to existing issue #' + recentIssue.number);
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: recentIssue.number,
-                body: `**Update** from run [${github.run_id}](${runUrl}):\n\n${failedChecksList}`
+                body: 'Update: ' + failedList
               });
             } else {
-              console.log('Creating new governance validation failure issue');
+              console.log('Creating new issue');
               const { data: newIssue } = await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: `❌ Governance Validation Failed - ${failedChecks[0].name}`,
-                body: issueBody,
+                title: 'Governance Validation Failed - ' + failedChecks[0],
+                body: body,
                 labels: ['governance', 'validation', 'automated']
               });
-              console.log(`Created issue #${newIssue.number}`);
+              console.log('Created issue #' + newIssue.number);
             }
