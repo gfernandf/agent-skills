@@ -27,7 +27,7 @@ permissions:
   actions: read
 
 env:
-  REGISTRY_REF: 74a939653093d0342a2b3e123a4c6fe937f95e05
+  REGISTRY_REF: ca58b340d9ad3082cef2e04c04485e55d3314698
 
 jobs:
   promote_bundle:
