@@ -211,7 +211,9 @@ def _normalize(value: Any) -> Any:
     return value
 
 
-def _equal_execute_skill(http_payload: dict[str, Any], mcp_payload: dict[str, Any]) -> bool:
+def _equal_execute_skill(
+    http_payload: dict[str, Any], mcp_payload: dict[str, Any]
+) -> bool:
     """Compare execute-skill parity using stable structure, not model-generated content.
 
     Some preferred skills depend on non-deterministic model backends; output text can
@@ -229,8 +231,12 @@ def _equal_execute_skill(http_payload: dict[str, Any], mcp_payload: dict[str, An
     if http_norm.get("skill_id") != mcp_norm.get("skill_id"):
         return False
 
-    http_outputs = http_norm.get("outputs") if isinstance(http_norm.get("outputs"), dict) else {}
-    mcp_outputs = mcp_norm.get("outputs") if isinstance(mcp_norm.get("outputs"), dict) else {}
+    http_outputs = (
+        http_norm.get("outputs") if isinstance(http_norm.get("outputs"), dict) else {}
+    )
+    mcp_outputs = (
+        mcp_norm.get("outputs") if isinstance(mcp_norm.get("outputs"), dict) else {}
+    )
     if sorted(http_outputs.keys()) != sorted(mcp_outputs.keys()):
         return False
 
