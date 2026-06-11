@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      issues: write
     steps:
       - name: Checkout agent-skills
         uses: actions/checkout@v4
@@ -28,6 +29,7 @@ jobs:
       - name: Verify GitHub branch protection
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python tooling/verify_github_branch_protection.py \
             --report-file artifacts/governance_branch_protection_check.json
@@ -157,6 +159,7 @@ jobs:
         if: failure()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const path = require('path');

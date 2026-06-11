@@ -390,14 +390,6 @@ def main() -> int:
             "detail": args.repository,
         }
     )
-    checks.append(
-        {
-            "check_id": "github_token_present",
-            "passed": bool(token),
-            "detail": "present" if token else "missing",
-        }
-    )
-
     if not args.repository:
         unverified = True
     else:
