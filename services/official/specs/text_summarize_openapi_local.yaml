@@ -1,0 +1,72 @@
+openapi: 3.0.3
+info:
+  title: Text Content Summarize Local API
+  version: 1.0.0
+  description: Local provider for pilot real-service integration of text.content.summarize.
+servers:
+  - url: http://127.0.0.1:8781
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Health probe endpoint.
+      responses:
+        '200':
+          description: Service health.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, degraded, error]
+  /summarize:
+    post:
+      operationId: summarize
+      summary: Summarize text content.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Source text to summarize
+                max_length:
+                  type: integer
+                  description: Optional maximum summary length in words
+                  minimum: 10
+                  maximum: 1000
+      responses:
+        '200':
+          description: Summary response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - summary
+                  - status
+                properties:
+                  summary:
+                    type: string
+                    description: Condensed summary preserving key ideas
+                  status:
+                    type: string
+                    enum: [ok, partial, error]
+                    description: Execution outcome status
+                  trace_ref:
+                    type: string
+                    description: Optional trace reference for audit
+                  error:
+                    type: string
+                    description: Error message if status is error
+        '400':
+          description: Invalid request (missing required fields, validation error).
+        '503':
+          description: Service unavailable.
