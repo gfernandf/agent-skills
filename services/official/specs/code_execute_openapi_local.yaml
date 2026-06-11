@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: Code Snippet Execute Local API
+  version: 1.0.0
+  description: Local provider for pilot real-service integration of code.snippet.execute.
+servers:
+  - url: http://127.0.0.1:8782
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Health probe endpoint.
+      responses:
+        '200':
+          description: Service health.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, degraded, error]
+  /execute:
+    post:
+      operationId: execute
+      summary: Execute code snippet.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - language
+              properties:
+                code:
+                  type: string
+                  description: Code snippet to execute
+                language:
+                  type: string
+                  description: Programming language (python, javascript, bash, etc.)
+                  enum: [python, javascript, bash, bash]
+                timeout:
+                  type: integer
+                  description: Execution timeout in seconds
+      responses:
+        '200':
+          description: Execution result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - result
+                  - status
+                properties:
+                  result:
+                    type: object
+                    description: Execution output
+                    properties:
+                      stdout:
+                        type: string
+                      stderr:
+                        type: string
+                      exit_code:
+                        type: integer
+                  status:
+                    type: string
+                    enum: [ok, partial, error]
+                  trace_ref:
+                    type: string

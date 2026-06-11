@@ -1,0 +1,11 @@
+id: web_fetch_openapi_local
+kind: openapi
+base_url: http://127.0.0.1:8783
+spec_ref: services/official/specs/web_fetch_openapi_local.yaml
+
+metadata:
+  description: "Local real OpenAPI provider for web.page.fetch pilot integration."
+  maintained_by: "agent-skills"
+  status: pilot
+  purpose: phase1-real-local
+  timeout_seconds: 30

@@ -1,0 +1,22 @@
+id: openapi_code_execute_local
+
+capability: code.snippet.execute
+service: code_execute_openapi_local
+protocol: openapi
+operation: execute
+
+request:
+  code: input.code
+  language: input.language
+  timeout: input.timeout
+
+response:
+  result: response.result
+  status: response.status
+  trace_ref: response.trace_ref
+
+metadata:
+  method: POST
+  description: "Local OpenAPI pilot binding for code.snippet.execute."
+  status: pilot
+  timeout_seconds: 30

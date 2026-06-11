@@ -1,0 +1,11 @@
+id: fs_read_openapi_local
+kind: openapi
+base_url: http://127.0.0.1:8786
+spec_ref: services/official/specs/fs_read_openapi_local.yaml
+
+metadata:
+  description: "Local real OpenAPI provider for fs.file.read pilot integration."
+  maintained_by: "agent-skills"
+  status: pilot
+  purpose: phase1-real-local
+  timeout_seconds: 30

@@ -1,0 +1,70 @@
+openapi: 3.0.3
+info:
+  title: File System Read Local API
+  version: 1.0.0
+  description: Local provider for pilot real-service integration of fs.file.read.
+servers:
+  - url: http://127.0.0.1:8786
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        '200':
+          description: Service health.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, degraded, error]
+  /read:
+    post:
+      operationId: read
+      summary: Read file from filesystem.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - path
+              properties:
+                path:
+                  type: string
+                  description: File path to read
+                mode:
+                  type: string
+                  description: Read mode (text, binary, etc.)
+                  enum: [text, binary]
+                encoding:
+                  type: string
+                  description: Text encoding (utf-8, latin-1, etc.)
+      responses:
+        '200':
+          description: File read result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - result
+                  - status
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      content:
+                        type: string
+                      size:
+                        type: integer
+                      mode:
+                        type: string
+                  status:
+                    type: string
+                    enum: [ok, partial, error]
+                  trace_ref:
+                    type: string
