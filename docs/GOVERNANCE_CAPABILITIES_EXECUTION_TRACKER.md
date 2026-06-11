@@ -266,6 +266,32 @@ Done:
 1. Sin checks `unverified` que afecten la decision de release.
 2. Evidencia externa incluida en bundle de release.
 
+### Bloque B - Cierre De Evidencia Governance/Release - UPDATE
+
+Estructuralmente **COMPLETO** (2026-06-11):
+
+Artefactos creados:
+
+1. `docs/GOVERNANCE_EVIDENCE_CHECKLIST.md` - Guía procedural para capturar evidencia manual (UI screenshots):
+   - Ruleset configuration para master branch
+   - Branch protection rules (legacy)
+   - Required status checks visibles
+   - Bypass control settings
+   - Repository settings verification
+   
+2. `tooling/generate_governance_evidence_manifest.py` - Script automatizado que genera JSON manifest de evidencia:
+   - Carga automated reports (branch protection, status checks consistency)
+   - Carga policy documents (BRANCH_PROTECTION_POLICY.md, required_status_checks.json)
+   - Estructura output para integración en release bundle
+   - Genera exit criteria checklist
+
+Done B (Structural):
+
+1. Checklist de evidencia manual documentado y procedible.
+2. Script de automatización de evidencia disponible.
+3. Proceso de integración en release bundle definido.
+4. Falta solo: Captura manual de UI screenshots en cada release (procedimiento documentado en GOVERNANCE_EVIDENCE_CHECKLIST.md).
+
 ### Bloque C - Hardening Progresivo De SLO
 
 Objetivo:
@@ -412,10 +438,29 @@ Estado C3:
 
 ## Estado Del Bloque C
 
-1. C1 cerrado.
-2. C2 cerrado.
-3. C3 cerrado.
-4. Bloque C completado en este ciclo.
+Phase 2 SLO Hardening (2026-06-11):
+
+1. `docs/SLO_HARDENING_ROADMAP.md` creado - Define 4 fases de progressive threshold enforcement:
+   - Phase 1 (Baseline, current): Conservative thresholds, no enforcement
+   - Phase 2 (Warning-level, 2026-06-11 ✅): Enable DX_SLO, increase CI_TREND pass rate to 0.85
+   - Phase 3 (Soft-fail, 2026-06-25): Increase to 0.90 pass rate, tighten DX metrics
+   - Phase 4 (Hard-fail, 2026-07-09): Increase to 0.95 pass rate, hard-block on SLO breach
+   
+2. smoke.yml actualizado (commit da10c52):
+   - `DX_SLO_ENFORCE`: "false" → "true"
+   - `CI_TREND_SLO_MIN_PASS_RATE`: "0.80" → "0.85"
+
+3. Exit criteria Phase 2:
+   - [x] DX metrics now enforced (will fail if docs parity < 90% or TTFS > 300s)
+   - [x] CI trend threshold at warning level (85% pass rate)
+   - [ ] GitHub issue creation on breach (next check in smoke run)
+   - [ ] ~2-3 issues/week expected as baseline stabilizes
+
+Estado:
+
+1. C1-C3 cerrados (baseline + unverified elimination).
+2. Phase 2 SLO Hardening aplicado (commit da10c52).
+3. Falta: Validar en próxima ejecución de smoke si issues se crean automáticamente en breach.
 
 ## Siguiente Tramo En Curso
 
