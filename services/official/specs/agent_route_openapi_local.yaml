@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Agent Input Route Local API
+  version: 1.0.0
+  description: Local provider for pilot real-service integration of agent.input.route.
+servers:
+  - url: http://127.0.0.1:8787
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        '200':
+          description: Service health.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+  /route:
+    post:
+      operationId: route
+      summary: Route query to appropriate agent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  oneOf:
+                    - type: string
+                    - type: array
+                agents:
+                  oneOf:
+                    - type: string
+                    - type: array
+      responses:
+        '200':
+          description: Routing result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - result
+                  - status
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      route:
+                        type: string
+                      confidence:
+                        type: number
+                  status:
+                    type: string
+                    enum: [ok, partial, error]
+                  trace_ref:
+                    type: string

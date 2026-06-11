@@ -1,0 +1,21 @@
+id: openapi_pdf_read_local
+
+capability: pdf.document.read
+service: pdf_read_openapi_local
+protocol: openapi
+operation: read
+
+request:
+  path: input.path
+  pages: input.pages
+
+response:
+  result: response.result
+  status: response.status
+  trace_ref: response.trace_ref
+
+metadata:
+  method: POST
+  description: "Local OpenAPI pilot binding for pdf.document.read."
+  status: pilot
+  timeout_seconds: 30

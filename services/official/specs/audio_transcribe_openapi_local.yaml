@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Audio Speech Transcribe Local API
+  version: 1.0.0
+  description: Local provider for pilot real-service integration of audio.speech.transcribe.
+servers:
+  - url: http://127.0.0.1:8785
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        '200':
+          description: Service health.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+  /transcribe:
+    post:
+      operationId: transcribe
+      summary: Transcribe audio to text.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                audio_data:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: integer
+                language:
+                  type: string
+      responses:
+        '200':
+          description: Transcription result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - result
+                  - status
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+                      duration:
+                        type: number
+                  status:
+                    type: string
+                    enum: [ok, partial, error]
+                  trace_ref:
+                    type: string

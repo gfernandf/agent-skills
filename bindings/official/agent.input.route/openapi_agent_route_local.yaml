@@ -1,0 +1,21 @@
+id: openapi_agent_route_local
+
+capability: agent.input.route
+service: agent_route_openapi_local
+protocol: openapi
+operation: route
+
+request:
+  query: input.query
+  agents: input.agents
+
+response:
+  result: response.result
+  status: response.status
+  trace_ref: response.trace_ref
+
+metadata:
+  method: POST
+  description: "Local OpenAPI pilot binding for agent.input.route."
+  status: pilot
+  timeout_seconds: 30
