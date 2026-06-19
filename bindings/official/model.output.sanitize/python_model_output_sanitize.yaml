@@ -1,5 +1,5 @@
 id: python_model_output_sanitize
-capability: model.output.sanitize
+capability: reasoning.output.normalize
 service: model_baseline
 protocol: pythoncall
 operation: sanitize_output
@@ -14,5 +14,5 @@ response:
   clean: response.clean
 
 metadata:
-  description: Official pythoncall binding for model.output.sanitize.
+  description: Official pythoncall binding for reasoning.output.normalize.
   status: experimental

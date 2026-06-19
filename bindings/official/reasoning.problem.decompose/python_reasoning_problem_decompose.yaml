@@ -10,8 +10,6 @@ request:
   max_components: input.max_components
 response:
   components: response.components
-  gaps: response.gaps
-  overlaps: response.overlaps
   decomposition_notes: response.decomposition_notes
 metadata:
   description: Python fallback for reasoning.problem.decompose using cognitive_baseline service.

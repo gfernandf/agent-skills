@@ -62,7 +62,7 @@ Implemented and active:
 - 3 typed safety errors: SafetyTrustLevelError, SafetyGateFailedError, SafetyConfirmationRequiredError
 - Safety vocabulary: `vocabulary/safety_vocabulary.yaml` (trust_levels, data_classifications, failure_policies, allowed_targets, scope_constraints)
 - Registry validation enforces safety vocabulary and v2 policy
-- 5 capabilities annotated: agent.task.delegate, code.snippet.execute, email.message.send, memory.entry.store, message.notification.send
+- 5 capabilities annotated: agent.task.delegate, code.snippet.execute, email.message.send, memory.record.store, message.notification.send
 
 ## Observability Status
 

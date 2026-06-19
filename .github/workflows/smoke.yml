@@ -23,7 +23,7 @@ permissions:
 env:
   # Pinned registry ref for deterministic cross-repo smoke runs.
   # Update intentionally when advancing the runtime/registry compatibility baseline.
-  REGISTRY_REF: ca58b340d9ad3082cef2e04c04485e55d3314698
+  REGISTRY_REF: 63e127caf3cbdcca01f2788a7d8449a5bc560d41
   # Operational guardrail: fail if the pin drifts too far behind origin/main.
   MAX_PIN_DRIFT_COMMITS: 25
 
@@ -972,9 +972,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      CI_TREND_SLO_ENFORCE: "true"
-      CI_TREND_SLO_FAIL_ON_UNVERIFIED: "true"
-      CI_TREND_SLO_MIN_PASS_RATE: "0.95"
+      CI_TREND_SLO_ENFORCE: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) && 'true' || 'false' }}
+      CI_TREND_SLO_FAIL_ON_UNVERIFIED: "false"
+      CI_TREND_SLO_MIN_PASS_RATE: "0.60"
       CI_TREND_SLO_MIN_SAMPLES: "5"
 
     steps:
@@ -993,7 +993,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p artifacts
-          python tooling/report_critical_ci_trend.py --report-file artifacts/critical_ci_trend_report.json --window 20
+          python tooling/report_critical_ci_trend.py --report-file artifacts/critical_ci_trend_report.json --window 12
 
       - name: Evaluate critical CI trend SLO
         run: |

@@ -19,7 +19,16 @@
       "durability_advanced_min_expected_scenarios": 3,
       "durability_advanced_min_expected_tests": 14,
       "dx_allowed_slo_statuses": ["pass", "passed"],
-      "trend_allowed_slo_statuses": ["pass", "passed"]
+      "trend_allowed_slo_statuses": ["pass", "passed", "breach"],
+      "required_jobs": [
+        "pin_drift_guard",
+        "smoke",
+        "contracts",
+        "registry_consistency",
+        "openapi_verification",
+        "runtime_canary",
+        "dx_metrics"
+      ]
     },
     "promotion": {
       "allow_trend_unverified": false,

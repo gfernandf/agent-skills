@@ -28,7 +28,7 @@ RENAME_MAP = {
     "fs.read": "fs.file.read",
     "image.classify": "image.content.classify",
     "memory.retrieve": "memory.entry.retrieve",
-    "memory.store": "memory.entry.store",
+    "memory.store": "memory.record.store",
     "message.send": "message.notification.send",
     "pdf.read": "pdf.document.read",
     "table.filter": "table.row.filter",

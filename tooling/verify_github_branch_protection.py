@@ -339,9 +339,7 @@ def _evaluate_branch_metadata(
 
     protection = metadata.get("protection")
     required_status_checks = (
-        protection.get("required_status_checks")
-        if isinstance(protection, dict)
-        else {}
+        protection.get("required_status_checks") if isinstance(protection, dict) else {}
     )
     contexts = []
     if isinstance(required_status_checks, dict):
@@ -430,9 +428,11 @@ def main() -> int:
             )
             if ruleset_status == 200 and ruleset_rules is not None:
                 branch_verified = True
-                ruleset_checks, ruleset_found_pr_reviews, ruleset_found_status_checks = (
-                    _evaluate_rules_for_branch(ruleset_rules, required_checks)
-                )
+                (
+                    ruleset_checks,
+                    ruleset_found_pr_reviews,
+                    ruleset_found_status_checks,
+                ) = _evaluate_rules_for_branch(ruleset_rules, required_checks)
                 for item in ruleset_checks:
                     item["check_id"] = item["check_id"].replace(
                         "ruleset", f"{branch}:rulesets"
@@ -442,8 +442,12 @@ def main() -> int:
                 if ruleset_found_pr_reviews and ruleset_found_status_checks:
                     continue
 
-            branch_url = f"https://api.github.com/repos/{args.repository}/branches/{branch}"
-            branch_status, branch_payload, branch_detail = _api_get_dict(branch_url, token)
+            branch_url = (
+                f"https://api.github.com/repos/{args.repository}/branches/{branch}"
+            )
+            branch_status, branch_payload, branch_detail = _api_get_dict(
+                branch_url, token
+            )
             checks.append(
                 {
                     "check_id": f"branch_metadata_api_call:{branch}",
@@ -453,8 +457,8 @@ def main() -> int:
             )
             if branch_status == 200 and branch_payload is not None:
                 branch_verified = True
-                metadata_checks, metadata_found_status_checks = _evaluate_branch_metadata(
-                    branch_payload, required_checks, branch
+                metadata_checks, metadata_found_status_checks = (
+                    _evaluate_branch_metadata(branch_payload, required_checks, branch)
                 )
                 checks.extend(metadata_checks)
                 if metadata_found_status_checks:

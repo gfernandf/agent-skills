@@ -7,13 +7,10 @@ operation: fetch
 
 request:
   url: input.url
-  timeout: input.timeout
-  headers: input.headers
 
 response:
-  result: response.result
+  content: response.content
   status: response.status
-  trace_ref: response.trace_ref
 
 metadata:
   method: POST

@@ -90,7 +90,9 @@ def verify_release_gate_policy(policy_file):
                         f"Profile '{profile_name}' field '{field}' must be int, got {type(val).__name__}"
                     )
                 elif val < 0:
-                    issues.append(f"Profile '{profile_name}' field '{field}' cannot be negative")
+                    issues.append(
+                        f"Profile '{profile_name}' field '{field}' cannot be negative"
+                    )
 
     status = "passed" if not issues else "failed"
     return status, issues, policy_data
