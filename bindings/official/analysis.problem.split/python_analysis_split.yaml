@@ -8,8 +8,6 @@ request:
   strategy: input.strategy
 response:
   components: response.components
-  gaps: response.gaps
-  overlaps: response.overlaps
   decomposition_notes: response.decomposition_notes
 metadata:
   description: Official binding for analysis.problem.split using analysis_baseline service.
