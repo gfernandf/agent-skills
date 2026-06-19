@@ -8,7 +8,6 @@ operation: read
 request:
   path: input.path
   mode: input.mode
-  encoding: input.encoding
 
 response:
   result: response.result

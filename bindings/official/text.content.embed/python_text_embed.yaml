@@ -1,6 +1,6 @@
 id: python_text_embed
 
-capability: text.content.embed
+capability: reasoning.embedding.generate
 service: text_baseline
 protocol: pythoncall
 operation: embed_text

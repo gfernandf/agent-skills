@@ -10,7 +10,8 @@ request:
   agents: input.agents
 
 response:
-  result: response.result
+  route: response.route
+  confidence: response.confidence
   status: response.status
   trace_ref: response.trace_ref
 

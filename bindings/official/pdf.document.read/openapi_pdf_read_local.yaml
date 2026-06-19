@@ -7,7 +7,6 @@ operation: read
 
 request:
   path: input.path
-  pages: input.pages
 
 response:
   result: response.result

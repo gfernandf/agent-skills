@@ -6,15 +6,13 @@ protocol: pythoncall
 operation: generate_skill_from_prompt
 
 request:
-  intent_description: input.intent_description
-  registry_root: input.registry_root
-  target_channel: input.target_channel
+  objective: input.objective
+  context: input.context
+  max_steps: input.max_steps
 
 response:
-  skill_yaml: response.skill_yaml
-  suggested_id: response.suggested_id
-  capabilities_used: response.capabilities_used
-  validation_errors: response.validation_errors
+  plan: response.plan
+  step_count: response.step_count
 
 metadata:
   description: >

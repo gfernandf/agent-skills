@@ -8,7 +8,6 @@ operation: execute
 request:
   code: input.code
   language: input.language
-  timeout: input.timeout
 
 response:
   result: response.result

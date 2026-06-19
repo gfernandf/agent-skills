@@ -6,11 +6,10 @@ protocol: openapi
 operation: transcribe
 
 request:
-  audio_data: input.audio_data
-  language: input.language
+  audio: input.audio
 
 response:
-  result: response.result
+  transcript: response.transcript
   status: response.status
   trace_ref: response.trace_ref
 

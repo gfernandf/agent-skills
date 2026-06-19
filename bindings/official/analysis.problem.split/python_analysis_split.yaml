@@ -1,5 +1,5 @@
 id: python_analysis_split
-capability: analysis.problem.split
+capability: reasoning.problem.decompose
 service: analysis_baseline
 protocol: pythoncall
 operation: split_problem
