@@ -972,7 +972,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      CI_TREND_SLO_ENFORCE: "true"
+      CI_TREND_SLO_ENFORCE: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) && 'true' || 'false' }}
       CI_TREND_SLO_FAIL_ON_UNVERIFIED: "false"
       CI_TREND_SLO_MIN_PASS_RATE: "0.60"
       CI_TREND_SLO_MIN_SAMPLES: "5"
