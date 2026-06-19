@@ -65,13 +65,35 @@ jobs:
           python skills.py release-bundle-verify "${{ steps.bundle.outputs.bundle_path }}"
 
       - name: Promote bundle into preview state
+        if: github.event_name != 'pull_request'
         run: |
           python skills.py release-bundle-promote-gated "${{ steps.bundle.outputs.bundle_path }}" --environment preview
+
+      - name: Record preview promotion as skipped for pull requests
+        if: github.event_name == 'pull_request'
+        run: |
+          python - << 'PY'
+          import json
+          from pathlib import Path
+          report = {
+              "contract": "release_bundle_promotion_v1",
+              "environment": "preview",
+              "status": "skipped",
+              "decision": "no-op",
+              "reason": "gated promotion is skipped on pull_request runs",
+              "bundle_path": "${{ steps.bundle.outputs.bundle_path }}",
+          }
+          Path("artifacts/release_bundle_promotion_preview.json").write_text(
+              json.dumps(report, indent=2), encoding="utf-8"
+          )
+          print("Preview promotion skipped for pull_request context")
+          PY
 
       - name: Upload preview bundle artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-preview-bundle
+          if-no-files-found: warn
           path: |
             ${{ steps.bundle.outputs.bundle_path }}
             artifacts/deployments/preview/current.json

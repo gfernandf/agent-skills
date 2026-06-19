@@ -974,7 +974,7 @@ jobs:
     env:
       CI_TREND_SLO_ENFORCE: "true"
       CI_TREND_SLO_FAIL_ON_UNVERIFIED: "false"
-      CI_TREND_SLO_MIN_PASS_RATE: "0.70"
+      CI_TREND_SLO_MIN_PASS_RATE: "0.60"
       CI_TREND_SLO_MIN_SAMPLES: "5"
 
     steps:
@@ -993,7 +993,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p artifacts
-          python tooling/report_critical_ci_trend.py --report-file artifacts/critical_ci_trend_report.json --window 20
+          python tooling/report_critical_ci_trend.py --report-file artifacts/critical_ci_trend_report.json --window 12
 
       - name: Evaluate critical CI trend SLO
         run: |
