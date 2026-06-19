@@ -89,8 +89,6 @@ def _load_policy_documents(repo_root: Path) -> Dict[str, Any]:
     policy_file = repo_root / "docs" / "BRANCH_PROTECTION_POLICY.md"
     if policy_file.exists():
         try:
-            with open(policy_file, "r", encoding="utf-8") as f:
-                content = f.read()
             result["branch_protection_policy"] = {
                 "status": "present",
                 "path": "docs/BRANCH_PROTECTION_POLICY.md",
