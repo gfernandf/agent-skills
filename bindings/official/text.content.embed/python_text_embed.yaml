@@ -10,6 +10,7 @@ request:
 
 response:
   embedding: response.embedding
+  model: response.model
 
 metadata:
   description: "Official binding for text.content.embed using the text_baseline service."

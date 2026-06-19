@@ -12,8 +12,6 @@ request:
 response:
   route: response.route
   confidence: response.confidence
-  status: response.status
-  trace_ref: response.trace_ref
 
 metadata:
   method: POST

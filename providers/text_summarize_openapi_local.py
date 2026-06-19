@@ -13,7 +13,6 @@ Environment variables:
   HOST: Server host (default: 127.0.0.1)
 """
 
-import json
 import sys
 import argparse
 from datetime import datetime
@@ -21,7 +20,6 @@ from typing import Optional
 
 try:
     from fastapi import FastAPI, HTTPException, Request
-    from fastapi.responses import JSONResponse
     import uvicorn
 except ImportError:
     print("ERROR: FastAPI and uvicorn required. Install with:")

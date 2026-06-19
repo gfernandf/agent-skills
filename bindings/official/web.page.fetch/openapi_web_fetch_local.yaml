@@ -11,7 +11,6 @@ request:
 response:
   content: response.content
   status: response.status
-  trace_ref: response.trace_ref
 
 metadata:
   method: POST

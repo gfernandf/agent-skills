@@ -9,9 +9,8 @@ request:
   path: input.path
 
 response:
-  result: response.result
-  status: response.status
-  trace_ref: response.trace_ref
+  text: response.text
+  metadata: response.metadata
 
 metadata:
   method: POST

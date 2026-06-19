@@ -33,7 +33,7 @@ def _verify_github_branch_protection(artifacts_dir: Path) -> Dict[str, Any]:
     """Run branch protection verification and capture result."""
     try:
         report_file = artifacts_dir / "github_branch_protection_report.json"
-        result = subprocess.run(
+        subprocess.run(
             ["python", "tooling/verify_github_branch_protection.py", 
              "--report-file", str(report_file)],
             capture_output=True,
@@ -59,7 +59,7 @@ def _verify_required_status_checks_consistency(artifacts_dir: Path) -> Dict[str,
     """Verify required status checks consistency."""
     try:
         report_file = artifacts_dir / "required_status_checks_consistency_report.json"
-        result = subprocess.run(
+        subprocess.run(
             ["python", "tooling/verify_required_status_checks_consistency.py",
              "--report-file", str(report_file)],
             capture_output=True,

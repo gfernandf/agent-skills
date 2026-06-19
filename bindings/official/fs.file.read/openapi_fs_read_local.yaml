@@ -10,9 +10,8 @@ request:
   mode: input.mode
 
 response:
-  result: response.result
-  status: response.status
-  trace_ref: response.trace_ref
+  content: response.content
+  bytes: response.bytes
 
 metadata:
   method: POST
