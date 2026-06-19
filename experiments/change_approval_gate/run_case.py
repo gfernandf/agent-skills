@@ -296,7 +296,7 @@ def run_all(engine) -> None:
         meta = fixture.get("_meta", {})
         for ppath in policy_files:
             policy = json.loads(ppath.read_text(encoding="utf-8"))
-            print(f"\nRunning: {fpath.stem} × {ppath.stem} ...", end="", flush=True)
+            print(f"\nRunning: {fpath.stem} x {ppath.stem} ...", end="", flush=True)
 
             try:
                 pr = run_prompt(fixture, policy)
@@ -354,7 +354,7 @@ def run_all(engine) -> None:
         writer = csv.DictWriter(f, fieldnames=rows[0].keys())
         writer.writeheader()
         writer.writerows(rows)
-    print(f"\nResults saved → {csv_path.relative_to(REPO_ROOT)}")
+    print(f"\nResults saved -> {csv_path.relative_to(REPO_ROOT)}")
 
     _print_comparison_table(rows)
 
@@ -391,7 +391,7 @@ def main() -> None:
         print("ERROR: OPENAI_API_KEY not set.", file=sys.stderr)
         sys.exit(1)
 
-    print("Building ORCA engine …")
+    print("Building ORCA engine ...")
     engine = _build_orca_engine()
     print("Engine ready.\n")
 
@@ -430,14 +430,14 @@ def main() -> None:
     print(f"Teaching: {meta.get('teaching_point', '')}")
 
     if args.compare:
-        print("\nRunning prompt baseline …")
+        print("\nRunning prompt baseline ...")
         pr = run_prompt(fixture, policy)
-        print("Running ORCA skill …")
+        print("Running ORCA skill ...")
         or_ = run_orca(engine, fixture, policy)
         _print_result("PROMPT BASELINE", pr, meta)
         _print_result("ORCA: code.change-approval-gate", or_, meta)
     else:
-        print("\nRunning ORCA skill …")
+        print("\nRunning ORCA skill ...")
         or_ = run_orca(engine, fixture, policy)
         _print_result("ORCA: code.change-approval-gate", or_, meta)
 

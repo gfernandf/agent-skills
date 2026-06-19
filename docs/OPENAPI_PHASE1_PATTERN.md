@@ -159,12 +159,12 @@ Sequence and ports:
 |---|---|---|---|---|
 | data.schema.validate | data_schema_validate | 8780 | validate | ✅ DONE |
 | text.content.summarize | text_summarize | 8781 | summarize | ✅ DONE |
-| code.snippet.execute | code_execute | 8782 | execute | ⏳ TODO |
-| web.page.fetch | web_fetch | 8783 | fetch | ⏳ TODO |
-| pdf.document.read | pdf_read | 8784 | read | ⏳ TODO |
-| audio.speech.transcribe | audio_transcribe | 8785 | transcribe | ⏳ TODO |
-| fs.file.read | fs_read | 8786 | read | ⏳ TODO |
-| agent.input.route | agent_route | 8787 | route | ⏳ TODO |
+| code.snippet.execute | code_execute | 8782 | execute | ✅ DONE |
+| web.page.fetch | web_fetch | 8783 | fetch | ✅ DONE |
+| pdf.document.read | pdf_read | 8784 | read | ✅ DONE |
+| audio.speech.transcribe | audio_transcribe | 8785 | transcribe | ✅ DONE |
+| fs.file.read | fs_read | 8786 | read | ✅ DONE |
+| agent.input.route | agent_route | 8787 | route | ✅ DONE |
 
 ---
 

@@ -231,11 +231,11 @@ def main():
 
     # Exit with success if all automated reports collected
     if manifest["exit_criteria"]["verification_passed"]:
-        print("✓ All automated reports collected and verified")
+        print("OK: All automated reports collected and verified")
         return 0
     else:
         print(
-            "⚠ Some automated reports not collected; manual evidence capture still needed"
+            "WARN: Some automated reports not collected; manual evidence capture still needed"
         )
         return 1
 

@@ -215,17 +215,17 @@ def print_results(results: dict, total_checks: int):
     print("CONTRACT TEST RESULTS")
     print("=" * 70)
 
-    print(f"\n✅ PASS ({len(results['pass'])})")
+    print(f"\nPASS ({len(results['pass'])})")
     print("-" * 70)
     for cap_id in results["pass"]:
         print(f"  {cap_id}")
 
-    print(f"\n❌ FAIL ({len(results['fail'])})")
+    print(f"\nFAIL ({len(results['fail'])})")
     print("-" * 70)
     for item in results["fail"]:
         print(f"  {item['id']}")
         for v in item["violations"]:
-            print(f"      • {v}")
+            print(f"      - {v}")
 
     print("\n" + "=" * 70)
     total = len(results["pass"]) + len(results["fail"])
@@ -244,7 +244,7 @@ def main():
         ok = print_results(results, total_checks)
         return 0 if ok else 1
     except Exception as e:
-        print(f"❌ Fatal error: {e}")
+        print(f"FATAL ERROR: {e}")
         import traceback
 
         traceback.print_exc()

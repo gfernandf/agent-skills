@@ -275,7 +275,7 @@ def main():
         print("=== VERIFICATION: Checking for remaining old capability IDs ===\n")
         remaining = verify_no_old_ids()
         if not remaining:
-            print("  OK — No old two-segment capability IDs found anywhere.")
+            print("  OK - No old two-segment capability IDs found anywhere.")
         else:
             print(f"  FOUND {len(remaining)} files still containing old IDs:\n")
             for fpath, ids in remaining:
@@ -289,26 +289,26 @@ def main():
                         prefix = "[skills] "
                     except ValueError:
                         prefix = ""
-                print(f"    {prefix} {rel}  →  {', '.join(sorted(ids))}")
+                print(f"    {prefix} {rel}  ->  {', '.join(sorted(ids))}")
         return len(remaining) > 0
 
     dry_run = mode != "--execute"
 
     if dry_run:
         print("=" * 70)
-        print("  DRY RUN — No changes will be written")
+        print("  DRY RUN - No changes will be written")
         print("  Run with --execute to apply all changes")
         print("=" * 70)
     else:
         print("=" * 70)
-        print("  EXECUTING — Changes will be applied to both repos")
+        print("  EXECUTING - Changes will be applied to both repos")
         print("=" * 70)
 
     print()
     pattern = build_pattern()
 
     # Phase 1: Text replacements
-    print("─── Phase 1: Text content replacements ───\n")
+    print("--- Phase 1: Text content replacements ---\n")
     text_changes = replace_text_in_files(pattern, dry_run)
     for ch in text_changes:
         rel_path = ch["path"]
@@ -321,34 +321,34 @@ def main():
                 prefix = "[skills] "
             except ValueError:
                 prefix = ""
-        detail_str = ", ".join(f"{k}×{v}" for k, v in sorted(ch["detail"].items()))
+        detail_str = ", ".join(f"{k}x{v}" for k, v in sorted(ch["detail"].items()))
         print(
             f"  {prefix} {rel_path}  ({ch['replacements']} replacements: {detail_str})"
         )
 
     # Phase 2: Capability YAML file renames
     print(
-        f"\n─── Phase 2: Capability YAML renames ({'' if dry_run else 'applied'}) ───\n"
+        f"\n--- Phase 2: Capability YAML renames ({'' if dry_run else 'applied'}) ---\n"
     )
     cap_renames = rename_capability_yamls(dry_run)
     for old_p, new_p in cap_renames:
-        print(f"  {old_p.name}  →  {new_p.name}")
+        print(f"  {old_p.name}  ->  {new_p.name}")
 
     # Phase 3: Binding directory renames
     print(
-        f"\n─── Phase 3: Binding directory renames ({'' if dry_run else 'applied'}) ───\n"
+        f"\n--- Phase 3: Binding directory renames ({'' if dry_run else 'applied'}) ---\n"
     )
     bind_renames = rename_binding_dirs(dry_run)
     for old_p, new_p in bind_renames:
-        print(f"  {old_p.name}/  →  {new_p.name}/")
+        print(f"  {old_p.name}/  ->  {new_p.name}/")
 
     # Phase 4: Scenario file renames
     print(
-        f"\n─── Phase 4: Scenario file renames ({'' if dry_run else 'applied'}) ───\n"
+        f"\n--- Phase 4: Scenario file renames ({'' if dry_run else 'applied'}) ---\n"
     )
     scenario_renames = rename_scenario_files(dry_run)
     for old_p, new_p in scenario_renames:
-        print(f"  {old_p.name}  →  {new_p.name}")
+        print(f"  {old_p.name}  ->  {new_p.name}")
     if not scenario_renames:
         print("  (none)")
 

@@ -32,13 +32,13 @@ def main() -> None:
     if args.api_key:
         req.add_header("x-api-key", args.api_key)
 
-    print(f"→ POST {url}")
+    print(f"-> POST {url}")
 
     try:
         with urlopen(req, timeout=30) as resp:
             content_type = resp.headers.get("Content-Type", "")
             if "text/event-stream" not in content_type:
-                print(f"✗ Expected Content-Type text/event-stream, got: {content_type}")
+                print(f"ERROR: Expected Content-Type text/event-stream, got: {content_type}")
                 sys.exit(1)
 
             print(f"  Content-Type: {content_type}")
@@ -54,25 +54,25 @@ def main() -> None:
                     data = json.loads(line[6:])
                     events.append({"event": current_event, "data": data})
                     print(
-                        f"  ← event: {current_event}  ({data.get('message', '')[:60]})"
+                        f"  <- event: {current_event}  ({data.get('message', '')[:60]})"
                     )
 
             # Validation
             if not events:
-                print("✗ No events received")
+                print("ERROR: No events received")
                 sys.exit(1)
 
             last = events[-1]
             if last["event"] != "done":
-                print(f"✗ Last event should be 'done', got '{last['event']}'")
+                print(f"ERROR: Last event should be 'done', got '{last['event']}'")
                 sys.exit(1)
 
             event_types = [e["event"] for e in events]
-            print(f"\n✓ {len(events)} events received: {event_types}")
-            print(f"✓ Final status: {last['data'].get('status', 'unknown')}")
+            print(f"\nOK: {len(events)} events received: {event_types}")
+            print(f"OK: Final status: {last['data'].get('status', 'unknown')}")
 
     except Exception as e:
-        print(f"✗ Connection error: {e}")
+        print(f"ERROR: Connection error: {e}")
         print("  (Is the server running?)")
         sys.exit(1)
 

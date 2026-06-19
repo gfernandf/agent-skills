@@ -118,7 +118,7 @@ def main() -> None:
     for i, entry in enumerate(entries):
         intent = entry.get("intent", "")
         if not intent:
-            print(f"[{i + 1}/{len(entries)}] SKIP — missing 'intent' field")
+            print(f"[{i + 1}/{len(entries)}] SKIP - missing 'intent' field")
             skipped += 1
             continue
 

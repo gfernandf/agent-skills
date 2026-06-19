@@ -175,7 +175,7 @@ def main() -> None:
 
     output_dir = args.output or (registry_root / "catalog" / "site")
     out = generate_site(registry_root, output_dir)
-    print(f"Marketplace site generated → {out}")
+    print(f"Marketplace site generated -> {out}")
 
 
 if __name__ == "__main__":

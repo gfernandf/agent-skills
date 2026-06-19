@@ -89,7 +89,8 @@ Auth mode is `enforced` but no API key is provided.
 
 Default: 60 requests per 60-second window per client IP.
 
-- Increase via `AGENT_SKILLS_RATE_LIMIT` and `AGENT_SKILLS_RATE_WINDOW`.
+- For the built-in HTTP server started with `agent-skills serve`, limits are currently fixed at the defaults above.
+- To customize limits, start the server programmatically and pass a custom `ServerConfig(rate_limit_requests=..., rate_limit_window_seconds=...)` to `run_server(...)`.
 - Behind a proxy? Set `AGENT_SKILLS_TRUSTED_PROXIES` so the real client IP is used.
 
 ---

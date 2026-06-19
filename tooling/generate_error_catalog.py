@@ -64,8 +64,8 @@ def main():
     _write_markdown(entries)
     _write_json(entries)
     print(f"Generated {len(entries)} error entries")
-    print(f"  Markdown → {MD_PATH}")
-    print(f"  JSON     → {JSON_PATH}")
+    print(f"  Markdown -> {MD_PATH}")
+    print(f"  JSON     -> {JSON_PATH}")
 
 
 if __name__ == "__main__":

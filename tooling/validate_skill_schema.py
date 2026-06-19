@@ -165,17 +165,17 @@ def main() -> None:
         errs = validate_skill_yaml(f)
         if errs:
             print(
-                f"\n✗ {f.relative_to(Path.cwd()) if f.is_relative_to(Path.cwd()) else f}"
+                f"\nFAIL {f.relative_to(Path.cwd()) if f.is_relative_to(Path.cwd()) else f}"
             )
             for e in errs:
                 print(f"  - {e}")
             total_errors += len(errs)
         else:
             print(
-                f"✓ {f.relative_to(Path.cwd()) if f.is_relative_to(Path.cwd()) else f}"
+                f"PASS {f.relative_to(Path.cwd()) if f.is_relative_to(Path.cwd()) else f}"
             )
 
-    print(f"\n{'─' * 40}")
+    print(f"\n{'-' * 40}")
     print(f"Files: {len(files)}  Errors: {total_errors}")
     sys.exit(1 if total_errors > 0 else 0)
 

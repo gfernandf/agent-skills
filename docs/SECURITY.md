@@ -85,10 +85,15 @@ zero, an empty dict is returned.
 
 Per-client IP rate limiting with sliding-window counters:
 
-| Parameter | Default | Env var |
-|-----------|---------|---------|
-| `rate_limit_requests` | 60 | `AGENT_SKILLS_RATE_LIMIT_REQUESTS` |
-| `rate_limit_window_seconds` | 60 | `AGENT_SKILLS_RATE_LIMIT_WINDOW` |
+| Parameter | Default | Runtime configuration |
+|-----------|---------|-----------------------|
+| `rate_limit_requests` | 60 | `ServerConfig.rate_limit_requests` |
+| `rate_limit_window_seconds` | 60 | `ServerConfig.rate_limit_window_seconds` |
+
+Notes:
+
+- For the built-in server path (`agent-skills serve`), these values currently use defaults.
+- For custom deployments, provide explicit values via `run_server(..., config=ServerConfig(...))`.
 
 - Returns HTTP `429` with `RateLimitError` when exceeded.
 - Stale client entries are garbage-collected on every request to prevent
