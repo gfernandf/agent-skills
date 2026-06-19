@@ -1148,6 +1148,11 @@ jobs:
         run: |
           python tooling/verify_release_lineage_contract.py --lineage-file artifacts/release_lineage.json --report-file artifacts/release_lineage_contract_report.json
 
+      - name: Generate governance evidence manifest
+        if: always()
+        run: |
+          python tooling/generate_governance_evidence_manifest.py --repo-root . --artifacts-dir artifacts --output-file artifacts/governance_evidence_manifest.json
+
       - name: Publish release readiness artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -1159,6 +1164,7 @@ jobs:
             artifacts/release_lineage.json
             artifacts/release_lineage.md
             artifacts/release_lineage_contract_report.json
+            artifacts/governance_evidence_manifest.json
 
       - name: Append release readiness summary
         if: always()
