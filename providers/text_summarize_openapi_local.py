@@ -37,10 +37,7 @@ app = FastAPI(
 @app.get("/health")
 async def health():
     """Health probe endpoint."""
-    return {
-        "status": "ok",
-        "timestamp": datetime.utcnow().isoformat() + "Z"
-    }
+    return {"status": "ok", "timestamp": datetime.utcnow().isoformat() + "Z"}
 
 
 @app.post("/summarize")
@@ -49,32 +46,23 @@ async def summarize(request: Request):
     try:
         body = await request.json()
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid JSON: {str(e)}"
-        )
-    
+        raise HTTPException(status_code=400, detail=f"Invalid JSON: {str(e)}")
+
     # Validate request
     if "text" not in body:
-        raise HTTPException(
-            status_code=400,
-            detail="Missing required field: 'text'"
-        )
-    
+        raise HTTPException(status_code=400, detail="Missing required field: 'text'")
+
     text = body.get("text", "").strip()
     if not text:
-        raise HTTPException(
-            status_code=400,
-            detail="Field 'text' cannot be empty"
-        )
-    
+        raise HTTPException(status_code=400, detail="Field 'text' cannot be empty")
+
     max_length = body.get("max_length", 150)
     if not isinstance(max_length, int) or max_length < 10 or max_length > 1000:
         raise HTTPException(
             status_code=400,
-            detail="Field 'max_length' must be integer between 10 and 1000"
+            detail="Field 'max_length' must be integer between 10 and 1000",
         )
-    
+
     # Simulate summarization
     # In production, call actual LLM or summarization service
     try:
@@ -85,30 +73,30 @@ async def summarize(request: Request):
         summary = None
         status = "error"
         error = str(e)
-    
+
     response = {
         "summary": summary if summary else text[:max_length],
         "status": status,
         "trace_ref": f"local-text-summarize-{datetime.utcnow().isoformat()}",
     }
-    
+
     if error:
         response["error"] = error
-    
+
     return response
 
 
 def _synthesize_summary(text: str, max_length: int) -> Optional[str]:
     """
     Synthesize a summary of the text.
-    
+
     This is a simple heuristic-based approach for Phase 1 pilot.
     Production implementations would use an LLM or proper summarization algorithm.
     """
     # Simple heuristic: extract first max_length characters, then truncate at word boundary
     if len(text) <= max_length:
         return text
-    
+
     truncated = text[:max_length]
     # Find last word boundary
     last_space = truncated.rfind(" ")
@@ -125,19 +113,15 @@ def main():
     parser.add_argument("--host", default="127.0.0.1", help="Server host")
     parser.add_argument("--port", type=int, default=8781, help="Server port")
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload")
-    
+
     args = parser.parse_args()
-    
+
     print(f"Starting text.content.summarize local provider on {args.host}:{args.port}")
     print(f"Health endpoint: http://{args.host}:{args.port}/health")
     print(f"Summarize endpoint: http://{args.host}:{args.port}/summarize")
-    
+
     uvicorn.run(
-        app,
-        host=args.host,
-        port=args.port,
-        reload=args.reload,
-        log_level="info"
+        app, host=args.host, port=args.port, reload=args.reload, log_level="info"
     )
 
 

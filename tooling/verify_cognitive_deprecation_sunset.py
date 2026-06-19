@@ -24,11 +24,15 @@ def _scan_deprecated_cognitive_capabilities(registry_root: Path) -> list[str]:
         if cap_file.name.startswith("_"):
             continue
         data = _load_yaml(cap_file)
-        metadata = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+        metadata = (
+            data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+        )
         layer = metadata.get("layer")
         status = metadata.get("status")
         if layer == "cognitive" and status == "deprecated":
-            cap_id = data.get("id") if isinstance(data.get("id"), str) else cap_file.stem
+            cap_id = (
+                data.get("id") if isinstance(data.get("id"), str) else cap_file.stem
+            )
             deprecated.append(cap_id)
 
     return deprecated
