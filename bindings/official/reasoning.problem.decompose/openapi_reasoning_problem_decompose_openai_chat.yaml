@@ -19,8 +19,6 @@ response:
   - response.choices.0.message.content_json.subproblems
   - response.choices.0.message.content_json.items
   - response.choices.0.message.content_json
-  gaps: response.choices.0.message.content_json.gaps
-  overlaps: response.choices.0.message.content_json.overlaps
   decomposition_notes: response.choices.0.message.content_json.decomposition_notes
 metadata:
   method: POST
