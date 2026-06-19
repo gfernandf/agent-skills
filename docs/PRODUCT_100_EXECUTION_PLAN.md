@@ -29,9 +29,9 @@ Reference gap sources:
 
 Primary open gaps:
 
-1. External/manual branch/ruleset closure evidence attachment for release records
-2. Progressive SLO threshold hardening beyond current enforced baseline
-3. Broader same_tenant rollout beyond the current expanded baseline cohort
+1. Governance external/manual branch/ruleset evidence must be attached on every release candidate (process is implemented; recurring execution remains mandatory)
+2. Cognitive pure capabilities require continuous drift monitoring equivalent to governance continuous validation
+3. Deprecated cognitive capabilities must be fully sunset from active contracts/bindings and replaced by canonical successors
 4. Strategic architecture migrations (Temporal/Dagster-dbt/OPA productization depth)
 
 ## 3. Phased Execution

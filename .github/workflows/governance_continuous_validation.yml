@@ -48,8 +48,10 @@ jobs:
           python tooling/evaluate_critical_ci_trend.py \
             --trend-report-file artifacts/governance_trend_report.json \
             --slo-report-file artifacts/governance_trend_slo_report.json \
-            --min-pass-rate 0.80 \
-            --min-samples 5
+            --min-pass-rate 0.95 \
+            --min-samples 5 \
+            --fail-on-breach \
+            --fail-on-unverified
 
       - name: Verify required status checks consistency
         run: |

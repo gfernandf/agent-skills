@@ -124,7 +124,7 @@ def _legacy_capability_alias_candidates(capability_id: str) -> list[str]:
         "agent.plan.split": "reasoning.plan.decompose",
         "agent.plan.run": "agent.plan.execute",
         "agent.plan.generate": "reasoning.plan.generate",
-        "agent.plan.create": "reasoning.plan.create",
+        "agent.plan.create": "reasoning.plan.generate",
         "agent.task.delegate": "decision.task.delegate",
         "eval.option.analyze": "reasoning.option.analyze",
         "model.output.score": "evaluation.output.score",

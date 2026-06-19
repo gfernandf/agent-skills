@@ -1,0 +1,216 @@
+name: Cognitive Continuous Validation
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  continuous_validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - name: Checkout agent-skills
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout agent-skill-registry
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/agent-skill-registry.git" ../agent-skill-registry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run cognitive quality gates
+        run: |
+          mkdir -p artifacts
+          python tooling/run_cognitive_quality_gates.py --report-file artifacts/cognitive_quality_gates_local_report.json
+
+      - name: Verify deprecated cognitive capability sunset
+        run: |
+          python tooling/verify_cognitive_deprecation_sunset.py \
+            --registry-root ../agent-skill-registry \
+            --report-file artifacts/cognitive_deprecation_sunset_report.json
+
+      - name: Compile continuous validation report
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          import time
+          from pathlib import Path
+
+          artifacts_dir = Path('artifacts')
+          report = {
+              'generated_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+              'cognitive_checks': {}
+          }
+
+          checks = [
+              'cognitive_quality_gates_local_report.json',
+              'cognitive_quality_scorecard.json',
+              'cognitive_deprecation_sunset_report.json',
+          ]
+
+          all_passed = True
+          for check_file in checks:
+              check_path = artifacts_dir / check_file
+              if check_path.exists():
+                  try:
+                      data = json.loads(check_path.read_text(encoding='utf-8'))
+                      status = data.get('status', 'unknown')
+                      report['cognitive_checks'][check_file] = {
+                          'status': status,
+                          'passed': status in {'passed', 'pass'}
+                      }
+                      if status not in {'passed', 'pass'}:
+                          all_passed = False
+                  except Exception as exc:
+                      report['cognitive_checks'][check_file] = {
+                          'status': 'error',
+                          'error': str(exc),
+                          'passed': False,
+                      }
+                      all_passed = False
+              else:
+                  report['cognitive_checks'][check_file] = {
+                      'status': 'missing',
+                      'passed': False,
+                  }
+                  all_passed = False
+
+          report['overall_status'] = 'passed' if all_passed else 'failed'
+          out = artifacts_dir / 'cognitive_continuous_validation_report.json'
+          out.write_text(json.dumps(report, indent=2), encoding='utf-8')
+          print(f"Cognitive continuous validation report: {report['overall_status']}")
+          PY
+
+      - name: Publish continuous validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cognitive-continuous-validation-report
+          path: |
+            artifacts/cognitive_quality_gates_local_report.json
+            artifacts/cognitive_quality_scorecard.json
+            artifacts/cognitive_deprecation_sunset_report.json
+            artifacts/cognitive_continuous_validation_report.json
+
+      - name: Report validation status to summary
+        if: always()
+        run: |
+          python - << 'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report_path = Path('artifacts/cognitive_continuous_validation_report.json')
+          if report_path.exists():
+              report = json.loads(report_path.read_text(encoding='utf-8'))
+              summary = ['## Cognitive Continuous Validation', '']
+              summary.append(f"**Overall Status**: {report.get('overall_status', 'unknown').upper()}")
+              summary.append('')
+              summary.append('### Check Results')
+              for check, result in report.get('cognitive_checks', {}).items():
+                  status_icon = '✅' if result.get('passed') else '❌'
+                  summary.append(f"- {status_icon} {check}: {result.get('status', 'unknown')}")
+
+              with open(Path(os.environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as fh:
+                  fh.write('\n'.join(summary) + '\n')
+          PY
+        env:
+          GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
+
+      - name: Create issue if validation failed
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const reportPath = path.join(process.env.GITHUB_WORKSPACE, 'artifacts', 'cognitive_continuous_validation_report.json');
+            let report = {};
+            try {
+              report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            } catch (e) {
+              console.log('Could not read cognitive validation report');
+            }
+
+            const failedChecks = [];
+            for (const [check, result] of Object.entries(report.cognitive_checks || {})) {
+              if (!result.passed) {
+                failedChecks.push(check);
+              }
+            }
+
+            if (failedChecks.length === 0) {
+              console.log('No failed checks detected');
+              return;
+            }
+
+            const failedList = failedChecks.map(c => '- ' + c).join('\n');
+            const runId = context.runId;
+            const branch = context.ref.replace('refs/heads/', '');
+            const body = [
+              '## Continuous Cognitive Validation Failure',
+              '',
+              'Automated report from cognitive_continuous_validation workflow.',
+              '',
+              '### Failed Checks',
+              '',
+              failedList,
+              '',
+              '### Details',
+              '',
+              '- Workflow Run: #' + runId,
+              '- Branch: ' + branch,
+              '- Timestamp: ' + new Date().toISOString(),
+            ].join('\n');
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'cognitive,validation,automated',
+              state: 'open',
+              per_page: 10,
+            });
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const recentIssue = issues.find(issue => {
+              const issueDate = new Date(issue.created_at);
+              issueDate.setHours(0, 0, 0, 0);
+              return issueDate.getTime() === today.getTime();
+            });
+
+            if (recentIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: recentIssue.number,
+                body: 'Update: ' + failedList,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Cognitive Validation Failed - ' + failedChecks[0],
+                body: body,
+                labels: ['cognitive', 'validation', 'automated'],
+              });
+            }
