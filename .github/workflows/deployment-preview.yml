@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  REGISTRY_REF: ca58b340d9ad3082cef2e04c04485e55d3314698
+  REGISTRY_REF: 63e127caf3cbdcca01f2788a7d8449a5bc560d41
 
 jobs:
   preview_bundle:
