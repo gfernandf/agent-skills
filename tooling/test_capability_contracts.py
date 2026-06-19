@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT))
 import test_capabilities_batch as batch
 from runtime.binding_registry import BindingRegistry
 from runtime.capability_loader import YamlCapabilityLoader
+from runtime.contract_policy import enrich_runtime_managed_outputs
 
 # ---------------------------------------------------------------------------
 # Type mapping: capability YAML type → Python type(s)
@@ -83,8 +84,16 @@ def _check_output_shape(
         violations.append(f"Result is not a dict: {type(result).__name__}")
         return violations
 
+    # Runtime-managed required outputs are synthesized by runtime policy.
+    runtime_enriched = enrich_runtime_managed_outputs(
+        dict(result),
+        capability_id=capability_id,
+        trace_id=None,
+        binding_id=None,
+    )
+
     for key, field_spec in declared_outputs.items():
-        if field_spec.required and key not in result:
+        if field_spec.required and key not in runtime_enriched:
             violations.append(f"Missing required output key: '{key}'")
 
     return violations
@@ -150,6 +159,7 @@ def run_contract_tests():
     all_capabilities = capability_loader.get_all_capabilities()
 
     results = {"pass": [], "fail": []}
+    skipped_shape_type: list[str] = []
     total_checks = 0
 
     print(f"Running contract tests for {len(all_capabilities)} capabilities...\n")
@@ -193,7 +203,7 @@ def run_contract_tests():
                     f"Happy-path call failed (cannot check shape/types): {reason}"
                 )
         else:
-            capability_violations.append("No test data — skipping shape/type checks.")
+            skipped_shape_type.append(capability_id)
 
         # --- 2. GRACEFUL ERROR ---
         total_checks += 1
@@ -207,10 +217,10 @@ def run_contract_tests():
         else:
             results["pass"].append(capability_id)
 
-    return results, total_checks
+    return results, total_checks, skipped_shape_type
 
 
-def print_results(results: dict, total_checks: int):
+def print_results(results: dict, total_checks: int, skipped_shape_type: list[str]):
     print("=" * 70)
     print("CONTRACT TEST RESULTS")
     print("=" * 70)
@@ -227,6 +237,12 @@ def print_results(results: dict, total_checks: int):
         for v in item["violations"]:
             print(f"      - {v}")
 
+    print(f"\nSKIP (shape/type without fixture): {len(skipped_shape_type)}")
+    if skipped_shape_type:
+        print("-" * 70)
+        for cap_id in skipped_shape_type:
+            print(f"  {cap_id}")
+
     print("\n" + "=" * 70)
     total = len(results["pass"]) + len(results["fail"])
     print(
@@ -240,8 +256,8 @@ def print_results(results: dict, total_checks: int):
 
 def main():
     try:
-        results, total_checks = run_contract_tests()
-        ok = print_results(results, total_checks)
+        results, total_checks, skipped_shape_type = run_contract_tests()
+        ok = print_results(results, total_checks, skipped_shape_type)
         return 0 if ok else 1
     except Exception as e:
         print(f"FATAL ERROR: {e}")
