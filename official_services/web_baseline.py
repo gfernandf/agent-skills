@@ -543,7 +543,13 @@ def send_request(url, method, headers=None, body=None, timeout_seconds=None):
 
     ok, err = _validate_url(url)
     if not ok:
-        return {"status_code": 0, "headers": {}, "body": "", "error": err}
+        return {
+            "status_code": 0,
+            "headers": {},
+            "body": {"text": ""},
+            "error": err,
+            "success": False,
+        }
 
     try:
         data = None
@@ -568,15 +574,23 @@ def send_request(url, method, headers=None, body=None, timeout_seconds=None):
             return {
                 "status_code": resp.status,
                 "headers": resp_headers,
-                "body": resp_body,
+                "body": {"text": resp_body},
                 "error": None,
+                "success": 200 <= int(resp.status) < 400,
             }
     except urllib.error.HTTPError as e:
         return {
             "status_code": e.code,
             "headers": dict(e.headers),
-            "body": str(e.reason),
+            "body": {"text": str(e.reason)},
             "error": str(e),
+            "success": False,
         }
     except Exception as e:
-        return {"status_code": 0, "headers": {}, "body": "", "error": str(e)}
+        return {
+            "status_code": 0,
+            "headers": {},
+            "body": {"text": ""},
+            "error": str(e),
+            "success": False,
+        }

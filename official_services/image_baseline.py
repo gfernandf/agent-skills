@@ -120,6 +120,7 @@ def generate_image(prompt, style=None, size=None):
     """Generate an image from a text prompt (baseline: returns placeholder)."""
     return {
         "image": None,
+        "format": "png",
         "prompt": prompt,
         "style": style or "default",
         "size": size or "512x512",

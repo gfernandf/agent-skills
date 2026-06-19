@@ -166,7 +166,7 @@ def map_array(items, expression, context=None):
 def map_fields(record, mapping, drop_unmapped=False):
     """Rename/alias fields in a record."""
     if not isinstance(record, dict):
-        return {"record": record, "fields_mapped": 0}
+        return {"record": record, "mapped_count": 0}
     result = {}
     mapped = 0
     for old_key, new_key in (mapping or {}).items():
@@ -177,7 +177,7 @@ def map_fields(record, mapping, drop_unmapped=False):
         for k, v in record.items():
             if k not in (mapping or {}):
                 result[k] = v
-    return {"record": result, "fields_mapped": mapped}
+    return {"record": result, "mapped_count": mapped}
 
 
 def join_records(records_a, records_b, key_field, join_type=None):
@@ -191,6 +191,7 @@ def join_records(records_a, records_b, key_field, join_type=None):
 
     joined = []
     matched_keys = set()
+    matched_count = 0
     for rec_a in records_a or []:
         key = rec_a.get(key_field)
         matches = index_b.get(key, [])
@@ -199,6 +200,7 @@ def join_records(records_a, records_b, key_field, join_type=None):
             for rec_b in matches:
                 merged = {**rec_a, **rec_b}
                 joined.append(merged)
+                matched_count += 1
         elif jtype in ("left", "outer"):
             joined.append(dict(rec_a))
 
@@ -208,7 +210,12 @@ def join_records(records_a, records_b, key_field, join_type=None):
             if key not in matched_keys:
                 joined.append(dict(rec_b))
 
-    return {"records": joined, "record_count": len(joined), "join_type": jtype}
+    unmatched_count = max(len(joined) - matched_count, 0)
+    return {
+        "records": joined,
+        "matched_count": matched_count,
+        "unmatched_count": unmatched_count,
+    }
 
 
 def merge_records(records, strategy=None):
@@ -226,4 +233,4 @@ def merge_records(records, strategy=None):
                     result[k] = v
         else:
             result.update(rec)
-    return {"record": result, "strategy": strat}
+    return {"record": result, "field_count": len(result)}

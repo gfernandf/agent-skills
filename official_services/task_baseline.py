@@ -328,6 +328,7 @@ def schedule_event(
     """Schedule a future event or recurring timer."""
     event_id = _next_id("evt")
     return {
+        "scheduled": True,
         "event_id": event_id,
         "title": title,
         "scheduled_time": scheduled_time,

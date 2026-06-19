@@ -108,7 +108,12 @@ def read_sheet(path, sheet_name=None, range=None):
 
     p = _Path(path)
     if not p.exists():
-        return {"rows": [], "row_count": 0, "error": f"File not found: {path}"}
+        return {
+            "table": [],
+            "headers": [],
+            "row_count": 0,
+            "error": f"File not found: {path}",
+        }
 
     rows = []
     try:
@@ -117,10 +122,10 @@ def read_sheet(path, sheet_name=None, range=None):
             for row in reader:
                 rows.append(dict(row))
     except Exception as e:
-        return {"rows": [], "row_count": 0, "error": str(e)}
+        return {"table": [], "headers": [], "row_count": 0, "error": str(e)}
 
     return {
-        "rows": rows,
+        "table": rows,
         "row_count": len(rows),
         "headers": list(rows[0].keys()) if rows else [],
     }
@@ -135,7 +140,7 @@ def write_sheet(path, table, headers=None, sheet_name=None):
     p.parent.mkdir(parents=True, exist_ok=True)
 
     if not table:
-        return {"rows_written": 0, "path": str(p)}
+        return {"written": False, "row_count": 0, "path": str(p)}
 
     cols = headers or list(table[0].keys()) if table else []
     try:
@@ -145,6 +150,6 @@ def write_sheet(path, table, headers=None, sheet_name=None):
             for row in table:
                 writer.writerow({k: row.get(k, "") for k in cols})
     except Exception as e:
-        return {"rows_written": 0, "path": str(p), "error": str(e)}
+        return {"written": False, "row_count": 0, "path": str(p), "error": str(e)}
 
-    return {"rows_written": len(table), "path": str(p)}
+    return {"written": True, "row_count": len(table), "path": str(p)}

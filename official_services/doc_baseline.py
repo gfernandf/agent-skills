@@ -228,4 +228,9 @@ def generate_document(instruction, context=None, sections=None, format=None):
     if not context and not sections:
         parts.append(f"\n[Baseline] Document content for: {instruction}")
     text = "\n\n".join(parts)
-    return {"document": text, "format": fmt, "_fallback": True}
+    return {
+        "document": text,
+        "format": fmt,
+        "word_count": len(text.split()),
+        "_fallback": True,
+    }
