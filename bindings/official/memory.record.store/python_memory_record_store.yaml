@@ -15,4 +15,4 @@ response:
 
 metadata:
   description: Official pythoncall binding for memory.record.store.
-  status: experimental
+  status: stable

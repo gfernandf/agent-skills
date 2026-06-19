@@ -20,7 +20,6 @@ defaults:
   image.content.classify: python_image_classify
   image.content.extract: python_image_extract
   memory.entry.retrieve: python_memory_retrieve
-  memory.entry.store: python_memory_store
   memory.record.store: python_memory_record_store
   memory.vector.search: python_memory_vector_search
   message.notification.send: python_message_send

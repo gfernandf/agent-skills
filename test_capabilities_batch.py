@@ -246,7 +246,6 @@ TEST_DATA = {
         "labels": ["cat", "dog", "bird"],
     },
     "memory.entry.retrieve": {"key": "test_key"},
-    "memory.entry.store": {"key": "test_key", "value": "test_value"},
     "message.notification.send": {"message": "Test message", "recipient": "test_user"},
     "ops.budget.estimate": {
         "plan": {"steps": [{"id": "s1"}, {"id": "s2"}]},

@@ -1,6 +1,6 @@
 # Target Architecture Merge Readiness (RFC-0007)
 
-Status date: 2026-05-28
+Status date: 2026-06-19
 Reference RFC: docs/rfcs/RFC-0007-OSS-FIRST-TARGET-ARCH-EXECUTION.md
 Progress baseline: docs/TARGET_ARCH_PROGRESS.md
 
@@ -123,6 +123,23 @@ Evidence:
 2. Contracts/artifacts/promotion orchestration with stronger lineage model
 3. OPA governance depth beyond manifest checks: branch/CI-enforced environment promotion policy
 4. Wider same_tenant rollout beyond 8-capability expansion
+
+## Orchestration/Operational Closure (2026-06-19)
+
+Status: Complete
+
+Evidence:
+
+1. `agent.plan.execute` promoted to `stable` in registry contract + index + domain docs.
+2. `memory.entry.store` sunset executed in active sources; runtime/skills/docs migrated to `memory.record.store`.
+3. Runtime defaults no longer select `memory.entry.store`; canonical binding for `memory.record.store` is stable.
+4. Contract/reference verification and binding contract tests aligned to final state.
+
+Go/No-Go criteria for this closure:
+
+1. Zero non-stable outliers for intended production orchestration/operational contracts.
+2. Zero deprecated active references in runtime/bindings/tests/docs for sunset IDs.
+3. Full registry CI-equivalent sequence passes with regenerated catalog clean.
 
 ## Commit Guidance with Large Dirty Trees
 
