@@ -67,7 +67,11 @@ def generate_plan(goal, context=None, max_steps=None):
         "assumptions": ["Input data is available and accessible"],
         "risks": ["Incomplete requirements may lead to partial solution"],
     }
-    return {"plan": plan, "step_count": len(steps)}
+    return {
+        "plan": plan,
+        "macro_plan": plan,
+        "step_count": len(steps),
+    }
 
 
 def route_agent(query, agents=None, routing_strategy=None):

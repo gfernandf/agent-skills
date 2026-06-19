@@ -14,6 +14,23 @@ env:
   REGISTRY_REF: ca58b340d9ad3082cef2e04c04485e55d3314698
 
 jobs:
+  enforce-pr-association:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Enforce PR association on protected-branch pushes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python tooling/enforce_pr_association.py
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20

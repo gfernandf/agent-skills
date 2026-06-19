@@ -178,6 +178,12 @@ def run_contract_tests():
             continue
 
         test_input = batch.TEST_DATA.get(capability_id)
+        generated_input = False
+        if not test_input:
+            # Fall back to synthetic input based on binding templates to
+            # increase shape/type coverage when explicit fixtures are absent.
+            test_input = batch._build_fallback_test_input(binding)
+            generated_input = bool(test_input)
 
         capability_violations = []
 
@@ -199,9 +205,12 @@ def run_contract_tests():
                 )
                 capability_violations.extend(type_violations)
             else:
-                capability_violations.append(
-                    f"Happy-path call failed (cannot check shape/types): {reason}"
-                )
+                if generated_input:
+                    skipped_shape_type.append(capability_id)
+                else:
+                    capability_violations.append(
+                        f"Happy-path call failed (cannot check shape/types): {reason}"
+                    )
         else:
             skipped_shape_type.append(capability_id)
 

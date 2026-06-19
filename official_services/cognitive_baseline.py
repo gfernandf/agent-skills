@@ -1010,7 +1010,12 @@ def _evaluation_plan_validate(**kwargs: Any) -> dict[str, Any]:
         "check_count": max(1, len(bound_steps) * 3),
     }
 
-    result: dict[str, Any] = {"validation_result": validation_result}
+    result: dict[str, Any] = {
+        "validation_result": validation_result,
+        "validation_errors": errors,
+        "validation_warnings": warnings,
+        "repairable": repairable,
+    }
     if status == "passed":
         result["validated_plan"] = expanded_plan
 
