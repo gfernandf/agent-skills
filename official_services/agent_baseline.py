@@ -156,25 +156,83 @@ def evaluate_branch(condition, context, branches, default_branch=None):
     'match' (backward-compat alias) for the structured predicate. Returns
     'selected_branch' as the branch id, matching the contract.
     """
-    condition_lower = str(condition).lower()
+    import ast
+    import re
+
+    ctx = context if isinstance(context, dict) else {}
+
+    def _normalize_expr(expr):
+        # Normalize lowercase boolean/null literals to Python values.
+        expr = re.sub(r"\btrue\b", "True", expr, flags=re.IGNORECASE)
+        expr = re.sub(r"\bfalse\b", "False", expr, flags=re.IGNORECASE)
+        expr = re.sub(r"\bnull\b", "None", expr, flags=re.IGNORECASE)
+        return expr
+
+    def _eval_expr(expr):
+        allowed_bin_ops = {
+            ast.Eq: lambda a, b: a == b,
+            ast.NotEq: lambda a, b: a != b,
+            ast.Gt: lambda a, b: a > b,
+            ast.GtE: lambda a, b: a >= b,
+            ast.Lt: lambda a, b: a < b,
+            ast.LtE: lambda a, b: a <= b,
+            ast.In: lambda a, b: a in b,
+            ast.NotIn: lambda a, b: a not in b,
+            ast.Is: lambda a, b: a is b,
+            ast.IsNot: lambda a, b: a is not b,
+        }
+
+        def _resolve(node):
+            if isinstance(node, ast.Expression):
+                return _resolve(node.body)
+            if isinstance(node, ast.BoolOp):
+                values = [_resolve(v) for v in node.values]
+                if isinstance(node.op, ast.And):
+                    return all(values)
+                if isinstance(node.op, ast.Or):
+                    return any(values)
+                raise ValueError("unsupported bool operator")
+            if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+                return not bool(_resolve(node.operand))
+            if isinstance(node, ast.Compare):
+                left = _resolve(node.left)
+                for op, comp in zip(node.ops, node.comparators):
+                    right = _resolve(comp)
+                    handler = allowed_bin_ops.get(type(op))
+                    if handler is None:
+                        raise ValueError("unsupported comparator")
+                    if not handler(left, right):
+                        return False
+                    left = right
+                return True
+            if isinstance(node, ast.Name):
+                return ctx.get(node.id)
+            if isinstance(node, ast.Constant):
+                return node.value
+            if isinstance(node, ast.List):
+                return [_resolve(e) for e in node.elts]
+            if isinstance(node, ast.Tuple):
+                return tuple(_resolve(e) for e in node.elts)
+            if isinstance(node, ast.Set):
+                return {_resolve(e) for e in node.elts}
+            raise ValueError("unsupported expression")
+
+        try:
+            normalized = _normalize_expr(str(expr))
+            parsed = ast.parse(normalized, mode="eval")
+            return bool(_resolve(parsed))
+        except Exception:
+            return False
+
     for branch in branches or []:
         branch_id = branch.get("id") or branch.get("label", "")
         # Accept 'match_expression' (contract) or 'match' (legacy alias)
-        match_expr = str(
-            branch.get("match_expression") or branch.get("match", "")
-        ).lower()
-        keywords = [
-            w.strip("'\" ")
-            for w in match_expr.replace("==", " ").split()
-            if len(w.strip("'\" ")) > 2
-        ]
-        if any(
-            kw in condition_lower or kw in str(context).lower() for kw in keywords if kw
-        ):
+        match_expr = branch.get("match_expression") or branch.get("match", "")
+        if match_expr and _eval_expr(match_expr):
             return {
                 "selected_branch": branch_id,
-                "rationale": f"Matched branch '{branch_id}' via keyword heuristic.",
-                "confidence": 0.7,
+                "rationale": f"Matched branch '{branch_id}' via expression evaluation.",
+                "confidence": 0.9,
             }
     fallback = default_branch or (
         branches[0].get("id") or branches[0].get("label") if branches else "default"
