@@ -128,7 +128,7 @@ TEST_DATA = {
         "fallback_strategy": "default_value",
         "default_value": {"status": "degraded", "result": None},
         "max_retries": 2,
-        "context": {"attempt": 1, "component": "gateway"},
+        "context": "attempt=1 component=gateway",
     },
     "decision.option.select": {
         "options": [
