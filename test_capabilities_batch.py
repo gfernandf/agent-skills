@@ -79,7 +79,7 @@ TEST_DATA = {
         "content": "test write",
         "mode": "overwrite",
     },
-    "image.content.extract": {"image": b"fake image data for OCR"},
+    "image.content.extract": {"image": "fake image data for OCR"},
     "table.column.aggregate": {
         "table": [
             {"dept": "Engineering", "salary": 90000},
@@ -240,9 +240,9 @@ TEST_DATA = {
         "body": "Test message body",
     },
     "fs.file.read": {"path": str(Path(__file__).resolve()), "mode": "text"},
-    "image.caption.generate": {"image": b"fake image data"},
+    "image.caption.generate": {"image": "fake image data"},
     "image.content.classify": {
-        "image": b"fake image data",
+        "image": "fake image data",
         "labels": ["cat", "dog", "bird"],
     },
     "memory.entry.retrieve": {"key": "test_key"},
@@ -371,7 +371,7 @@ TEST_DATA = {
         "variables": {"name": "John", "place": "Agent Skills"},
     },
     "text.content.translate": {"text": "Hello world", "target_language": "es"},
-    "video.frame.extract": {"video": b"fake video data"},
+    "video.frame.extract": {"video": "fake video data"},
     "web.page.fetch": {"url": "https://www.google.com"},
     "web.page.extract": {
         "content": "<html><body><h1>Web Page</h1><p>Main content here.</p></body></html>"

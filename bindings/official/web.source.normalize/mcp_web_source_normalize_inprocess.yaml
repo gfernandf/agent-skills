@@ -11,5 +11,5 @@ response:
 metadata:
   description: Official MCP fallback binding for web.source.normalize using in-process
     baseline tools server.
-  status: experimental
+  status: stable
   fallback_binding_id: python_web_source_normalize

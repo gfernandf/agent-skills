@@ -25,14 +25,17 @@ def _load_registry() -> dict[str, tuple[str, str]]:
             service_modules[sid] = module
 
     tools: dict[str, tuple[str, str]] = {}
-    for path in _BINDINGS_ROOT.rglob("python_*.yaml"):
+    for path in _BINDINGS_ROOT.rglob("*.yaml"):
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         if not isinstance(raw, dict):
+            continue
+        if str(raw.get("protocol", "")).lower() != "pythoncall":
             continue
         capability = raw.get("capability")
         service_id = raw.get("service")
         operation = raw.get("operation")
-        status = str(raw.get("status", "")).lower()
+        metadata = raw.get("metadata") if isinstance(raw.get("metadata"), dict) else {}
+        status = str(metadata.get("status", "")).lower()
         if status == "deprecated":
             continue
         if not (isinstance(capability, str) and isinstance(service_id, str) and isinstance(operation, str)):
