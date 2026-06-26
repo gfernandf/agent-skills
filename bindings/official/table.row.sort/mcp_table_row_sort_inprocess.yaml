@@ -1,0 +1,15 @@
+id: mcp_table_row_sort_inprocess
+capability: table.row.sort
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: table.row.sort
+request:
+  table_data: input.table
+  sort_by: input.sort_by
+response:
+  table: response.table
+metadata:
+  description: Official MCP fallback binding for table.row.sort using in-process baseline
+    tools server.
+  status: experimental
+  fallback_binding_id: python_table_sort

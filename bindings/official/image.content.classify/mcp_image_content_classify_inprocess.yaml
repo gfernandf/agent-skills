@@ -1,0 +1,15 @@
+id: mcp_image_content_classify_inprocess
+capability: image.content.classify
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: image.content.classify
+request:
+  image_data: input.image
+response:
+  label: response.label
+  confidence: response.confidence
+metadata:
+  description: Official MCP fallback binding for image.content.classify using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_image_classify

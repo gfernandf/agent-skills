@@ -3,17 +3,15 @@ capability: task.state.transition
 service: task_baseline
 protocol: pythoncall
 operation: transition_state
-
 request:
   task_id: input.task_id
   target_state: input.target_state
-
 response:
   transitioned: response.transitioned
   previous_state: response.previous_state
   current_state: response.current_state
   reason: response.reason
-
 metadata:
   description: Official pythoncall binding for task.state.transition.
   status: experimental
+  fallback_binding_id: mcp_task_state_transition_inprocess

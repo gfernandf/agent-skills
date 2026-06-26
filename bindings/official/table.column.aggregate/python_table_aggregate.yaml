@@ -11,5 +11,7 @@ response:
   results: response.results
   row_count: response.row_count
 metadata:
-  description: Official binding for table.column.aggregate using the table_baseline service.
+  description: Official binding for table.column.aggregate using the table_baseline
+    service.
   status: stable
+  fallback_binding_id: mcp_table_column_aggregate_inprocess

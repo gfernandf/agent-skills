@@ -1,20 +1,17 @@
 id: openapi_fs_read_local
-
 capability: fs.file.read
 service: fs_read_openapi_local
 protocol: openapi
 operation: read
-
 request:
   path: input.path
   mode: input.mode
-
 response:
   content: response.content
   bytes: response.bytes
-
 metadata:
   method: POST
-  description: "Local OpenAPI pilot binding for fs.file.read."
+  description: Local OpenAPI pilot binding for fs.file.read.
   status: pilot
   timeout_seconds: 30
+  fallback_binding_id: python_fs_read

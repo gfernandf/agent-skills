@@ -11,3 +11,4 @@ response:
 metadata:
   description: Official binding for video.frame.extract using the video_baseline service.
   status: stable
+  fallback_binding_id: mcp_video_frame_extract_inprocess

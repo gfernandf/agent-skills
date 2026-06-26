@@ -9,5 +9,7 @@ response:
   label: response.label
   confidence: response.confidence
 metadata:
-  description: Official binding for image.content.classify using the image_baseline service.
+  description: Official binding for image.content.classify using the image_baseline
+    service.
   status: stable
+  fallback_binding_id: mcp_image_content_classify_inprocess

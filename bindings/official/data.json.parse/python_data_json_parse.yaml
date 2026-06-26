@@ -10,3 +10,4 @@ response:
 metadata:
   description: Official binding for data.json.parse using the data_baseline service.
   status: stable
+  fallback_binding_id: mcp_data_json_parse_inprocess

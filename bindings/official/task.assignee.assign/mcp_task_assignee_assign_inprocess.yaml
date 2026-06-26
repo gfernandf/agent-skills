@@ -1,0 +1,16 @@
+id: mcp_task_assignee_assign_inprocess
+capability: task.assignee.assign
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: task.assignee.assign
+request:
+  task_id: input.task_id
+  assignee_id: input.assignee_id
+response:
+  assigned: response.assigned
+  timestamp: response.timestamp
+metadata:
+  description: Official MCP fallback binding for task.assignee.assign using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_task_assignee_assign

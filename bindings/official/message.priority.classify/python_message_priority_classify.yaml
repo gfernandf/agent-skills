@@ -1,19 +1,17 @@
-﻿id: python_message_priority_classify
+id: python_message_priority_classify
 capability: message.priority.classify
 service: message_baseline
 protocol: pythoncall
 operation: classify_priority
-
 request:
   message: input.message
   sender: input.sender
   context: input.context
-
 response:
   priority: response.priority
   confidence: response.confidence
   rationale: response.rationale
-
 metadata:
   description: Official pythoncall binding for message.priority.classify.
   status: experimental
+  fallback_binding_id: python_task_priority_classify

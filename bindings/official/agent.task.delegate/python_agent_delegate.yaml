@@ -1,17 +1,14 @@
 id: python_agent_delegate
-
 capability: decision.task.delegate
 service: agent_baseline
 protocol: pythoncall
 operation: delegate_agent
-
 request:
   task: input.task
   agent: input.agent
-
 response:
   accepted: response.accepted
-
 metadata:
-  description: "Official binding for agent.task.delegate using the agent_baseline service."
+  description: Official binding for agent.task.delegate using the agent_baseline service.
   status: stable
+  fallback_binding_id: python_decision_task_delegate

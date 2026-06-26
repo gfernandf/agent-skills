@@ -3,16 +3,14 @@ capability: memory.vector.search
 service: memory_baseline
 protocol: pythoncall
 operation: vector_search
-
 request:
   query: input.query
   namespace: input.namespace
   top_k: input.top_k
-
 response:
   results: response.results
   total_searched: response.total_searched
-
 metadata:
   description: Official pythoncall binding for memory.vector.search.
   status: experimental
+  fallback_binding_id: mcp_memory_vector_search_inprocess

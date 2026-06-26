@@ -1,0 +1,15 @@
+id: mcp_table_row_filter_inprocess
+capability: table.row.filter
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: table.row.filter
+request:
+  table_data: input.table
+  filter_criteria: input.condition
+response:
+  table: response.table
+metadata:
+  description: Official MCP fallback binding for table.row.filter using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_table_filter

@@ -1,0 +1,15 @@
+id: mcp_code_source_format_inprocess
+capability: code.source.format
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: code.source.format
+request:
+  code: input.code
+  language: input.language
+response:
+  formatted_code: response.formatted_code
+metadata:
+  description: Official MCP fallback binding for code.source.format using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_code_format

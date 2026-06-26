@@ -13,3 +13,4 @@ response:
 metadata:
   description: Official binding for ops.budget.estimate using ops_baseline service.
   status: stable
+  fallback_binding_id: mcp_ops_budget_estimate_inprocess

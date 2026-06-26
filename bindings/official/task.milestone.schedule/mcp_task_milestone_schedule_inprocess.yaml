@@ -1,0 +1,17 @@
+id: mcp_task_milestone_schedule_inprocess
+capability: task.milestone.schedule
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: task.milestone.schedule
+request:
+  milestone_name: input.milestone_name
+  target_date: input.target_date
+  deliverables: input.deliverables
+response:
+  milestone_id: response.milestone_id
+  scheduled: response.scheduled
+metadata:
+  description: Official MCP fallback binding for task.milestone.schedule using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_task_milestone_schedule

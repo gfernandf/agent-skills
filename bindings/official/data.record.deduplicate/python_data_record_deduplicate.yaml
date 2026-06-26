@@ -12,3 +12,4 @@ response:
 metadata:
   description: Official binding for data.record.deduplicate using data_baseline service.
   status: stable
+  fallback_binding_id: mcp_data_record_deduplicate_inprocess

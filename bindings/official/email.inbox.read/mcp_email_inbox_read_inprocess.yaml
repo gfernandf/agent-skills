@@ -1,0 +1,14 @@
+id: mcp_email_inbox_read_inprocess
+capability: email.inbox.read
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: email.inbox.read
+request:
+  mailbox: input.mailbox
+response:
+  messages: response.messages
+metadata:
+  description: Official MCP fallback binding for email.inbox.read using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_email_read

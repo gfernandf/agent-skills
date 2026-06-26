@@ -13,3 +13,4 @@ response:
 metadata:
   description: Official binding for fs.file.write using the fs_baseline service.
   status: stable
+  fallback_binding_id: mcp_fs_file_write_inprocess

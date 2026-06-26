@@ -13,3 +13,4 @@ metadata:
   description: Python binding for agent.plan.execute using agent_baseline service.
   status: experimental
   timeout_seconds: 180
+  fallback_binding_id: mcp_agent_plan_execute_inprocess

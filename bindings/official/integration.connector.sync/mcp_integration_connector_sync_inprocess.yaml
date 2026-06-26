@@ -1,0 +1,17 @@
+id: mcp_integration_connector_sync_inprocess
+capability: integration.connector.sync
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.connector.sync
+request:
+  connector_id: input.connector_id
+  options: input.options
+response:
+  synced: response.synced
+  records_processed: response.records_processed
+  timestamp: response.timestamp
+metadata:
+  description: Official MCP fallback binding for integration.connector.sync using
+    in-process baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_connector_sync

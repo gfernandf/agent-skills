@@ -1,0 +1,15 @@
+id: mcp_message_notification_send_inprocess
+capability: message.notification.send
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: message.notification.send
+request:
+  channel: input.recipient
+  message: input.message
+response:
+  sent: response.sent
+metadata:
+  description: Official MCP fallback binding for message.notification.send using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_message_send

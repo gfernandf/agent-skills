@@ -1,0 +1,17 @@
+id: mcp_image_content_generate_inprocess
+capability: image.content.generate
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: image.content.generate
+request:
+  prompt: input.prompt
+  style: input.style
+  size: input.size
+response:
+  image: response.image
+  format: response.format
+metadata:
+  description: Official MCP fallback binding for image.content.generate using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_image_generate

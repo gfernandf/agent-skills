@@ -3,17 +3,15 @@ capability: integration.record.compare
 service: integration_baseline
 protocol: pythoncall
 operation: compare_records
-
 request:
   record_a: input.record_a
   record_b: input.record_b
   key_fields: input.key_fields
-
 response:
   match: response.match
   differences: response.differences
   similarity: response.similarity
-
 metadata:
   description: Official pythoncall binding for integration.record.compare.
   status: experimental
+  fallback_binding_id: mcp_integration_record_compare_inprocess

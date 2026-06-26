@@ -3,18 +3,16 @@ capability: agent.flow.wait
 service: agent_baseline
 protocol: pythoncall
 operation: wait_condition
-
 request:
   condition: input.condition
   timeout_seconds: input.timeout_seconds
   poll_interval_seconds: input.poll_interval_seconds
-
 response:
   resolved: response.resolved
   event: response.event
   timed_out: response.timed_out
   elapsed_seconds: response.elapsed_seconds
-
 metadata:
   description: Official baseline binding for agent.flow.wait.
   status: stable
+  fallback_binding_id: mcp_agent_flow_wait_inprocess

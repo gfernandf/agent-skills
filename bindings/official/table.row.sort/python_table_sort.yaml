@@ -11,3 +11,4 @@ response:
 metadata:
   description: Official binding for table.row.sort using the table_baseline service.
   status: stable
+  fallback_binding_id: mcp_table_row_sort_inprocess

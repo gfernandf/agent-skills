@@ -14,3 +14,4 @@ metadata:
   description: Official MCP binding for policy.risk.score using the in-process MCP
     governance server.
   status: experimental
+  fallback_binding_id: python_policy_risk_score

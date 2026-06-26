@@ -1,0 +1,15 @@
+id: mcp_code_diff_extract_inprocess
+capability: code.diff.extract
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: code.diff.extract
+request:
+  code_before: input.code_b
+  code_after: input.code_a
+response:
+  diff: response.diff
+metadata:
+  description: Official MCP fallback binding for code.diff.extract using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_code_diff_extract

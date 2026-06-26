@@ -3,16 +3,15 @@ capability: research.source.retrieve
 service: doc_baseline
 protocol: pythoncall
 operation: resolve_corpus_sources
-
 request:
   items: input.items
-
 response:
   items: response.items
-
 metadata:
-  description: >
-    Official binding for research.source.retrieve. Resolves source_refs in corpus
-    items to actual text content: reads PDFs via PyPDF2, filesystem files via
-    open(), and URLs via requests. Items with existing content are passed through.
+  description: 'Official binding for research.source.retrieve. Resolves source_refs
+    in corpus items to actual text content: reads PDFs via PyPDF2, filesystem files
+    via open(), and URLs via requests. Items with existing content are passed through.
+
+    '
   status: stable
+  fallback_binding_id: mcp_research_source_retrieve_inprocess

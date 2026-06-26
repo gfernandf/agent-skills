@@ -1,0 +1,19 @@
+id: mcp_integration_record_reconcile_inprocess
+capability: integration.record.reconcile
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.record.reconcile
+request:
+  records_a: input.records_a
+  records_b: input.records_b
+  key_field: input.key_field
+response:
+  matched: response.matched
+  only_a: response.only_a
+  only_b: response.only_b
+  discrepancies: response.discrepancies
+metadata:
+  description: Official MCP fallback binding for integration.record.reconcile using
+    in-process baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_record_reconcile

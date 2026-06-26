@@ -3,14 +3,12 @@ capability: integration.record.delete
 service: integration_baseline
 protocol: pythoncall
 operation: delete_record
-
 request:
   connector_id: input.connector_id
   record_id: input.record_id
-
 response:
   deleted: response.deleted
-
 metadata:
   description: Official pythoncall binding for integration.record.delete.
   status: experimental
+  fallback_binding_id: mcp_integration_record_delete_inprocess

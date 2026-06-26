@@ -1,0 +1,15 @@
+id: mcp_integration_record_delete_inprocess
+capability: integration.record.delete
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.record.delete
+request:
+  connector_id: input.connector_id
+  record_id: input.record_id
+response:
+  deleted: response.deleted
+metadata:
+  description: Official MCP fallback binding for integration.record.delete using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_record_delete

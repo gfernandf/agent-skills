@@ -1,0 +1,15 @@
+id: mcp_doc_content_chunk_inprocess
+capability: doc.content.chunk
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: doc.content.chunk
+request:
+  text: input.text
+  chunk_size: input.chunk_size
+response:
+  chunks: response.chunks
+metadata:
+  description: Official MCP fallback binding for doc.content.chunk using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_doc_chunk

@@ -1,0 +1,17 @@
+id: mcp_memory_vector_search_inprocess
+capability: memory.vector.search
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: memory.vector.search
+request:
+  query: input.query
+  namespace: input.namespace
+  top_k: input.top_k
+response:
+  results: response.results
+  total_searched: response.total_searched
+metadata:
+  description: Official MCP fallback binding for memory.vector.search using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_memory_vector_search

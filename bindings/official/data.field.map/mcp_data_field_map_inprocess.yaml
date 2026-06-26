@@ -1,0 +1,17 @@
+id: mcp_data_field_map_inprocess
+capability: data.field.map
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: data.field.map
+request:
+  record: input.record
+  mapping: input.mapping
+  drop_unmapped: input.drop_unmapped
+response:
+  record: response.record
+  mapped_count: response.mapped_count
+metadata:
+  description: Official MCP fallback binding for data.field.map using in-process baseline
+    tools server.
+  status: experimental
+  fallback_binding_id: python_data_field_map

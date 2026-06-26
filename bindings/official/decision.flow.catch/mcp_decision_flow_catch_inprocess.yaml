@@ -1,0 +1,20 @@
+id: mcp_decision_flow_catch_inprocess
+capability: decision.flow.catch
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: decision.flow.catch
+request:
+  error: input.error
+  fallback_strategy: input.fallback_strategy
+  default_value: input.default_value
+  max_retries: input.max_retries
+  context: input.context
+response:
+  result: response.result
+  strategy_applied: response.strategy_applied
+  recovered: response.recovered
+metadata:
+  description: Official MCP fallback binding for decision.flow.catch using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_decision_flow_catch

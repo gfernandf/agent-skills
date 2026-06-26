@@ -1,0 +1,17 @@
+id: mcp_code_source_analyze_inprocess
+capability: code.source.analyze
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: code.source.analyze
+request:
+  code: input.code
+  language: input.language
+response:
+  metrics: response.metrics
+  warnings: response.warnings
+  summary: response.summary
+metadata:
+  description: Official MCP fallback binding for code.source.analyze using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_code_analyze

@@ -1,19 +1,16 @@
 id: openapi_web_fetch_local
-
 capability: web.page.fetch
 service: web_fetch_openapi_local
 protocol: openapi
 operation: fetch
-
 request:
   url: input.url
-
 response:
   content: response.content
   status: response.status
-
 metadata:
   method: POST
-  description: "Local OpenAPI pilot binding for web.page.fetch."
+  description: Local OpenAPI pilot binding for web.page.fetch.
   status: pilot
   timeout_seconds: 30
+  fallback_binding_id: mcp_web_fetch_inprocess

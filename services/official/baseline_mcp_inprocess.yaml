@@ -1,0 +1,7 @@
+id: baseline_mcp_inprocess
+kind: mcp
+server: official_baseline_tools
+metadata:
+  description: In-process MCP server exposing official baseline pythoncall operations
+    as MCP tools.
+  maintained_by: agent-skills

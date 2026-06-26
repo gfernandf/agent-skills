@@ -14,3 +14,4 @@ metadata:
   description: Official MCP binding for identity.assignee.identify using the in-process
     MCP governance server.
   status: experimental
+  fallback_binding_id: python_identity_assignee_identify

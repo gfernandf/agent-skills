@@ -1,0 +1,18 @@
+id: mcp_task_incident_create_inprocess
+capability: task.incident.create
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: task.incident.create
+request:
+  title: input.title
+  severity: input.severity
+  affected_system: input.affected_system
+  description: input.description
+response:
+  incident_id: response.incident_id
+  created: response.created
+metadata:
+  description: Official MCP fallback binding for task.incident.create using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_task_incident_create

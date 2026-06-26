@@ -1,19 +1,16 @@
 id: openapi_pdf_read_local
-
 capability: pdf.document.read
 service: pdf_read_openapi_local
 protocol: openapi
 operation: read
-
 request:
   path: input.path
-
 response:
   text: response.text
   metadata: response.metadata
-
 metadata:
   method: POST
-  description: "Local OpenAPI pilot binding for pdf.document.read."
+  description: Local OpenAPI pilot binding for pdf.document.read.
   status: pilot
   timeout_seconds: 30
+  fallback_binding_id: python_pdf_read

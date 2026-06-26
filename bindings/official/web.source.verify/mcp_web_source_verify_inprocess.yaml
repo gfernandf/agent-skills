@@ -1,0 +1,16 @@
+id: mcp_web_source_verify_inprocess
+capability: web.source.verify
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: web.source.verify
+request:
+  url: input.url
+response:
+  trusted: response.trusted
+  reason: response.reason
+  normalized_source: response.normalized_source
+metadata:
+  description: Official MCP fallback binding for web.source.verify using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_web_source_verify

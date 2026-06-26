@@ -14,3 +14,4 @@ metadata:
   description: Official MCP binding for identity.permission.verify using the in-process
     MCP governance server.
   status: experimental
+  fallback_binding_id: python_identity_permission_verify

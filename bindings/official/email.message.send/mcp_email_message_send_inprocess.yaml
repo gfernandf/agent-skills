@@ -1,0 +1,16 @@
+id: mcp_email_message_send_inprocess
+capability: email.message.send
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: email.message.send
+request:
+  to: input.to
+  subject: input.subject
+  body: input.body
+response:
+  sent: response.sent
+metadata:
+  description: Official MCP fallback binding for email.message.send using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_email_send

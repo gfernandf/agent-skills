@@ -1,0 +1,16 @@
+id: mcp_integration_mapping_transform_inprocess
+capability: integration.mapping.transform
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.mapping.transform
+request:
+  record: input.record
+  mapping: input.mapping
+response:
+  transformed: response.transformed
+  unmapped_fields: response.unmapped_fields
+metadata:
+  description: Official MCP fallback binding for integration.mapping.transform using
+    in-process baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_mapping_transform

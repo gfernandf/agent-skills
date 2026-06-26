@@ -1,0 +1,17 @@
+id: mcp_task_approval_approve_inprocess
+capability: task.approval.approve
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: task.approval.approve
+request:
+  approval_id: input.approval_id
+  approver: input.approver
+  notes: input.notes
+response:
+  approved: response.approved
+  timestamp: response.timestamp
+metadata:
+  description: Official MCP fallback binding for task.approval.approve using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_task_approval_approve

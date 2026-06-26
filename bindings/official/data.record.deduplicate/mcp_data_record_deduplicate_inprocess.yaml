@@ -1,0 +1,16 @@
+id: mcp_data_record_deduplicate_inprocess
+capability: data.record.deduplicate
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: data.record.deduplicate
+request:
+  records: input.records
+  key_fields: input.key_fields
+response:
+  records: response.records
+  duplicates: response.duplicates
+metadata:
+  description: Official MCP fallback binding for data.record.deduplicate using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_data_record_deduplicate

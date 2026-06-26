@@ -1,0 +1,17 @@
+id: mcp_data_array_map_inprocess
+capability: data.array.map
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: data.array.map
+request:
+  items: input.items
+  expression: input.expression
+  context: input.context
+response:
+  items: response.items
+  item_count: response.item_count
+metadata:
+  description: Official MCP fallback binding for data.array.map using in-process baseline
+    tools server.
+  status: experimental
+  fallback_binding_id: python_data_array_map

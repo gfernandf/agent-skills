@@ -1,4 +1,4 @@
-﻿id: python_perception_case_search
+id: python_perception_case_search
 capability: perception.case.search
 service: task_baseline
 protocol: pythoncall
@@ -12,5 +12,4 @@ response:
 metadata:
   description: Python fallback for perception.case.search using task case search baseline.
   status: stable
-
-
+  fallback_binding_id: python_task_case_search

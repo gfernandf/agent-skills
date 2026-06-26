@@ -3,16 +3,14 @@ capability: perception.event.monitor
 service: ops_baseline
 protocol: pythoncall
 operation: monitor_events
-
 request:
   events: input.events
   thresholds: input.thresholds
-
 response:
   status: response.status
   alerts: response.alerts
   event_summary: response.event_summary
-
 metadata:
   description: Official pythoncall binding for ops.event.monitor.
   status: experimental
+  fallback_binding_id: python_perception_event_monitor

@@ -1,0 +1,18 @@
+id: mcp_integration_record_compare_inprocess
+capability: integration.record.compare
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.record.compare
+request:
+  record_a: input.record_a
+  record_b: input.record_b
+  key_fields: input.key_fields
+response:
+  match: response.match
+  differences: response.differences
+  similarity: response.similarity
+metadata:
+  description: Official MCP fallback binding for integration.record.compare using
+    in-process baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_record_compare

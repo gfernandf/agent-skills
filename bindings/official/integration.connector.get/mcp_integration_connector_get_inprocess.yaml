@@ -1,0 +1,15 @@
+id: mcp_integration_connector_get_inprocess
+capability: integration.connector.get
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.connector.get
+request:
+  connector_id: input.connector_id
+response:
+  connector: response.connector
+  found: response.found
+metadata:
+  description: Official MCP fallback binding for integration.connector.get using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_connector_get

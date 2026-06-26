@@ -1,0 +1,17 @@
+id: mcp_task_approval_reject_inprocess
+capability: task.approval.reject
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: task.approval.reject
+request:
+  approval_id: input.approval_id
+  rejector: input.rejector
+  reason: input.reason
+response:
+  rejected: response.rejected
+  timestamp: response.timestamp
+metadata:
+  description: Official MCP fallback binding for task.approval.reject using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_task_approval_reject

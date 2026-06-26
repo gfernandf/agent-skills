@@ -1,0 +1,16 @@
+id: mcp_integration_mapping_validate_inprocess
+capability: integration.mapping.validate
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.mapping.validate
+request:
+  mapping: input.mapping
+  source_schema: input.source_schema
+response:
+  valid: response.valid
+  issues: response.issues
+metadata:
+  description: Official MCP fallback binding for integration.mapping.validate using
+    in-process baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_mapping_validate

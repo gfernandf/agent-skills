@@ -12,3 +12,4 @@ response:
 metadata:
   description: Official binding for web.source.verify using web_baseline service.
   status: stable
+  fallback_binding_id: mcp_web_source_verify_inprocess

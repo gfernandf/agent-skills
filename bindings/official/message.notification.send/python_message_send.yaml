@@ -9,5 +9,7 @@ request:
 response:
   sent: response.sent
 metadata:
-  description: Official binding for message.notification.send using the message_baseline service.
+  description: Official binding for message.notification.send using the message_baseline
+    service.
   status: stable
+  fallback_binding_id: mcp_message_notification_send_inprocess

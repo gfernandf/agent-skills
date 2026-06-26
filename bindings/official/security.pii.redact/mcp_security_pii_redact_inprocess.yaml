@@ -12,3 +12,4 @@ metadata:
   description: Official MCP binding for security.pii.redact using the in-process MCP
     governance server.
   status: experimental
+  fallback_binding_id: python_security_pii_redact

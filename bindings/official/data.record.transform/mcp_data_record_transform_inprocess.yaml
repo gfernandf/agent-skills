@@ -1,0 +1,16 @@
+id: mcp_data_record_transform_inprocess
+capability: data.record.transform
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: data.record.transform
+request:
+  records: input.records
+  mapping: input.mapping
+response:
+  records: response.records
+  transform_summary: response.transform_summary
+metadata:
+  description: Official MCP fallback binding for data.record.transform using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_data_transform

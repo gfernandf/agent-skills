@@ -1,0 +1,19 @@
+id: mcp_table_sheet_write_inprocess
+capability: table.sheet.write
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: table.sheet.write
+request:
+  path: input.path
+  table: input.table
+  headers: input.headers
+  sheet_name: input.sheet_name
+response:
+  written: response.written
+  row_count: response.row_count
+  path: response.path
+metadata:
+  description: Official MCP fallback binding for table.sheet.write using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_table_sheet_write

@@ -1,0 +1,19 @@
+id: mcp_data_record_join_inprocess
+capability: data.record.join
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: data.record.join
+request:
+  records_a: input.records_a
+  records_b: input.records_b
+  key_field: input.key_field
+  join_type: input.join_type
+response:
+  records: response.records
+  matched_count: response.matched_count
+  unmatched_count: response.unmatched_count
+metadata:
+  description: Official MCP fallback binding for data.record.join using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_data_join

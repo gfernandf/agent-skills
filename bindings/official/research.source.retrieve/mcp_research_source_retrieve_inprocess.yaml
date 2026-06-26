@@ -1,0 +1,14 @@
+id: mcp_research_source_retrieve_inprocess
+capability: research.source.retrieve
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: research.source.retrieve
+request:
+  items: input.items
+response:
+  items: response.items
+metadata:
+  description: Official MCP fallback binding for research.source.retrieve using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_research_source_retrieve

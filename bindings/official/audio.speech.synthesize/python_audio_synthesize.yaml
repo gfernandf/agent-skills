@@ -13,3 +13,4 @@ response:
 metadata:
   description: Official baseline binding for audio.speech.synthesize (TTS).
   status: stable
+  fallback_binding_id: mcp_audio_speech_synthesize_inprocess

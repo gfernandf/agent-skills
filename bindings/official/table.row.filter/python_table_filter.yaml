@@ -11,3 +11,4 @@ response:
 metadata:
   description: Official binding for table.row.filter using the table_baseline service.
   status: stable
+  fallback_binding_id: mcp_table_row_filter_inprocess

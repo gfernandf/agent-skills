@@ -3,16 +3,14 @@ capability: task.approval.reject
 service: task_baseline
 protocol: pythoncall
 operation: reject_request
-
 request:
   approval_id: input.approval_id
   rejector: input.rejector
   reason: input.reason
-
 response:
   rejected: response.rejected
   timestamp: response.timestamp
-
 metadata:
   description: Official pythoncall binding for task.approval.reject.
   status: experimental
+  fallback_binding_id: mcp_task_approval_reject_inprocess

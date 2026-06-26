@@ -1,0 +1,17 @@
+id: mcp_audio_speech_synthesize_inprocess
+capability: audio.speech.synthesize
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: audio.speech.synthesize
+request:
+  text: input.text
+  language: input.language
+  voice: input.voice
+response:
+  audio: response.audio
+  metadata: response.metadata
+metadata:
+  description: Official MCP fallback binding for audio.speech.synthesize using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_audio_synthesize

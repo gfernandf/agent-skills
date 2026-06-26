@@ -1,0 +1,16 @@
+id: mcp_agent_plan_execute_inprocess
+capability: agent.plan.execute
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: agent.plan.execute
+request:
+  compiled_plan: input.compiled_plan
+  initial_state: input.initial_state
+response:
+  execution_result: response.execution_result
+  failed_steps: response.failed_steps
+metadata:
+  description: Official MCP fallback binding for agent.plan.execute using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_agent_plan_execute

@@ -3,14 +3,12 @@ capability: web.source.normalize
 service: web_baseline
 protocol: pythoncall
 operation: normalize_search_results
-
 request:
   results: input.results
   mode: input.mode
-
 response:
   items: response.items
-
 metadata:
   description: Official binding for web.source.normalize using web_baseline service.
   status: stable
+  fallback_binding_id: mcp_web_source_normalize_inprocess

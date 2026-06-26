@@ -13,3 +13,4 @@ metadata:
   description: Official MCP binding for identity.permission.list using the in-process
     MCP governance server.
   status: experimental
+  fallback_binding_id: python_identity_permission_list

@@ -1,0 +1,17 @@
+id: mcp_ops_budget_estimate_inprocess
+capability: ops.budget.estimate
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: ops.budget.estimate
+request:
+  plan: input.plan
+  limits: input.limits
+response:
+  estimated_cost: response.estimated_cost
+  estimated_duration_ms: response.estimated_duration_ms
+  within_budget: response.within_budget
+metadata:
+  description: Official MCP fallback binding for ops.budget.estimate using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_ops_budget_estimate

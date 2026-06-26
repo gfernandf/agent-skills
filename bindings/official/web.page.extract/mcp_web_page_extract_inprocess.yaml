@@ -1,0 +1,15 @@
+id: mcp_web_page_extract_inprocess
+capability: web.page.extract
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: web.page.extract
+request:
+  content: input.content
+response:
+  title: response.title
+  text: response.text
+metadata:
+  description: Official MCP fallback binding for web.page.extract using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_web_page_extract

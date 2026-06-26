@@ -11,3 +11,4 @@ metadata:
   description: Official binding for image.caption.generate using the image_baseline
     service.
   status: stable
+  fallback_binding_id: mcp_image_caption_generate_inprocess

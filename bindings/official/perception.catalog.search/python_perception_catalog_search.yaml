@@ -13,3 +13,4 @@ response:
 metadata:
   description: Python fallback for agent.catalog.search using local registry heuristics.
   status: stable
+  fallback_binding_id: mcp_perception_catalog_search_inprocess

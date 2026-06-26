@@ -1,0 +1,16 @@
+id: mcp_task_case_close_inprocess
+capability: task.case.close
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: task.case.close
+request:
+  case_id: input.case_id
+  resolution: input.resolution
+response:
+  closed: response.closed
+  timestamp: response.timestamp
+metadata:
+  description: Official MCP fallback binding for task.case.close using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_task_case_close

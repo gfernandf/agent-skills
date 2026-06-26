@@ -3,16 +3,14 @@ capability: data.field.map
 service: data_baseline
 protocol: pythoncall
 operation: map_fields
-
 request:
   record: input.record
   mapping: input.mapping
   drop_unmapped: input.drop_unmapped
-
 response:
   record: response.record
   mapped_count: response.mapped_count
-
 metadata:
   description: Official baseline binding for data.field.map.
   status: stable
+  fallback_binding_id: mcp_data_field_map_inprocess

@@ -3,16 +3,14 @@ capability: reasoning.prompt.template
 service: model_baseline
 protocol: pythoncall
 operation: template_prompt
-
 request:
   template: input.template
   variables: input.variables
   format: input.format
-
 response:
   prompt: response.prompt
   unresolved: response.unresolved
-
 metadata:
   description: Official pythoncall binding for model.prompt.template.
   status: experimental
+  fallback_binding_id: python_reasoning_prompt_template

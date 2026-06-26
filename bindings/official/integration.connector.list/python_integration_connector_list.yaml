@@ -3,15 +3,13 @@ capability: integration.connector.list
 service: integration_baseline
 protocol: pythoncall
 operation: list_connectors
-
 request:
   type_filter: input.type_filter
   status_filter: input.status_filter
-
 response:
   connectors: response.connectors
   total: response.total
-
 metadata:
   description: Official pythoncall binding for integration.connector.list.
   status: experimental
+  fallback_binding_id: mcp_integration_connector_list_inprocess

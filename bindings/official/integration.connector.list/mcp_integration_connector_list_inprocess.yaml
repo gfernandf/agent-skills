@@ -1,0 +1,16 @@
+id: mcp_integration_connector_list_inprocess
+capability: integration.connector.list
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.connector.list
+request:
+  type_filter: input.type_filter
+  status_filter: input.status_filter
+response:
+  connectors: response.connectors
+  total: response.total
+metadata:
+  description: Official MCP fallback binding for integration.connector.list using
+    in-process baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_connector_list

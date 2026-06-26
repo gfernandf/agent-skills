@@ -15,3 +15,4 @@ response:
 metadata:
   description: Python alias binding for agent.flow.branch via evaluate_branch.
   status: stable
+  fallback_binding_id: python_decision_flow_branch

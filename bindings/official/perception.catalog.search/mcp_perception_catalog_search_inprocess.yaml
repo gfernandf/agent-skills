@@ -1,0 +1,17 @@
+id: mcp_perception_catalog_search_inprocess
+capability: perception.catalog.search
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: perception.catalog.search
+request:
+  goal: input.goal
+  registry: input.registry
+  filters: input.filters
+response:
+  candidate_items: response.candidate_items
+  total_matched: response.total_matched
+metadata:
+  description: Official MCP fallback binding for perception.catalog.search using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_perception_catalog_search

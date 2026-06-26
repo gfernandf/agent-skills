@@ -1,0 +1,17 @@
+id: mcp_task_case_create_inprocess
+capability: task.case.create
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: task.case.create
+request:
+  title: input.title
+  description: input.description
+  priority: input.priority
+response:
+  case_id: response.case_id
+  created: response.created
+metadata:
+  description: Official MCP fallback binding for task.case.create using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_task_case_create

@@ -1,0 +1,14 @@
+id: mcp_data_json_parse_inprocess
+capability: data.json.parse
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: data.json.parse
+request:
+  json_string: input.text
+response:
+  data: response.data
+metadata:
+  description: Official MCP fallback binding for data.json.parse using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_data_json_parse

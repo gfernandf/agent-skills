@@ -1,0 +1,17 @@
+id: mcp_fs_file_write_inprocess
+capability: fs.file.write
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: fs.file.write
+request:
+  path: input.path
+  content: input.content
+  mode: input.mode
+response:
+  path: response.path
+  bytes_written: response.bytes_written
+metadata:
+  description: Official MCP fallback binding for fs.file.write using in-process baseline
+    tools server.
+  status: experimental
+  fallback_binding_id: python_fs_write

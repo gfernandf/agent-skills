@@ -13,3 +13,4 @@ metadata:
   description: Official MCP binding for policy.constraint.validate using the in-process
     MCP governance server.
   status: experimental
+  fallback_binding_id: python_policy_constraint_validate

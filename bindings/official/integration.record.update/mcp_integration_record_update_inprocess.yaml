@@ -1,0 +1,16 @@
+id: mcp_integration_record_update_inprocess
+capability: integration.record.update
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.record.update
+request:
+  connector_id: input.connector_id
+  record_id: input.record_id
+  fields: input.fields
+response:
+  updated: response.updated
+metadata:
+  description: Official MCP fallback binding for integration.record.update using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_record_update

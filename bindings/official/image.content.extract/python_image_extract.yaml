@@ -13,3 +13,4 @@ response:
 metadata:
   description: Official baseline binding for image.content.extract (OCR).
   status: stable
+  fallback_binding_id: mcp_image_content_extract_inprocess

@@ -1,0 +1,17 @@
+id: mcp_fs_file_list_inprocess
+capability: fs.file.list
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: fs.file.list
+request:
+  path: input.path
+  pattern: input.pattern
+  recursive: input.recursive
+response:
+  entries: response.entries
+  total: response.total
+metadata:
+  description: Official MCP fallback binding for fs.file.list using in-process baseline
+    tools server.
+  status: experimental
+  fallback_binding_id: python_fs_list

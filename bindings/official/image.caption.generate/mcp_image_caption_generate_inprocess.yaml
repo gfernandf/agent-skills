@@ -1,0 +1,14 @@
+id: mcp_image_caption_generate_inprocess
+capability: image.caption.generate
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: image.caption.generate
+request:
+  image_data: input.image
+response:
+  caption: response.caption
+metadata:
+  description: Official MCP fallback binding for image.caption.generate using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_image_caption_generate

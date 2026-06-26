@@ -1,0 +1,21 @@
+id: mcp_agent_flow_iterate_inprocess
+capability: agent.flow.iterate
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: agent.flow.iterate
+request:
+  items: input.items
+  capability: input.capability
+  input_mapping: input.input_mapping
+  mode: input.mode
+  max_concurrency: input.max_concurrency
+response:
+  results: response.results
+  item_count: response.item_count
+  error_count: response.error_count
+  errors: response.errors
+metadata:
+  description: Official MCP fallback binding for agent.flow.iterate using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_agent_flow_iterate

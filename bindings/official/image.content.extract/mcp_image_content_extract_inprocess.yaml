@@ -1,0 +1,17 @@
+id: mcp_image_content_extract_inprocess
+capability: image.content.extract
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: image.content.extract
+request:
+  image_data: input.image
+  language: input.language
+response:
+  text: response.text
+  confidence: response.confidence
+  regions: response.regions
+metadata:
+  description: Official MCP fallback binding for image.content.extract using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_image_extract

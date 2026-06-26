@@ -10,5 +10,7 @@ response:
   records: response.records
   transform_summary: response.transform_summary
 metadata:
-  description: Official binding for data.record.transform using the data_baseline service.
+  description: Official binding for data.record.transform using the data_baseline
+    service.
   status: stable
+  fallback_binding_id: mcp_data_record_transform_inprocess

@@ -1,18 +1,15 @@
 id: openapi_audio_transcribe_local
-
 capability: audio.speech.transcribe
 service: audio_transcribe_openapi_local
 protocol: openapi
 operation: transcribe
-
 request:
   audio: input.audio
-
 response:
   transcript: response.transcript
-
 metadata:
   method: POST
-  description: "Local OpenAPI pilot binding for audio.speech.transcribe."
+  description: Local OpenAPI pilot binding for audio.speech.transcribe.
   status: pilot
   timeout_seconds: 60
+  fallback_binding_id: python_audio_transcribe

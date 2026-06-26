@@ -1,0 +1,15 @@
+id: mcp_web_source_normalize_inprocess
+capability: web.source.normalize
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: web.source.normalize
+request:
+  results: input.results
+  mode: input.mode
+response:
+  items: response.items
+metadata:
+  description: Official MCP fallback binding for web.source.normalize using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_web_source_normalize

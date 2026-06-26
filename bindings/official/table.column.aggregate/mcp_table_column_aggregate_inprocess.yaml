@@ -1,0 +1,17 @@
+id: mcp_table_column_aggregate_inprocess
+capability: table.column.aggregate
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: table.column.aggregate
+request:
+  table_data: input.table
+  aggregations: input.aggregations
+  group_by: input.group_by
+response:
+  results: response.results
+  row_count: response.row_count
+metadata:
+  description: Official MCP fallback binding for table.column.aggregate using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_table_aggregate

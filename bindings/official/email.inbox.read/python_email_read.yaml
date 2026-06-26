@@ -10,3 +10,4 @@ response:
 metadata:
   description: Official binding for email.inbox.read using the email_baseline service.
   status: stable
+  fallback_binding_id: mcp_email_inbox_read_inprocess

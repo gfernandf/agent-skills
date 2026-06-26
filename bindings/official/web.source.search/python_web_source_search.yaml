@@ -1,17 +1,14 @@
 id: python_web_source_search
-
 capability: web.source.search
 service: web_baseline
 protocol: pythoncall
 operation: search_web
-
 request:
   query: input.query
   limit: input.limit
-
 response:
   results: response.results
-
 metadata:
-  description: "Official binding for web.source.search using the web_baseline service."
+  description: Official binding for web.source.search using the web_baseline service.
   status: stable
+  fallback_binding_id: mcp_web_source_search_inprocess

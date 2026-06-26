@@ -15,3 +15,4 @@ metadata:
   description: Official MCP binding for identity.decision.justify using the in-process
     MCP governance server.
   status: experimental
+  fallback_binding_id: python_identity_decision_justify

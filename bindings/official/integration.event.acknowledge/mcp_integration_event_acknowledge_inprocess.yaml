@@ -1,0 +1,17 @@
+id: mcp_integration_event_acknowledge_inprocess
+capability: integration.event.acknowledge
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: integration.event.acknowledge
+request:
+  event_id: input.event_id
+  connector_id: input.connector_id
+  notes: input.notes
+response:
+  acknowledged: response.acknowledged
+  timestamp: response.timestamp
+metadata:
+  description: Official MCP fallback binding for integration.event.acknowledge using
+    in-process baseline tools server.
+  status: experimental
+  fallback_binding_id: python_integration_event_acknowledge

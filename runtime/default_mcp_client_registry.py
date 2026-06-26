@@ -9,6 +9,7 @@ _DEFAULT_SERVER_MODULES = {
     "official_data_tools": "official_mcp_servers.data_tools",
     "official_web_tools": "official_mcp_servers.web_tools",
     "official_governance_tools": "official_mcp_servers.governance_tools",
+    "official_baseline_tools": "official_mcp_servers.baseline_tools",
 }
 
 

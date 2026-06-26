@@ -1,0 +1,18 @@
+id: mcp_table_sheet_read_inprocess
+capability: table.sheet.read
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: table.sheet.read
+request:
+  path: input.path
+  sheet_name: input.sheet_name
+  range: input.range
+response:
+  table: response.table
+  headers: response.headers
+  row_count: response.row_count
+metadata:
+  description: Official MCP fallback binding for table.sheet.read using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_table_sheet_read

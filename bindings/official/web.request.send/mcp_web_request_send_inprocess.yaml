@@ -1,0 +1,21 @@
+id: mcp_web_request_send_inprocess
+capability: web.request.send
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: web.request.send
+request:
+  url: input.url
+  method: input.method
+  headers: input.headers
+  body: input.body
+  timeout_seconds: input.timeout_seconds
+response:
+  status_code: response.status_code
+  headers: response.headers
+  body: response.body
+  success: response.success
+metadata:
+  description: Official MCP fallback binding for web.request.send using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_web_request_send

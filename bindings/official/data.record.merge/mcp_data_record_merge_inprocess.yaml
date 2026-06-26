@@ -1,0 +1,16 @@
+id: mcp_data_record_merge_inprocess
+capability: data.record.merge
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: data.record.merge
+request:
+  records: input.records
+  strategy: input.strategy
+response:
+  record: response.record
+  field_count: response.field_count
+metadata:
+  description: Official MCP fallback binding for data.record.merge using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_data_merge

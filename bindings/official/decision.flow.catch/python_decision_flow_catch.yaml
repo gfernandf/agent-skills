@@ -16,3 +16,4 @@ response:
 metadata:
   description: Python fallback for agent.flow.catch using agent error-handling baseline.
   status: stable
+  fallback_binding_id: mcp_decision_flow_catch_inprocess

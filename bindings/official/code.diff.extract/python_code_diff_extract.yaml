@@ -11,3 +11,4 @@ response:
 metadata:
   description: Official binding for code.diff.extract using the code_baseline service.
   status: stable
+  fallback_binding_id: mcp_code_diff_extract_inprocess

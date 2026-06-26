@@ -1,0 +1,15 @@
+id: mcp_video_frame_extract_inprocess
+capability: video.frame.extract
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: video.frame.extract
+request:
+  video_data: input.video
+  frame_rate: input.video
+response:
+  frames: response.frames
+metadata:
+  description: Official MCP fallback binding for video.frame.extract using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_video_frame_extract

@@ -1,0 +1,15 @@
+id: mcp_web_source_search_inprocess
+capability: web.source.search
+service: baseline_mcp_inprocess
+protocol: mcp
+operation: web.source.search
+request:
+  query: input.query
+  limit: input.limit
+response:
+  results: response.results
+metadata:
+  description: Official MCP fallback binding for web.source.search using in-process
+    baseline tools server.
+  status: experimental
+  fallback_binding_id: python_web_source_search
