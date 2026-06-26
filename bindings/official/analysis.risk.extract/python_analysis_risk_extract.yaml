@@ -1,0 +1,18 @@
+id: python_analysis_risk_extract
+capability: reasoning.risk.extract
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_risk_extract
+request:
+  target: input.target
+  context: input.context
+  risk_scope: input.risk_scope
+response:
+  risks: response.risks
+  assumptions: response.assumptions
+  failure_modes: response.failure_modes
+  mitigation_ideas: response.mitigation_ideas
+  extraction_notes: response.extraction_notes
+metadata:
+  description: Python alias binding for analysis.risk.extract via reasoning_risk_extract.
+  status: stable

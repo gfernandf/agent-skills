@@ -1,4 +1,4 @@
-id: mcp_policy_record_classify_inprocess
+﻿id: mcp_policy_record_classify_inprocess
 capability: policy.record.classify
 service: governance_mcp_inprocess
 protocol: mcp
@@ -15,4 +15,6 @@ response:
 metadata:
   description: Official MCP binding for policy.record.classify using the in-process
     MCP governance server.
-  status: experimental
+  status: deprecated
+  deprecation_reason: capability_not_in_registry
+  deprecation_source_of_truth: agent-skill-registry/capabilities

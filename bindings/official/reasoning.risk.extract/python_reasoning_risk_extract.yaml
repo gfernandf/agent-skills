@@ -1,4 +1,4 @@
-id: python_reasoning_risk_extract
+﻿id: python_reasoning_risk_extract
 capability: reasoning.risk.extract
 service: cognitive_baseline
 protocol: pythoncall
@@ -16,3 +16,5 @@ response:
 metadata:
   description: Python fallback for reasoning.risk.extract using cognitive_baseline service.
   status: stable
+
+

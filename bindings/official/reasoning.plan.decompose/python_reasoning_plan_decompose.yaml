@@ -1,4 +1,4 @@
-id: python_reasoning_plan_decompose
+﻿id: python_reasoning_plan_decompose
 capability: reasoning.plan.decompose
 service: cognitive_baseline
 protocol: pythoncall
@@ -14,3 +14,5 @@ response:
 metadata:
   description: Python fallback for reasoning.plan.decompose using cognitive_baseline service.
   status: stable
+
+

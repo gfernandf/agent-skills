@@ -1,0 +1,14 @@
+id: python_agent_request_normalize
+capability: reasoning.request.normalize
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_request_normalize
+request:
+  user_message: input.user_message
+  context: input.context
+response:
+  normalized_request: response.normalized_request
+  language: response.language
+metadata:
+  description: Python alias binding for agent.request.normalize via reasoning_request_normalize.
+  status: stable

@@ -1,4 +1,4 @@
-id: python_reasoning_content_summarize
+﻿id: python_reasoning_content_summarize
 capability: reasoning.content.summarize
 service: cognitive_baseline
 protocol: pythoncall
@@ -11,3 +11,5 @@ response:
 metadata:
   description: Python fallback for reasoning.content.summarize using cognitive_baseline service.
   status: stable
+
+

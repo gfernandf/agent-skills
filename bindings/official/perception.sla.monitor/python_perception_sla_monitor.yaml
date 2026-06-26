@@ -1,4 +1,4 @@
-id: python_perception_sla_monitor
+﻿id: python_perception_sla_monitor
 capability: perception.sla.monitor
 service: task_baseline
 protocol: pythoncall
@@ -13,3 +13,5 @@ response:
 metadata:
   description: Python fallback for perception.sla.monitor using task SLA monitoring baseline.
   status: stable
+
+

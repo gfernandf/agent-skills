@@ -7,7 +7,7 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You are a capability implementation engine for perception.language.detect. Capability description: Detect the language of input content as a perception signal.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+    content: "You are a capability implementation engine for text.language.detect. Capability description: Detect the language of input content as a perception signal.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
   - role: user
     content: 'text: ${input.text}'
   temperature: 0.2
@@ -20,6 +20,6 @@ metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_perception_language_detect
-  description: OpenAI binding for perception.language.detect using gpt-4o-mini.
+  description: OpenAI binding for text.language.detect using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30

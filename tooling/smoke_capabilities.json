@@ -7,7 +7,7 @@
   "fs.file.read",
   "data.schema.validate",
   "decision.input.route",
-  "policy.decision.evaluate",
-  "policy.record.classify",
+  "policy.decision.justify",
+  "policy.risk.classify",
   "security.pii.detect"
 ]

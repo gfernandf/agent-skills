@@ -1,0 +1,17 @@
+id: python_agent_flow_branch
+capability: decision.flow.branch
+service: agent_baseline
+protocol: pythoncall
+operation: evaluate_branch
+request:
+  condition: input.condition
+  context: input.context
+  branches: input.branches
+  default_branch: input.default_branch
+response:
+  selected_branch: response.selected_branch
+  rationale: response.rationale
+  confidence: response.confidence
+metadata:
+  description: Python alias binding for agent.flow.branch via evaluate_branch.
+  status: stable

@@ -1,4 +1,4 @@
-id: openapi_evaluation_option_score_openai_chat
+﻿id: openapi_evaluation_option_score_openai_chat
 capability: evaluation.option.score
 service: model_openai_chat
 protocol: openapi
@@ -34,3 +34,5 @@ metadata:
   description: OpenAI binding for evaluation.option.score using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

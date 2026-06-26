@@ -1,4 +1,4 @@
-id: openapi_reasoning_risk_extract_openai_chat
+﻿id: openapi_reasoning_risk_extract_openai_chat
 capability: reasoning.risk.extract
 service: model_openai_chat
 protocol: openapi
@@ -7,7 +7,7 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You are a capability implementation engine for reasoning.risk.extract. Capability description: Extract risks, fragile assumptions, failure modes, and preliminary mitigation ideas from a target artifact (decision, plan, analysis, proposal, draft). Produces a structured risk inventory with severity hints. Does NOT score or rank risks — that is the responsibility of downstream capabilities.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+    content: "You are a capability implementation engine for reasoning.risk.extract. Capability description: Extract risks, fragile assumptions, failure modes, and preliminary mitigation ideas from a target artifact (decision, plan, analysis, proposal, draft). Produces a structured risk inventory with severity hints. Does NOT score or rank risks â€” that is the responsibility of downstream capabilities.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
   - role: user
     content: 'target: ${input.target}\n\ncontext: ${input.context}\n\nrisk_scope: ${input.risk_scope}'
   temperature: 0.2
@@ -27,3 +27,5 @@ metadata:
   status: experimental
   timeout_seconds: 60
   retry_count: 15
+
+

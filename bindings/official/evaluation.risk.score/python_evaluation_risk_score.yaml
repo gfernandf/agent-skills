@@ -1,4 +1,4 @@
-id: python_evaluation_risk_score
+﻿id: python_evaluation_risk_score
 capability: evaluation.risk.score
 service: cognitive_baseline
 protocol: pythoncall
@@ -15,3 +15,5 @@ response:
 metadata:
   description: Python fallback for evaluation.risk.score using cognitive_baseline service.
   status: stable
+
+

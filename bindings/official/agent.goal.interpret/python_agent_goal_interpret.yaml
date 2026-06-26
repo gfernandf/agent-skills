@@ -1,0 +1,14 @@
+id: python_agent_goal_interpret
+capability: reasoning.goal.interpret
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_goal_interpret
+request:
+  normalized_request: input.normalized_request
+  context: input.context
+response:
+  interpreted_goal: response.interpreted_goal
+  requires_clarification: response.requires_clarification
+metadata:
+  description: Python alias binding for agent.goal.interpret via reasoning_goal_interpret.
+  status: stable

@@ -1,4 +1,4 @@
-id: python_evidence_source_assess
+﻿id: python_evidence_source_assess
 capability: evidence.source.assess
 service: cognitive_baseline
 protocol: pythoncall
@@ -11,4 +11,6 @@ response:
   assessment_summary: response.assessment_summary
 metadata:
   description: Python fallback for evidence.source.assess using cognitive_baseline service.
-  status: stable
+  status: deprecated
+  deprecation_reason: capability_not_in_registry
+  deprecation_source_of_truth: agent-skill-registry/capabilities

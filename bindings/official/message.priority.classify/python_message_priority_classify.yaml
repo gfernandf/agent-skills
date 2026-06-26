@@ -1,4 +1,4 @@
-id: python_message_priority_classify
+﻿id: python_message_priority_classify
 capability: message.priority.classify
 service: message_baseline
 protocol: pythoncall

@@ -1,4 +1,4 @@
-id: openapi_reasoning_theme_cluster_openai_chat
+﻿id: openapi_reasoning_theme_cluster_openai_chat
 capability: reasoning.theme.cluster
 service: model_openai_chat
 protocol: openapi
@@ -24,3 +24,5 @@ metadata:
   description: OpenAI binding for reasoning.theme.cluster using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

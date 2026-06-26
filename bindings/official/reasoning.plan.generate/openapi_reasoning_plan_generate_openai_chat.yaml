@@ -1,4 +1,4 @@
-id: openapi_reasoning_plan_generate_openai_chat
+﻿id: openapi_reasoning_plan_generate_openai_chat
 capability: reasoning.plan.generate
 service: model_openai_chat
 protocol: openapi
@@ -7,7 +7,7 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You are a capability implementation engine for reasoning.plan.generate. Capability description: Generate a structured execution plan for solving a task or objective. The plan contains ordered steps, each referencing a capability or action, along with assumptions and risk notes. Used as the planning backbone for skill orchestration and agent workflows.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+    content: "You are a capability implementation engine for agent.plan.generate. Capability description: Generate a structured execution plan for solving a task or objective. The plan contains ordered steps, each referencing a capability or action, along with assumptions and risk notes. Used as the planning backbone for skill orchestration and agent workflows.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
   - role: user
     content: 'objective: ${input.objective}\n\ncontext: ${input.context}\n\nmax_steps: ${input.max_steps}'
   temperature: 0.2
@@ -29,7 +29,7 @@ metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_reasoning_plan_generate
-  description: OpenAI binding for reasoning.plan.generate using gpt-4o-mini.
+  description: OpenAI binding for agent.plan.generate using gpt-4o-mini.
   status: experimental
   timeout_seconds: 60
   retry_count: 15

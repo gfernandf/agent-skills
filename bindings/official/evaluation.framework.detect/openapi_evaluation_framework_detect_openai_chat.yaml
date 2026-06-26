@@ -30,6 +30,6 @@ metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_evaluation_framework_detect
-  description: OpenAI binding for evaluation.framework.detect using gpt-4o-mini.
+  description: OpenAI binding for agent.catalog.detect using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30

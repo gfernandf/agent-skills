@@ -1,6 +1,6 @@
 id: python_text_summarize
 
-capability: text.content.summarize
+capability: reasoning.content.summarize
 service: text_baseline
 protocol: pythoncall
 operation: summarize_text

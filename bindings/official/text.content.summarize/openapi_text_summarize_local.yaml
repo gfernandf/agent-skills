@@ -1,6 +1,6 @@
 id: openapi_text_summarize_local
 
-capability: text.content.summarize
+capability: reasoning.content.summarize
 service: text_summarize_openapi_local
 protocol: openapi
 operation: summarize

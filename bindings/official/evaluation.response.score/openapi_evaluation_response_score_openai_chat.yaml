@@ -30,6 +30,6 @@ metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_evaluation_response_score
-  description: OpenAI binding for evaluation.response.score using gpt-4o-mini.
+  description: OpenAI binding for model.output.score using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30

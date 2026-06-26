@@ -1,5 +1,5 @@
 id: python_ops_trace_monitor
-capability: ops.trace.monitor
+capability: evidence.trace.monitor
 service: ops_baseline
 protocol: pythoncall
 operation: monitor_trace

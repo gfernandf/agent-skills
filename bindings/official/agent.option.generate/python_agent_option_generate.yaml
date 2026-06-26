@@ -1,0 +1,16 @@
+id: python_agent_option_generate
+capability: reasoning.option.generate
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_option_generate
+request:
+  goal: input.goal
+  context: input.context
+  constraints: input.constraints
+  max_options: input.max_options
+response:
+  options: response.options
+  generation_notes: response.generation_notes
+metadata:
+  description: Python alias binding for agent.option.generate via reasoning_option_generate.
+  status: stable

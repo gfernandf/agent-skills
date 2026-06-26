@@ -1,4 +1,4 @@
-id: python_evidence_trace_summarize
+﻿id: python_evidence_trace_summarize
 capability: evidence.trace.summarize
 service: cognitive_baseline
 protocol: pythoncall
@@ -10,3 +10,5 @@ response:
 metadata:
   description: Python fallback for evidence.trace.summarize using cognitive_baseline service.
   status: stable
+
+

@@ -1,5 +1,5 @@
 id: python_ops_event_monitor
-capability: ops.event.monitor
+capability: perception.event.monitor
 service: ops_baseline
 protocol: pythoncall
 operation: monitor_events

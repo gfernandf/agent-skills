@@ -1,4 +1,4 @@
-id: openapi_reasoning_sentiment_analyze_openai_chat
+﻿id: openapi_reasoning_sentiment_analyze_openai_chat
 capability: reasoning.sentiment.analyze
 service: model_openai_chat
 protocol: openapi
@@ -25,3 +25,5 @@ metadata:
   description: OpenAI binding for reasoning.sentiment.analyze using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

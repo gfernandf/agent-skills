@@ -1,4 +1,4 @@
-id: openapi_evaluation_response_validate_openai_chat
+﻿id: openapi_evaluation_response_validate_openai_chat
 capability: evaluation.response.validate
 service: model_openai_chat
 protocol: openapi
@@ -25,3 +25,5 @@ metadata:
   description: OpenAI binding for evaluation.response.validate using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

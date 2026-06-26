@@ -1,6 +1,6 @@
 id: openapi_text_summarize_mock
 
-capability: text.content.summarize
+capability: reasoning.content.summarize
 service: text_summarize_openapi_mock
 protocol: openapi
 operation: summarize

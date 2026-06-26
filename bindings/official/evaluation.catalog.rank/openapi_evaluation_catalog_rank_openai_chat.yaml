@@ -24,6 +24,6 @@ metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_evaluation_catalog_rank
-  description: OpenAI binding for evaluation.catalog.rank using gpt-4o-mini.
+  description: OpenAI binding for agent.catalog.rank using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30

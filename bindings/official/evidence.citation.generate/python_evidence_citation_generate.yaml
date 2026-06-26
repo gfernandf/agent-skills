@@ -1,4 +1,4 @@
-id: python_evidence_citation_generate
+﻿id: python_evidence_citation_generate
 capability: evidence.citation.generate
 service: cognitive_baseline
 protocol: pythoncall
@@ -12,3 +12,5 @@ response:
 metadata:
   description: Python fallback for evidence.citation.generate using cognitive_baseline service.
   status: stable
+
+

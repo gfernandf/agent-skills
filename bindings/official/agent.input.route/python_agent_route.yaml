@@ -1,6 +1,6 @@
 id: python_agent_route
 
-capability: agent.input.route
+capability: decision.input.route
 service: agent_baseline
 protocol: pythoncall
 operation: route_agent

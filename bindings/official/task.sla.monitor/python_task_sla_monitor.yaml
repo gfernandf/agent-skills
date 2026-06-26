@@ -1,5 +1,5 @@
 id: python_task_sla_monitor
-capability: task.sla.monitor
+capability: perception.sla.monitor
 service: task_baseline
 protocol: pythoncall
 operation: monitor_sla

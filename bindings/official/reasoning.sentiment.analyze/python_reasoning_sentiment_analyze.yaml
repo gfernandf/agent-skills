@@ -1,4 +1,4 @@
-id: python_reasoning_sentiment_analyze
+﻿id: python_reasoning_sentiment_analyze
 capability: reasoning.sentiment.analyze
 service: cognitive_baseline
 protocol: pythoncall
@@ -14,3 +14,5 @@ response:
 metadata:
   description: Python fallback for reasoning.sentiment.analyze using cognitive_baseline service.
   status: stable
+
+

@@ -1,5 +1,5 @@
 id: python_model_risk_score
-capability: model.risk.score
+capability: evaluation.risk.score
 service: model_baseline
 protocol: pythoncall
 operation: score_risk

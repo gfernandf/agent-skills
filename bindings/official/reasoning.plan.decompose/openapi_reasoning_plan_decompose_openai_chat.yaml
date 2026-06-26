@@ -1,4 +1,4 @@
-id: openapi_reasoning_plan_decompose_openai_chat
+﻿id: openapi_reasoning_plan_decompose_openai_chat
 capability: reasoning.plan.decompose
 service: model_openai_chat
 protocol: openapi
@@ -33,3 +33,5 @@ metadata:
   description: OpenAI binding for reasoning.plan.decompose using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

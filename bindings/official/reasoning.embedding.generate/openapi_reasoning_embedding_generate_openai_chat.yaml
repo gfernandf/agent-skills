@@ -1,4 +1,4 @@
-id: openapi_reasoning_embedding_generate_openai_chat
+﻿id: openapi_reasoning_embedding_generate_openai_chat
 capability: reasoning.embedding.generate
 service: model_openai_chat
 protocol: openapi
@@ -18,3 +18,5 @@ metadata:
   status: experimental
   retry_count: 10
   timeout_seconds: 60
+
+

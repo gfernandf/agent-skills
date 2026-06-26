@@ -9,9 +9,9 @@ request:
   context: input.context
   raw_input: input.raw_input
 response:
-  structured_input: response.structured_input
+  response: response.structured_input
   complete: response.complete
   missing_fields: response.missing_fields
 metadata:
-  description: Python fallback for perception.input.structure using cognitive_baseline service.
+  description: Python fallback for agent.input.collect using cognitive_baseline service.
   status: stable

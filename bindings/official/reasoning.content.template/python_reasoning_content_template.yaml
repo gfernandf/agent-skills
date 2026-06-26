@@ -1,4 +1,4 @@
-id: python_reasoning_content_template
+﻿id: python_reasoning_content_template
 capability: reasoning.content.template
 service: cognitive_baseline
 protocol: pythoncall
@@ -11,3 +11,5 @@ response:
 metadata:
   description: Python fallback for reasoning.content.template using cognitive_baseline service.
   status: stable
+
+

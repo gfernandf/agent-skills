@@ -1,5 +1,5 @@
 id: mcp_provenance_citation_generate_inprocess
-capability: provenance.citation.generate
+capability: evidence.citation.generate
 service: governance_mcp_inprocess
 protocol: mcp
 operation: provenance.citation.generate

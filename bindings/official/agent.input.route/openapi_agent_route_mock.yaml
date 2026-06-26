@@ -1,6 +1,6 @@
 id: openapi_agent_route_mock
 
-capability: agent.input.route
+capability: decision.input.route
 service: agent_route_openapi_mock
 protocol: openapi
 operation: route

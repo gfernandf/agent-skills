@@ -1,4 +1,4 @@
-id: openapi_memory_context_store_openai_chat
+﻿id: openapi_memory_entry_store_openai_chat
 capability: memory.context.store
 service: model_openai_chat
 protocol: openapi
@@ -7,9 +7,9 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You are a capability implementation engine for memory.context.store. Capability description: Persist structured cognitive context for reuse across executions, sessions, or iterative reasoning cycles. Stores contextual payloads by context_id with optional TTL.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+    content: "You are a capability implementation engine for memory.entry.store. Capability description: Store a key-value memory entry. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
   - role: user
-    content: 'context_id: ${input.context_id}\n\ncontext: ${input.context}\n\nttl_seconds: ${input.ttl_seconds}'
+    content: 'key: ${input.key}\n\nvalue: ${input.value}'
   temperature: 0.2
   response_format:
     type: json_object
@@ -19,13 +19,10 @@ response:
   - response.choices.0.message.content_json.success
   - response.choices.0.message.content_json.saved
   - response.choices.0.message.content_json.status
-  context_id:
-  - response.choices.0.message.content_json.context_id
-  - response.choices.0.message.content_json.id
 metadata:
   method: POST
   response_mode: json
-  fallback_binding_id: python_memory_context_store
-  description: OpenAI binding for memory.context.store using gpt-4o-mini.
-  status: experimental
+  fallback_binding_id: python_memory_entry_store
+  description: OpenAI binding for memory.entry.store using gpt-4o-mini.
+  status: deprecated
   timeout_seconds: 30

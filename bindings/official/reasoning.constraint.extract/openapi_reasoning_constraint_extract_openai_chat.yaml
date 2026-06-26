@@ -1,4 +1,4 @@
-id: openapi_reasoning_constraint_extract_openai_chat
+﻿id: openapi_reasoning_constraint_extract_openai_chat
 capability: reasoning.constraint.extract
 service: model_openai_chat
 protocol: openapi
@@ -21,5 +21,7 @@ metadata:
   response_mode: json
   fallback_binding_id: python_reasoning_constraint_extract
   description: OpenAI binding for reasoning.constraint.extract using gpt-4o-mini.
-  status: experimental
+  status: deprecated
   timeout_seconds: 30
+  deprecation_reason: capability_not_in_registry
+  deprecation_source_of_truth: agent-skill-registry/capabilities

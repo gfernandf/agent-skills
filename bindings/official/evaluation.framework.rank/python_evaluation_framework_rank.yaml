@@ -10,5 +10,5 @@ response:
   ranked_skills: response.ranked_skills
   ranked_capabilities: response.ranked_capabilities
 metadata:
-  description: Python fallback for evaluation.framework.rank using cognitive_baseline service.
+  description: Python fallback for agent.catalog.rank using cognitive_baseline service.
   status: stable

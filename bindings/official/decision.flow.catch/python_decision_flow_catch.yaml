@@ -14,5 +14,5 @@ response:
   strategy_applied: response.strategy_applied
   recovered: response.recovered
 metadata:
-  description: Python fallback for decision.flow.catch using agent error-handling baseline.
+  description: Python fallback for agent.flow.catch using agent error-handling baseline.
   status: stable

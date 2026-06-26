@@ -1,15 +1,13 @@
-id: python_memory_context_store
+﻿id: python_memory_entry_store
 capability: memory.context.store
-service: cognitive_baseline
+service: memory_baseline
 protocol: pythoncall
-operation: memory_context_store
+operation: store_memory
 request:
-  context_id: input.context_id
-  context: input.context
-  ttl_seconds: input.ttl_seconds
+  key: input.key
+  value: input.value
 response:
   stored: response.stored
-  context_id: response.context_id
 metadata:
-  description: Python fallback for memory.context.store using cognitive_baseline service.
-  status: stable
+  description: Python fallback for memory.entry.store using memory_baseline service.
+  status: deprecated

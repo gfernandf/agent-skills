@@ -1,4 +1,4 @@
-id: python_decision_task_delegate
+﻿id: python_decision_task_delegate
 capability: decision.task.delegate
 service: agent_baseline
 protocol: pythoncall
@@ -13,3 +13,5 @@ response:
 metadata:
   description: Python fallback for decision.task.delegate using agent delegation baseline.
   status: stable
+
+

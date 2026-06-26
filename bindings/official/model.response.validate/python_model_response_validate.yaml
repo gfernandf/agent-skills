@@ -1,5 +1,5 @@
 id: python_model_response_validate
-capability: model.response.validate
+capability: evaluation.response.validate
 service: model_baseline
 protocol: pythoncall
 operation: validate_response

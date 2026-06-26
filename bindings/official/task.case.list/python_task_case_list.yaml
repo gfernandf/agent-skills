@@ -1,5 +1,5 @@
 id: python_task_case_list
-capability: task.case.list
+capability: perception.case.list
 service: task_baseline
 protocol: pythoncall
 operation: list_cases

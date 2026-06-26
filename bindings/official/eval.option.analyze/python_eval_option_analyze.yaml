@@ -1,5 +1,5 @@
 id: python_eval_option_analyze
-capability: eval.option.analyze
+capability: reasoning.option.analyze
 service: eval_baseline
 protocol: pythoncall
 operation: analyze_options

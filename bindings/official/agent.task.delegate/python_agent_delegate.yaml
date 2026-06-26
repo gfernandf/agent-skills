@@ -1,6 +1,6 @@
 id: python_agent_delegate
 
-capability: agent.task.delegate
+capability: decision.task.delegate
 service: agent_baseline
 protocol: pythoncall
 operation: delegate_agent

@@ -1,4 +1,4 @@
-id: python_reasoning_prompt_template
+﻿id: python_reasoning_prompt_template
 capability: reasoning.prompt.template
 service: model_baseline
 protocol: pythoncall
@@ -13,3 +13,5 @@ response:
 metadata:
   description: Python fallback for reasoning.prompt.template using model template baseline.
   status: stable
+
+

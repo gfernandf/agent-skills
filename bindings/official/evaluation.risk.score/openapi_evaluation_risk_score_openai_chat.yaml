@@ -1,4 +1,4 @@
-id: openapi_evaluation_risk_score_openai_chat
+﻿id: openapi_evaluation_risk_score_openai_chat
 capability: evaluation.risk.score
 service: model_openai_chat
 protocol: openapi
@@ -26,3 +26,5 @@ metadata:
   status: experimental
   retry_count: 10
   timeout_seconds: 30
+
+

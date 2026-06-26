@@ -11,5 +11,5 @@ response:
   missing_skills: response.missing_skills
   gap_severity: response.gap_severity
 metadata:
-  description: Python fallback for evaluation.catalog.detect using evaluation framework detection baseline.
+  description: Python fallback for agent.catalog.detect using evaluation framework detection baseline.
   status: stable

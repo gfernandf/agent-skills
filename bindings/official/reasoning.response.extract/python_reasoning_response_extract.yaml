@@ -1,4 +1,4 @@
-id: python_reasoning_response_extract
+﻿id: python_reasoning_response_extract
 capability: reasoning.response.extract
 service: cognitive_baseline
 protocol: pythoncall
@@ -12,3 +12,5 @@ response:
 metadata:
   description: Python fallback for reasoning.response.extract using cognitive_baseline service.
   status: stable
+
+

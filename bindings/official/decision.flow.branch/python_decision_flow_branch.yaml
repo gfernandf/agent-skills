@@ -13,5 +13,5 @@ response:
   rationale: response.rationale
   confidence: response.confidence
 metadata:
-  description: Python fallback for decision.flow.branch using agent_baseline.
+  description: Python fallback for agent.flow.branch using agent_baseline.
   status: stable

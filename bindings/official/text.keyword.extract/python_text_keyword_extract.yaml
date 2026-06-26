@@ -1,6 +1,6 @@
 id: python_text_keyword_extract
 
-capability: text.keyword.extract
+capability: perception.keyword.extract
 service: text_baseline
 protocol: pythoncall
 operation: extract_keywords

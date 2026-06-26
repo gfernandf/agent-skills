@@ -1,5 +1,5 @@
 id: python_task_case_search
-capability: task.case.search
+capability: perception.case.search
 service: task_baseline
 protocol: pythoncall
 operation: search_cases

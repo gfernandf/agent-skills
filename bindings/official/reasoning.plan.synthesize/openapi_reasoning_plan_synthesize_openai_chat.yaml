@@ -1,4 +1,4 @@
-id: openapi_reasoning_plan_synthesize_openai_chat
+﻿id: openapi_reasoning_plan_synthesize_openai_chat
 capability: reasoning.plan.synthesize
 service: model_openai_chat
 protocol: openapi
@@ -7,7 +7,7 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You implement reasoning.plan.synthesize. Return only valid JSON with fields: compiled_plan, step_count, compiled_plan_json."
+    content: "You implement agent.plan.synthesize. Return only valid JSON with fields: compiled_plan, step_count, compiled_plan_json."
   - role: user
     content: 'validated_plan: ${input.validated_plan}\n\nruntime_config: ${input.runtime_config}'
   temperature: 0.2
@@ -24,7 +24,7 @@ metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_reasoning_plan_synthesize
-  description: OpenAI binding for reasoning.plan.synthesize using gpt-4o-mini.
+  description: OpenAI binding for agent.plan.synthesize using gpt-4o-mini.
   status: experimental
   timeout_seconds: 120
   retry_count: 25

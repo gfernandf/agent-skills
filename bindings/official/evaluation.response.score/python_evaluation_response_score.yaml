@@ -13,5 +13,5 @@ response:
   overall: response.overall
   rationale: response.rationale
 metadata:
-  description: Python fallback for evaluation.response.score using cognitive_baseline service.
+  description: Python fallback for model.output.score using cognitive_baseline service.
   status: stable

@@ -1,4 +1,4 @@
-id: python_perception_keyword_extract
+﻿id: python_perception_keyword_extract
 capability: perception.keyword.extract
 service: cognitive_baseline
 protocol: pythoncall
@@ -10,3 +10,5 @@ response:
 metadata:
   description: Python fallback for perception.keyword.extract using cognitive_baseline service.
   status: stable
+
+

@@ -1,4 +1,4 @@
-id: openapi_perception_content_extract_openai_chat
+﻿id: openapi_perception_content_extract_openai_chat
 capability: perception.content.extract
 service: model_openai_chat
 protocol: openapi
@@ -22,3 +22,5 @@ metadata:
   description: OpenAI binding for perception.content.extract using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

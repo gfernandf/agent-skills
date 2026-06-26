@@ -10,5 +10,5 @@ request:
 response:
   authorization_result: response.authorization_result
 metadata:
-  description: Python fallback for evaluation.plan.gate using cognitive_baseline service.
+  description: Python fallback for agent.plan.gate using cognitive_baseline service.
   status: stable

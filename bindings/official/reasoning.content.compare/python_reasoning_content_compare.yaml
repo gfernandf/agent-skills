@@ -1,4 +1,4 @@
-id: python_reasoning_content_compare
+﻿id: python_reasoning_content_compare
 capability: reasoning.content.compare
 service: cognitive_baseline
 protocol: pythoncall
@@ -14,3 +14,5 @@ response:
 metadata:
   description: Python fallback for reasoning.content.compare using cognitive_baseline service.
   status: stable
+
+

@@ -16,14 +16,14 @@ if str(ROOT) not in sys.path:
 
 from customer_facing.neutral_api import NeutralRuntimeAPI
 
-_BINDING_ID = "openapi_text_summarize_openai_chat"
-_SERVICE_ID = "text_openai_chat"
+_BINDING_ID = "openapi_doc_generate_openai_chat"
+_SERVICE_ID = "model_openai_chat"
 
 
 def _write_active_binding(host_root: Path) -> None:
     state_dir = host_root / ".agent-skills"
     state_dir.mkdir(parents=True, exist_ok=True)
-    payload = {"text.content.summarize": _BINDING_ID}
+    payload = {"doc.content.generate": _BINDING_ID}
     (state_dir / "active_bindings.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -36,9 +36,8 @@ def main() -> int:
             "OPENAI_API_KEY is not set. Define it in your shell before running this verifier."
         )
 
-    sample_text = (
-        "Model Context Protocol helps standardize tool access. "
-        "This verifier checks a real OpenAI-backed text.content.summarize binding end to end."
+    sample_instruction = (
+        "Write a concise markdown status note about OpenAPI runtime health."
     )
 
     with tempfile.TemporaryDirectory(prefix="agent-skills-openai-") as tmpdir:
@@ -51,16 +50,20 @@ def main() -> int:
             host_root=host_root,
         )
         result = api.execute_capability(
-            "text.content.summarize",
-            {"text": sample_text, "max_length": 90},
+            "doc.content.generate",
+            {
+                "instruction": sample_instruction,
+                "context": "Live verifier run",
+                "format": "markdown",
+            },
         )
 
     outputs = result.get("outputs") or {}
     meta = result.get("meta", {})
 
-    summary = outputs.get("summary")
-    if not isinstance(summary, str) or not summary.strip():
-        raise RuntimeError(f"OpenAI summarize returned invalid summary: {outputs!r}")
+    document = outputs.get("document")
+    if not isinstance(document, str) or not document.strip():
+        raise RuntimeError(f"OpenAI doc.generate returned invalid document: {outputs!r}")
 
     if meta.get("binding_id") != _BINDING_ID:
         raise RuntimeError(
@@ -72,8 +75,8 @@ def main() -> int:
             f"Expected service_id '{_SERVICE_ID}', got '{meta.get('service_id')}'."
         )
 
-    print("OpenAI text.content.summarize verification passed.")
-    print(f"Summary preview: {summary[:160]!r}")
+    print("OpenAI doc.content.generate verification passed.")
+    print(f"Document preview: {document[:160]!r}")
     return 0
 
 

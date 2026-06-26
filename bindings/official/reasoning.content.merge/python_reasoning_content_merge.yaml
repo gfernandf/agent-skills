@@ -1,4 +1,4 @@
-id: python_reasoning_content_merge
+﻿id: python_reasoning_content_merge
 capability: reasoning.content.merge
 service: cognitive_baseline
 protocol: pythoncall
@@ -13,3 +13,5 @@ response:
 metadata:
   description: Python fallback for reasoning.content.merge using cognitive_baseline service.
   status: stable
+
+

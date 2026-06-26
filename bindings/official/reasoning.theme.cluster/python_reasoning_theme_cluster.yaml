@@ -1,4 +1,4 @@
-id: python_reasoning_theme_cluster
+﻿id: python_reasoning_theme_cluster
 capability: reasoning.theme.cluster
 service: cognitive_baseline
 protocol: pythoncall
@@ -15,3 +15,5 @@ response:
 metadata:
   description: Python fallback for reasoning.theme.cluster using cognitive_baseline service.
   status: stable
+
+

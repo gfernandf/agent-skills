@@ -1,54 +1,32 @@
 defaults:
+  agent.flow.iterate: python_agent_flow_iterate
+  agent.flow.wait: python_agent_flow_wait
   agent.plan.execute: python_agent_plan_execute
-  audio.speech.transcribe: python_audio_transcribe
+  audio.speaker.diarize: python_audio_speaker_diarize
   audio.speech.synthesize: python_audio_synthesize
+  audio.speech.transcribe: python_audio_transcribe
   code.diff.extract: python_code_diff_extract
   code.snippet.execute: python_code_execute
-  code.source.format: python_code_format
   code.source.analyze: python_code_analyze
+  code.source.format: python_code_format
+  data.array.map: python_data_array_map
+  data.field.map: python_data_field_map
   data.json.parse: python_data_json_parse
   data.record.deduplicate: python_data_record_deduplicate
-  data.schema.validate: python_data_schema_validate
+  data.record.join: python_data_join
+  data.record.merge: python_data_merge
   data.record.transform: python_data_transform
+  data.schema.validate: python_data_schema_validate
+  decision.flow.branch: python_agent_flow_branch
+  decision.option.justify: openapi_decision_option_justify_openai_chat
   doc.content.chunk: python_doc_chunk
+  doc.content.generate: openapi_doc_generate_openai_chat
   email.inbox.read: python_email_read
   email.message.send: python_email_send
-  fs.file.read: python_fs_read
+  evaluation.option.score: python_eval_option_score
   fs.file.list: python_fs_list
+  fs.file.read: python_fs_read
   fs.file.write: python_fs_write
-  image.caption.generate: python_image_caption_generate
-  image.content.classify: python_image_classify
-  image.content.extract: python_image_extract
-  memory.entry.retrieve: python_memory_retrieve
-  memory.record.store: python_memory_record_store
-  memory.vector.search: python_memory_vector_search
-  message.notification.send: python_message_send
-  message.priority.classify: python_message_priority_classify
-  ops.budget.estimate: python_ops_budget_estimate
-  ops.event.acknowledge: python_ops_event_acknowledge
-  research.source.retrieve: python_research_source_retrieve
-  pdf.document.read: python_pdf_read
-  policy.constraint.validate: python_policy_constraint_validate
-  policy.constraint.gate: python_policy_constraint_gate
-  policy.decision.evaluate: python_policy_decision_evaluate
-  policy.decision.justify: python_policy_decision_justify
-  policy.record.classify: python_policy_record_classify
-  policy.risk.classify: python_policy_risk_classify
-  policy.risk.score: python_policy_risk_score
-  security.output.gate: python_security_output_gate
-  security.pii.detect: python_security_pii_detect
-  security.pii.redact: python_security_pii_redact
-  security.secret.detect: python_security_secret_detect
-  table.row.filter: python_table_filter
-  table.row.sort: python_table_sort
-  table.column.aggregate: python_table_aggregate
-  video.frame.extract: python_video_frame_extract
-  web.page.fetch: python_web_fetch
-  web.page.extract: python_web_page_extract
-  web.source.verify: python_web_source_verify
-  web.source.search: python_web_source_search
-  decision.option.justify: openapi_decision_option_justify_openai_chat
-  web.source.normalize: python_web_source_normalize
   identity.assignee.identify: python_identity_assignee_identify
   identity.decision.justify: python_identity_decision_justify
   identity.permission.gate: python_identity_permission_gate
@@ -59,6 +37,10 @@ defaults:
   identity.role.assign: python_identity_role_assign
   identity.role.get: python_identity_role_get
   identity.role.list: python_identity_role_list
+  image.caption.generate: python_image_caption_generate
+  image.content.classify: python_image_classify
+  image.content.extract: python_image_extract
+  image.content.generate: python_image_generate
   integration.connector.get: python_integration_connector_get
   integration.connector.list: python_integration_connector_list
   integration.connector.sync: python_integration_connector_sync
@@ -71,6 +53,36 @@ defaults:
   integration.record.reconcile: python_integration_record_reconcile
   integration.record.update: python_integration_record_update
   integration.record.upsert: python_integration_record_upsert
+  memory.entry.retrieve: python_memory_retrieve
+  memory.record.store: python_memory_record_store
+  memory.vector.search: python_memory_vector_search
+  message.content.format: openapi_message_format_openai_chat
+  message.notification.send: python_message_send
+  message.priority.classify: python_message_priority_classify
+  ops.budget.estimate: python_ops_budget_estimate
+  ops.event.acknowledge: python_ops_event_acknowledge
+  pdf.document.read: python_pdf_read
+  perception.entity.extract: python_text_entity_extract
+  policy.constraint.gate: python_policy_constraint_gate
+  policy.constraint.validate: python_policy_constraint_validate
+  policy.decision.justify: python_policy_decision_justify
+  policy.risk.classify: python_policy_risk_classify
+  policy.risk.score: python_policy_risk_score
+  reasoning.goal.interpret: python_agent_goal_interpret
+  reasoning.option.analyze: python_eval_option_analyze
+  reasoning.option.generate: python_agent_option_generate
+  reasoning.request.normalize: python_agent_request_normalize
+  reasoning.risk.extract: python_analysis_risk_extract
+  research.source.retrieve: python_research_source_retrieve
+  security.output.gate: python_security_output_gate
+  security.pii.detect: python_security_pii_detect
+  security.pii.redact: python_security_pii_redact
+  security.secret.detect: python_security_secret_detect
+  table.column.aggregate: python_table_aggregate
+  table.row.filter: python_table_filter
+  table.row.sort: python_table_sort
+  table.sheet.read: python_table_sheet_read
+  table.sheet.write: python_table_sheet_write
   task.approval.approve: python_task_approval_approve
   task.approval.reject: python_task_approval_reject
   task.assignee.assign: python_task_assignee_assign
@@ -78,92 +90,14 @@ defaults:
   task.case.create: python_task_case_create
   task.case.update: python_task_case_update
   task.event.acknowledge: python_task_event_acknowledge
+  task.event.schedule: python_task_event_schedule
   task.incident.create: python_task_incident_create
   task.milestone.schedule: python_task_milestone_schedule
   task.state.transition: python_task_state_transition
-  agent.flow.iterate: python_agent_flow_iterate
-  agent.flow.wait: python_agent_flow_wait
-  audio.speaker.diarize: python_audio_speaker_diarize
-  data.array.map: python_data_array_map
-  data.field.map: python_data_field_map
-  data.record.join: python_data_join
-  data.record.merge: python_data_merge
-  doc.content.generate: openapi_doc_generate_openai_chat
-  image.content.generate: python_image_generate
-  message.content.format: openapi_message_format_openai_chat
-  table.sheet.read: python_table_sheet_read
-  table.sheet.write: python_table_sheet_write
-  task.event.schedule: python_task_event_schedule
+  video.frame.extract: python_video_frame_extract
+  web.page.extract: python_web_page_extract
+  web.page.fetch: python_web_fetch
   web.request.send: python_web_request_send
-  decision.input.route: openapi_decision_input_route_openai_chat
-  decision.option.select: openapi_decision_option_select_openai_chat
-  decision.strategy.select: openapi_decision_strategy_select_openai_chat
-  decision.uncertainty.prioritize: openapi_decision_uncertainty_prioritize_openai_chat
-  evaluation.assumption.validate: openapi_evaluation_assumption_validate_openai_chat
-  evaluation.constraint.validate: openapi_evaluation_constraint_validate_openai_chat
-  evaluation.failure.analyze: openapi_evaluation_failure_analyze_openai_chat
-  evaluation.framework.detect: openapi_evaluation_framework_detect_openai_chat
-  evaluation.framework.rank: openapi_evaluation_framework_rank_openai_chat
-  evaluation.hypothesis.compare: openapi_evaluation_hypothesis_compare_openai_chat
-  evaluation.hypothesis.evaluate: openapi_evaluation_hypothesis_evaluate_openai_chat
-  evaluation.option.score: openapi_evaluation_option_score_openai_chat
-  evaluation.output.score: openapi_evaluation_output_score_openai_chat
-  evaluation.output.validate: openapi_evaluation_output_validate_openai_chat
-  evaluation.plan.gate: openapi_evaluation_plan_gate_openai_chat
-  evaluation.plan.validate: openapi_evaluation_plan_validate_openai_chat
-  evaluation.response.score: openapi_evaluation_response_score_openai_chat
-  evaluation.response.validate: openapi_evaluation_response_validate_openai_chat
-  evaluation.risk.score: openapi_evaluation_risk_score_openai_chat
-  evaluation.uncertainty.score: openapi_evaluation_uncertainty_score_openai_chat
-  evidence.citation.generate: openapi_evidence_citation_generate_openai_chat
-  evidence.claim.verify: openapi_evidence_claim_verify_openai_chat
-  evidence.conflict.detect: openapi_evidence_conflict_detect_openai_chat
-  evidence.gap.detect: openapi_evidence_gap_detect_openai_chat
-  evidence.source.assess: openapi_evidence_source_assess_openai_chat
-  evidence.trace.analyze: openapi_evidence_trace_analyze_openai_chat
-  evidence.trace.summarize: openapi_evidence_trace_summarize_openai_chat
-  memory.context.compress: openapi_memory_context_compress_openai_chat
-  memory.context.reconcile: openapi_memory_context_reconcile_openai_chat
-  memory.context.retrieve: openapi_memory_context_retrieve_openai_chat
-  memory.context.store: openapi_memory_context_store_openai_chat
-  memory.context.update: openapi_memory_context_update_openai_chat
-  perception.content.extract: openapi_perception_content_extract_openai_chat
-  perception.entity.extract: openapi_perception_entity_extract_openai_chat
-  perception.input.structure: openapi_perception_input_structure_openai_chat
-  perception.keyword.extract: openapi_perception_keyword_extract_openai_chat
-  perception.language.detect: openapi_perception_language_detect_openai_chat
-  reasoning.assumption.extract: openapi_reasoning_assumption_extract_openai_chat
-  reasoning.constraint.extract: openapi_reasoning_constraint_extract_openai_chat
-  reasoning.constraint.reconcile: openapi_reasoning_constraint_reconcile_openai_chat
-  reasoning.content.classify: openapi_reasoning_content_classify_openai_chat
-  reasoning.content.compare: openapi_reasoning_content_compare_openai_chat
-  reasoning.content.generate: openapi_reasoning_content_generate_openai_chat
-  reasoning.content.merge: openapi_reasoning_content_merge_openai_chat
-  reasoning.content.summarize: openapi_reasoning_content_summarize_openai_chat
-  reasoning.content.template: openapi_reasoning_content_template_openai_chat
-  reasoning.content.transform: openapi_reasoning_content_transform_openai_chat
-  reasoning.content.translate: openapi_reasoning_content_translate_openai_chat
-  reasoning.criteria.define: openapi_reasoning_criteria_define_openai_chat
-  reasoning.embedding.generate: openapi_reasoning_embedding_generate_openai_chat
-  reasoning.goal.interpret: openapi_reasoning_goal_interpret_openai_chat
-  reasoning.hypothesis.generate: openapi_reasoning_hypothesis_generate_openai_chat
-  reasoning.option.analyze: openapi_reasoning_option_analyze_openai_chat
-  reasoning.option.generate: openapi_reasoning_option_generate_openai_chat
-  reasoning.output.classify: openapi_reasoning_output_classify_openai_chat
-  reasoning.output.generate: openapi_reasoning_output_generate_openai_chat
-  reasoning.output.normalize: openapi_reasoning_output_normalize_openai_chat
-  reasoning.output.synthesize: openapi_reasoning_output_synthesize_openai_chat
-  reasoning.plan.decompose: openapi_reasoning_plan_decompose_openai_chat
-  reasoning.plan.generate: openapi_reasoning_plan_generate_openai_chat
-  reasoning.plan.map: openapi_reasoning_plan_map_openai_chat
-  reasoning.plan.reconcile: openapi_reasoning_plan_reconcile_openai_chat
-  reasoning.plan.synthesize: openapi_reasoning_plan_synthesize_openai_chat
-  reasoning.priority.classify: openapi_reasoning_priority_classify_openai_chat
-  reasoning.problem.decompose: openapi_reasoning_problem_decompose_openai_chat
-  reasoning.request.normalize: openapi_reasoning_request_normalize_openai_chat
-  reasoning.response.extract: openapi_reasoning_response_extract_openai_chat
-  reasoning.response.generate: openapi_reasoning_response_generate_openai_chat
-  reasoning.risk.extract: openapi_reasoning_risk_extract_openai_chat
-  reasoning.sentiment.analyze: openapi_reasoning_sentiment_analyze_openai_chat
-  reasoning.theme.cluster: openapi_reasoning_theme_cluster_openai_chat
-  reasoning.uncertainty.extract: openapi_reasoning_uncertainty_extract_openai_chat
+  web.source.normalize: python_web_source_normalize
+  web.source.search: python_web_source_search
+  web.source.verify: python_web_source_verify

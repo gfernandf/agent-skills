@@ -1,6 +1,6 @@
 id: openapi_agent_route_local
 
-capability: agent.input.route
+capability: decision.input.route
 service: agent_route_openapi_local
 protocol: openapi
 operation: route

@@ -1,4 +1,4 @@
-id: python_reasoning_content_generate
+﻿id: python_reasoning_content_generate
 capability: reasoning.content.generate
 service: cognitive_baseline
 protocol: pythoncall
@@ -12,3 +12,5 @@ response:
 metadata:
   description: Python fallback for reasoning.content.generate using cognitive_baseline service.
   status: stable
+
+

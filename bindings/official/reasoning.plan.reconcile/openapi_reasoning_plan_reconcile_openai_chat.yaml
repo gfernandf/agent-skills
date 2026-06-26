@@ -1,4 +1,4 @@
-id: openapi_reasoning_plan_reconcile_openai_chat
+﻿id: openapi_reasoning_plan_reconcile_openai_chat
 capability: reasoning.plan.reconcile
 service: model_openai_chat
 protocol: openapi
@@ -7,7 +7,7 @@ request:
   model: gpt-4o-mini
   messages:
   - role: system
-    content: "You are a capability implementation engine for reasoning.plan.reconcile. Capability description: Repair an invalid ORCA plan based on validation errors. Repairs include: replacing unresolvable capability or skill references with closest valid alternatives, inserting missing inter-step dependencies, resolving unbound input paths, adding missing policy gates on high-risk steps, and removing or flagging steps that are structurally incompatible with the goal. Returns the repaired plan and a list of repair notes for audit.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
+    content: "You are a capability implementation engine for agent.plan.reconcile. Capability description: Repair an invalid ORCA plan based on validation errors. Repairs include: replacing unresolvable capability or skill references with closest valid alternatives, inserting missing inter-step dependencies, resolving unbound input paths, adding missing policy gates on high-risk steps, and removing or flagging steps that are structurally incompatible with the goal. Returns the repaired plan and a list of repair notes for audit.. Return a valid JSON object only (no markdown). Include all expected output fields exactly as requested by this capability contract."
   - role: user
     content: 'invalid_plan: ${input.invalid_plan}\n\nvalidation_errors: ${input.validation_errors}\n\nregistry: ${input.registry}'
   temperature: 0.2
@@ -21,6 +21,6 @@ metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_reasoning_plan_reconcile
-  description: OpenAI binding for reasoning.plan.reconcile using gpt-4o-mini.
+  description: OpenAI binding for agent.plan.reconcile using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30

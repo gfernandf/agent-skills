@@ -1,4 +1,4 @@
-id: python_evidence_trace_monitor
+﻿id: python_evidence_trace_monitor
 capability: evidence.trace.monitor
 service: ops_baseline
 protocol: pythoncall
@@ -12,3 +12,5 @@ response:
 metadata:
   description: Python fallback for evidence.trace.monitor using ops trace monitoring baseline.
   status: stable
+
+

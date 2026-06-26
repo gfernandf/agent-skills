@@ -1,4 +1,4 @@
-id: python_evaluation_failure_analyze
+﻿id: python_evaluation_failure_analyze
 capability: evaluation.failure.analyze
 service: cognitive_baseline
 protocol: pythoncall
@@ -12,4 +12,6 @@ response:
   recurrence_risk: response.recurrence_risk
 metadata:
   description: Python fallback for evaluation.failure.analyze using cognitive_baseline service.
-  status: stable
+  status: deprecated
+  deprecation_reason: capability_not_in_registry
+  deprecation_source_of_truth: agent-skill-registry/capabilities

@@ -1,4 +1,4 @@
-id: openapi_decision_input_route_openai_chat
+﻿id: openapi_decision_input_route_openai_chat
 capability: decision.input.route
 service: model_openai_chat
 protocol: openapi
@@ -28,3 +28,5 @@ metadata:
   description: OpenAI binding for decision.input.route using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

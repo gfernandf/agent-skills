@@ -1,4 +1,4 @@
-id: openapi_reasoning_plan_split_openai_chat
+﻿id: openapi_reasoning_plan_split_openai_chat
 capability: reasoning.plan.split
 service: model_openai_chat
 protocol: openapi
@@ -38,6 +38,8 @@ metadata:
   response_mode: json
   fallback_binding_id: python_reasoning_plan_split
   description: OpenAI binding for reasoning.plan.split using gpt-4o-mini.
-  status: experimental
+  status: deprecated
   timeout_seconds: 30
   retry_count: 10
+  deprecation_reason: capability_not_in_registry
+  deprecation_source_of_truth: agent-skill-registry/capabilities

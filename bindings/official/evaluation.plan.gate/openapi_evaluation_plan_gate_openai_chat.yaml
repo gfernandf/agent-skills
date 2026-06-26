@@ -22,6 +22,6 @@ metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_evaluation_plan_gate
-  description: OpenAI binding for evaluation.plan.gate using gpt-4o-mini.
+  description: OpenAI binding for agent.plan.gate using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30

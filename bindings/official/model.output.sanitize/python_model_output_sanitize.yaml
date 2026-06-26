@@ -1,5 +1,8 @@
 id: python_model_output_sanitize
-capability: reasoning.output.normalize
+capability: model.output.sanitize
+status: deprecated
+deprecation_reason: capability_not_in_registry
+deprecation_source_of_truth: agent-skill-registry/capabilities
 service: model_baseline
 protocol: pythoncall
 operation: sanitize_output
@@ -14,5 +17,5 @@ response:
   clean: response.clean
 
 metadata:
-  description: Official pythoncall binding for reasoning.output.normalize.
+  description: Official pythoncall binding for model.output.sanitize.
   status: experimental

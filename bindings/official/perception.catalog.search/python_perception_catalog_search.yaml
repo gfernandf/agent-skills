@@ -11,5 +11,5 @@ response:
   candidate_items: response.candidate_items
   total_matched: response.total_matched
 metadata:
-  description: Python fallback for perception.catalog.search using local registry heuristics.
+  description: Python fallback for agent.catalog.search using local registry heuristics.
   status: stable

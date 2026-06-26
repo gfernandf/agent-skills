@@ -1,4 +1,4 @@
-id: python_reasoning_hypothesis_generate
+﻿id: python_reasoning_hypothesis_generate
 capability: reasoning.hypothesis.generate
 service: cognitive_baseline
 protocol: pythoncall
@@ -13,4 +13,6 @@ response:
   generation_notes: response.generation_notes
 metadata:
   description: Python fallback for reasoning.hypothesis.generate using cognitive_baseline service.
-  status: stable
+  status: deprecated
+  deprecation_reason: capability_not_in_registry
+  deprecation_source_of_truth: agent-skill-registry/capabilities

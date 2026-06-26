@@ -12,5 +12,5 @@ response:
   dimensions: response.dimensions
   quality_level: response.quality_level
 metadata:
-  description: Python fallback for evaluation.output.score using cognitive_baseline service.
+  description: Python fallback for eval.output.score using cognitive_baseline service.
   status: stable

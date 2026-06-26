@@ -1,4 +1,4 @@
-id: openapi_evidence_claim_verify_openai_chat
+﻿id: openapi_evidence_claim_verify_openai_chat
 capability: evidence.claim.verify
 service: model_openai_chat
 protocol: openapi
@@ -25,3 +25,5 @@ metadata:
   status: experimental
   retry_count: 10
   timeout_seconds: 30
+
+

@@ -1,4 +1,4 @@
-id: python_evaluation_response_validate
+﻿id: python_evaluation_response_validate
 capability: evaluation.response.validate
 service: cognitive_baseline
 protocol: pythoncall
@@ -15,3 +15,5 @@ response:
 metadata:
   description: Python fallback for evaluation.response.validate using cognitive_baseline service.
   status: stable
+
+

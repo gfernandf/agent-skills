@@ -9,5 +9,5 @@ response:
   language: response.language
   confidence: response.confidence
 metadata:
-  description: Python fallback for perception.language.detect using cognitive_baseline service.
+  description: Python fallback for text.language.detect using cognitive_baseline service.
   status: stable

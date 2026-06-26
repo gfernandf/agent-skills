@@ -1,0 +1,18 @@
+id: python_model_output_generate
+capability: reasoning.output.generate
+service: cognitive_baseline
+protocol: pythoncall
+operation: reasoning_output_generate
+request:
+  instruction: input.instruction
+  context_items: input.context_items
+  output_schema: input.output_schema
+  detail_level: input.detail_level
+  constraints: input.constraints
+response:
+  output: response.output
+  warnings: response.warnings
+  coverage: response.coverage
+metadata:
+  description: Python alias binding for model.output.generate via reasoning_output_generate.
+  status: stable

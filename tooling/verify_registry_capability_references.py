@@ -16,6 +16,8 @@ BINDINGS_DIR = ROOT / "bindings" / "official"
 SMOKE_LIST_PATH = ROOT / "tooling" / "smoke_capabilities.json"
 DEFAULT_SELECTION_PATH = ROOT / "policies" / "official_default_selection.yaml"
 GOVERNANCE_TOOLS_PATH = ROOT / "official_mcp_servers" / "governance_tools.py"
+ACTIVE_BINDINGS_PATH = ROOT / ".agent-skills" / "active_bindings.json"
+DEPRECATED_MANIFEST_GLOB = "deprecated_noncanonical_bindings_*.tsv"
 
 
 def _load_yaml(path: Path) -> dict:
@@ -36,9 +38,14 @@ def _registry_capability_ids() -> set[str]:
     return ids
 
 
-def _discover_bindings() -> tuple[dict[str, str], list[tuple[Path, str]]]:
+def _discover_bindings() -> tuple[
+    dict[str, str],
+    list[tuple[Path, str]],
+    dict[str, list[str]],
+]:
     binding_by_id: dict[str, str] = {}
     binding_cap_refs: list[tuple[Path, str]] = []
+    bindings_by_capability: dict[str, list[str]] = {}
 
     for path in sorted(BINDINGS_DIR.rglob("*.yaml")):
         data = _load_yaml(path)
@@ -50,8 +57,10 @@ def _discover_bindings() -> tuple[dict[str, str], list[tuple[Path, str]]]:
 
         if isinstance(capability, str) and capability:
             binding_cap_refs.append((path, capability))
+            if isinstance(binding_id, str) and binding_id:
+                bindings_by_capability.setdefault(capability, []).append(binding_id)
 
-    return binding_by_id, binding_cap_refs
+    return binding_by_id, binding_cap_refs, bindings_by_capability
 
 
 def _read_smoke_capabilities() -> list[str]:
@@ -72,6 +81,56 @@ def _read_default_selection() -> dict[str, str]:
         for cap_id, binding_id in defaults.items()
         if isinstance(cap_id, str) and isinstance(binding_id, str)
     }
+
+
+def _read_active_bindings() -> dict[str, str]:
+    if not ACTIVE_BINDINGS_PATH.exists():
+        return {}
+
+    with ACTIVE_BINDINGS_PATH.open("r", encoding="utf-8") as fh:
+        raw = json.load(fh)
+
+    if not isinstance(raw, dict):
+        raise ValueError("active_bindings.json must be an object mapping strings")
+
+    return {
+        str(cap_id): str(binding_id)
+        for cap_id, binding_id in raw.items()
+        if isinstance(cap_id, str) and isinstance(binding_id, str)
+    }
+
+
+def _load_deprecated_binding_ids() -> set[str]:
+    artifacts_dir = ROOT / "artifacts"
+    manifests = sorted(artifacts_dir.glob(DEPRECATED_MANIFEST_GLOB))
+    if not manifests:
+        return set()
+
+    manifest = manifests[-1]
+    deprecated_ids: set[str] = set()
+
+    with manifest.open("r", encoding="utf-8") as fh:
+        for i, line in enumerate(fh):
+            line = line.strip()
+            if not line:
+                continue
+            if i == 0 and line.startswith("capability\tfile"):
+                continue
+            parts = line.split("\t")
+            if len(parts) < 2:
+                continue
+            rel = parts[1].strip()
+            if not rel:
+                continue
+            path = ROOT / rel
+            if not path.exists():
+                continue
+            data = _load_yaml(path)
+            binding_id = data.get("id")
+            if isinstance(binding_id, str) and binding_id:
+                deprecated_ids.add(binding_id)
+
+    return deprecated_ids
 
 
 def _read_governance_tools_supported_keys() -> set[str]:
@@ -98,81 +157,69 @@ def _read_governance_tools_supported_keys() -> set[str]:
     return set()
 
 
-def _legacy_capability_alias_candidates(capability_id: str) -> list[str]:
-    candidates: list[str] = []
-
-    prefix_aliases = {
-        "text.": "reasoning.",
-        "eval.": "evaluation.",
-        "model.": "reasoning.",
-        "analysis.": "reasoning.",
-        "provenance.": "evidence.",
-        "ops.trace.": "evidence.trace.",
-        "ops.event.": "perception.event.",
-        "agent.input.": "decision.input.",
-        "task.case.": "perception.case.",
-        "task.priority.": "message.priority.",
-        "task.sla.": "perception.sla.",
-        "agent.option.": "reasoning.option.",
-    }
-    for old_prefix, new_prefix in prefix_aliases.items():
-        if capability_id.startswith(old_prefix):
-            candidates.append(new_prefix + capability_id[len(old_prefix) :])
-
-    explicit_aliases = {
-        "agent.task.plan": "reasoning.plan.generate",
-        "agent.plan.split": "reasoning.plan.decompose",
-        "agent.plan.run": "agent.plan.execute",
-        "agent.plan.generate": "reasoning.plan.generate",
-        "agent.plan.create": "reasoning.plan.generate",
-        "agent.task.delegate": "decision.task.delegate",
-        "eval.option.analyze": "reasoning.option.analyze",
-        "model.output.score": "evaluation.output.score",
-        "model.response.validate": "evaluation.response.validate",
-        "model.risk.score": "evaluation.risk.score",
-        "text.content.extract": "perception.content.extract",
-        "text.entity.extract": "perception.entity.extract",
-        "text.keyword.extract": "perception.keyword.extract",
-    }
-    mapped = explicit_aliases.get(capability_id)
-    if mapped:
-        candidates.append(mapped)
-
-    return list(dict.fromkeys(candidates))
-
-
-def _resolve_registry_capability(
-    capability_id: str, registry_ids: set[str]
-) -> str | None:
-    if capability_id in registry_ids:
-        return capability_id
-    for alias in _legacy_capability_alias_candidates(capability_id):
-        if alias in registry_ids:
-            return alias
-    return None
-
-
 def main() -> int:
     registry_ids = _registry_capability_ids()
-    binding_by_id, binding_cap_refs = _discover_bindings()
+    binding_by_id, binding_cap_refs, bindings_by_capability = _discover_bindings()
     smoke_caps = _read_smoke_capabilities()
     default_selection = _read_default_selection()
+    active_bindings = _read_active_bindings()
+    manifest_deprecated_binding_ids = _load_deprecated_binding_ids()
     governance_tool_caps = _read_governance_tools_supported_keys()
 
     errors: list[str] = []
 
+    binding_capability_by_id: dict[str, str] = {}
     for path, cap_id in binding_cap_refs:
-        if _resolve_registry_capability(cap_id, registry_ids) is None:
+        data = _load_yaml(path)
+        binding_id = data.get("id")
+        if isinstance(binding_id, str) and binding_id:
+            binding_capability_by_id[binding_id] = cap_id
+
+    deprecated_binding_ids: set[str] = {
+        bid
+        for bid in manifest_deprecated_binding_ids
+        if binding_capability_by_id.get(bid) not in registry_ids
+    }
+    stale_manifest_binding_ids = sorted(
+        bid
+        for bid in manifest_deprecated_binding_ids
+        if binding_capability_by_id.get(bid) in registry_ids
+    )
+
+    for path, cap_id in binding_cap_refs:
+        data = _load_yaml(path)
+        binding_id = data.get("id")
+        binding_id_str = binding_id if isinstance(binding_id, str) else ""
+        if cap_id not in registry_ids:
+            if binding_id_str and binding_id_str in deprecated_binding_ids:
+                continue
             rel = str(path.relative_to(ROOT)).replace("\\", "/")
-            errors.append(f"binding capability not in registry: {rel} -> {cap_id}")
+            errors.append(
+                f"binding capability not in registry and not deprecated: {rel} -> {cap_id}"
+            )
+
+    uncovered_registry_caps = sorted(
+        cap_id for cap_id in registry_ids if cap_id not in bindings_by_capability
+    )
+    for cap_id in uncovered_registry_caps:
+        errors.append(f"registry capability without binding: {cap_id}")
+
+    non_deprecated_by_capability: dict[str, list[str]] = {}
+    for cap_id, binding_ids in bindings_by_capability.items():
+        eligible = [bid for bid in binding_ids if bid not in deprecated_binding_ids]
+        if eligible:
+            non_deprecated_by_capability[cap_id] = eligible
+
+    for cap_id in sorted(registry_ids):
+        if cap_id not in non_deprecated_by_capability:
+            errors.append(f"registry capability without active binding: {cap_id}")
 
     for cap_id in smoke_caps:
-        if _resolve_registry_capability(cap_id, registry_ids) is None:
+        if cap_id not in registry_ids:
             errors.append(f"smoke capability not in registry: {cap_id}")
 
     for cap_id, binding_id in default_selection.items():
-        resolved_default = _resolve_registry_capability(cap_id, registry_ids)
-        if resolved_default is None:
+        if cap_id not in registry_ids:
             errors.append(
                 f"default selection capability not in registry: {cap_id} -> {binding_id}"
             )
@@ -193,29 +240,74 @@ def main() -> int:
             )
             continue
 
-        resolved_binding = _resolve_registry_capability(binding_cap, registry_ids)
-        if resolved_binding is None:
+        if binding_cap not in registry_ids:
             errors.append(
                 f"default selection binding capability not in registry: {binding_id} -> {binding_cap}"
             )
             continue
 
-        if resolved_binding != resolved_default:
+        if binding_cap != cap_id:
             errors.append(
                 "default selection mismatch: "
                 f"{cap_id} -> {binding_id} declares capability {binding_cap}"
             )
 
+        if binding_id in deprecated_binding_ids:
+            errors.append(
+                f"default selection uses deprecated binding: {cap_id} -> {binding_id}"
+            )
+
+    for cap_id, binding_id in active_bindings.items():
+        if cap_id not in registry_ids:
+            errors.append(
+                f"active binding capability not in registry: {cap_id} -> {binding_id}"
+            )
+            continue
+
+        binding_path = binding_by_id.get(binding_id)
+        if binding_path is None:
+            errors.append(f"active binding does not exist: {cap_id} -> {binding_id}")
+            continue
+
+        binding_yaml = _load_yaml(ROOT / binding_path)
+        binding_cap = binding_yaml.get("capability")
+        if not isinstance(binding_cap, str):
+            errors.append(
+                f"active binding without capability: {cap_id} -> {binding_id}"
+            )
+            continue
+
+        if binding_cap != cap_id:
+            errors.append(
+                "active binding mismatch: "
+                f"{cap_id} -> {binding_id} declares capability {binding_cap}"
+            )
+
+        if binding_id in deprecated_binding_ids:
+            errors.append(f"active binding uses deprecated binding: {cap_id} -> {binding_id}")
+
     for cap_id in sorted(governance_tool_caps):
-        if _resolve_registry_capability(cap_id, registry_ids) is None:
+        if cap_id not in registry_ids:
             errors.append(f"governance tool capability not in registry: {cap_id}")
 
     print("Registry capability reference verification")
     print(f"- registry capabilities: {len(registry_ids)}")
     print(f"- bindings scanned: {len(binding_cap_refs)}")
+    print(f"- capabilities with >=1 binding: {len(bindings_by_capability)}")
+    print(
+        "- capabilities with >=1 non-deprecated binding: "
+        f"{len(non_deprecated_by_capability)}"
+    )
     print(f"- smoke capabilities: {len(smoke_caps)}")
     print(f"- default selections: {len(default_selection)}")
+    print(f"- active selections: {len(active_bindings)}")
     print(f"- governance tool capabilities: {len(governance_tool_caps)}")
+    print(
+        "- deprecated bindings manifest entries: "
+        f"{len(manifest_deprecated_binding_ids)}"
+    )
+    print(f"- deprecated bindings effective: {len(deprecated_binding_ids)}")
+    print(f"- deprecated manifest stale entries: {len(stale_manifest_binding_ids)}")
 
     if errors:
         print("\nFound reference issues:")

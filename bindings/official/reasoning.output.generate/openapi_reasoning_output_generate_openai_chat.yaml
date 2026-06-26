@@ -1,4 +1,4 @@
-id: openapi_reasoning_output_generate_openai_chat
+﻿id: openapi_reasoning_output_generate_openai_chat
 capability: reasoning.output.generate
 service: model_openai_chat
 protocol: openapi
@@ -24,3 +24,5 @@ metadata:
   description: OpenAI binding for reasoning.output.generate using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

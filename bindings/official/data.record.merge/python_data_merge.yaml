@@ -11,7 +11,6 @@ request:
 response:
   record: response.record
   field_count: response.field_count
-  conflicts: response.conflicts
 
 metadata:
   description: Official baseline binding for data.record.merge.

@@ -1,4 +1,4 @@
-id: python_reasoning_option_generate
+﻿id: python_reasoning_option_generate
 capability: reasoning.option.generate
 service: cognitive_baseline
 protocol: pythoncall
@@ -14,3 +14,5 @@ response:
 metadata:
   description: Python fallback for reasoning.option.generate using cognitive_baseline service.
   status: stable
+
+

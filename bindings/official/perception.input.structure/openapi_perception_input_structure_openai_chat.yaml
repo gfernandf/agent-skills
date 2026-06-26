@@ -14,13 +14,13 @@ request:
   response_format:
     type: json_object
 response:
-  structured_input: response.choices.0.message.content_json.structured_input
+  response: response.choices.0.message.content_json.structured_input
   complete: response.choices.0.message.content_json.complete
   missing_fields: response.choices.0.message.content_json.missing_fields
 metadata:
   method: POST
   response_mode: json
   fallback_binding_id: python_perception_input_structure
-  description: OpenAI binding for perception.input.structure using gpt-4o-mini.
+  description: OpenAI binding for agent.input.collect using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30

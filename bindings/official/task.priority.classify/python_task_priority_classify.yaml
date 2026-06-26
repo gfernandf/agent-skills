@@ -1,0 +1,18 @@
+id: python_task_priority_classify
+capability: message.priority.classify
+service: task_baseline
+protocol: pythoncall
+operation: classify_priority
+
+request:
+  task: input.task
+  context: input.context
+
+response:
+  priority: response.priority
+  confidence: response.confidence
+  rationale: response.rationale
+
+metadata:
+  description: Python fallback for task.priority.classify using task_baseline service.
+  status: experimental

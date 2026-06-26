@@ -1,4 +1,4 @@
-id: openapi_evidence_trace_summarize_openai_chat
+﻿id: openapi_evidence_trace_summarize_openai_chat
 capability: evidence.trace.summarize
 service: model_openai_chat
 protocol: openapi
@@ -22,3 +22,5 @@ metadata:
   description: OpenAI binding for evidence.trace.summarize using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

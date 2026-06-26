@@ -1,5 +1,5 @@
 id: python_model_output_score
-capability: model.output.score
+capability: evaluation.response.score
 service: cognitive_baseline
 protocol: pythoncall
 operation: evaluation_output_score

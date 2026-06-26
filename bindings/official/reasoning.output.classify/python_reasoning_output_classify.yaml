@@ -1,4 +1,4 @@
-id: python_reasoning_output_classify
+﻿id: python_reasoning_output_classify
 capability: reasoning.output.classify
 service: cognitive_baseline
 protocol: pythoncall
@@ -14,3 +14,5 @@ response:
 metadata:
   description: Python fallback for reasoning.output.classify using cognitive_baseline service.
   status: stable
+
+

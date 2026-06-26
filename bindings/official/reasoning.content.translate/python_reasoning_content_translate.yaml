@@ -1,4 +1,4 @@
-id: python_reasoning_content_translate
+﻿id: python_reasoning_content_translate
 capability: reasoning.content.translate
 service: cognitive_baseline
 protocol: pythoncall
@@ -12,3 +12,5 @@ response:
 metadata:
   description: Python fallback for reasoning.content.translate using cognitive_baseline service.
   status: stable
+
+

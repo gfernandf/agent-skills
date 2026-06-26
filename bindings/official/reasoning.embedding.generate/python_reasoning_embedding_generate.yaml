@@ -1,4 +1,4 @@
-id: python_reasoning_embedding_generate
+﻿id: python_reasoning_embedding_generate
 capability: reasoning.embedding.generate
 service: cognitive_baseline
 protocol: pythoncall
@@ -13,3 +13,5 @@ response:
 metadata:
   description: Python fallback for reasoning.embedding.generate using cognitive_baseline service.
   status: stable
+
+

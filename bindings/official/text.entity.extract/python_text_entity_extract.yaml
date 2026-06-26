@@ -1,6 +1,6 @@
 id: python_text_entity_extract
 
-capability: text.entity.extract
+capability: perception.entity.extract
 service: text_baseline
 protocol: pythoncall
 operation: extract_entities

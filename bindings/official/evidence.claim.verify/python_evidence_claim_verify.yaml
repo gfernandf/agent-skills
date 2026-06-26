@@ -1,4 +1,4 @@
-id: python_evidence_claim_verify
+﻿id: python_evidence_claim_verify
 capability: evidence.claim.verify
 service: cognitive_baseline
 protocol: pythoncall
@@ -13,3 +13,5 @@ response:
 metadata:
   description: Python fallback for evidence.claim.verify using cognitive_baseline service.
   status: stable
+
+

@@ -1,4 +1,4 @@
-id: openapi_reasoning_content_classify_openai_chat
+﻿id: openapi_reasoning_content_classify_openai_chat
 capability: reasoning.content.classify
 service: model_openai_chat
 protocol: openapi
@@ -23,3 +23,5 @@ metadata:
   description: OpenAI binding for reasoning.content.classify using gpt-4o-mini.
   status: experimental
   timeout_seconds: 30
+
+

@@ -1,4 +1,4 @@
-id: python_perception_event_monitor
+﻿id: python_perception_event_monitor
 capability: perception.event.monitor
 service: ops_baseline
 protocol: pythoncall
@@ -13,3 +13,5 @@ response:
 metadata:
   description: Python fallback for perception.event.monitor using ops event monitoring baseline.
   status: stable
+
+

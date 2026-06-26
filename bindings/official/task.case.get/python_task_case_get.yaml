@@ -1,5 +1,5 @@
 id: python_task_case_get
-capability: task.case.get
+capability: perception.case.get
 service: task_baseline
 protocol: pythoncall
 operation: get_case

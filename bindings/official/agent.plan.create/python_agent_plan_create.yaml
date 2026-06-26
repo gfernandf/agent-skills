@@ -1,6 +1,6 @@
 id: python_agent_plan_create
 
-capability: agent.plan.create
+capability: reasoning.plan.generate
 service: scaffold_service
 protocol: pythoncall
 operation: generate_skill_from_prompt
