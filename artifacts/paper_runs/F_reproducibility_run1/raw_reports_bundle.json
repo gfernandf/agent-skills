@@ -1,0 +1,76 @@
+{
+  "generated_at": "2026-06-29T16:20:14.671805+00:00",
+  "count": 14,
+  "items": [
+    {
+      "path": "artifacts/action_preflight_batches/batch_1_smoke_functional.json",
+      "sha256": "204aef1263dbe1b57c89135e6fe4e84bfc5bd8c18f7334a679e8d30255de9758",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_batches/batch_2_determinism_stability.json",
+      "sha256": "96fe16074311f2c5df263fa58f659e948a454bde2c297a05ae016d249ae88f80",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_batches/batch_3_adversarial_inputs.json",
+      "sha256": "b47a1d645ac0e137fb02279ab3037710a1ea007ea60422e4f81225638d79a62b",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_batches/batch_4_binding_resilience.json",
+      "sha256": "c70e76202d9ae95be0b44610d95773b32ecf5dfd1961b0a05a5243ede56029f8",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_batches/batch_5_regression_pack.json",
+      "sha256": "c88a718122d6b5738c4d7aba11ff88e1dd0da8f85fe942b91bba2d106ec83734",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_ablations/batch_c_ablation_run1_aggregate.json",
+      "sha256": "3c60698d373226793e73da4f658cc3205cd67bedae5b63747ddaa252a9859fdb",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_ablations/batch_c_ablation_run1_full_skill.json",
+      "sha256": "a9fab34925b51aef980d4992cd062e0235a64843a5982373f76fc8b59dcb8ad6",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_privacy_signal.json",
+      "sha256": "b488622a4fa2a7569b24757d03769f7ea33d76a25149a8356f08a3451398a58d",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_incident_pressure_signal.json",
+      "sha256": "830eb8e67bf3fcd3042e0837cae0fb9996f373091265ff424caf91083709606e",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_rollback_signal.json",
+      "sha256": "cf78cde09cea9e71d143829b4606d2813655fe88d88f8478a0de6425c3f80ccf",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_uncertainty_extraction.json",
+      "sha256": "39775b34a2259bf78ee405ddd9a91a32a77608751f05b69d4df6fd7b426f33ab",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_enriched_branch_logic.json",
+      "sha256": "5b43c26dc672a5e9096c1a231c3409e097cd6fd5da5755a1529abd5080d8c19b",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_robustness/batch_d_robustness_run1.json",
+      "sha256": "52e4a635ba2726ab5df37ee97719ca52d36af97332f05118cf53ae83ed0f74d8",
+      "exists": true
+    },
+    {
+      "path": "artifacts/action_preflight_calibration/batch_e_calibration_run1.json",
+      "sha256": "b7762aa6b39d0f53f1cea7da107d342371948672501a675f4827d8913e8dfc82",
+      "exists": true
+    }
+  ]
+}

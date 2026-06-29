@@ -1,0 +1,14 @@
+{
+  "study_id": "action_preflight_forecast_journal_2026",
+  "batch_label": "F",
+  "run_label": "reproducibility_run1",
+  "generated_at": "2026-06-29T16:20:14.681280+00:00",
+  "package_dir": "artifacts/paper_runs/F_reproducibility_run1",
+  "files": {
+    "run_manifest": "artifacts/paper_runs/F_reproducibility_run1/run_manifest.json",
+    "frozen_inputs_hashes": "artifacts/paper_runs/F_reproducibility_run1/frozen_inputs_hashes.json",
+    "raw_reports_bundle": "artifacts/paper_runs/F_reproducibility_run1/raw_reports_bundle.json",
+    "aggregated_tables_bundle": "artifacts/paper_runs/F_reproducibility_run1/aggregated_tables_bundle.json",
+    "figure_specs": "artifacts/paper_runs/F_reproducibility_run1/figure_specs.json"
+  }
+}

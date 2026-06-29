@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-06-29T16:20:14.638197+00:00",
+  "items": {
+    "base_case_file": {
+      "path": "test_inputs/action_preflight_batch_cases.json",
+      "sha256": "f6b83e35cff53bff8b4faa254554256df3ee94bfb3edcb9f672d0afec375cf42",
+      "exists": true
+    },
+    "base_batch_manifest": {
+      "path": "tooling/action_preflight_batches_manifest.json",
+      "sha256": "68d817771d72d54aea7075ee89d67a4e890b62ba2423983bb1770e7bd473bcb8",
+      "exists": true
+    },
+    "runner": {
+      "path": "tooling/run_action_preflight_batches.py",
+      "sha256": "496de4e2230b3017707d28f97d24e2f66929db648f814b2ee215845d6f3792b1",
+      "exists": true
+    },
+    "protocol": {
+      "path": "docs/papers/action_preflight_forecast_study/BATCH_A_PROTOCOL.md",
+      "sha256": "f4e7e42e6a7c215c780fa4b19f9aabd0677133342829d5f9117f96fd69ddaafe",
+      "exists": true
+    },
+    "evaluation_manifest": {
+      "path": "docs/papers/action_preflight_forecast_study/BATCH_BF_EVALUATION_MANIFEST.json",
+      "sha256": "9fec22692147afa7789170e1df80740e95c3776b4bb8a7b4aa394b51ceef7ba5",
+      "exists": true
+    }
+  }
+}

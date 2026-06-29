@@ -1,0 +1,43 @@
+{
+  "study_id": "action_preflight_forecast_journal_2026",
+  "batch_label": "A",
+  "run_label": "draft1",
+  "generated_at_utc": "2026-06-29T12:23:16.305248+00:00",
+  "workspace": {
+    "agent_skills_root": "C:\\Users\\Usuario\\agent-skills",
+    "agent_skill_registry_root": "C:\\Users\\Usuario\\agent-skill-registry"
+  },
+  "commits": {
+    "agent_skills": "c41e701980957b4552c90b76e4eab2ced8bf1b82",
+    "agent_skill_registry": "043b35a1cb2477198833217ee4653cc9039c1928"
+  },
+  "file_hashes": {
+    "protocol": {
+      "path": "C:\\Users\\Usuario\\agent-skills\\docs\\papers\\action_preflight_forecast_study\\BATCH_A_PROTOCOL.md",
+      "sha256": "f4e7e42e6a7c215c780fa4b19f9aabd0677133342829d5f9117f96fd69ddaafe"
+    },
+    "eval_manifest": {
+      "path": "C:\\Users\\Usuario\\agent-skills\\docs\\papers\\action_preflight_forecast_study\\BATCH_BF_EVALUATION_MANIFEST.json",
+      "sha256": "f62f3a598f0dfc93204ffdb8bc1f77cabba812d6d1bd7dc359595fd39534d39f"
+    },
+    "batch_manifest": {
+      "path": "C:\\Users\\Usuario\\agent-skills\\tooling\\action_preflight_batches_manifest.json",
+      "sha256": "68d817771d72d54aea7075ee89d67a4e890b62ba2423983bb1770e7bd473bcb8"
+    },
+    "case_file": {
+      "path": "C:\\Users\\Usuario\\agent-skills\\test_inputs\\action_preflight_batch_cases.json",
+      "sha256": "f6b83e35cff53bff8b4faa254554256df3ee94bfb3edcb9f672d0afec375cf42"
+    },
+    "runner": {
+      "path": "C:\\Users\\Usuario\\agent-skills\\tooling\\run_action_preflight_batches.py",
+      "sha256": "496de4e2230b3017707d28f97d24e2f66929db648f814b2ee215845d6f3792b1"
+    }
+  },
+  "environment": {
+    "python_version": "3.14.3 (tags/v3.14.3:323c59a, Feb  3 2026, 16:04:56) [MSC v.1944 64 bit (AMD64)]",
+    "python_executable": "C:\\Users\\Usuario\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+    "platform": "Windows-11-10.0.26100-SP0",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 78 Stepping 3, GenuineIntel"
+  }
+}

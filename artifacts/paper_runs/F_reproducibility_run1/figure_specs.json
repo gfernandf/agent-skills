@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-06-29T16:20:14.676610+00:00",
+  "figures": [
+    {
+      "id": "fig_b_core_kpis",
+      "title": "Batch B Core KPIs by Batch",
+      "source": "aggregated_tables_bundle.json::tables.batch_b_core_benchmark",
+      "chart": "bar",
+      "x": "batch_name",
+      "y": [
+        "pass_rate",
+        "fallback_ratio"
+      ]
+    },
+    {
+      "id": "fig_c_ablation_deltas",
+      "title": "Batch C Ablation Delta Pass Rate vs Full Skill",
+      "source": "aggregated_tables_bundle.json::tables.batch_c_ablation_deltas",
+      "chart": "heatmap",
+      "x": "variant",
+      "y": "batch_id",
+      "value": "delta_pass_rate"
+    },
+    {
+      "id": "fig_d_perturbation_resilience",
+      "title": "Batch D Pass Rate by Perturbation",
+      "source": "aggregated_tables_bundle.json::tables.batch_d_by_perturbation",
+      "chart": "bar",
+      "x": "perturbation",
+      "y": "pass_rate"
+    },
+    {
+      "id": "fig_e_reliability_curve",
+      "title": "Batch E Reliability Curve",
+      "source": "aggregated_tables_bundle.json::tables.batch_e_calibration_summary.reliability_curve_bins",
+      "chart": "line",
+      "x": "avg_confidence",
+      "y": "empirical_accuracy"
+    }
+  ],
+  "notes": [
+    "All figure sources are derived from frozen run artifacts only.",
+    "No post-hoc threshold tuning is applied in this package."
+  ],
+  "status": "ready"
+}
