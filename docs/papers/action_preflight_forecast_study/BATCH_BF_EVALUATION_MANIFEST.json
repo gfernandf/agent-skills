@@ -1,0 +1,215 @@
+{
+  "study_id": "action_preflight_forecast_journal_2026",
+  "status": "batch_f_completed",
+  "batch_a_freeze": {
+    "approved_at_utc": "2026-06-29T12:27:16.910392+00:00",
+    "run_label": "run0_freeze",
+    "evidence_manifest": "artifacts/paper_runs/A_run0_freeze_run_manifest.json"
+  },
+  "batch_b_execution": {
+    "completed_at_utc": "2026-06-29T12:35:47.516425+00:00",
+    "run_label": "core_benchmark_run1",
+    "evidence_manifest": "artifacts/paper_runs/B_core_benchmark_run1_run_manifest.json",
+    "reports": [
+      "artifacts/action_preflight_batches/batch_1_smoke_functional.json",
+      "artifacts/action_preflight_batches/batch_2_determinism_stability.json",
+      "artifacts/action_preflight_batches/batch_3_adversarial_inputs.json",
+      "artifacts/action_preflight_batches/batch_4_binding_resilience.json",
+      "artifacts/action_preflight_batches/batch_5_regression_pack.json"
+    ],
+    "aggregate_summary": {
+      "batches_passed": 5,
+      "batches_total": 5,
+      "go_no_go": "go"
+    }
+  },
+  "batch_c_execution": {
+    "completed_at_utc": "2026-06-29T15:27:40.993415+00:00",
+    "run_label": "ablation_run1",
+    "ablation_runner": "tooling/run_action_preflight_ablations.py",
+    "aggregate_report": "artifacts/action_preflight_ablations/batch_c_ablation_run1_aggregate.json",
+    "incident_classification": {
+      "operational_incidents": [],
+      "quality_regressions_full_skill": [],
+      "expected_ablation_findings": [
+        "minus_privacy_signal degrades batch 3 pass rate",
+        "minus_uncertainty_extraction causes broad unsafe decision drift",
+        "minus_enriched_branch_logic degrades batch 3 pass rate"
+      ]
+    },
+    "variant_reports": [
+      "artifacts/action_preflight_ablations/batch_c_ablation_run1_full_skill.json",
+      "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_privacy_signal.json",
+      "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_incident_pressure_signal.json",
+      "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_rollback_signal.json",
+      "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_uncertainty_extraction.json",
+      "artifacts/action_preflight_ablations/batch_c_ablation_run1_minus_enriched_branch_logic.json"
+    ],
+    "headline_deltas": {
+      "minus_privacy_signal_batch3_delta_pass_rate": -0.3333,
+      "minus_uncertainty_extraction_cross_batch_delta_pass_rate": -0.6667,
+      "minus_uncertainty_extraction_cross_batch_delta_unsafe_proceed_medium_high": 2,
+      "minus_enriched_branch_logic_batch3_delta_pass_rate": -0.3333
+    }
+  },
+  "batch_d_execution": {
+    "completed_at_utc": "2026-06-29T16:14:08.069971+00:00",
+    "run_label": "robustness_run1",
+    "evidence_manifest": "artifacts/paper_runs/D_robustness_run1_run_manifest.json",
+    "robustness_runner": "tooling/run_action_preflight_robustness.py",
+    "aggregate_report": "artifacts/action_preflight_robustness/batch_d_robustness_run1.json",
+    "incident_classification": {
+      "operational_incidents": [],
+      "quality_regressions_full_skill": [],
+      "expected_robustness_findings": [
+        "incomplete_context perturbation reduced pass_rate to 0.8333 while preserving unsafe_proceed_medium_high = 0"
+      ]
+    },
+    "kpis": {
+      "robust_pass_rate": 0.9667,
+      "unsafe_proceed_under_stress": 0,
+      "decision_stability_under_perturbation": 0.9792,
+      "error_rate": 0.0,
+      "fallback_ratio": 0.0333
+    }
+  },
+  "batch_e_execution": {
+    "completed_at_utc": "2026-06-29T16:18:29.778359+00:00",
+    "run_label": "calibration_run1",
+    "evidence_manifest": "artifacts/paper_runs/E_calibration_run1_run_manifest.json",
+    "calibration_runner": "tooling/run_action_preflight_calibration.py",
+    "aggregate_report": "artifacts/action_preflight_calibration/batch_e_calibration_run1.json",
+    "incident_classification": {
+      "operational_incidents": [],
+      "quality_regressions_full_skill": [],
+      "expected_calibration_findings": []
+    },
+    "kpis": {
+      "brier_score": 0.0064,
+      "ece": 0.08,
+      "overconfidence_rate": 0.0,
+      "error_rate": 0.0
+    }
+  },
+  "batch_f_execution": {
+    "completed_at_utc": "2026-06-29T16:20:14.681280+00:00",
+    "run_label": "reproducibility_run1",
+    "evidence_manifest": "artifacts/paper_runs/F_reproducibility_run1_run_manifest.json",
+    "package_dir": "artifacts/paper_runs/F_reproducibility_run1",
+    "package_index": "artifacts/paper_runs/F_reproducibility_run1/package_index.json",
+    "outputs": {
+      "run_manifest": "artifacts/paper_runs/F_reproducibility_run1/run_manifest.json",
+      "frozen_inputs_hashes": "artifacts/paper_runs/F_reproducibility_run1/frozen_inputs_hashes.json",
+      "raw_reports_bundle": "artifacts/paper_runs/F_reproducibility_run1/raw_reports_bundle.json",
+      "aggregated_tables_bundle": "artifacts/paper_runs/F_reproducibility_run1/aggregated_tables_bundle.json",
+      "figure_specs": "artifacts/paper_runs/F_reproducibility_run1/figure_specs.json"
+    },
+    "documentation": {
+      "final_report": "docs/papers/action_preflight_forecast_study/BATCH_BF_FINAL_REPORT.md",
+      "external_use_guide": "docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL.md"
+    },
+    "incident_classification": {
+      "operational_incidents": [],
+      "packaging_incidents": [],
+      "missing_artifacts": []
+    }
+  },
+  "frozen_inputs": {
+    "skill_id": "decision.action-preflight-forecast",
+    "base_case_file": "test_inputs/action_preflight_batch_cases.json",
+    "base_batch_manifest": "tooling/action_preflight_batches_manifest.json",
+    "runner": "tooling/run_action_preflight_batches.py"
+  },
+  "evaluation_batches": [
+    {
+      "id": "B",
+      "name": "core_benchmark",
+      "purpose": "Primary performance and safety endpoints",
+      "inputs": {
+        "batch_ids": [1, 2, 3, 4, 5]
+      },
+      "kpis": [
+        "pass_rate",
+        "decision_family_accuracy",
+        "unsafe_proceed_medium_high",
+        "error_rate",
+        "fallback_ratio",
+        "decision_variants_per_case"
+      ],
+      "acceptance": {
+        "required_pass_rate": 1.0,
+        "max_errors": 0,
+        "forbid_unsafe_proceed_medium_high": true
+      }
+    },
+    {
+      "id": "C",
+      "name": "ablation_suite",
+      "purpose": "Measure contribution of each major forecast component",
+      "inputs": {
+        "variants": [
+          "full_skill",
+          "minus_privacy_signal",
+          "minus_incident_pressure_signal",
+          "minus_rollback_signal",
+          "minus_uncertainty_extraction",
+          "minus_enriched_branch_logic"
+        ]
+      },
+      "kpis": [
+        "delta_pass_rate",
+        "delta_unsafe_proceed_medium_high",
+        "delta_decision_family_accuracy",
+        "delta_missing_detect_terms_rate"
+      ]
+    },
+    {
+      "id": "D",
+      "name": "robustness_adversarial",
+      "purpose": "Stress-test under ambiguity, contradiction, and partial evidence",
+      "inputs": {
+        "perturbations": [
+          "paraphrase",
+          "signal_dropout",
+          "conflicting_constraints",
+          "incomplete_context"
+        ]
+      },
+      "kpis": [
+        "robust_pass_rate",
+        "unsafe_proceed_under_stress",
+        "decision_stability_under_perturbation"
+      ]
+    },
+    {
+      "id": "E",
+      "name": "calibration_reliability",
+      "purpose": "Evaluate confidence quality and reliability",
+      "inputs": {
+        "stratification": [
+          "risk_band",
+          "family",
+          "execution_health"
+        ]
+      },
+      "kpis": [
+        "brier_score",
+        "ece",
+        "reliability_curve_bins",
+        "overconfidence_rate"
+      ]
+    },
+    {
+      "id": "F",
+      "name": "reproducibility_package",
+      "purpose": "Third-party rerun readiness",
+      "outputs": [
+        "run_manifest.json",
+        "frozen_inputs_hashes.json",
+        "raw_reports_bundle",
+        "aggregated_tables_bundle",
+        "figure_specs"
+      ]
+    }
+  ]
+}

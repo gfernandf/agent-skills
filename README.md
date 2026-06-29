@@ -427,6 +427,9 @@ See docs index below for details.
 | Skill authoring | [docs/SKILL_AUTHORING.md](docs/SKILL_AUTHORING.md) |
 | Troubleshooting | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) |
 | Public release use cases | [docs/PUBLIC_RELEASE_USE_CASES.md](docs/PUBLIC_RELEASE_USE_CASES.md) |
+| Action Preflight external freeze/repro | [docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL.md](docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL.md) |
+| Action Preflight release note | [docs/ACTION_PREFLIGHT_FORECAST_RELEASE_NOTE.md](docs/ACTION_PREFLIGHT_FORECAST_RELEASE_NOTE.md) |
+| Action Preflight external checklist | [docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL_CHECKLIST.md](docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL_CHECKLIST.md) |
 | Project status | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) |
 | ORCA specification | [ORCA.md](ORCA.md) |
 
