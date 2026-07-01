@@ -29,6 +29,17 @@ Agent Skills Runtime is the reference implementation of ORCA (Open Cognitive Run
 - Bindings connect contracts to execution backends (PythonCall, OpenAPI, MCP, OpenRPC)
 - Runtime executes DAGs with policy/safety, CognitiveState, and traceability
 
+## Terminology Note
+
+For cognitive runtime terminology, we use:
+
+- COGIT = capability
+- SYLLOG = skill
+
+In this repository implementation, we keep the canonical technical terms
+`capability/capabilities` and `skill/skills` (file paths, APIs, schemas, CLI,
+catalogs, and runtime internals) to preserve architecture and compatibility.
+
 No API key required for local-first runs. Deterministic Python baselines are available for offline development and testing.
 
 ---
@@ -427,6 +438,7 @@ See docs index below for details.
 | Skill authoring | [docs/SKILL_AUTHORING.md](docs/SKILL_AUTHORING.md) |
 | Troubleshooting | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) |
 | Public release use cases | [docs/PUBLIC_RELEASE_USE_CASES.md](docs/PUBLIC_RELEASE_USE_CASES.md) |
+| Action Preflight integration quickstart | [docs/ACTION_PREFLIGHT_FORECAST_QUICKSTART.md](docs/ACTION_PREFLIGHT_FORECAST_QUICKSTART.md) |
 | Action Preflight external freeze/repro | [docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL.md](docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL.md) |
 | Action Preflight release note | [docs/ACTION_PREFLIGHT_FORECAST_RELEASE_NOTE.md](docs/ACTION_PREFLIGHT_FORECAST_RELEASE_NOTE.md) |
 | Action Preflight external checklist | [docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL_CHECKLIST.md](docs/ACTION_PREFLIGHT_FORECAST_EXTERNAL_CHECKLIST.md) |
