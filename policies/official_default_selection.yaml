@@ -18,12 +18,14 @@ defaults:
   data.record.transform: python_data_transform
   data.schema.validate: python_data_schema_validate
   decision.flow.branch: python_agent_flow_branch
-  decision.option.justify: openapi_decision_option_justify_openai_chat
+  decision.option.justify: python_decision_option_justify
   doc.content.chunk: python_doc_chunk
   doc.content.generate: openapi_doc_generate_openai_chat
   email.inbox.read: python_email_read
   email.message.send: python_email_send
+  evaluation.hypothesis.evaluate: python_evaluation_hypothesis_evaluate
   evaluation.option.score: python_eval_option_score
+  evaluation.uncertainty.score: python_evaluation_uncertainty_score
   fs.file.list: python_fs_list
   fs.file.read: python_fs_read
   fs.file.write: python_fs_write
@@ -71,8 +73,10 @@ defaults:
   reasoning.goal.interpret: python_agent_goal_interpret
   reasoning.option.analyze: python_eval_option_analyze
   reasoning.option.generate: python_agent_option_generate
+  reasoning.output.classify: python_reasoning_output_classify
   reasoning.request.normalize: python_agent_request_normalize
-  reasoning.risk.extract: python_analysis_risk_extract
+  reasoning.risk.extract: python_reasoning_risk_extract
+  reasoning.uncertainty.extract: python_reasoning_uncertainty_extract
   research.source.retrieve: python_research_source_retrieve
   security.output.gate: python_security_output_gate
   security.pii.detect: python_security_pii_detect

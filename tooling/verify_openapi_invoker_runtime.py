@@ -18,8 +18,22 @@ from runtime.openapi_invoker import OpenAPIInvocationError, OpenAPIInvoker  # no
 
 
 class _HarnessHandler(BaseHTTPRequestHandler):
+    _rate_limit_once_hits = 0
+
     def do_POST(self) -> None:  # noqa: N802
         if self.path == "/ok":
+            self._write_json(200, {"valid": True, "errors": []})
+            return
+
+        if self.path == "/rate-limit-once":
+            _HarnessHandler._rate_limit_once_hits += 1
+            if _HarnessHandler._rate_limit_once_hits == 1:
+                self._write_json(
+                    429,
+                    {"error": "too_many_requests"},
+                    headers={"Retry-After": "1"},
+                )
+                return
             self._write_json(200, {"valid": True, "errors": []})
             return
 
@@ -44,13 +58,20 @@ class _HarnessHandler(BaseHTTPRequestHandler):
             return
         self._write_json(404, {"error": "not_found"})
 
-    def _write_json(self, status: int, body: dict) -> None:
+    def _write_json(self, status: int, body: dict, headers: dict | None = None) -> None:
         encoded = json.dumps(body).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(encoded)))
+        if headers:
+            for key, value in headers.items():
+                self.send_header(str(key), str(value))
         self.end_headers()
-        self.wfile.write(encoded)
+        try:
+            self.wfile.write(encoded)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            # Expected in timeout/cancel checks where client closes first.
+            return
 
     def _write_text(self, status: int, body: str) -> None:
         encoded = body.encode("utf-8")
@@ -58,7 +79,11 @@ class _HarnessHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/plain")
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
-        self.wfile.write(encoded)
+        try:
+            self.wfile.write(encoded)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            # Expected in timeout/cancel checks where client closes first.
+            return
 
     def log_message(self, format: str, *args) -> None:  # noqa: A003
         return
@@ -103,6 +128,7 @@ def _assert(condition: bool, message: str) -> None:
 
 def main() -> int:
     invoker = OpenAPIInvoker()
+    _HarnessHandler._rate_limit_once_hits = 0
     server = ThreadingHTTPServer(("127.0.0.1", 8766), _HarnessHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -176,6 +202,23 @@ def main() -> int:
             _assert(
                 "http 500" in str(e).lower(), "Expected HTTP status detail in error"
             )
+
+        # 7) 429 should retry and recover when retries are enabled
+        response = invoker.invoke(
+            _make_request(
+                operation="rate-limit-once",
+                binding_metadata={"retry_count": 1},
+            )
+        )
+        checks += 1
+        _assert(
+            response.raw_response == {"valid": True, "errors": []},
+            "429 retry flow did not recover as expected",
+        )
+        _assert(
+            _HarnessHandler._rate_limit_once_hits == 2,
+            "Expected exactly one retry after initial 429",
+        )
 
         print(f"OpenAPI invoker runtime verification passed ({checks} checks)")
         return 0

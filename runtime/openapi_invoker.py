@@ -6,7 +6,9 @@ import logging
 import os
 import re
 import socket
+import threading
 import time
+from email.utils import parsedate_to_datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -26,7 +28,14 @@ _TRANSIENT_STATUS_CODES = frozenset({429, 502, 503, 504})
 _DEFAULT_MAX_RETRIES = 3
 _DEFAULT_RETRY_BACKOFF_BASE = 1.0
 _DEFAULT_RETRY_BACKOFF_FACTOR = 2.0
+_DEFAULT_MIN_429_WAIT_SECONDS = 2.0
 _MAX_RETRY_AFTER_SECONDS = 60.0
+_DEFAULT_OPENAPI_MAX_INFLIGHT = max(
+    1, int(os.getenv("AGENT_SKILLS_OPENAPI_MAX_INFLIGHT", "2"))
+)
+_DEFAULT_OPENAPI_MIN_INTERVAL_SECONDS = max(
+    0.0, float(os.getenv("AGENT_SKILLS_OPENAPI_MIN_INTERVAL_SECONDS", "0.25"))
+)
 
 _DEFAULT_MAX_REQUEST_BYTES = int(
     os.getenv("AGENT_SKILLS_MAX_REQUEST_BYTES", str(10 * 1024 * 1024))
@@ -74,7 +83,14 @@ class OpenAPIInvoker:
         self._logger = logging.getLogger(__name__)
         # Connection-pooled sessions keyed by base_url for persistent TCP reuse
         self._sessions: dict[str, requests.Session] = {}
-        self._sessions_lock = __import__("threading").Lock()
+        self._sessions_lock = threading.Lock()
+        # Runtime admission control to smooth traffic and reduce 429 bursts.
+        self._inflight_semaphore = threading.BoundedSemaphore(
+            _DEFAULT_OPENAPI_MAX_INFLIGHT
+        )
+        self._min_interval_seconds = _DEFAULT_OPENAPI_MIN_INTERVAL_SECONDS
+        self._service_rate_lock = threading.Lock()
+        self._next_allowed_by_service: dict[str, float] = {}
 
     def _get_session(self, base_url: str) -> requests.Session:
         """Return a pooled Session for the given base_url, creating one if needed."""
@@ -215,14 +231,19 @@ class OpenAPIInvoker:
                 headers.update(tp_headers)
 
             try:
-                session = self._get_session(resolved_base_url)
-                response = session.request(
-                    method=method,
-                    url=url,
-                    json=request.payload,
-                    headers=headers or None,
-                    timeout=timeout_seconds,
-                )
+                self._throttle_before_request(service.id)
+                self._inflight_semaphore.acquire()
+                try:
+                    session = self._get_session(resolved_base_url)
+                    response = session.request(
+                        method=method,
+                        url=url,
+                        json=request.payload,
+                        headers=headers or None,
+                        timeout=timeout_seconds,
+                    )
+                finally:
+                    self._inflight_semaphore.release()
             except requests.Timeout as e:
                 if attempt < max_retries:
                     self._wait_backoff(attempt, backoff_base, backoff_factor)
@@ -257,6 +278,8 @@ class OpenAPIInvoker:
                 wait = self._extract_retry_after(
                     response, attempt, backoff_base, backoff_factor
                 )
+                if response.status_code == 429:
+                    self._register_rate_limit(service.id, wait)
                 time.sleep(wait)
                 continue
 
@@ -718,6 +741,32 @@ class OpenAPIInvoker:
         delay = base * (factor**attempt)
         time.sleep(delay)
 
+    def _throttle_before_request(self, service_id: str) -> None:
+        if self._min_interval_seconds <= 0:
+            return
+
+        while True:
+            with self._service_rate_lock:
+                now = time.monotonic()
+                next_allowed = self._next_allowed_by_service.get(service_id, 0.0)
+                if now >= next_allowed:
+                    self._next_allowed_by_service[service_id] = (
+                        now + self._min_interval_seconds
+                    )
+                    return
+                wait = next_allowed - now
+            time.sleep(wait)
+
+    def _register_rate_limit(self, service_id: str, wait_seconds: float) -> None:
+        if wait_seconds <= 0:
+            return
+        with self._service_rate_lock:
+            now = time.monotonic()
+            current = self._next_allowed_by_service.get(service_id, 0.0)
+            self._next_allowed_by_service[service_id] = max(
+                current, now + wait_seconds
+            )
+
     @staticmethod
     def _extract_retry_after(
         response: requests.Response,
@@ -725,12 +774,32 @@ class OpenAPIInvoker:
         backoff_base: float,
         backoff_factor: float,
     ) -> float:
-        """Parse Retry-After header if present; fall back to exponential backoff."""
+        """Parse Retry-After header if present; fall back to exponential backoff.
+
+        Also applies a conservative minimum wait for HTTP 429 to reduce immediate
+        re-throttling loops under provider-side rate limits.
+        """
         retry_after = response.headers.get("Retry-After")
+        wait: float | None = None
+
         if retry_after is not None:
             try:
                 wait = float(retry_after)
-                return min(max(wait, 0), _MAX_RETRY_AFTER_SECONDS)
             except (ValueError, TypeError):
-                pass
-        return backoff_base * (backoff_factor**attempt)
+                wait = None
+
+            # RFC-compatible support for HTTP-date Retry-After values.
+            if wait is None:
+                try:
+                    retry_dt = parsedate_to_datetime(retry_after)
+                    wait = retry_dt.timestamp() - time.time()
+                except Exception:
+                    wait = None
+
+        if wait is None:
+            wait = backoff_base * (backoff_factor**attempt)
+
+        if response.status_code == 429:
+            wait = max(wait, _DEFAULT_MIN_429_WAIT_SECONDS)
+
+        return min(max(wait, 0), _MAX_RETRY_AFTER_SECONDS)

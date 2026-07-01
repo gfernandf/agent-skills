@@ -8,6 +8,7 @@ from runtime.binding_models import InvocationRequest, InvocationResponse
 from runtime.binding_registry import BindingRegistry
 from runtime.binding_resolver import BindingResolver
 from runtime.circuit_breaker import CircuitBreakerRegistry, CircuitOpenError
+from runtime.contract_policy import RUNTIME_MANAGED_REQUIRED_OUTPUTS
 from runtime.metrics import METRICS
 from runtime.errors import RuntimeErrorBase
 from runtime.request_builder import RequestBuilder
@@ -183,6 +184,24 @@ class BindingExecutor:
                     request_payload=payload,
                 )
 
+                required_outputs = {
+                    field_name
+                    for field_name, field_spec in capability.outputs.items()
+                    if field_spec.required
+                }
+                missing_required_outputs = sorted(
+                    (required_outputs - set(mapped_output.keys()))
+                    - RUNTIME_MANAGED_REQUIRED_OUTPUTS
+                )
+                if missing_required_outputs:
+                    raise BindingExecutionError(
+                        (
+                            f"Binding '{binding.id}' returned outputs missing required "
+                            f"fields: {missing_required_outputs}."
+                        ),
+                        capability_id=capability_id,
+                    )
+
                 attempts.append(
                     {
                         "binding_id": binding.id,
@@ -193,17 +212,26 @@ class BindingExecutor:
                     }
                 )
 
+                fallback_used = bool(
+                    index > 0
+                    and any(
+                        isinstance(attempt, dict)
+                        and attempt.get("status") == "failed"
+                        for attempt in attempts
+                    )
+                )
+
                 elapsed = (time.perf_counter() - t0) * 1000
                 METRICS.observe("binding.resolution_ms", elapsed)
                 METRICS.inc("binding.execute.success")
-                if index > 0:
+                if fallback_used:
                     METRICS.inc("binding.execute.fallback_used")
                 return mapped_output, {
                     "binding_id": binding.id,
                     "service_id": service.id,
                     "conformance_profile": conformance_profile,
                     "required_conformance_profile": required_profile,
-                    "fallback_used": index > 0,
+                    "fallback_used": fallback_used,
                     "fallback_chain": list(chain),
                     "attempts": attempts,
                     "resolution_plan": resolution_plan,

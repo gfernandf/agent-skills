@@ -482,18 +482,23 @@ def execute_with_meta(
     *,
     trace_id: str | None = None,
     channel: str = "embedded",
+    tenant_id: str | None = None,
 ) -> dict[str, Any]:
     """Execute a skill and return outputs together with binding/fallback diagnostics.
 
     Returns a dict with ``outputs`` (the normal skill outputs) and ``meta``
     (binding diagnostics per step including fallback causes).
     """
-    from runtime.models import ExecutionRequest
+    from runtime.models import ExecutionOptions, ExecutionRequest
 
     engine, _, _ = _get_components()
     skill = engine.skill_loader.get_skill(skill_id)
     req = ExecutionRequest(
-        skill_id=skill_id, inputs=inputs, trace_id=trace_id, channel=channel
+        skill_id=skill_id,
+        inputs=inputs,
+        trace_id=trace_id,
+        channel=channel,
+        options=ExecutionOptions(tenant_id=tenant_id),
     )
     try:
         result = engine.execute(req)

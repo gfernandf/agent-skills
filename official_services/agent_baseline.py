@@ -207,6 +207,13 @@ def evaluate_branch(condition, context, branches, default_branch=None):
                 return True
             if isinstance(node, ast.Name):
                 return ctx.get(node.id)
+            if isinstance(node, ast.Attribute):
+                # Support dot-notation dict access: obj.key where obj is a
+                # context variable holding a dict (e.g. action_context.scope_defined).
+                obj = _resolve(node.value)
+                if isinstance(obj, dict):
+                    return obj.get(node.attr)
+                return getattr(obj, node.attr, None)
             if isinstance(node, ast.Constant):
                 return node.value
             if isinstance(node, ast.List):
