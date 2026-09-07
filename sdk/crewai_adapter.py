@@ -21,6 +21,7 @@ from __future__ import annotations
 from typing import Any
 
 import requests
+import urllib.parse
 
 
 def _call_capability(
@@ -32,7 +33,7 @@ def _call_capability(
         headers["Authorization"] = f"Bearer {api_key}"
     resp = requests.post(url, json=payload, headers=headers, timeout=60)
     resp.raise_for_status()
-    return resp.json()
+    return _safe_response_json(resp)
 
 
 def build_crewai_tools(
@@ -52,7 +53,7 @@ def build_crewai_tools(
     if capabilities is None:
         resp = requests.get(f"{base_url.rstrip('/')}/v1/capabilities", timeout=10)
         resp.raise_for_status()
-        capabilities = [c["id"] for c in resp.json().get("capabilities", [])]
+        capabilities = [c["id"] for c in _safe_response_json(resp).get("capabilities", [])]
 
     tools = []
     for cap_id in capabilities:
