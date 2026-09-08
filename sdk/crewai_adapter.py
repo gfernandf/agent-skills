@@ -24,10 +24,21 @@ import requests
 import urllib.parse
 
 
+def _safe_response_json(resp: requests.Response) -> dict[str, Any]:
+    try:
+        payload = resp.json()
+    except ValueError as exc:
+        raise RuntimeError("Capability service returned invalid JSON") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError("Capability service returned a non-object JSON value")
+    return payload
+
+
 def _call_capability(
     base_url: str, capability_id: str, payload: dict, api_key: str | None = None
 ) -> dict:
-    url = f"{base_url.rstrip('/')}/v1/capabilities/{capability_id}/execute"
+    encoded_capability_id = urllib.parse.quote(capability_id, safe="")
+    url = f"{base_url.rstrip('/')}/v1/capabilities/{encoded_capability_id}/execute"
     headers: dict[str, str] = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
@@ -58,8 +69,10 @@ def build_crewai_tools(
     tools = []
     for cap_id in capabilities:
         try:
+            encoded_capability_id = urllib.parse.quote(cap_id, safe="")
             info = requests.get(
-                f"{base_url.rstrip('/')}/v1/capabilities/{cap_id}", timeout=10
+                f"{base_url.rstrip('/')}/v1/capabilities/{encoded_capability_id}",
+                timeout=10,
             )
             info.raise_for_status()
             meta = info.json()
